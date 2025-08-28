@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "output": {
+    "roi": -40,
+    "paybackPeriod": 20,
+    "initialInvestment": 10000,
+    "monthlyRevenue": 2000,
+    "monthlyExpenses": 1500,
+    "monthlyProfit": 500,
+    "totalRevenue": 24000,
+    "totalExpenses": 18000,
+    "totalProfit": 6000,
+    "netProfit": -4000,
+    "timePeriod": 12,
+    "calculatedAt": "2025-08-26T10:55:53.560Z"
+  }
+}

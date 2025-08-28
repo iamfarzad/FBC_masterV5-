@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="FBC-E2E-Test-Suite" tests="11" failures="0" skipped="1">
+    <testcase name="backend-health" time="0.095">
+    </testcase>
+    <testcase name="consent-api" time="0.182">
+    </testcase>
+    <testcase name="context-init" time="0.797">
+    </testcase>
+    <testcase name="chat-sse" time="2.560">
+    </testcase>
+    <testcase name="intelligence" time="2.667">
+    </testcase>
+    <testcase name="pdf-export" time="3.498">
+    </testcase>
+    <testcase name="user-avatar" time="3.521">
+    </testcase>
+    <testcase name="placeholder-avatar" time="3.535">
+    </testcase>
+    <testcase name="file-upload" time="6.082">
+    </testcase>
+    <testcase name="roi-tool" time="6.207">
+    </testcase>
+    <testcase name="live-api" time="6.441">
+      <skipped message="Live API not available: Live API not enabled (set LIVE_ENABLED=true)" />
+    </testcase>
+  </testsuite>
+</testsuites>

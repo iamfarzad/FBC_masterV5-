@@ -1,0 +1,21 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(req: NextRequest) {
+  // Serve the FBC logo for AI assistant avatar
+  const { searchParams } = new URL(req.url)
+  const size = searchParams.get('size') || '64'
+
+  // FBC logo SVG - scaled appropriately
+  const fbcLogo = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 48 48" fill="none">
+      <path fill="#171717" fill-rule="evenodd" d="m7.839 40.783 16.03-28.054L20 6 0 40.783h7.839Zm8.214 0H40L27.99 19.894l-4.02 7.032 3.976 6.914H20.02l-3.967 6.943Z" clip-rule="evenodd"/>
+    </svg>
+  `.trim()
+
+  return new NextResponse(fbcLogo, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=31536000'
+    }
+  })
+}

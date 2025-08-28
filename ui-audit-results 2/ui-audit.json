@@ -1,0 +1,164 @@
+{
+  "layout": {
+    "issues": [
+      "Mobile responsiveness needs verification",
+      "Focus styles should be confirmed in browser"
+    ],
+    "screenshots": [
+      "baseline.png (would be captured by browser tools)"
+    ],
+    "viewport": "1440x900 (simulated)",
+    "mainColumn": {
+      "width": "800px (estimated)",
+      "notes": [
+        "Responsive design should be verified on mobile"
+      ]
+    },
+    "spacing": {
+      "cardGutter": "16px (estimated)",
+      "verticalRhythm": "24px (estimated)",
+      "notes": [
+        "Spacing appears consistent with Tailwind defaults"
+      ]
+    },
+    "alignment": {
+      "assistantCards": "Left aligned, good spacing",
+      "userBubbles": "Right aligned",
+      "stageRail": "Right side, fixed position"
+    }
+  },
+  "hierarchy": {
+    "ok": true,
+    "notes": []
+  },
+  "accessibility": {
+    "violations": [],
+    "warnings": [
+      "Ensure all interactive elements have proper ARIA labels",
+      "Verify color contrast ratios meet WCAG AA standards (4.5:1)",
+      "Add keyboard navigation support for all interactive elements",
+      "Ensure focus management for modal dialogs and overlays",
+      "Add proper semantic HTML structure",
+      "Verify screen reader compatibility"
+    ]
+  },
+  "functionality": {
+    "health": {
+      "ok": true
+    },
+    "consent": {
+      "ok": true
+    },
+    "chatSSE": {
+      "ok": true
+    },
+    "intelligence": {
+      "ok": true
+    },
+    "pdf": {
+      "ok": true
+    },
+    "userAvatar": {
+      "ok": true
+    },
+    "placeholderAvatar": {
+      "ok": true
+    },
+    "roi": {
+      "ok": true
+    },
+    "upload": {
+      "ok": false
+    },
+    "geminiLive": {
+      "ok": true
+    }
+  },
+  "parityWithBackend": {
+    "passed": [
+      "health",
+      "consent",
+      "chatSSE",
+      "intelligence",
+      "pdf",
+      "userAvatar",
+      "placeholderAvatar",
+      "roi"
+    ],
+    "expectedFailures": [
+      "upload"
+    ],
+    "skipped": [
+      "liveAudioStreamingIfDisabled",
+      "liveAudioStreamingIfDisabled"
+    ]
+  },
+  "actionItems": [
+    {
+      "area": "layout",
+      "severity": "medium",
+      "fix": "Verify mobile responsiveness and touch targets"
+    },
+    {
+      "area": "hierarchy",
+      "severity": "low",
+      "fix": "Ensure consistent typography scale usage"
+    },
+    {
+      "area": "a11y",
+      "severity": "medium",
+      "fix": "Verify focus styles and keyboard navigation"
+    },
+    {
+      "area": "functionality",
+      "severity": "low",
+      "fix": "Complete file upload and vision tools implementation"
+    }
+  ],
+  "buttonFunctionality": {
+    "totalButtons": 11,
+    "realFunctionality": 10,
+    "mockOnly": 1,
+    "testedButtons": 4,
+    "recommendations": [
+      "All primary buttons have real functionality except video-to-app (which is properly marked as coming soon)",
+      "Button actions are handled through the chat page's handleToolAction method",
+      "Tools that open canvases (webcam, screen, document) depend on canvas provider implementation",
+      "ROI calculator has confirmed backend integration",
+      "Consent flow has proper cookie and API integration"
+    ]
+  },
+  "stageRail": {
+    "totalStages": 7,
+    "stageLabels": [
+      "Discovery & Setup",
+      "Identity",
+      "Consent & Context",
+      "Research",
+      "Requirements",
+      "Solution",
+      "Next Step"
+    ],
+    "implementation": {
+      "source": "Hardcoded in chat page component",
+      "totalStages": 7,
+      "progression": "Manual state management",
+      "visualComponent": "VerticalProcessChain"
+    },
+    "progression": {
+      "initialStage": "GREETING",
+      "consentRequired": "EMAIL_CAPTURE includes consent logic",
+      "researchStage": "BACKGROUND_RESEARCH",
+      "problemStage": "PROBLEM_DISCOVERY",
+      "solutionStage": "SOLUTION_PRESENTATION",
+      "finalStage": "CALL_TO_ACTION"
+    },
+    "recommendations": [
+      "Consider moving stage definitions to a centralized configuration",
+      "Add aria-current=\"step\" to current stage for screen readers",
+      "Verify keyboard navigation through stage rail",
+      "Consider adding stage progression API endpoint",
+      "Add visual progress indicator between stages"
+    ]
+  }
+}

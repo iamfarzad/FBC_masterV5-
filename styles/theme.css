@@ -1,0 +1,175 @@
+/* ===========================================
+   F.B/c THEME SYSTEM - IMMUTABLE BRAND COLORS
+   ===========================================
+   🚫 NEVER MODIFY BRAND COLORS WITHOUT APPROVAL 🚫
+   These colors represent the F.B/c brand identity
+   =========================================== */
+
+:root {
+  /* 🎨 IMMUTABLE BRAND COLORS - NEVER CHANGE */
+  --brand: #ff5b04;          /* F.B/c Orange - THE BRAND */
+  --brand-hover: #e65200;    /* Orange hover state */
+
+  /* 🌟 LIGHT THEME COLORS */
+  --bg: #f5f5f5;             /* Light Silver background */
+  --surface: #ffffff;        /* White surface */
+  --surface-elevated: #e5e5e5; /* Elevated surface */
+
+  --text: #111111;           /* Primary text */
+  --text-muted: #666666;     /* Muted text */
+
+  --border: #e5e5e5;        /* Default border */
+
+  /* 🎨 SEMANTIC COLORS */
+  --success: #10b981;        /* Green for success states */
+  --warning: #f59e0b;        /* Amber for warning states */
+  --error: #ef4444;          /* Red for error states */
+  --info: #3b82f6;           /* Blue for info states */
+}
+
+:root[data-theme="dark"],
+.dark {
+  /* 🌙 DARK THEME COLORS */
+  --bg: #0b1620;             /* Dark navy background */
+  --surface: #1d2a35;        /* Dark surface */
+  --surface-elevated: #1f2f3a; /* Elevated dark surface */
+
+  --text: #e5e9ec;          /* Light text */
+  --text-muted: #a0a5aa;    /* Muted light text */
+
+  --border: #2a3a46;        /* Dark border */
+
+  /* 🎨 SEMANTIC COLORS (DARK) */
+  --success: #10b981;        /* Green (same for dark) */
+  --warning: #f59e0b;        /* Amber (same for dark) */
+  --error: #ef4444;          /* Red (same for dark) */
+  --info: #60a5fa;           /* Light blue for dark */
+}
+
+/* ===========================================
+   THEME UTILITIES - SAFE TO EXTEND
+   =========================================== */
+
+/* Background colors */
+.bg-bg { background-color: var(--bg); }
+.bg-surface { background-color: var(--surface); }
+.bg-surface-elevated { background-color: var(--surface-elevated); }
+
+/* Text colors */
+.text-text { color: var(--text); }
+.text-text-muted { color: var(--text-muted); }
+
+/* Border colors */
+.border-border { border-color: var(--border); }
+
+/* Brand utilities */
+.btn-brand {
+  background: var(--brand);
+  color: var(--surface);
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-brand:hover {
+  background: var(--brand-hover);
+}
+
+.text-brand { color: var(--brand); }
+
+/* Semantic utilities */
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-error { color: var(--error); }
+.text-info { color: var(--info); }
+
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+.bg-error { background-color: var(--error); }
+.bg-info { background-color: var(--info); }
+
+/* ===========================================
+   THEME VERSIONING & MIGRATION
+   =========================================== */
+
+:root {
+  --theme-version: '1.0.0';
+  --theme-last-updated: '2025-01-27';
+}
+
+/* Future theme versions can be added here safely */
+/* Example:
+[data-theme-version="2.0.0"] {
+  --brand-new: #ff6b35;
+}
+*/
+
+/* ===========================================
+   ACCESSIBILITY & PERFORMANCE
+   =========================================== */
+
+/* Ensure proper contrast ratios */
+@media (prefers-contrast: high) {
+  :root {
+    --text: #000000;
+    --bg: #ffffff;
+    --border: #000000;
+  }
+
+  .dark {
+    --text: #ffffff;
+    --bg: #000000;
+    --border: #ffffff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-duration: 0ms;
+    --transition-duration: 0ms;
+  }
+}
+
+/* ===========================================
+   THEME SYSTEM INTEGRITY CHECKS
+   =========================================== */
+
+/* These CSS rules help detect theme system violations */
+/* They will show warnings in browser dev tools if brand colors change */
+
+.theme-integrity-check::before {
+  content: "🎨 F.B/c Theme v" var(--theme-version) " - " var(--theme-last-updated);
+  display: none; /* Hidden utility for debugging */
+}
+
+/* Brand color integrity verification */
+.theme-brand-check {
+  --expected-brand: #ff5b04;
+  --expected-brand-hover: #e65200;
+}
+
+/* ===========================================
+   DOCUMENTATION & GUIDELINES
+   ===========================================
+   📚 THEME SYSTEM USAGE:
+
+   ✅ CORRECT USAGE:
+   .bg-brand { background: var(--brand); }
+   .text-surface { color: var(--surface); }
+   .border-border { border-color: var(--border); }
+
+   🚫 FORBIDDEN:
+   .bg-red-500 {}  // Never use generic colors
+   color: #ff0000;  // Never use hardcoded colors
+   background: blue; // Never use named colors
+
+   🎯 BRAND PROTECTION:
+   - --brand (#ff5b04) = F.B/c Orange - NEVER CHANGE
+   - --brand-hover (#e65200) = Orange hover - NEVER CHANGE
+   - All other colors can be extended safely
+
+   📞 SUPPORT:
+   - Theme changes require design lead approval
+   - Brand color changes require executive approval
+   - Emergency changes: document, backup, test, approve
+   =========================================== */

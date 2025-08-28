@@ -1,0 +1,104 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+**/node_modules/
+server/node_modules/
+node_modules/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# testing
+/coverage/
+coverage/
+/test-results/
+test-results/
+*.log
+**/*.log
+test-*.pdf
+test-*.mjs
+
+# sensitive files
+cookies.txt
+prod-cookies.txt
+*.cookie
+*.session
+
+# build artifacts
+*.pdf
+!README.pdf
+!docs/**/*.pdf
+
+# additional build artifacts
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vite/
+
+# admin documentation (contains sensitive credentials)
+docs/ADMIN_LOGIN.md
+docs/ADMIN_API.md
+docs/PRODUCTION_DEPLOYMENT.md
+
+# playwright tests (moved to separate folder to avoid v0.dev conflicts)
+playwright-tests/
+
+# embedded git repositories
+fb-centric-ai/
+fbc-logo-icon/
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# temporary files
+*.tmp
+*.temp
+.cache/
+localhost.pem
+localhost-key.pem
+.env*.local
+
+# Local dev/sample and long-form notes (do not commit)
+/live-audio (5)/
+/video2app/
+/industry-ai-education./
+/Documents_progress_overtime/
+/evidence/

@@ -1,0 +1,298 @@
+---
+alwaysApply: true
+description: New Component Brand Colors Law - All new components must use brand colors
+globs: components/**/*.tsx,components/**/*.ts,app/**/*.tsx,app/**/*.ts
+---
+
+# 🆕 NEW COMPONENT BRAND COLORS LAW
+
+## 🚨 MANDATORY REQUIREMENT
+**ALL NEW COMPONENTS MUST USE BRAND COLORS FROM THE START**
+
+### ✅ REQUIRED COMPONENT TEMPLATE
+Every new component **MUST** follow this exact template:
+
+```tsx
+// ✅ MANDATORY - Use this exact template for ALL new components
+import { cn } from '@/src/core/utils';
+
+interface ComponentNameProps {
+  className?: string;
+  variant?: 'default' | 'secondary' | 'outline';
+  children: React.ReactNode;
+}
+
+export function ComponentName({
+  className,
+  variant = 'default',
+  children
+}: ComponentNameProps) {
+  // ✅ MANDATORY - Use theme classes
+  const baseClasses = "bg-surface border border-border text-text";
+
+  const variants = {
+    default: "bg-brand hover:bg-brand-hover text-surface border-transparent",
+    secondary: "bg-surface-elevated hover:bg-surface text-text-muted",
+    outline: "bg-transparent hover:bg-surface-elevated border-border text-text"
+  };
+
+  return (
+    <div className={cn(baseClasses, variants[variant], className)}>
+      {children}
+    </div>
+  );
+}
+```
+
+## 🔧 REQUIRED UTILITIES
+### Always import and use:
+```tsx
+// ✅ MANDATORY - Always import these
+import { cn } from '@/src/core/utils';
+import { useTheme } from 'next-themes';
+```
+
+### Always use theme-aware classes:
+```tsx
+// ✅ REQUIRED - Theme-aware component
+export function SmartComponent({ className }: ComponentProps) {
+  const { theme } = useTheme();
+
+  return (
+    <div className={cn(
+      "bg-surface text-text border border-border",
+      theme === 'dark' && "shadow-lg",
+      className
+    )}>
+      Content
+    </div>
+  );
+}
+```
+
+## 🎨 BRAND COLOR USAGE RULES
+
+### 1. **PRIMARY ACTIONS (MANDATORY)**
+```tsx
+// ✅ CORRECT - Primary CTAs must use brand colors
+<button className="bg-brand hover:bg-brand-hover text-surface border-0">
+  Primary Action
+</button>
+
+// ❌ FORBIDDEN - Never use generic colors for primary actions
+<button className="bg-blue-500 hover:bg-blue-600"> // NO!
+```
+
+### 2. **SECONDARY ELEMENTS**
+```tsx
+// ✅ CORRECT - Secondary elements use surface colors
+<div className="bg-surface-elevated border border-border text-text-muted">
+  Secondary content
+</div>
+```
+
+### 3. **TEXT COLORS**
+```tsx
+// ✅ CORRECT - Always use theme text colors
+<h1 className="text-text">Primary heading</h1>
+<p className="text-text-muted">Secondary text</p>
+<span className="text-brand">Brand accent text</span>
+```
+
+### 4. **BORDERS & DIVIDERS**
+```tsx
+// ✅ CORRECT - Always use theme borders
+<div className="border border-border rounded-lg">
+  Content
+</div>
+
+// ❌ FORBIDDEN
+<div className="border border-gray-200"> // NO!
+```
+
+## 🚫 FORBIDDEN PATTERNS (HARD BLOCKED)
+
+### ❌ NEVER USE:
+```tsx
+// FORBIDDEN - Hardcoded colors
+<div style={{ backgroundColor: '#ff5b04' }}>
+<div style={{ color: '#ffffff' }}>
+<div style={{ borderColor: '#e5e5e5' }}>
+
+// FORBIDDEN - Generic Tailwind colors
+className="bg-white text-black border-gray-200"
+className="bg-blue-500 text-red-600"
+className="bg-gray-100 hover:bg-gray-200"
+
+// FORBIDDEN - No theme detection
+function BadComponent() {
+  return <div className="bg-white">No theme awareness</div>;
+}
+```
+
+## 🔍 ENFORCEMENT CHECKLIST
+
+### ✅ MUST HAVE (Automatic Rejection if Missing):
+- [ ] Uses `cn()` utility for class merging
+- [ ] Uses theme token classes (`bg-brand`, `text-surface`, `border-border`)
+- [ ] Works in both light and dark modes
+- [ ] Uses `useTheme()` hook if theme-aware behavior needed
+- [ ] No hardcoded hex colors (`#ff5b04`, `#ffffff`, etc.)
+- [ ] No generic Tailwind colors (`bg-white`, `text-gray-900`, etc.)
+
+### 🎯 BRAND APPLICATION RULES
+
+#### **High Importance Elements** (MUST use brand colors):
+- Primary buttons and CTAs
+- Navigation elements
+- Brand-related components
+- Headers and titles
+- Interactive elements
+
+#### **Medium Importance Elements** (Use theme colors):
+- Secondary buttons
+- Cards and containers
+- Form elements
+- List items
+- Supporting text
+
+#### **Low Importance Elements** (Flexible):
+- Background decorations
+- Subtle accents
+- Status indicators (success/warning/error)
+
+## 📝 CODE REVIEW REQUIREMENTS
+
+### PR Title Format:
+```
+feat: add UserProfile component (uses brand colors)
+fix: update Button component (brand colors compliance)
+```
+
+### PR Description MUST include:
+```
+## Brand Colors Compliance ✅
+- [x] Uses theme tokens (bg-brand, text-surface, etc.)
+- [x] Works in light and dark modes
+- [x] No hardcoded colors
+- [x] Follows component template
+- [x] Tested theme switching
+```
+
+## 🔧 REFactoring Old Components
+
+### When updating existing components:
+```tsx
+// OLD (needs fixing)
+<div className="bg-white text-gray-900 border border-gray-200">
+  <button className="bg-blue-500 text-white">
+    Action
+  </button>
+</div>
+
+// NEW (compliant)
+<div className="bg-surface text-text border border-border">
+  <button className="bg-brand hover:bg-brand-hover text-surface">
+    Action
+  </button>
+</div>
+```
+
+## 🎨 COMPONENT EXAMPLES
+
+### Card Component:
+```tsx
+// ✅ CORRECT
+export function Card({ className, children }: CardProps) {
+  return (
+    <div className={cn("bg-surface border border-border rounded-lg shadow-sm", className)}>
+      {children}
+    </div>
+  );
+}
+```
+
+### Button Variants:
+```tsx
+// ✅ CORRECT
+export function Button({ variant = 'primary', className, children }: ButtonProps) {
+  const variants = {
+    primary: "bg-brand hover:bg-brand-hover text-surface",
+    secondary: "bg-surface-elevated hover:bg-surface text-text-muted border border-border",
+    outline: "bg-transparent hover:bg-surface-elevated text-text border border-border"
+  };
+
+  return (
+    <button className={cn("px-4 py-2 rounded-md transition-colors", variants[variant], className)}>
+      {children}
+    </button>
+  );
+}
+```
+
+### Form Input:
+```tsx
+// ✅ CORRECT
+export function Input({ className, ...props }: InputProps) {
+  return (
+    <input
+      className={cn(
+        "bg-surface border border-border text-text placeholder:text-text-muted",
+        "focus:border-brand focus:ring-1 focus:ring-brand",
+        "rounded-md px-3 py-2",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+## 🚨 VIOLATION CONSEQUENCES
+
+### Immediate Actions:
+1. **Block PR** until compliance is achieved
+2. **Require rewrite** of non-compliant components
+3. **Mandatory review** by design system maintainer
+4. **Documentation** of brand compliance in PR
+
+### Prevention Measures:
+- **Linting rules** for hardcoded colors (planned)
+- **PR templates** with brand compliance checklist
+- **Component library** with pre-built compliant components
+- **Design system documentation** as primary reference
+
+## 📚 REFERENCE IMPLEMENTATIONS
+
+### Use these as templates:
+- `[components/ui/button.tsx](mdc:components/ui/button.tsx)` - Compliant button
+- `[components/ui/card.tsx](mdc:components/ui/card.tsx)` - Compliant card
+- `[components/ui/input.tsx](mdc:components/ui/input.tsx)` - Compliant input
+
+### Theme utilities:
+- `[src/core/theme/setTheme.ts](mdc:src/core/theme/setTheme.ts)` - Theme management
+- `[src/core/theme/tokens.ts](mdc:src/core/theme/tokens.ts)` - Theme tokens
+
+## ⚡ PERFORMANCE CONSIDERATIONS
+
+### CSS Optimization:
+- Theme variables are CSS custom properties (fast)
+- No runtime color calculations
+- Minimal CSS bundle size increase
+- Efficient theme switching
+
+### Bundle Size:
+- Theme tokens are tree-shakable
+- Only load used theme variants
+- Minimal runtime overhead
+
+## 🎯 SUCCESS METRICS
+
+### Brand Consistency Score:
+- [ ] 100% of new components use theme tokens
+- [ ] 0 hardcoded colors in new code
+- [ ] All components work in both themes
+- [ ] Theme switching is instant and smooth
+- [ ] Brand colors never change across versions
+
+**LAW ENFORCED**: All new components **MUST** use brand colors. This is **MANDATORY** and **NON-NEGOTIABLE**. Protect the F.B/c brand! 🛡️🎨

@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-08-26T10:56:05.196Z",
+  "buttons": [
+    {
+      "name": "voiceButton",
+      "description": "Voice input button",
+      "note": "Requires browser interaction to test fully"
+    },
+    {
+      "name": "toolMenu",
+      "description": "Tools dropdown menu",
+      "note": "Contains multiple tool options"
+    },
+    {
+      "name": "documentUpload",
+      "description": "Document upload tool",
+      "functionality": "Should trigger file picker or canvas",
+      "implementation": "Handled via onToolAction in chat page"
+    },
+    {
+      "name": "imageUpload",
+      "description": "Image upload tool",
+      "functionality": "Should trigger image file picker",
+      "implementation": "Handled via onToolAction in chat page"
+    },
+    {
+      "name": "webcamTool",
+      "description": "Webcam capture tool",
+      "functionality": "Should open webcam canvas",
+      "implementation": "Handled via onToolAction in chat page"
+    },
+    {
+      "name": "screenShareTool",
+      "description": "Screen share tool",
+      "functionality": "Should trigger screen share",
+      "implementation": "Handled via onToolAction in chat page"
+    },
+    {
+      "name": "roiTool",
+      "description": "ROI calculator tool",
+      "functionality": "Should show ROI calculator",
+      "implementation": "Handled via onToolAction in chat page",
+      "tested": true
+    },
+    {
+      "name": "videoToAppTool",
+      "description": "Video to app tool",
+      "functionality": "Coming soon - placeholder only",
+      "implementation": "Mock implementation",
+      "mock": true
+    },
+    {
+      "name": "submitButton",
+      "description": "Message submit button",
+      "functionality": "Should send message to chat",
+      "implementation": "Connected to useChat hook",
+      "tested": true
+    },
+    {
+      "name": "consentAllow",
+      "description": "Consent overlay allow button",
+      "functionality": "Should accept consent and proceed",
+      "implementation": "Posts to /api/consent and sets cookie",
+      "tested": true
+    },
+    {
+      "name": "consentDeny",
+      "description": "Consent overlay deny button",
+      "functionality": "Should deny consent and continue without personalization",
+      "implementation": "Sets hasConsent to true without posting",
+      "tested": true
+    }
+  ],
+  "summary": {
+    "total": 11,
+    "withRealFunctionality": 10,
+    "mockOnly": 1,
+    "tested": 4
+  },
+  "recommendations": [
+    "All primary buttons have real functionality except video-to-app (which is properly marked as coming soon)",
+    "Button actions are handled through the chat page's handleToolAction method",
+    "Tools that open canvases (webcam, screen, document) depend on canvas provider implementation",
+    "ROI calculator has confirmed backend integration",
+    "Consent flow has proper cookie and API integration"
+  ]
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBC Color Test</title>
+    <style>
+        /* Import the CSS */
+        @import url('./app/globals.css');
+
+        /* Test styles */
+        .color-test {
+            padding: 20px;
+            margin: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .color-sample {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+            line-height: 100px;
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>FBC Brand Color Test</h1>
+
+    <div class="color-test">
+        <h2>Brand Colors</h2>
+        <div class="color-sample" style="background: var(--color-orange-accent);">Orange Accent</div>
+        <div class="color-sample" style="background: var(--color-orange-accent-hover);">Orange Hover</div>
+        <div class="color-sample" style="background: var(--color-gunmetal);">Gunmetal</div>
+        <div class="color-sample" style="background: var(--color-light-silver); color: black;">Light Silver</div>
+    </div>
+
+    <div class="color-test">
+        <h2>Theme Colors (Light Mode)</h2>
+        <div class="color-sample" style="background: hsl(var(--accent));">Accent</div>
+        <div class="color-sample" style="background: hsl(var(--primary));">Primary</div>
+        <div class="color-sample" style="background: hsl(var(--background)); color: black;">Background</div>
+        <div class="color-sample" style="background: hsl(var(--foreground));">Foreground</div>
+    </div>
+
+    <div class="color-test dark">
+        <h2>Theme Colors (Dark Mode)</h2>
+        <div class="color-sample" style="background: hsl(var(--accent));">Accent</div>
+        <div class="color-sample" style="background: hsl(var(--primary));">Primary</div>
+        <div class="color-sample" style="background: hsl(var(--background));">Background</div>
+        <div class="color-sample" style="background: hsl(var(--foreground));">Foreground</div>
+    </div>
+
+    <script>
+        // Log CSS variables to console
+        console.log('=== FBC Color Test ===');
+
+        const root = document.documentElement;
+
+        function getCSSVar(name) {
+            return getComputedStyle(root).getPropertyValue(name).trim();
+        }
+
+        // Test brand colors
+        const brandVars = [
+            '--color-orange-accent',
+            '--color-orange-accent-hover',
+            '--color-gunmetal',
+            '--color-light-silver',
+            '--accent',
+            '--primary',
+            '--background',
+            '--foreground'
+        ];
+
+        brandVars.forEach(varName => {
+            const value = getCSSVar(varName);
+            console.log(`${varName}: ${value}`);
+        });
+
+        // Test Tailwind classes
+        console.log('\n=== Tailwind Classes ===');
+        const testDiv = document.createElement('div');
+        testDiv.className = 'bg-orange-accent-hover';
+        document.body.appendChild(testDiv);
+
+        // Force style computation
+        window.getComputedStyle(testDiv).backgroundColor;
+        console.log('orange-accent-hover class background:', window.getComputedStyle(testDiv).backgroundColor);
+
+        document.body.removeChild(testDiv);
+
+        // Check theme
+        console.log('Current theme:', document.body.classList.contains('dark') ? 'dark' : 'light');
+    </script>
+</body>
+</html>

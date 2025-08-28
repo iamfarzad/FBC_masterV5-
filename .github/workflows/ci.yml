@@ -1,0 +1,35 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint:all
+      - run: pnpm build
+      - run: pnpm test:unit
+      - run: pnpm playwright install --with-deps
+      - run: pnpm test:visual
+      - name: Check for hardcoded colors
+        run: |
+          echo "🔍 Checking for hardcoded colors..."
+          if pnpm lint:all 2>&1 | grep -q "Use CSS var tokens"; then
+            echo "🚨 FOUND HARDCODED COLORS! See output above."
+            exit 1
+          else
+            echo "✅ No hardcoded colors found"
+          fi
+      - name: Validate brand colors
+        run: |
+          echo "🎨 Validating brand colors..."
+          BRAND_IN_CSS=$(grep -o "#ff5b04" styles/theme.css | wc -l)
+          if [ "$BRAND_IN_CSS" -lt 2 ]; then
+            echo "🚨 BRAND COLOR VIOLATION: #ff5b04 not found in theme.css"
+            exit 1
+          fi
+          echo "✅ Brand colors validated"

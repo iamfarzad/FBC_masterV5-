@@ -1,0 +1,22 @@
+{
+  "headings": {
+    "cardTitles": "Expected: 18-20px, 600 weight",
+    "bodyText": "Expected: 14-16px, 400 weight",
+    "notes": [
+      "Hierarchy should follow design system tokens"
+    ]
+  },
+  "contrast": {
+    "primaryCTAs": "Should have sufficient contrast ratio",
+    "secondaryElements": "Should not compete with primary actions"
+  },
+  "spacing": {
+    "headingToBody": "≥8px gap",
+    "cardSpacing": "≥16px between cards"
+  },
+  "recommendations": [
+    "Ensure consistent use of design system typography scales",
+    "Verify button contrast meets WCAG AA standards",
+    "Check focus ring visibility on all interactive elements"
+  ]
+}

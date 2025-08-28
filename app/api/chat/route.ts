@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { handleChat } from '@/src/api/chat/handler'
+import { validateRequest, chatRequestSchema } from '@/src/core/validation'
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+
+    // Validate request using the same pattern as FB-c_labV3-main
+    const validation = validateRequest(chatRequestSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request',
+          details: validation.errors
+        },
+        { status: 400 }
+      )
+    }
+
+    // Pass validated data to handler
+    return await handleChat(validation.data)
+  } catch (error) {
+    console.error('Chat API error:', error)
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Internal server error'
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+  }
+}
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'

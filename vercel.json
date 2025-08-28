@@ -1,0 +1,152 @@
+{
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "regions": [
+    "iad1"
+  ],
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "app/api/video-to-app/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/tools/screen/route.ts": {
+      "maxDuration": 45,
+      "memory": 1024
+    },
+    "app/api/gemini-live/route.ts": {
+      "maxDuration": 45,
+      "memory": 1024
+    },
+    "app/api/tools/webcam/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "app/api/analyze-screenshot/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/_next/image/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/api/(gemini-live|tools/webcam|tools/screen|analyze-screenshot|video-to-app)/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, x-correlation-id, x-intelligence-session-id, x-user-id"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/api/mock/(.*)",
+      "destination": "/api/mock/status",
+      "permanent": false,
+      "has": [
+        {
+          "type": "header",
+          "key": "x-vercel-deployment-type",
+          "value": "production"
+        }
+      ]
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "feature/*": true,
+      "develop": true,
+      "staging": true
+    },
+    "autoAlias": {
+      "main": "production",
+      "feature/*": "preview",
+      "develop": "preview",
+      "staging": "preview"
+    }
+  }
+}

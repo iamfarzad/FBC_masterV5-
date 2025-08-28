@@ -1,0 +1,48 @@
+{
+  "company": "TechFlow Solutions",
+  "industry": "Technology Consulting",
+  "services": [
+    {
+      "name": "AI Automation",
+      "description": "Intelligent process automation using machine learning",
+      "features": [
+        "Natural language processing",
+        "Predictive analytics",
+        "Workflow optimization",
+        "Real-time monitoring"
+      ],
+      "pricing": {
+        "setup": 50000,
+        "monthly": 5000,
+        "support": 10000
+      }
+    },
+    {
+      "name": "Data Analytics",
+      "description": "Advanced business intelligence and reporting",
+      "features": [
+        "Real-time dashboards",
+        "Custom reporting",
+        "Data visualization",
+        "Predictive modeling"
+      ],
+      "pricing": {
+        "setup": 30000,
+        "monthly": 3000,
+        "support": 7500
+      }
+    }
+  ],
+  "metrics": {
+    "clients": 150,
+    "projects_completed": 450,
+    "average_roi": "300%",
+    "customer_satisfaction": 4.8
+  },
+  "contact": {
+    "name": "Sarah Johnson",
+    "title": "VP of Operations",
+    "email": "sarah.johnson@techflow.com",
+    "phone": "(555) 987-6543"
+  }
+}

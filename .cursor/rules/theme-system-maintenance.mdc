@@ -1,0 +1,341 @@
+---
+alwaysApply: true
+description: Theme System Maintenance Law - Protect and maintain the unified theme system
+globs: styles/*.css,src/core/theme/*.ts,src/design/*.ts,tailwind.config.ts,app/globals.css
+---
+
+# 🎯 THEME SYSTEM MAINTENANCE LAW
+
+## 🚫 CRITICAL PROTECTION RULES
+
+### **NEVER MODIFY THESE FILES WITHOUT APPROVAL:**
+- `[styles/theme.css](mdc:styles/theme.css)` - **SACRED BRAND COLORS**
+- `[src/core/theme/tokens.ts](mdc:src/core/theme/tokens.ts)` - **CORE THEME TOKENS**
+- `[tailwind.config.ts](mdc:tailwind.config.ts)` - **TAILWIND THEME CONFIG**
+- `[app/globals.css](mdc:app/globals.css)` - **GLOBAL THEME APPLICATION**
+
+### **FORBIDDEN ACTIONS:**
+```css
+/* 🚫 NEVER CHANGE BRAND COLORS */
+--brand: #ff5b04;          /* NEVER MODIFY */
+--brand-hover: #e65200;    /* NEVER MODIFY */
+--bg: #f5f5f5;             /* NEVER MODIFY */
+--surface: #ffffff;        /* NEVER MODIFY */
+```
+
+```typescript
+// 🚫 NEVER MODIFY CORE TOKENS
+export const tokens = {
+  light: {
+    brand: '#ff5b04',        // 🚫 NEVER CHANGE
+    bg: '#f5f5f5',           // 🚫 NEVER CHANGE
+    surface: '#ffffff',      // 🚫 NEVER CHANGE
+    // ...
+  }
+}
+```
+
+## 🔧 ALLOWED MAINTENANCE TASKS
+
+### ✅ PERMITTED MODIFICATIONS:
+
+#### 1. **Adding New Theme Properties**
+```css
+/* ✅ ALLOWED - Add new semantic colors */
+:root {
+  --brand: #ff5b04;          /* NEVER CHANGE */
+  --brand-hover: #e65200;    /* NEVER CHANGE */
+  --success: #10b981;        /* ✅ NEW - Allowed */
+  --warning: #f59e0b;        /* ✅ NEW - Allowed */
+  --error: #ef4444;          /* ✅ NEW - Allowed */
+}
+```
+
+#### 2. **Adding Theme Variants**
+```css
+/* ✅ ALLOWED - New theme contexts */
+[data-theme="high-contrast"] {
+  --bg: #ffffff;              /* ✅ ALLOWED */
+  --text: #000000;           /* ✅ ALLOWED */
+  --brand: #ff5b04;          /* NEVER CHANGE */
+}
+```
+
+#### 3. **Performance Optimizations**
+```css
+/* ✅ ALLOWED - CSS optimizations */
+:root {
+  --brand: #ff5b04; /* NEVER CHANGE */
+  /* Add CSS custom properties for performance */
+  --brand-rgb: 255, 91, 4;
+  --surface-rgb: 255, 255, 255;
+}
+```
+
+## 🚨 EMERGENCY MAINTENANCE PROTOCOL
+
+### **ONLY WHEN ABSOLUTELY NECESSARY:**
+1. **Document the business reason** in detail
+2. **Get explicit approval** from product/design lead
+3. **Create backup** of current theme files
+4. **Test extensively** in all environments
+5. **Document changes** in theme changelog
+
+### **Emergency Change Process:**
+```bash
+# 1. Create backup
+cp styles/theme.css styles/theme.css.backup.$(date +%Y%m%d_%H%M%S)
+
+# 2. Document reason
+echo "EMERGENCY CHANGE: [reason]" > styles/theme-change-log.md
+
+# 3. Make minimal change
+# 4. Test thoroughly
+# 5. Commit with detailed message
+```
+
+## 🔍 THEME SYSTEM AUDIT REQUIREMENTS
+
+### **Monthly Theme Audit Checklist:**
+- [ ] All brand colors unchanged (#ff5b04, #e65200, etc.)
+- [ ] Theme tokens match CSS custom properties
+- [ ] Tailwind config uses correct theme values
+- [ ] No hardcoded colors in new components
+- [ ] Theme switching works in all components
+- [ ] Dark mode colors are consistent
+- [ ] Performance impact is minimal
+
+### **Automated Checks:**
+```bash
+# ✅ RECOMMENDED - Add to CI/CD
+#!/bin/bash
+# Check brand colors haven't changed
+if ! grep -q "#ff5b04" styles/theme.css; then
+  echo "🚨 BRAND COLOR CHANGED! REVERT IMMEDIATELY"
+  exit 1
+fi
+
+# Check theme tokens match
+if ! diff <(grep "brand.*#ff5b04" src/core/theme/tokens.ts) \
+         <(grep "brand.*#ff5b04" styles/theme.css); then
+  echo "🚨 THEME TOKENS MISMATCH!"
+  exit 1
+fi
+```
+
+## 🎨 THEME EXTENSION GUIDELINES
+
+### **Adding New Colors (SAFE METHOD):**
+```css
+/* ✅ SAFE - Extend without changing brand */
+:root {
+  --brand: #ff5b04;          /* NEVER CHANGE */
+  --brand-secondary: #ffb366; /* ✅ NEW - Brand-adjacent */
+  --accent-blue: #3b82f6;     /* ✅ NEW - Semantic colors */
+  --accent-green: #10b981;    /* ✅ NEW - Status colors */
+}
+```
+
+### **Component-Specific Colors:**
+```css
+/* ✅ SAFE - Component-specific overrides */
+.component-status-success {
+  color: var(--accent-green, #10b981);
+}
+
+.component-status-warning {
+  color: var(--accent-yellow, #f59e0b);
+}
+```
+
+## 📊 THEME METRICS & MONITORING
+
+### **Track These Metrics:**
+- Theme switching performance (< 100ms)
+- CSS bundle size impact
+- Color contrast ratios (WCAG compliance)
+- Theme consistency across components
+- User theme preference adoption
+
+### **Monitoring Implementation:**
+```typescript
+// ✅ RECOMMENDED - Theme performance monitoring
+export function useThemeMetrics() {
+  const { theme, setTheme } = useTheme();
+
+  const measureThemeSwitch = () => {
+    const start = performance.now();
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const end = performance.now();
+    console.log(`Theme switch took: ${end - start}ms`);
+  };
+
+  return { measureThemeSwitch };
+}
+```
+
+## 🔧 THEME SYSTEM ARCHITECTURE
+
+### **Core Files Structure:**
+```
+styles/
+├── theme.css              # 🎨 PRIMARY THEME DEFINITIONS
+└── components.css         # 🎨 COMPONENT-SPECIFIC STYLES
+
+src/core/theme/
+├── tokens.ts             # 🎯 THEME TOKENS (TYPE-SAFE)
+├── setTheme.ts           # 🎮 THEME MANAGEMENT
+└── utils.ts              # 🛠️ THEME UTILITIES
+
+app/
+└── globals.css           # 🌐 GLOBAL APPLICATION
+```
+
+### **Dependency Flow:**
+```
+theme.css → globals.css → tailwind.config.ts → components
+    ↓
+tokens.ts → setTheme.ts → useTheme hook
+```
+
+## 🚫 BREAKING CHANGES PREVENTION
+
+### **Version Control Strategy:**
+```bash
+# ✅ SAFE - Feature branches
+git checkout -b feature/new-theme-colors
+# Make changes...
+git commit -m "feat: add success/warning colors to theme"
+
+# 🚫 DANGEROUS - Direct main changes
+git checkout main
+# Never modify theme files directly on main
+```
+
+### **Theme Change Review Process:**
+```markdown
+## Theme Change PR Template
+
+### 🚨 THEME SYSTEM CHANGE
+**This PR modifies the theme system**
+
+#### Risk Assessment:
+- [ ] LOW RISK: Adding new colors, no brand changes
+- [ ] MEDIUM RISK: Modifying existing colors, backward compatible
+- [ ] HIGH RISK: Changing brand colors, breaking changes
+
+#### Brand Compliance:
+- [ ] Brand colors unchanged (#ff5b04, #e65200)
+- [ ] Theme tokens updated consistently
+- [ ] Tailwind config updated
+- [ ] All components tested
+
+#### Testing:
+- [ ] Light/dark mode switching works
+- [ ] No color regressions
+- [ ] Performance impact measured
+- [ ] Cross-browser compatibility verified
+```
+
+## 🎯 FUTURE-PROOFING STRATEGY
+
+### **Theme Versioning:**
+```css
+/* ✅ RECOMMENDED - Theme versioning */
+:root {
+  --theme-version: '1.0.0';
+  --brand: #ff5b04;          /* v1.0.0 */
+  --brand-hover: #e65200;    /* v1.0.0 */
+}
+
+/* Future version support */
+[data-theme-version="2.0.0"] {
+  --brand-new: #ff6b35;      /* Future brand color */
+}
+```
+
+### **Migration Strategy:**
+```typescript
+// ✅ SAFE - Backward compatibility
+export function migrateTheme() {
+  const currentVersion = getComputedStyle(document.documentElement)
+    .getPropertyValue('--theme-version');
+
+  if (currentVersion < '2.0.0') {
+    // Apply migration logic
+    console.log('Migrating theme to v2.0.0');
+  }
+}
+```
+
+## 📚 DOCUMENTATION REQUIREMENTS
+
+### **Theme Documentation MUST Include:**
+1. **Color Palette** - All available colors with usage guidelines
+2. **Component Usage** - How to use theme in components
+3. **Customization Guide** - How to extend the theme safely
+4. **Migration Guide** - For theme system updates
+5. **Performance Guide** - Theme switching optimization
+
+### **API Documentation:**
+```typescript
+/**
+ * Theme System API
+ *
+ * @example
+ * ```tsx
+ * import { useTheme } from 'next-themes';
+ *
+ * function Component() {
+ *   const { theme, setTheme } = useTheme();
+ *   return (
+ *     <div className="bg-surface text-text">
+ *       Current theme: {theme}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+```
+
+## 🚨 VIOLATION RESPONSE PROTOCOL
+
+### **Immediate Actions for Theme Violations:**
+1. **STOP ALL WORK** on the violating change
+2. **REVERT** the change immediately
+3. **DOCUMENT** the violation in team slack/channel
+4. **REVIEW** the incident to prevent recurrence
+5. **TRAIN** the team member on theme system rules
+
+### **Severity Levels:**
+- **CRITICAL**: Brand color changes → Immediate rollback + senior review
+- **HIGH**: Theme system breaking changes → Rollback within 1 hour
+- **MEDIUM**: New color additions without documentation → Fix within 24 hours
+- **LOW**: Style inconsistencies → Fix in next sprint
+
+## 🎯 SUCCESS CRITERIA
+
+### **Theme System Health Score:**
+- [ ] 100% brand color protection
+- [ ] 0 breaking changes in 6 months
+- [ ] < 100ms theme switching performance
+- [ ] 100% component theme compliance
+- [ ] Complete documentation coverage
+- [ ] Automated theme validation in CI/CD
+
+**PROTECT THE BRAND**: The theme system is the foundation of F.B/c's visual identity. **MAINTAIN IT RELIGIOUSLY**! 🛡️🎨
+
+## 📞 SUPPORT & ESCALATION
+
+### **Theme System Contacts:**
+- **Design Lead**: Responsible for brand color decisions
+- **Tech Lead**: Responsible for theme system architecture
+- **QA Lead**: Responsible for theme compliance testing
+
+### **Escalation Matrix:**
+1. **Component Developer** → **Tech Lead**
+2. **Tech Lead** → **Design Lead**
+3. **Design Lead** → **Product Owner**
+4. **Product Owner** → **Executive Team**
+
+**REMEMBER**: The theme system protects F.B/c's brand. **RESPECT IT**. **MAINTAIN IT**. **EVOLVE IT SAFELY**. 🌟

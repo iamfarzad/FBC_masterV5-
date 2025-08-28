@@ -1,0 +1,110 @@
+{
+  "testSuite": "FBC-E2E-Test-Suite",
+  "timestamp": "2025-08-26T10:08:06.513Z",
+  "summary": {
+    "total": 11,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 1
+  },
+  "results": [
+    {
+      "step": "backend-health",
+      "status": "pass",
+      "message": "Backend health check passed",
+      "timestamp": "2025-08-26T10:08:00.166Z",
+      "duration": 95
+    },
+    {
+      "step": "consent-api",
+      "status": "pass",
+      "message": "Consent API call successful",
+      "timestamp": "2025-08-26T10:08:00.254Z",
+      "duration": 182
+    },
+    {
+      "step": "context-init",
+      "status": "pass",
+      "message": "Context initialization successful",
+      "timestamp": "2025-08-26T10:08:00.869Z",
+      "duration": 797
+    },
+    {
+      "step": "chat-sse",
+      "status": "pass",
+      "message": "Chat SSE response received",
+      "timestamp": "2025-08-26T10:08:02.632Z",
+      "duration": 2560
+    },
+    {
+      "step": "intelligence",
+      "status": "pass",
+      "message": "Intelligence API call successful",
+      "timestamp": "2025-08-26T10:08:02.739Z",
+      "duration": 2667
+    },
+    {
+      "step": "pdf-export",
+      "status": "pass",
+      "message": "PDF export successful",
+      "timestamp": "2025-08-26T10:08:03.570Z",
+      "duration": 3498
+    },
+    {
+      "step": "user-avatar",
+      "status": "pass",
+      "message": "user-avatar API successful",
+      "timestamp": "2025-08-26T10:08:03.593Z",
+      "duration": 3521
+    },
+    {
+      "step": "placeholder-avatar",
+      "status": "pass",
+      "message": "placeholder-avatar API successful",
+      "timestamp": "2025-08-26T10:08:03.607Z",
+      "duration": 3535
+    },
+    {
+      "step": "file-upload",
+      "status": "pass",
+      "message": "Upload endpoint accessible (GET test)",
+      "timestamp": "2025-08-26T10:08:06.154Z",
+      "duration": 6082,
+      "response": {
+        "message": "Upload endpoint is working",
+        "maxFileSize": "10MB",
+        "allowedTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "image/svg+xml",
+          "video/mp4",
+          "video/webm",
+          "audio/mpeg",
+          "audio/wav",
+          "audio/ogg",
+          "application/pdf",
+          "text/plain",
+          "application/json",
+          "application/xml"
+        ]
+      }
+    },
+    {
+      "step": "roi-tool",
+      "status": "pass",
+      "message": "ROI tool calculation successful",
+      "timestamp": "2025-08-26T10:08:06.279Z",
+      "duration": 6207
+    },
+    {
+      "step": "live-api",
+      "status": "skip",
+      "message": "Live API not available: Live API not enabled (set LIVE_ENABLED=true)",
+      "timestamp": "2025-08-26T10:08:06.513Z",
+      "duration": 6441
+    }
+  ],
+  "duration": 6441
+}

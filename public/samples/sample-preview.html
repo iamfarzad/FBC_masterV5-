@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>F.B/c — Sample Lead Report</title>
+  <style>
+    :root{
+      --ink:#0b1220;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --bg:#ffffff;
+      --panel:#f6f7f9;
+      --brand:#ff5b04;
+      --accent:#111827;
+      --good:#059669;
+      --warn:#f59e0b;
+      --bad:#dc2626;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:11pt/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,Inter,Roboto,Arial,sans-serif;}
+
+    .container{padding:0;max-width:800px;margin:0 auto;box-shadow:0 0 20px rgba(0,0,0,0.1);}
+
+    header{padding:28px 32px 16px 32px;border-bottom:1px solid var(--line)}
+    .brandrow{display:flex;align-items:center;gap:12px}
+    .logo{width:28px;height:28px;border-radius:6px;background:#fff}
+    .brand{font-weight:700;letter-spacing:-0.01em}
+    .doctype{margin-top:4px;color:var(--muted);font-size:10pt}
+
+    .section{padding:24px 32px;border-bottom:1px solid var(--line)}
+    .section h2{margin:0 0 12px 0;font-size:12pt;line-height:1.2}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .card{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:12px}
+    .card .k{display:block;color:var(--muted);font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em}
+    .card .v{display:block;font-weight:600;margin-top:4px}
+
+    .scorebox{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--panel)}
+    .scoreval{font-size:20pt;font-weight:700;letter-spacing:-.01em}
+    .scoreval.high{color:var(--good)}
+    .scoreval.mid{color:var(--warn)}
+    .scoreval.low{color:var(--bad)}
+    .bar{flex:1;height:8px;background:#eceff3;border-radius:4px;overflow:hidden}
+    .fill{height:100%;background:var(--brand);width:0}
+
+    .textblock{border-left:3px solid var(--accent);padding:12px 12px 12px 16px;background:#fafbfd;border-radius:6px}
+    .muted{color:var(--muted)}
+
+    .conv{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff}
+    .msg{padding:10px 0;border-top:1px solid var(--line)}
+    .msg:first-child{border-top:0}
+    .meta{font-size:8.5pt;color:var(--muted)}
+    .content{margin-top:4px}
+    .role{display:inline-block;font-weight:600}
+    .role.user{color:#0f766e}
+    .role.assistant{color:#2563eb}
+
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:600;border:1px solid var(--line)}
+    .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .btn.alt{background:#fff;color:var(--accent)}
+
+    footer{padding:18px 32px;color:var(--muted);font-size:9pt;position:relative}
+    footer a{color:var(--brand);text-decoration:none}
+    footer .pagenum{position:absolute;right:32px;bottom:18px;color:var(--muted)}
+
+    .avoid-break{break-inside:avoid}
+    .page-break{page-break-before:always}
+
+    @page {size:A4;margin:20mm}
+    body {counter-reset: page}
+    .pagenum:after {content: "Page " counter(page)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brandrow">
+        <div class="logo">🔵</div>
+        <div class="brand">F.B/c — AI Consulting</div>
+      </div>
+      <div class="doctype">Lead Summary</div>
+    </header>
+
+    <section class="section">
+      <h2>Lead</h2>
+      <div class="grid">
+        <div class="card"><span class="k">Name</span><span class="v">John Smith</span></div>
+        <div class="card"><span class="k">Email</span><span class="v">john.smith@techcorp.com</span></div>
+        <div class="card"><span class="k">Company</span><span class="v">TechCorp Solutions</span></div>
+        <div class="card"><span class="k">Role</span><span class="v">CTO</span></div>
+        <div class="card"><span class="k">Session</span><span class="v">session_12345</span></div>
+        <div class="card"><span class="k">Date</span><span class="v">15 Jan 2024</span></div>
+        <div class="card avoid-break" style="grid-column: span 2">
+          <div class="scorebox">
+            <div class="scoreval high">85</div>
+            <div class="bar"><div class="fill" style="width:85%"></div></div>
+            <div class="muted">out of 100</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section avoid-break">
+      <h2>Executive Summary</h2>
+      <div class="textblock">John Smith, CTO at TechCorp Solutions, is seeking AI solutions to automate their customer service operations handling 1000+ daily support tickets. They need intelligent response automation and are ready for immediate implementation.</div>
+    </section>
+
+    <section class="section avoid-break">
+      <h2>Consultant Brief</h2>
+      <div>High-value prospect with clear use case and budget. Ready for immediate engagement. Recommend personalized demo and ROI calculation within 24 hours.</div>
+    </section>
+
+    <section class="section avoid-break">
+      <h2>AI Capabilities Shown</h2>
+      <div>Natural language processing, automated response generation, sentiment analysis, and integration capabilities for customer service platforms.</div>
+    </section>
+
+    <section class="section">
+      <h2>Conversation</h2>
+      <div class="conv">
+        <div class="msg">
+          <div class="meta"><span class="role user">Lead</span> · 10:30</div>
+          <div class="content">Hi, I'm looking to implement AI solutions for our customer service operations. We're getting about 1000 support tickets per day and need to automate responses.</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role assistant">F.B/c AI</span> · 10:31</div>
+          <div class="content">That's a great use case for AI! I can help you implement an intelligent customer service system. Let me understand your current setup better - what channels do you receive tickets through?</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role user">Lead</span> · 10:32</div>
+          <div class="content">We use Zendesk for email tickets and Intercom for live chat. The main issues are response time and consistency in our support quality.</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role assistant">F.B/c AI</span> · 10:33</div>
+          <div class="content">Perfect! I can help you implement AI-powered responses that integrate with both Zendesk and Intercom. This would reduce response times from hours to minutes and ensure consistent quality. What's your timeline for implementation?</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role user">Lead</span> · 10:35</div>
+          <div class="content">We'd like to start within the next 2-3 weeks. Budget isn't a major constraint if we can see clear ROI. Can you provide a demo and cost estimate?</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role assistant">F.B/c AI</span> · 10:36</div>
+          <div class="content">Absolutely! I'll prepare a personalized demo showing how AI can handle your specific ticket types. Based on your volume, I estimate 60-70% automation rate with 40-50% cost reduction. Let me schedule a detailed consultation.</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role user">Lead</span> · 10:38</div>
+          <div class="content">That sounds promising. I'm available tomorrow afternoon for a demo. Can you also prepare some case studies from similar companies?</div>
+        </div>
+        <div class="msg">
+          <div class="meta"><span class="role assistant">F.B/c AI</span> · 10:39</div>
+          <div class="content">Perfect! I'll send you case studies from tech companies with similar ticket volumes and prepare a demo focused on your Zendesk/Intercom integration. Looking forward to our call tomorrow!</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section avoid-break">
+      <h2>Next Steps</h2>
+      <div class="actions">
+        <a class="btn primary" href="https://www.farzadbayat.com/meetings/book">Book 30‑min call</a>
+        <a class="btn alt" href="https://www.farzadbayat.com/workshop">Workshops</a>
+      </div>
+      <div class="muted" style="margin-top:8px">Suggested: confirm scope, ROI, first milestone.</div>
+    </section>
+
+    <footer>
+      <div><strong>Farzad Bayat</strong> — AI Consulting Specialist</div>
+      <div>📧 <a href="mailto:contact@farzadbayat.com">contact@farzadbayat.com</a> · 📱 <a href="tel:+4794446446">+47 944 46 446</a> · 🌐 <a href="https://www.farzadbayat.com">farzadbayat.com</a></div>
+      <div class="pagenum"></div>
+    </footer>
+  </div>
+</body>
+</html>

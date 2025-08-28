@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-08-26T10:56:00.142Z",
+  "url": "http://localhost:3000/chat",
+  "checks": {
+    "pageStructure": {
+      "passed": true,
+      "details": {
+        "hasTitle": true,
+        "hasLang": true,
+        "hasMetaDescription": true,
+        "contentLength": 82472
+      }
+    },
+    "api-health": {
+      "passed": true,
+      "status": 200,
+      "description": "Health check endpoint"
+    },
+    "api-user-avatar": {
+      "passed": true,
+      "status": 200,
+      "description": "User avatar endpoint"
+    },
+    "api-placeholder-avatar": {
+      "passed": true,
+      "status": 200,
+      "description": "Assistant avatar endpoint"
+    },
+    "consentFlow": {
+      "passed": true,
+      "status": 200,
+      "hasConsentCookie": false
+    },
+    "uploadForm": {
+      "passed": true,
+      "maxFileSize": "10MB",
+      "allowedTypes": [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/svg+xml",
+        "video/mp4",
+        "video/webm",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/ogg",
+        "application/pdf",
+        "text/plain",
+        "application/json",
+        "application/xml"
+      ],
+      "endpointAccessible": true
+    }
+  },
+  "violations": [],
+  "warnings": [],
+  "recommendations": [
+    "Ensure all interactive elements have proper ARIA labels",
+    "Verify color contrast ratios meet WCAG AA standards (4.5:1)",
+    "Add keyboard navigation support for all interactive elements",
+    "Ensure focus management for modal dialogs and overlays",
+    "Add proper semantic HTML structure",
+    "Verify screen reader compatibility"
+  ]
+}

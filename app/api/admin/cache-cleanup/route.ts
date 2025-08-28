@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { adminAuthMiddleware } from '@/src/core/auth'
+import { geminiConfig } from '@/src/core/models/gemini'
+
+export async function POST(request: NextRequest) {
+  try {
+    // Check admin authentication
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult) {
+      return authResult
+    }
+
+    // Perform cache cleanup
+    geminiConfig.clearAllCache()
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Cache cleanup completed successfully',
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Cache cleanup error:', error)
+    return NextResponse.json(
+      { error: 'Failed to perform cache cleanup' },
+      { status: 500 }
+    )
+  }
+}
