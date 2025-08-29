@@ -2,7 +2,7 @@
 // WHY: Keeps multiple browser tabs in sync for seamless user experience
 // BUSINESS IMPACT: No confusion when users have multiple tabs open
 
-import { safeStorage } from './safe-storage'
+import { safeStorage } from '../storage/safe-storage'
 
 export interface TabSyncMessage {
   type: 'state_update' | 'session_change' | 'activity_update' | 'ping' | 'pong'

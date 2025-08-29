@@ -17,19 +17,49 @@ export class GoogleGroundingProvider {
   private extractCitations(candidate: unknown): GroundedCitation[] {
     const citations: GroundedCitation[] = []
 
-    // Search grounding citations
-    const chunks = candidate?.groundingMetadata?.groundingChunks ?? []
-    const searchCitations: GroundedCitation[] = (Array.isArray(chunks) ? chunks : [])
-      .map((c: unknown) => c.web)
-      .filter(Boolean)
-      .map((w: unknown) => ({ uri: w.uri, title: w.title, description: w.snippet, source: 'search' as const }))
+    try {
+      // Search grounding citations - keep your logic
+      const chunks = candidate?.groundingMetadata?.groundingChunks ?? []
+      const searchCitations: GroundedCitation[] = (Array.isArray(chunks) ? chunks : [])
+        .map((c: unknown) => c.web)
+        .filter(Boolean)
+        .map((w: unknown) => ({
+          uri: w.uri || w.url,
+          title: w.title || 'Search Result',
+          description: w.snippet || w.description || '',
+          source: 'search' as const
+        }))
 
-    // URL Context citations (if available)
-    const urlMeta = candidate?.urlContextMetadata?.urlMetadata ?? []
-    const urlCitations: GroundedCitation[] = (Array.isArray(urlMeta) ? urlMeta : [])
-      .map((m: unknown) => ({ uri: m.retrievedUrl || m.url || m.uri, title: m.title, description: m.snippet, source: 'url' as const }))
+      // URL Context citations - SIMPLIFIED approach
+      const urlContextMetadata = candidate?.urlContextMetadata
+      const urlCitations: GroundedCitation[] = []
 
-    citations.push(...urlCitations, ...searchCitations)
+      if (urlContextMetadata && typeof urlContextMetadata === 'object') {
+        const urlMetadata = urlContextMetadata.urlMetadata
+
+        if (Array.isArray(urlMetadata)) {
+          urlMetadata.forEach((meta: unknown) => {
+            if (meta && typeof meta === 'object') {
+              const uri = meta.retrievedUrl || meta.url || meta.uri
+              if (uri) {
+                urlCitations.push({
+                  uri: String(uri),
+                  title: String(meta.title || 'URL Content'),
+                  description: String(meta.snippet || meta.description || ''),
+                  source: 'url' as const
+                })
+              }
+            }
+          })
+        }
+      }
+
+      citations.push(...urlCitations, ...searchCitations)
+    } catch (error) {
+      console.warn('Citation extraction failed:', error)
+      // Return empty array instead of crashing
+    }
+
     return citations
   }
 
@@ -45,10 +75,9 @@ export class GoogleGroundingProvider {
       const tools: unknown[] = [{ googleSearch: {} }]
       if (useUrls) tools.unshift({ urlContext: {} })
 
-      // When urlContext is enabled, Gemini uses any URLs present in contents.
-      // Provide the URLs inline to the model so it can fetch them.
+      // SIMPLIFIED: Direct prompt construction like chat-with-docs
       const prompt = useUrls
-        ? `Use these URLs as context (if relevant):\n${urls!.slice(0, 20).join('\n')}\n\nQuestion: ${query}`
+        ? `${query}\n\nRelevant URLs for context:\n${urls!.slice(0, 20).join('\n')}`
         : query
 
       const res = await this.genAI.models.generateContent({
@@ -57,11 +86,22 @@ export class GoogleGroundingProvider {
         config: { tools },
       } as any)
 
-      const text = typeof (res as any).text === 'function'
-        ? (res as any).text()
-        : (res as any).text
-          ?? (((res as any).candidates?.[0]?.content?.parts || [])
-                .map((p: unknown) => p.text || '').filter(Boolean).join('\n'))
+      // SIMPLIFIED: Robust text extraction
+      let text = ''
+      try {
+        if (typeof (res as any).text === 'function') {
+          text = (res as any).text()
+        } else if ((res as any).text) {
+          text = (res as any).text
+        } else if ((res as any).candidates?.[0]?.content?.parts) {
+          text = (res as any).candidates[0].content.parts
+            .map((p: unknown) => p.text || '')
+            .filter(Boolean)
+            .join('\n')
+        }
+      } catch {
+        text = 'I encountered an issue processing the response.'
+      }
 
       const candidate = (res as any).candidates?.[0] || {}
 
