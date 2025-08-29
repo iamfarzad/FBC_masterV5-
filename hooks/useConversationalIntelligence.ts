@@ -160,6 +160,111 @@ export function useConversationalIntelligence() {
     }))
   }, [])
 
+  /** Send real-time voice input through unified multimodal system **/
+  const sendRealtimeVoice = useCallback(async (
+    transcription: string,
+    audioData: string,
+    duration: number,
+    streamId?: string
+  ): Promise<boolean> => {
+    if (!getSessionId()) return false
+
+    try {
+      const response = await fetch('/api/multimodal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modality: 'realtime-voice',
+          content: transcription,
+          metadata: {
+            sessionId: getSessionId(),
+            transcription,
+            fileData: audioData, // base64 audio data
+            duration,
+            streamId,
+            isStreaming: true
+          }
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to send real-time voice')
+        return false
+      }
+
+      const result = await response.json()
+      console.log('Real-time voice sent successfully:', result)
+      return true
+
+    } catch (error) {
+      console.error('Real-time voice send error:', error)
+      return false
+    }
+  }, [getSessionId])
+
+  /** Initialize real-time voice session **/
+  const initializeRealtimeVoice = useCallback(async (
+    leadContext?: IntelligenceContext['company']
+  ): Promise<boolean> => {
+    const sessionId = getSessionId()
+    if (!sessionId) return false
+
+    try {
+      const response = await fetch('/api/gemini-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start',
+          sessionId,
+          leadContext: leadContext ? {
+            name: leadContext.name,
+            email: leadContext.email,
+            company: leadContext.company,
+            role: leadContext.role
+          } : undefined
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to initialize real-time voice session')
+        return false
+      }
+
+      const result = await response.json()
+      console.log('Real-time voice session initialized:', result)
+      return result.success === true
+
+    } catch (error) {
+      console.error('Real-time voice initialization error:', error)
+      return false
+    }
+  }, [getSessionId])
+
+  /** End real-time voice session **/
+  const endRealtimeVoice = useCallback(async (): Promise<boolean> => {
+    const sessionId = getSessionId()
+    if (!sessionId) return false
+
+    try {
+      const response = await fetch('/api/gemini-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'end',
+          sessionId
+        })
+      })
+
+      const result = await response.json()
+      console.log('Real-time voice session ended:', result)
+      return result.success === true
+
+    } catch (error) {
+      console.error('Real-time voice end error:', error)
+      return false
+    }
+  }, [getSessionId])
+
   /** Get multimodal status description **/
   const getMultimodalStatus = useCallback(() => {
     const active = Object.entries(activeModalities)
@@ -244,6 +349,10 @@ export function useConversationalIntelligence() {
     // Multimodal state management
     activeModalities,
     setModalityActive,
-    getMultimodalStatus
+    getMultimodalStatus,
+    // Real-time voice integration
+    sendRealtimeVoice,
+    initializeRealtimeVoice,
+    endRealtimeVoice
   }
 }

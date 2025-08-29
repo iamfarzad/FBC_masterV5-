@@ -13,7 +13,7 @@ import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
 export interface VoiceOverlayProps {
   open: boolean
   onCancel: () => void
-  onAccept: (transcript: string) => void
+  onAccept: (transcript: string, audioData?: string, duration?: number) => void
   sessionId?: string | null
   activeModalities?: {
     voice: boolean
@@ -29,6 +29,8 @@ export function VoiceOverlay({
   activeModalities = { voice: false, webcam: false, screen: false }
 }: VoiceOverlayProps) {
   const overlayRef = React.useRef<HTMLDivElement | null>(null)
+  const [collectedAudioData, setCollectedAudioData] = React.useState<string[]>([])
+  const [recordingStartTime, setRecordingStartTime] = React.useState<number | null>(null)
 
   const {
     session,
@@ -50,7 +52,15 @@ export function VoiceOverlay({
     volume,
     hasPermission,
     requestPermission,
-  } = useVoiceRecorder({ onAudioChunk, onTurnComplete })
+  } = useVoiceRecorder({
+    onAudioChunk: (audioData: string) => {
+      // Collect audio chunks for real-time voice
+      setCollectedAudioData(prev => [...prev, audioData])
+      // Also send to WebSocket for live processing
+      onAudioChunk(audioData)
+    },
+    onTurnComplete
+  })
 
   React.useEffect(() => {
     if (!open) return
@@ -61,6 +71,9 @@ export function VoiceOverlay({
     })()
     return () => {
       try { stopRecording() } catch {}
+      // Reset collected data when overlay closes
+      setCollectedAudioData([])
+      setRecordingStartTime(null)
     }
   }, [open, hasPermission, requestPermission, stopRecording])
 
@@ -70,6 +83,11 @@ export function VoiceOverlay({
       const startVoice = async () => {
         const ok = await requestPermission()
         if (!ok) return
+
+        // Track recording start time
+        setRecordingStartTime(Date.now())
+        setCollectedAudioData([]) // Reset collected data
+
         await startRecording()
         if (!isConnected || !session?.isActive) {
           try {
@@ -93,6 +111,34 @@ export function VoiceOverlay({
       await startRecording()
     }
   }, [isRecording, stopRecording, onTurnComplete, startRecording])
+
+  const handleAccept = useCallback(() => {
+    if (!transcript) return
+
+    // Calculate duration
+    const duration = recordingStartTime
+      ? (Date.now() - recordingStartTime) / 1000 // Convert to seconds
+      : 0
+
+    // Combine all collected audio chunks
+    const combinedAudioData = collectedAudioData.length > 0
+      ? collectedAudioData.join('')
+      : undefined
+
+    console.log('Accepting voice input:', {
+      transcript,
+      audioChunks: collectedAudioData.length,
+      duration,
+      hasAudioData: !!combinedAudioData
+    })
+
+    // Pass all data to parent
+    onAccept(transcript, combinedAudioData, duration)
+
+    // Reset state
+    setCollectedAudioData([])
+    setRecordingStartTime(null)
+  }, [transcript, collectedAudioData, recordingStartTime, onAccept])
 
   return (
     <AnimatePresence>
@@ -142,8 +188,21 @@ export function VoiceOverlay({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Cancel */}
-          <div className="mt-6">
+          {/* Accept & Cancel */}
+          <div className="mt-6 flex gap-4">
+            {/* Accept Button - Only show if we have a transcript */}
+            {transcript && (
+              <Button
+                variant="default"
+                size="icon"
+                className="rounded-full bg-green-600 hover:bg-green-700"
+                onClick={handleAccept}
+                title="Send voice message"
+              >
+                ✓
+              </Button>
+            )}
+
             <Button
               variant="destructive"
               size="icon"

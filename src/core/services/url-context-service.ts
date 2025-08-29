@@ -1,4 +1,5 @@
-import { JSDOM } from 'jsdom';
+// Simplified URL context service without external dependencies
+// For production deployment, this provides basic URL analysis without DOM parsing
 
 export interface URLContextResult {
   url: string;
@@ -92,15 +93,11 @@ export class URLContextService {
         reader.releaseLock();
       }
       
-      // Parse HTML with JSDOM
-      const dom = new JSDOM(html);
-      const document = dom.window.document;
-      
-      // Extract basic information
-      const title = this.extractTitle(document);
-      const description = this.extractDescription(document);
-      const metadata = this.extractMetadata(document);
-      const extractedText = this.extractMainContent(document);
+      // Parse HTML with simple regex (no external dependencies)
+      const title = this.extractTitle(html);
+      const description = this.extractDescription(html);
+      const metadata = this.extractMetadata(html);
+      const extractedText = this.extractMainContent(html);
       
       // Calculate reading metrics
       const wordCount = this.countWords(extractedText);
@@ -163,24 +160,19 @@ export class URLContextService {
   /**
    * Extract page title
    */
-  private static extractTitle(document: Document): string {
-    // Try multiple selectors in order of preference
-    const titleSelectors = [
-      'title',
-      'h1',
-      '[property="og:title"]',
-      '[name="twitter:title"]',
-      '.title',
-      '#title'
+  private static extractTitle(html: string): string {
+    // Try multiple regex patterns in order of preference
+    const patterns = [
+      /<title[^>]*>([^<]+)<\/title>/i,
+      /<h1[^>]*>([^<]+)<\/h1>/i,
+      /<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i,
+      /<meta[^>]*name="twitter:title"[^>]*content="([^"]+)"/i
     ];
 
-    for (const selector of titleSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-        const title = element.getAttribute('content') || element.textContent;
-        if (title && title.trim()) {
-          return title.trim();
-        }
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        return match[1].trim();
       }
     }
 
@@ -190,24 +182,19 @@ export class URLContextService {
   /**
    * Extract page description
    */
-  private static extractDescription(document: Document): string {
-    // Try multiple selectors in order of preference
-    const descriptionSelectors = [
-      '[name="description"]',
-      '[property="og:description"]',
-      '[name="twitter:description"]',
-      '.description',
-      '.summary',
-      'p'
+  private static extractDescription(html: string): string {
+    // Try multiple regex patterns in order of preference
+    const patterns = [
+      /<meta[^>]*name="description"[^>]*content="([^"]+)"/i,
+      /<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i,
+      /<meta[^>]*name="twitter:description"[^>]*content="([^"]+)"/i,
+      /<p[^>]*>([^<]{50,200})<\/p>/i
     ];
 
-    for (const selector of descriptionSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-        const description = element.getAttribute('content') || element.textContent;
-        if (description && description.trim()) {
-          return description.trim().substring(0, 500); // Limit description length
-        }
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        return match[1].trim().substring(0, 500); // Limit description length
       }
     }
 
@@ -217,38 +204,38 @@ export class URLContextService {
   /**
    * Extract comprehensive metadata
    */
-  private static extractMetadata(document: Document): URLContextResult['metadata'] {
+  private static extractMetadata(html: string): URLContextResult['metadata'] {
     const metadata: URLContextResult['metadata'] = {};
 
-    // Helper function to get attribute content
-    const getContent = (selector: string): string | undefined => {
-      const element = document.querySelector(selector);
-      return element?.getAttribute('content') || undefined;
-    };
-
-    const getHref = (selector: string): string | undefined => {
-      const element = document.querySelector(selector);
-      return element?.getAttribute('href') || undefined;
+    // Helper function to extract meta content
+    const getMetaContent = (pattern: RegExp): string | undefined => {
+      const match = html.match(pattern);
+      return match ? match[1] : undefined;
     };
 
     // Open Graph metadata
-    metadata.ogTitle = getContent('[property="og:title"]');
-    metadata.ogDescription = getContent('[property="og:description"]');
-    metadata.ogImage = getContent('[property="og:image"]');
+    metadata.ogTitle = getMetaContent(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i);
+    metadata.ogDescription = getMetaContent(/<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i);
+    metadata.ogImage = getMetaContent(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
 
     // Twitter Card metadata
-    metadata.twitterTitle = getContent('[name="twitter:title"]');
-    metadata.twitterDescription = getContent('[name="twitter:description"]');
+    metadata.twitterTitle = getMetaContent(/<meta[^>]*name="twitter:title"[^>]*content="([^"]+)"/i);
+    metadata.twitterDescription = getMetaContent(/<meta[^>]*name="twitter:description"[^>]*content="([^"]+)"/i);
 
     // Standard metadata
-    metadata.author = getContent('[name="author"]') || getContent('[property="article:author"]');
-    metadata.publishDate = getContent('[name="date"]') || getContent('[property="article:published_time"]');
-    metadata.canonicalUrl = getHref('[rel="canonical"]');
+    metadata.author = getMetaContent(/<meta[^>]*name="author"[^>]*content="([^"]+)"/i) ||
+                     getMetaContent(/<meta[^>]*property="article:author"[^>]*content="([^"]+)"/i);
+    metadata.publishDate = getMetaContent(/<meta[^>]*name="date"[^>]*content="([^"]+)"/i) ||
+                          getMetaContent(/<meta[^>]*property="article:published_time"[^>]*content="([^"]+)"/i);
+
+    // Canonical URL
+    const canonicalMatch = html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/i);
+    metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : undefined;
 
     // Keywords
-    const keywordsContent = getContent('[name="keywords"]');
-    if (keywordsContent) {
-      metadata.keywords = keywordsContent.split(',').map((k: string) => k.trim()).filter((k: string) => k);
+    const keywordsMatch = html.match(/<meta[^>]*name="keywords"[^>]*content="([^"]+)"/i);
+    if (keywordsMatch && keywordsMatch[1]) {
+      metadata.keywords = keywordsMatch[1].split(',').map(k => k.trim()).filter(k => k);
     }
 
     return metadata;
@@ -257,34 +244,33 @@ export class URLContextService {
   /**
    * Extract main content from the page
    */
-  private static extractMainContent(document: Document): string {
-    // Remove unwanted elements
-    const unwantedSelectors = ['script', 'style', 'nav', 'header', 'footer', 'aside', '.advertisement', '.ads', '.social-share'];
-    unwantedSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(el => el.remove());
-    });
+  private static extractMainContent(html: string): string {
+    // Remove unwanted elements with regex
+    let cleanHtml = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+      .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+      .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
+      .replace(/<div[^>]*class="[^"]*advertisement[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*class="[^"]*ads[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
 
     // Try to find main content areas
-    const contentSelectors = [
-      'main',
-      'article',
-      '.content',
-      '.post-content',
-      '.entry-content',
-      '.article-content',
-      '#content',
-      '.main-content',
-      'body'
+    const patterns = [
+      /<main[^>]*>([\s\S]*?)<\/main>/i,
+      /<article[^>]*>([\s\S]*?)<\/article>/i,
+      /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /<body[^>]*>([\s\S]*?)<\/body>/i
     ];
 
     let bestContent = '';
     let maxLength = 0;
 
-    for (const selector of contentSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-        const text = element.textContent?.trim() || '';
+    for (const pattern of patterns) {
+      const match = cleanHtml.match(pattern);
+      if (match && match[1]) {
+        const text = this.extractTextFromHtml(match[1]);
         if (text.length > maxLength) {
           maxLength = text.length;
           bestContent = text;
@@ -292,8 +278,24 @@ export class URLContextService {
       }
     }
 
+    // If no structured content found, extract from body
+    if (!bestContent) {
+      const bodyMatch = cleanHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (bodyMatch) {
+        bestContent = this.extractTextFromHtml(bodyMatch[1]);
+      }
+    }
+
     // Clean up the text
     return this.cleanText(bestContent);
+  }
+
+  private static extractTextFromHtml(html: string): string {
+    // Remove HTML tags and extract text content
+    return html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /**

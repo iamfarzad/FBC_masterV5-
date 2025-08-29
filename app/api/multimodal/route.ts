@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 // Unified multimodal request schema
 const MultimodalRequestSchema = z.object({
-  modality: z.enum(['text', 'voice', 'vision', 'upload']),
+  modality: z.enum(['text', 'voice', 'vision', 'upload', 'realtime-voice']),
   content: z.string().optional(),
   metadata: z.object({
     sessionId: z.string().optional(),
@@ -15,6 +15,8 @@ const MultimodalRequestSchema = z.object({
     duration: z.number().optional(), // for audio
     transcription: z.string().optional(), // for voice
     imageSize: z.number().optional(), // for vision
+    streamId: z.string().optional(), // for real-time voice streams
+    isStreaming: z.boolean().optional(), // for real-time voice
   }).optional()
 })
 
@@ -60,6 +62,59 @@ export async function POST(request: NextRequest) {
           metadata.duration
         )
         response.processed = 'voice'
+        break
+
+      case 'realtime-voice':
+        // Route real-time voice to existing Gemini Live API
+        if (!metadata?.transcription || !metadata?.duration) {
+          return NextResponse.json({
+            error: 'Transcription and duration required for real-time voice modality'
+          }, { status: 400 })
+        }
+
+        try {
+          // Add voice message to unified context
+          await multimodalContextManager.addVoiceMessage(
+            sessionId,
+            metadata.transcription,
+            metadata.duration,
+            {
+              sampleRate: 16000,
+              format: 'audio/pcm',
+              confidence: 0.9,
+              isRealtime: true,
+              streamId: metadata.streamId
+            }
+          )
+
+          // Send to Gemini Live API for real-time processing
+          const liveResponse = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/gemini-live`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-intelligence-session-id': sessionId
+            },
+            body: JSON.stringify({
+              action: 'send',
+              sessionId: sessionId,
+              audioData: metadata.fileData, // base64 audio data
+              mimeType: 'audio/pcm;rate=16000'
+            })
+          })
+
+          if (!liveResponse.ok) {
+            console.warn('Live API send failed, but voice stored in context')
+          }
+
+          response.processed = 'realtime-voice'
+          response.liveApiSent = liveResponse.ok
+
+        } catch (error) {
+          console.error('Real-time voice processing error:', error)
+          // Still store in context even if Live API fails
+          response.processed = 'realtime-voice'
+          response.liveApiError = true
+        }
         break
 
       case 'vision':

@@ -407,12 +407,46 @@ export default function ChatPage() {
     }
   }, [handleSendMessage, input])
 
-  const handleVoiceInput = useCallback((transcript: string) => {
-    setInput(transcript)
-    setShowVoiceOverlay(false)
-    // Optionally auto-send the voice input
-    // handleSendMessage(transcript)
-  }, [])
+  const handleVoiceInput = useCallback(async (transcript: string, audioData?: string, duration?: number) => {
+    try {
+      // If we have audio data, use real-time voice functionality
+      if (audioData && duration && transcript) {
+        console.log('Sending real-time voice input:', { transcript, duration })
+
+        // Use the unified multimodal system with real-time voice
+        const success = await intelligence.sendRealtimeVoice(
+          transcript,
+          audioData,
+          duration,
+          `voice_${Date.now()}`
+        )
+
+        if (success) {
+          console.log('Real-time voice sent successfully')
+          // Add to chat UI for immediate feedback
+          addMessage({
+            role: 'user',
+            content: `[Voice] ${transcript}`,
+            timestamp: new Date(),
+            metadata: { modality: 'voice', duration }
+          })
+        } else {
+          console.warn('Real-time voice failed, falling back to text input')
+          setInput(transcript)
+        }
+      } else {
+        // Fallback to text input for simple voice transcripts
+        setInput(transcript)
+      }
+
+      setShowVoiceOverlay(false)
+    } catch (error) {
+      console.error('Voice input error:', error)
+      // Fallback to text input on error
+      setInput(transcript)
+      setShowVoiceOverlay(false)
+    }
+  }, [intelligence, addMessage])
 
   return (
     <TooltipProvider>
