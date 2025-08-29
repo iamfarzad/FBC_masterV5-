@@ -5,7 +5,10 @@ import { geminiConfig } from '@/src/core/models/gemini'
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const authResult = await adminAuthMiddleware(request)
+    const authResult = await adminAuthMiddleware({
+      authorization: request.headers.get('authorization'),
+      'x-admin-password': request.headers.get('x-admin-password')
+    })
     if (authResult) {
       return authResult
     }

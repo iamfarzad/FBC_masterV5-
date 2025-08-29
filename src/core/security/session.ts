@@ -22,3 +22,4 @@ export function createSessionFingerprint(userAgent: string, ip: string): string 
   const data = `${userAgent}:${ip}:${Date.now()}`
   return randomBytes(16).toString('hex')
 }
+

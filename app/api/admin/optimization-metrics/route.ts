@@ -5,7 +5,10 @@ import { getSupabase } from '@/src/core/supabase/server'
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
-    const authResult = await adminAuthMiddleware(request)
+    const authResult = await adminAuthMiddleware({
+      authorization: request.headers.get('authorization'),
+      'x-admin-password': request.headers.get('x-admin-password')
+    })
     if (authResult) {
       return authResult
     }

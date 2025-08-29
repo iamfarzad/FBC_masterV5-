@@ -439,3 +439,4 @@ ${this.getHealthInterpretation(healthScore)}`
 
 // Export singleton instance
 export const adminChatContext = new AdminChatContext()
+

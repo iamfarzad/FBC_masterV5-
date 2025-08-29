@@ -483,3 +483,4 @@ export class AdvancedCache {
 
 // Export singleton instance
 export const advancedCache = new AdvancedCache()
+

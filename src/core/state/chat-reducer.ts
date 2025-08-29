@@ -197,3 +197,4 @@ export function createInitialChatState(): ChatState {
     theme: 'system'
   }
 }
+

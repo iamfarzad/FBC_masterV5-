@@ -475,3 +475,4 @@ export class BrowserFeatureDetector {
 
 // Export singleton instance
 export const browserFeatures = new BrowserFeatureDetector()
+

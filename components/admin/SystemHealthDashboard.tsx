@@ -634,3 +634,4 @@ function getHealthStatus(metrics: SystemMetrics): 'good' | 'warning' | 'error' {
   if (score >= 60) return 'warning'
   return 'error'
 }
+

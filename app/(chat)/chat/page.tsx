@@ -241,7 +241,8 @@ export default function ChatPage() {
     isLoading: contextLoading,
     fetchContextFromLocalSession,
     clearContextCache,
-    generatePersonalizedGreeting
+    generatePersonalizedGreeting,
+    sendRealtimeVoice
   } = useConversationalIntelligence()
 
   // Lead Context Data
@@ -414,7 +415,7 @@ export default function ChatPage() {
         console.log('Sending real-time voice input:', { transcript, duration })
 
         // Use the unified multimodal system with real-time voice
-        const success = await intelligence.sendRealtimeVoice(
+        const success = await sendRealtimeVoice(
           transcript,
           audioData,
           duration,

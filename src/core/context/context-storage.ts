@@ -216,3 +216,6 @@ export class ContextStorage {
     }
   }
 }
+
+// Export singleton instance for backward compatibility
+export const contextStorage = new ContextStorage()

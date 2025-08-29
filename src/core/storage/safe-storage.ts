@@ -286,3 +286,4 @@ export const safeSessionStorage = {
   remove: (key: string) => safeStorage.remove(key),
   clear: () => safeStorage.clear()
 }
+

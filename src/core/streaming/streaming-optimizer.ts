@@ -470,3 +470,4 @@ export class StreamingOptimizer {
 
 // Export singleton instance
 export const streamingOptimizer = new StreamingOptimizer()
+
