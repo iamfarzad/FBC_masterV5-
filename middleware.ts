@@ -102,6 +102,7 @@ export const config = {
     // Specific API routes for mocking
     '/api/chat/:path*',
     '/api/gemini-live/:path*',
+    '/api/realtime-chat/:path*', // New Edge Function route
     // legacy analysis endpoints are redirected above
     '/api/video-to-app/:path*',
     '/api/lead-research/:path*',

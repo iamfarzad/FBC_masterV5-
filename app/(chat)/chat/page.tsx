@@ -10,6 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChat } from "@/hooks/useChat-ui"
 import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence"
+import { generateSecureSessionId } from "@/src/core/security/session"
+import { useRealtimeChat } from "@/hooks/useRealtimeChat"
 import { useCanvas } from "@/components/providers/canvas-provider"
 import { useTheme } from "next-themes"
 import { CanvasOrchestrator } from "@/components/chat/CanvasOrchestrator"
@@ -27,14 +29,15 @@ import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 
 export default function ChatPage() {
   // Session Management
+  const [useRealtimeMode, setUseRealtimeMode] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const existingId = window.localStorage.getItem('intelligence-session-id')
       if (existingId) {
         return existingId
       }
-      // Generate new session ID if none exists
-      const newId = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      // 🔒 Generate cryptographically secure session ID (256-bit random)
+      const newId = generateSecureSessionId()
       window.localStorage.setItem('intelligence-session-id', newId)
       return newId
     }
@@ -114,6 +117,14 @@ export default function ChatPage() {
 
   // Tool Items - Following Blueprint Pattern
   const toolItems = [
+    {
+      id: 'demo' as const,
+      icon: Zap,
+      label: 'Real-Time Demo',
+      shortcut: 'D',
+      description: 'Experience enterprise-grade AI with Edge Function performance',
+      gradient: 'from-purple-500 to-purple-600'
+    },
     {
       id: 'webcam' as const,
       icon: Camera,
@@ -261,26 +272,70 @@ export default function ChatPage() {
     }
   })
 
+  // Real-time Chat Hook
+  const realtimeChat = useRealtimeChat({
+    sessionId: sessionId || 'default-session',
+    context: {
+      mode: 'unified_chat',
+      userType: 'professional_user',
+      intelligenceEnabled: true
+    },
+    onMessage: (message) => {
+      if (message.type === 'text' && message.data) {
+        // Add real-time messages to chat state
+        addMessage({
+          role: 'assistant',
+          content: message.data,
+          timestamp: new Date()
+        })
+      }
+    },
+    onComplete: () => {
+      console.log('Real-time response completed')
+    },
+    onError: (error) => {
+      console.error('Real-time chat error:', error)
+      addMessage({
+        role: 'assistant',
+        content: `I apologize, but I encountered an error: ${error}. The conversation will continue with standard mode.`,
+        timestamp: new Date()
+      })
+      setUseRealtimeMode(false) // Fall back to regular mode
+    }
+  })
+
   // Canvas Provider
   const { openCanvas } = useCanvas()
 
     // Event Handlers
   const handleSendMessage = useCallback(async (content?: string) => {
     const messageContent = content || input.trim()
-    if (messageContent && !isLoading) {
-      // Clear input - loading state is managed by useChat hook
+    if (messageContent && !isLoading && !realtimeChat.isLoading) {
+      // Clear input
       setInput('')
 
+      // Add user message to chat
+      addMessage({
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date()
+      })
+
       try {
-        // Send message via real backend
-        await sendMessageHook(messageContent)
+        if (useRealtimeMode) {
+          // Use real-time Edge Function
+          await realtimeChat.sendMessage(messageContent)
+        } else {
+          // Use regular chat backend
+          await sendMessageHook(messageContent)
+        }
         setCurrentStage(prev => Math.min(prev + 1, 7))
       } catch (err) {
         console.error('Failed to send message:', err)
-        // Error is handled by useChat hook
+        // Error handling is managed by respective hooks
       }
     }
-  }, [input, isLoading, sendMessageHook])
+  }, [input, isLoading, sendMessageHook, useRealtimeMode, realtimeChat, addMessage])
 
   const handleToolAction = useCallback((tool: string) => {
     console.log('Tool action:', tool)
@@ -288,6 +343,10 @@ export default function ChatPage() {
       case 'menu':
         // Tool canvas functionality can be implemented later
         console.log('Menu tool selected')
+        break
+      case 'demo':
+        // Redirect to real-time demo page
+        window.location.href = '/demo'
         break
       case 'webcam':
         openCanvas('webcam')
@@ -337,7 +396,7 @@ export default function ChatPage() {
     clearContextCache()
     setInput('')
     setCurrentStage(1)
-    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const newSessionId = generateSecureSessionId()
     setSessionId(newSessionId)
   }, [clearMessages, clearContextCache])
 
@@ -657,6 +716,20 @@ export default function ChatPage() {
                   />
 
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-10 px-3 text-xs rounded-full modern-button ${
+                        useRealtimeMode
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : 'text-muted-foreground hover:text-orange-accent'
+                      }`}
+                      onClick={() => setUseRealtimeMode(!useRealtimeMode)}
+                      title={useRealtimeMode ? 'Using Real-Time Mode (5x faster)' : 'Switch to Real-Time Mode'}
+                    >
+                      <Zap className="h-4 w-4 mr-1" />
+                      {useRealtimeMode ? 'RT' : 'Fast'}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"

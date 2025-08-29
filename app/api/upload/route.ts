@@ -4,26 +4,10 @@ import { join } from "path"
 import { existsSync } from "fs"
 // Import supabase
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
+// 🔒 Import secure file validation
+import { validateFileSecurity, sanitizeFilename, MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '@/src/core/security/file-validation'
 
 export const dynamic = "force-dynamic"
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/svg+xml',
-  'video/mp4',
-  'video/webm',
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-  'application/pdf',
-  'text/plain',
-  'application/json',
-  'application/xml'
-]
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,17 +18,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    // 🔒 SECURE FILE VALIDATION - Prevents malware and spoofed files
+    const validation = await validateFileSecurity(file)
+    if (!validation.isValid) {
       return NextResponse.json({
-        error: `File size exceeds maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-      }, { status: 400 })
-    }
-
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({
-        error: `File type ${file.type} not allowed. Allowed types: ${ALLOWED_TYPES.join(', ')}`
+        error: `Security validation failed: ${validation.error}`
       }, { status: 400 })
     }
 
@@ -59,9 +37,9 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // Generate unique filename
+    // 🔒 SECURE FILENAME - Prevents directory traversal attacks
     const timestamp = Date.now()
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+    const sanitizedName = sanitizeFilename(file.name)
     const filename = `${timestamp}_${sanitizedName}`
     const filepath = join(uploadDir, filename)
 

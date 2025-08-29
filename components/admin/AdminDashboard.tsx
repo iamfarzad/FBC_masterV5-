@@ -14,6 +14,7 @@ import { AdminChatInterface } from "./AdminChatInterface"
 import { TokenCostAnalytics } from "./TokenCostAnalytics"
 import { MeetingCalendar } from "./MeetingCalendar"
 import { GeminiOptimizationDashboard } from "./GeminiOptimizationDashboard"
+import { SystemHealthDashboard } from "./SystemHealthDashboard"
 import {
   Home,
   Users,
@@ -39,6 +40,7 @@ type DashboardSection =
   | "ai-performance"
   | "gemini-optimization"
   | "activity"
+  | "system-health"
   | "ai-assistant"
 
 const navigationItems = [
@@ -51,6 +53,7 @@ const navigationItems = [
   { id: "ai-performance", label: "AI Performance", icon: Zap, description: "AI model performance metrics" },
   { id: "gemini-optimization", label: "Gemini Optimization", icon: Brain, description: "Gemini API cost optimization and caching" },
   { id: "activity", label: "Activity", icon: Activity, description: "Real-time system activity" },
+  { id: "system-health", label: "System Health", icon: Server, description: "Real-time system monitoring and health" },
   { id: "ai-assistant", label: "AI Assistant", icon: Brain, description: "AI-powered business intelligence" },
 ]
 
@@ -77,6 +80,8 @@ export function AdminDashboard() {
         return <GeminiOptimizationDashboard />
       case "activity":
         return <RealTimeActivity />
+      case "system-health":
+        return <SystemHealthDashboard />
       case "ai-assistant":
         return (
           <div className="h-[calc(100vh-200px)]">
