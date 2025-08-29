@@ -7,20 +7,22 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 interface ConsentOverlayProps {
   isVisible: boolean
-  onSubmit: (data: { email: string; companyUrl: string }) => void
+  onSubmit: (data: { name: string; email: string; companyUrl: string }) => void
   isLoading?: boolean
 }
 
 export function ConsentOverlay({ isVisible, onSubmit, isLoading = false }: ConsentOverlayProps) {
+  const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [companyUrl, setCompanyUrl] = React.useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (email.trim()) {
-      onSubmit({ 
-        email: email.trim(), 
-        companyUrl: companyUrl.trim() || undefined 
+    if (email.trim() && name.trim()) {
+      onSubmit({
+        name: name.trim(),
+        email: email.trim(),
+        companyUrl: companyUrl.trim() || undefined
       })
     }
   }
@@ -38,6 +40,18 @@ export function ConsentOverlay({ isVisible, onSubmit, isLoading = false }: Conse
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                data-testid="name-input"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Work Email</Label>
               <Input
@@ -64,7 +78,7 @@ export function ConsentOverlay({ isVisible, onSubmit, isLoading = false }: Conse
             <div className="pt-2">
               <Button
                 type="submit"
-                disabled={isLoading || !email.trim()}
+                disabled={isLoading || !email.trim() || !name.trim()}
                 className="w-full"
                 data-testid="consent-allow"
               >

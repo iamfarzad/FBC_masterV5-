@@ -20,7 +20,7 @@ export function ConsentOverlay({ open, email, company, onEmailChange, onCompanyC
     <div className={cn("fixed inset-0 z-[60] grid place-items-center bg-background/80 backdrop-blur p-4", className)}>
       <div className="w-full max-w-lg rounded-xl border bg-card p-4 shadow">
         <h2 className="text-base font-semibold">Personalize this chat using your public company info?</h2>
-        <p className="mt-1 text-sm text-muted-foreground">We’ll fetch from your company site and LinkedIn to ground results with citations. See our <a href="/privacy" className="underline">Privacy & Terms</a>.</p>
+        <p className="mt-1 text-sm text-muted-foreground">We’ll fetch from your company site and LinkedIn to ground results with citations. See our <a href="/legal" className="underline">Privacy & Terms</a>.</p>
         <div className="mt-3 grid grid-cols-1 gap-2">
           <input
             type="email"

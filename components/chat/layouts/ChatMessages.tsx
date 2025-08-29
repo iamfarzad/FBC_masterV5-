@@ -64,7 +64,7 @@ export function ChatMessages({
     >
       <div className="text-center max-w-md">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center mx-auto mb-6">
-          <FbcIcon className="h-6 w-6 text-accent" />
+          <FbcIcon variant="default" size={24} />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-3">
           Ready to assist you

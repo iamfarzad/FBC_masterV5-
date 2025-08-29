@@ -149,7 +149,7 @@ export default function TestChatWithAIElements() {
         <Avatar className="h-8 w-8 flex-shrink-0">
           <AvatarFallback className="bg-accent text-accent-foreground text-xs">
             {message.role === 'assistant' ? (
-              <FbcIcon className="h-4 w-4" />
+              <FbcIcon variant="default" size={16} />
             ) : (
               <User className="h-4 w-4" />
             )}

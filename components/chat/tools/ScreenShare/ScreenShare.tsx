@@ -1,428 +1,260 @@
 "use client"
 
-import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Monitor, Brain, Loader2, X } from "@/src/core/icon-mapping"
-
+import { motion } from "framer-motion"
+import { Monitor, X, Activity, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useToast } from "@/components/ui/use-toast"
-import { ToolCardWrapper } from "@/components/chat/ToolCardWrapper"
-import type { ScreenShareProps, ScreenShareState } from "./ScreenShare.types"
 
-interface AnalysisResult {
-  id: string
-  text: string
-  timestamp: number
+interface ScreenShareProps {
+  onClose: () => void
+  onAnalysis?: (analysis: string) => void
 }
 
-export function ScreenShare({
-  mode: _mode = 'card',
-  onAnalysis,
-  onClose,
-  onCancel: _onCancel,
-  onStream,
-  onLog
-}: ScreenShareProps) {
-  const { toast } = useToast()
-  const [screenState, setScreenState] = useState<ScreenShareState>("stopped")
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false)
-  const [analysisHistory, setAnalysisHistory] = useState<AnalysisResult[]>([])
+export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const autoAnalysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const videoReadyRef = useRef<boolean>(false)
+  // Intelligence context integration
+  const sessionId = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
 
-  async function waitForScreenReady(video: HTMLVideoElement): Promise<void> {
-    if (!video) return
-    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
-      videoReadyRef.current = true
-      return
-    }
-    await new Promise<void>((resolve) => {
-      const onMeta = () => {
-        void video.play().catch(() => {})
-        if (video.videoWidth > 0 && video.videoHeight > 0) {
-          videoReadyRef.current = true
-          video.removeEventListener('loadedmetadata', onMeta)
-          resolve()
-        }
-      }
-      video.addEventListener('loadedmetadata', onMeta)
-      setTimeout(onMeta, 500)
-    })
-  }
-
-  const sendScreenFrame = useCallback(async (imageData: string) => {
+  // Start screen share
+  const startScreenShare = useCallback(async () => {
     try {
-      setIsAnalyzing(true)
-      onLog?.({ level: 'log', message: 'Analyzing screen frame…', timestamp: new Date() })
-      const sid = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
-      const response = await fetch('/api/tools/screen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(sid ? { 'x-intelligence-session-id': sid } : {}) },
-        body: JSON.stringify({
-          image: imageData,
-          type: 'screen' // Specify this is a screen capture for analysis
-        })
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
       })
-      if (!response.ok) throw new Error('Failed to analyze screen frame')
-      const result: { output?: { analysis?: string }; analysis?: string } = await response.json()
-      const analysisText = result?.output?.analysis || result?.analysis || 'No analysis'
-      onLog?.({ level: 'log', message: `Screen analysis: ${analysisText}`, timestamp: new Date() })
-      const analysis: AnalysisResult = {
-        id: Date.now().toString(),
-        text: analysisText,
-        timestamp: Date.now(),
+      setStream(mediaStream)
+      if (videoRef.current) videoRef.current.srcObject = mediaStream
+
+      // Stop when user manually ends share
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      if (videoTrack) {
+        videoTrack.addEventListener("ended", () => stopScreenShare())
       }
-      setAnalysisHistory(prev => [analysis, ...prev])
-      onAnalysis?.(analysis.text)
-    } catch (e) {
-      setError((e as Error).message)
-      onLog?.({ level: 'error', message: `Screen analysis error: ${(e as Error).message}`, timestamp: new Date() })
+    } catch {
+      onClose()
+    }
+  }, [onClose])
+
+  // Stop screen share
+  const stopScreenShare = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+      setStream(null)
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    onClose()
+  }, [stream, onClose])
+
+  // Send frame to analysis API
+  const sendFrame = useCallback(async (imageData: string) => {
+    setIsAnalyzing(true)
+    try {
+      const response = await fetch("/api/tools/screen", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionId ? { 'x-intelligence-session-id': sessionId } : {})
+        },
+        body: JSON.stringify({ image: imageData, type: "screen" }),
+      })
+      const result = await response.json()
+      const analysisText =
+        result?.output?.analysis || result?.analysis || "No analysis"
+      onAnalysis?.(analysisText)
+    } catch (err) {
+      console.error("Screen analysis error", err)
     } finally {
       setIsAnalyzing(false)
     }
-  }, [onAnalysis, onLog])
+  }, [onAnalysis, sessionId])
 
-  // Auto-analysis interval with throttling and cost awareness
+  // Kick off auto-analysis loop
   useEffect(() => {
-    if (isAutoAnalyzing && screenState === "sharing" && videoReadyRef.current) {
-      let analysisCount = 0;
-      const maxAnalysisPerSession = 20; // Limit to prevent excessive costs
-      
-      autoAnalysisIntervalRef.current = setInterval(() => {
-        // Check if we've exceeded the analysis limit
-        if (analysisCount >= maxAnalysisPerSession) {
-          // Warning log removed - could add proper error handling here
-          setIsAutoAnalyzing(false);
-          return;
-        }
-
-        if (videoRef.current && canvasRef.current && !isAnalyzing && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0) {
-          const canvas = canvasRef.current
-          const video = videoRef.current
-
+    if (stream && videoRef.current && canvasRef.current) {
+      intervalRef.current = setInterval(() => {
+        const video = videoRef.current!
+        const canvas = canvasRef.current!
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
           canvas.width = video.videoWidth
           canvas.height = video.videoHeight
-
-          const ctx = canvas.getContext('2d')
+          const ctx = canvas.getContext("2d")
           if (ctx) {
             ctx.drawImage(video, 0, 0)
-            const imageData = canvas.toDataURL('image/jpeg', 0.8)
-            analysisCount++;
-            // Action logged
-            void sendScreenFrame(imageData)
+            const data = canvas.toDataURL("image/jpeg", 0.7)
+            void sendFrame(data)
           }
         }
-      }, 15000) // Increased to 15 seconds to reduce API calls
-    } else {
-      if (autoAnalysisIntervalRef.current) {
-        clearInterval(autoAnalysisIntervalRef.current)
-        autoAnalysisIntervalRef.current = null
-      }
+      }, 15000) // every 15s
     }
-
     return () => {
-      if (autoAnalysisIntervalRef.current) {
-        clearInterval(autoAnalysisIntervalRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [stream, sendFrame])
+
+  // Start on mount
+  useEffect(() => {
+    void startScreenShare()
+  }, [startScreenShare])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
       }
     }
-  }, [isAutoAnalyzing, screenState, sendScreenFrame, isAnalyzing])
-
-  const cleanup = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop())
-      setStream(null)
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
-
-    if (autoAnalysisIntervalRef.current) {
-      clearInterval(autoAnalysisIntervalRef.current)
-      autoAnalysisIntervalRef.current = null
-    }
-
-    setScreenState("stopped")
-    setIsAnalyzing(false)
-    setIsAutoAnalyzing(false)
   }, [stream])
 
-  const startScreenShare = useCallback(async () => {
-    try {
-      setScreenState("initializing")
-      const mediaStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false
-      })
-      setStream(mediaStream)
-      setScreenState("sharing")
-      if(videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-        await waitForScreenReady(videoRef.current)
-      }
-      onStream?.(mediaStream)
-      mediaStream.getVideoTracks()[0].addEventListener('ended', () => {
-        cleanup()
-      })
-      toast({ title: "Screen Sharing Started" })
-    } catch {
-      setScreenState("error")
-      setError('Screen share failed')
-      toast({ title: "Screen Share Failed", variant: "destructive" })
-    }
-  }, [onStream, toast, cleanup])
-
-  const captureScreenshot = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const canvas = canvasRef.current
-    const video = videoRef.current
-    if (video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
-      setError('Screen stream is warming up… try again in a moment')
-      return
-    }
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.drawImage(video, 0, 0)
-      const imageData = canvas.toDataURL('image/jpeg', 0.8)
-      void sendScreenFrame(imageData)
-    }
-  }, [sendScreenFrame])
-
-  const ScreenShareUI = () => (
-    <div className="h-full flex">
-      {/* Main Screen Share Area */}
-      <div className="flex-1 p-4">
-        {screenState !== "sharing" ? (
-          <div className="h-full flex items-center justify-center">
-            <Card className="w-full max-w-2xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-slate-900 mb-2">Start Screen Sharing</CardTitle>
-                <p className="text-slate-600">Share your screen with AI-powered analysis</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button
-                  variant="outline"
-                  className="w-full h-auto p-6 flex items-start gap-4 hover:bg-emerald-50 hover:border-emerald-200 bg-transparent"
-                  onClick={() => void startScreenShare()}
-                  disabled={screenState === "initializing"}
-                >
-                  <Monitor className="w-8 h-8 text-emerald-600 mt-1" />
-                  <div className="text-left">
-                    <h3 className="font-semibold text-slate-900 mb-1">
-                      {screenState === "initializing" ? "Initializing..." : "Share Screen"}
-                    </h3>
-                    <p className="text-sm text-slate-600">
-                      {screenState === "initializing" 
-                        ? "Setting up screen sharing..." 
-                        : "Start sharing your screen for real-time analysis"}
-                    </p>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="h-full bg-slate-900 rounded-lg overflow-hidden relative">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
-            <canvas ref={canvasRef} className="hidden" />
-            
-            {/* Status Badge */}
-            <div className="absolute top-4 left-4">
-              <Badge variant={screenState === "sharing" ? "default" : "destructive"} className="bg-error">
-                <div className="w-2 h-2 bg-surface rounded-full mr-2 animate-pulse"></div>
-                {screenState === "sharing" ? "Live" : screenState}
-              </Badge>
-            </div>
-
-            {/* Analysis Button */}
-            {screenState === 'sharing' && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="flex items-center gap-3 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2">
-                  <Button
-                    onClick={captureScreenshot}
-                    disabled={isAnalyzing}
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full"
-                  >
-                    {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={cleanup}
-                    className="rounded-full"
-                  >
-                    Stop Sharing
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Sidebar */}
-      <div className="w-80 bg-surface border-l border-border p-4 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Brain className="w-5 h-5 text-emerald-600" />
-              AI Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Switch 
-                checked={isAutoAnalyzing} 
-                onCheckedChange={setIsAutoAnalyzing} 
-                disabled={screenState !== "sharing"} 
-              />
-              <span className="text-sm">Auto Analysis (15s intervals)</span>
-            </div>
-            {isAnalyzing && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Analyzing screen content...
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {screenState === "sharing" && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Session Controls</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button
-                onClick={captureScreenshot}
-                disabled={isAnalyzing}
-                className="w-full"
-                variant="outline"
-              >
-                {isAnalyzing ? "Analyzing..." : "Analyze Now"}
-              </Button>
-              <Button 
-                variant="destructive" 
-                className="w-full" 
-                onClick={cleanup}
-              >
-                Stop Sharing
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {analysisHistory.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Analysis History</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-60 overflow-y-auto">
-              {analysisHistory.map((analysis) => (
-                <div key={analysis.id} className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-700">{analysis.text}</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {new Date(analysis.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Open Canvas
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Start Video Call
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Launch Workshop
-            </Button>
-          </CardContent>
-        </Card>
-
-        {error && (
-          <Card className="border-error/20 bg-error/5">
-            <CardContent className="pt-4">
-              <p className="text-error text-sm">{error}</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
-  )
-
-  // Modal variant
-  if (mode === 'modal') {
-    return (
-      <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl rounded-3xl border border-border/20 shadow-xl">
-          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <DialogTitle className="flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
-              Screen Share
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-full"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogHeader>
-          <ScreenShareUI />
-        </DialogContent>
-      </Dialog>
-    )
-  }
-
-  if (mode === 'canvas') {
-    return (
-      <div className="flex h-full w-full flex-col overflow-hidden">
-        <div className="flex h-10 items-center justify-between border-b px-2 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-success" />
-            <span>Screen Share</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={() => void startScreenShare()} disabled={screenState === 'sharing'}>Start</Button>
-            <Button size="sm" variant="ghost" onClick={captureScreenshot} disabled={screenState !== 'sharing' || isAnalyzing}>Capture</Button>
-            <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
-          </div>
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col p-2">
-          <ScreenShareUI />
-        </div>
-      </div>
-    )
-  }
-
-  // Card variant
   return (
-    <ToolCardWrapper title="Screen Share" description="Real-time screen sharing with AI analysis" icon={<Monitor className="w-4 h-4" />}>
-      <ScreenShareUI />
-    </ToolCardWrapper>
+    <div className="h-full w-full bg-black relative overflow-hidden">
+      {/* Enhanced Screen Preview with Gradient Overlay */}
+      {stream ? (
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-contain"
+          />
+          {/* Subtle gradient overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <Monitor className="w-20 h-20 mx-auto mb-6 text-gray-500 drop-shadow-lg" />
+              <h3 className="text-xl font-semibold text-white mb-2">Select Screen to Share</h3>
+              <p className="text-gray-400 max-w-sm mx-auto">
+                Choose a window, tab, or entire screen to share with AI analysis
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Status Indicators */}
+      {stream && (
+        <>
+          {/* AI Analysis Status - Top-left */}
+          <motion.div
+            className="absolute top-6 left-6 z-10"
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <div className="glass-card px-4 py-2 flex items-center gap-2 border-info/30">
+              <motion.div
+                className={`w-3 h-3 rounded-full ${isAnalyzing ? 'bg-warning' : 'bg-success'}`}
+                animate={isAnalyzing ? { scale: [1, 1.3, 1] } : { scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: isAnalyzing ? 1 : 2, ease: "easeInOut" }}
+              />
+              <span className={`font-semibold text-sm ${isAnalyzing ? 'text-warning' : 'text-success'}`}>
+                {isAnalyzing ? '🤖 AI Analyzing...' : '👁️ Live Analysis'}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Screen Share Indicator - Top-right */}
+          <motion.div
+            className="absolute top-6 right-6 z-10"
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
+          >
+            <div className="glass-card px-3 py-2 border-green-500/30">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 font-medium text-sm">Screen Shared</span>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+
+      {/* Enhanced Toolbar (Bottom Center) */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.4, ease: "easeOut" }}
+      >
+        <div className="glass-card px-6 py-4 flex items-center gap-3 shadow-luxe">
+          {/* Enhanced Stop Sharing Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="destructive"
+              size="lg"
+              onClick={stopScreenShare}
+              className="hover-scale rounded-full px-6 py-3 shadow-lg hover:shadow-red-500/30 transition-all duration-300"
+            >
+              <motion.div
+                className="flex items-center gap-2"
+                whileHover={{ gap: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Monitor className="w-5 h-5" />
+                <span className="font-semibold">Stop Sharing</span>
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* AI Analysis Toggle */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="glass"
+              size="icon"
+              onClick={() => setIsAnalyzing(!isAnalyzing)}
+              className={`hover-scale rounded-full w-14 h-14 shadow-md transition-all duration-300 ${
+                isAnalyzing ? 'ring-2 ring-warning shadow-warning/30' : ''
+              }`}
+            >
+              <motion.div
+                animate={isAnalyzing ? { rotate: 360 } : { rotate: 0 }}
+                transition={{ duration: 2, repeat: isAnalyzing ? Infinity : 0, ease: "linear" }}
+              >
+                <Activity className={`w-6 h-6 ${isAnalyzing ? 'text-warning' : 'text-text-muted'}`} />
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* Enhanced Close Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onClose}
+              className="hover-scale rounded-full w-14 h-14 border-border/50 hover:border-border hover:bg-surface-elevated/50 backdrop-blur-sm"
+            >
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="w-6 h-6" />
+              </motion.div>
+            </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Hidden Canvas - For capturing screenshots */}
+      <canvas ref={canvasRef} className="hidden" />
+    </div>
   )
 }

@@ -40,7 +40,7 @@ export function CtaSection({
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href={secondaryCtaLink}>
-                {secondaryCtaText} <FbcIcon className="ml-2 h-4 w-4" />
+                {secondaryCtaText} <FbcIcon variant="default" size={16} className="ml-2" />
               </Link>
             </Button>
           </div>

@@ -13,7 +13,6 @@ export interface ToolMenuProps {
   onWebcam?: () => void
   onScreenShare?: () => void
   onROI?: () => void
-  onVideoToApp?: () => void
   disabled?: boolean
   className?: string
   comingSoon?: Array<'document' | 'image' | 'webcam' | 'screen' | 'video'>
@@ -25,7 +24,6 @@ export function ToolMenu({
   onWebcam,
   onScreenShare,
   onROI,
-  onVideoToApp,
   disabled,
   className,
   comingSoon = [],
@@ -101,15 +99,12 @@ export function ToolMenu({
             <Calculator className="w-4 h-4" /> ROI calculator
           </DropdownMenuItem>
         )}
-        {onVideoToApp && (
-          <DropdownMenuItem
-            className="gap-3 cursor-pointer"
-            onClick={comingSoon.includes('video') ? undefined : onVideoToApp}
-            disabled={comingSoon.includes('video')}
-          >
-            <Video className="w-4 h-4" /> Video → App{comingSoon.includes('video') ? ' (coming soon)' : ''}
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          className="gap-3 cursor-pointer"
+          onClick={() => window.open('/workshop/video-to-app', '_blank')}
+        >
+          <Video className="w-4 h-4" /> Video → App Workshop
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

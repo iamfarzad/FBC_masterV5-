@@ -2,81 +2,135 @@
 
 import { motion } from "framer-motion"
 import { cn } from '@/src/core/utils'
+import Image from 'next/image'
+import { useTheme } from 'next-themes'
 
 interface FbcIconProps {
   className?: string
+  variant?: 'default' | 'favicon' | 'app-icon' | 'logo' | 'large-logo'
+  size?: number
 }
 
-export function FbcIcon({ className }: FbcIconProps) {
+export function FbcIcon({
+  className,
+  variant = 'default',
+  size = 24
+}: FbcIconProps) {
+  const { theme } = useTheme()
+
+  // Icon paths based on variant and theme
+  const getIconPath = () => {
+    const isDark = theme === 'dark'
+    const basePath = isDark ? 'fbc-voice-orb-dark-png' : 'fbc-voice-orb-light-png'
+
+    switch (variant) {
+      case 'favicon':
+        return isDark
+          ? `/fbc-icon/${basePath}/fbc-voice-orb-dark-32.png`
+          : `/fbc-icon/${basePath}/fbc-voice-orb-favicon-32.png`
+      case 'app-icon':
+        return isDark
+          ? `/fbc-icon/${basePath}/fbc-voice-orb-dark-192.png`
+          : `/fbc-icon/${basePath}/fbc-voice-orb-appicon-192.png`
+      case 'logo':
+        return isDark
+          ? `/fbc-icon/${basePath}/fbc-voice-orb-dark-512.png`
+          : `/fbc-icon/${basePath}/fbc-voice-orb-logo-512.png`
+      case 'large-logo':
+        return isDark
+          ? `/fbc-icon/${basePath}/fbc-voice-orb-dark-1024.png`
+          : `/fbc-icon/${basePath}/fbc-voice-orb-logo-1024.png`
+      default:
+        // For default, use the SVG for better scalability
+        return isDark
+          ? `/fbc-icon/${basePath}/fbc-voice-orb-logo-dark.svg`
+          : `/fbc-icon/fbc-voice-orb-light-png/fbc-voice-orb-logo.svg`
+    }
+  }
+
+  // Get appropriate size for each variant
+  const getIconSize = () => {
+    switch (variant) {
+      case 'favicon':
+        return 32
+      case 'app-icon':
+        return 192
+      case 'logo':
+        return 64 // Reasonable size for most logo uses
+      case 'large-logo':
+        return 256 // For hero sections and large displays
+      default:
+        return size
+    }
+  }
+
+  const iconPath = getIconPath()
+  const iconSize = getIconSize()
+
+  // Use SVG for default variant, PNG for others
+  if (variant === 'default' && iconPath.endsWith('.svg')) {
+    return (
+      <motion.div
+        className={cn("inline-block", className)}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        style={{ width: size, height: size }}
+      >
+        <Image
+          src={iconPath}
+          alt="F.B/c Logo"
+          width={size}
+          height={size}
+          className="w-full h-full object-contain"
+          priority
+        />
+      </motion.div>
+    )
+  }
+
+  // Use PNG for specific variants with error handling
   return (
     <motion.div
-      className={cn("w-6 h-6", className)}
+      className={cn("inline-block", className)}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.05 }}
       transition={{ type: "spring", stiffness: 300, damping: 15 }}
-      aria-hidden="true"
+      style={{ width: iconSize, height: iconSize }}
     >
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <defs>
-          <radialGradient id="orbGradient" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-            <stop offset="0%" stopColor="hsl(var(--surface))" />
-            <stop offset="100%" stopColor="hsl(var(--border))" />
-          </radialGradient>
-          <radialGradient id="orbGradientDark" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-            <stop offset="0%" stopColor="hsl(var(--surface-elevated))" />
-            <stop offset="100%" stopColor="hsl(var(--text-muted))" />
-          </radialGradient>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+      <Image
+        src={iconPath}
+        alt="F.B/c Logo"
+        width={iconSize}
+        height={iconSize}
+        className="w-full h-full object-contain"
+        priority
+        onError={(e) => {
+          // Fallback to light version if dark version doesn't exist
+          const target = e.target as HTMLImageElement
+          if (theme === 'dark' && target.src.includes('dark-png')) {
+            // Convert dark mode filenames to light mode equivalents
+            let fallbackSrc = target.src.replace('dark-png', 'light-png')
 
-        {/* Main Orb */}
-        <motion.circle
-          cx="50"
-          cy="50"
-          r="40"
-          className="fill-[url(#orbGradient)] dark:fill-[url(#orbGradientDark)]"
-          animate={{ scale: [1, 1.02, 1] }}
-          transition={{
-            duration: 4,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        />
+            // Handle the different naming conventions
+            if (fallbackSrc.includes('fbc-voice-orb-dark-32.png')) {
+              fallbackSrc = fallbackSrc.replace('fbc-voice-orb-dark-32.png', 'fbc-voice-orb-favicon-32.png')
+            } else if (fallbackSrc.includes('fbc-voice-orb-dark-192.png')) {
+              fallbackSrc = fallbackSrc.replace('fbc-voice-orb-dark-192.png', 'fbc-voice-orb-appicon-192.png')
+            } else if (fallbackSrc.includes('fbc-voice-orb-dark-512.png')) {
+              fallbackSrc = fallbackSrc.replace('fbc-voice-orb-dark-512.png', 'fbc-voice-orb-logo-512.png')
+            } else if (fallbackSrc.includes('fbc-voice-orb-dark-1024.png')) {
+              fallbackSrc = fallbackSrc.replace('fbc-voice-orb-dark-1024.png', 'fbc-voice-orb-logo-1024.png')
+            } else if (fallbackSrc.includes('fbc-voice-orb-logo-dark.svg')) {
+              fallbackSrc = fallbackSrc.replace('fbc-voice-orb-logo-dark.svg', 'fbc-voice-orb-logo.svg')
+            }
 
-        {/* Satellite Arc */}
-        <motion.path
-          d="M 25 21 A 45 45 0 0 1 75 21"
-          fill="none"
-          strokeWidth="4"
-          strokeLinecap="round"
-          className="stroke-brand"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
-        />
-
-        {/* Core */}
-        <motion.circle
-          cx="50"
-          cy="50"
-          r="4"
-          className="fill-brand/80"
-          style={{ filter: "url(#glow)" }}
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{
-            duration: 3,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-        />
-      </svg>
+            target.src = fallbackSrc
+          }
+        }}
+      />
     </motion.div>
   )
 }

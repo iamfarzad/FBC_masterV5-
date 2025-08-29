@@ -28,6 +28,7 @@ F.B/c is a **production-ready multimodal AI consulting platform** that combines:
 - **Image analysis** (webcam & screen capture)
 - **Document processing** with auto-analysis
 - **Context-aware** conversations across modalities
+- **🎬 Video-to-App**: Transform YouTube videos into interactive learning apps
 
 ### **🎨 Modern Design System**
 - **Glass morphism** effects and animations

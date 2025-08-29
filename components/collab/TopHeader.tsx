@@ -24,7 +24,7 @@ export function TopHeader({ title, subtitle, rightActions, statusChip, className
     >
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <FbcIcon className="h-5 w-5" />
+          <FbcIcon variant="default" size={20} />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold leading-tight tracking-tight">{title}</h1>

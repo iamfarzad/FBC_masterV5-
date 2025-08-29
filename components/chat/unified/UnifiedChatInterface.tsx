@@ -84,7 +84,7 @@ export const EnhancedHeader = memo<{
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background/95 p-4 backdrop-blur">
       <div className="flex items-center gap-3">
-        <FbcIcon className="h-8 w-8 text-accent" />
+        <FbcIcon variant="default" size={24} />
         <div>
           <h1 className="text-xl font-bold text-foreground">F.B/c</h1>
           <p className="text-xs text-muted-foreground">
@@ -454,7 +454,7 @@ const MessageComponent = memo<{ message: UnifiedMessage; isLast: boolean }>(
         {/* Avatar */}
         {message.role === 'assistant' ? (
           <div className="relative inline-flex h-8 w-8 flex-none max-w-none items-center justify-center rounded-full border border-accent/20 bg-card shadow-sm">
-            <FbcIcon className="h-4 w-4 text-accent" />
+            <FbcIcon variant="default" size={16} />
           </div>
         ) : (
           <Avatar className="h-8 w-8 flex-none max-w-none border border-border bg-card">
@@ -512,7 +512,7 @@ const MessageComponent = memo<{ message: UnifiedMessage; isLast: boolean }>(
                 if (t.type === 'roiResult') {
                   const r = t.data || {}
                   return (
-                    <ToolCardWrapper key={`tool-${message.id}-${i}`} title="ROI Summary" icon={<FbcIcon className="h-4 w-4" />}>
+                    <ToolCardWrapper key={`tool-${message.id}-${i}`} title="ROI Summary" icon={<FbcIcon variant="default" size={16} />}>
                       <div className="grid grid-cols-3 gap-3 text-sm">
                         <div className="text-center p-3 rounded-md bg-accent/10">
                           <div className="font-semibold text-accent">{r.estimatedROI ?? r.roi}%</div>
@@ -528,6 +528,440 @@ const MessageComponent = memo<{ message: UnifiedMessage; isLast: boolean }>(
                         </div>
                       </div>
                     </ToolCardWrapper>
+                  )
+                }
+                return null
+              })}
+            </div>
+          )}
+
+          {/* Image if present */}
+          {message.metadata?.imageUrl && (
+            <div className="mt-3 rounded-lg overflow-hidden border border-border/20">
+              <img
+                src={message.metadata.imageUrl}
+                alt="Message attachment"
+                className="max-w-full h-auto"
+              />
+            </div>
+          )}
+
+          {/* Citations (prefer explicit citations, fallback to sources) */}
+          {((message.metadata?.citations && message.metadata.citations.length > 0) ||
+            (message.metadata?.sources && message.metadata.sources.length > 0)) && (
+            <CitationDisplay
+              citations={message.metadata.citations ??
+                (message.metadata.sources?.map((s: any) => ({ uri: s.url, title: s.title })) || [])}
+            />
+          )}
+
+          {/* Sources */}
+          {message.metadata?.sources && message.metadata.sources.length > 0 && (
+            <div className="mt-2">
+              <Sources>
+                <SourcesTrigger count={message.metadata.sources.length} />
+                <SourcesContent>
+                  {message.metadata.sources.map((source, i) => (
+                    <Source
+                      key={`${message.id}-src-${i}`}
+                      href={source.url}
+                      title={source.title || source.url}
+                    />
+                  ))}
+                </SourcesContent>
+              </Sources>
+            </div>
+          )}
+
+          {/* Translation */}
+          {translation && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 text-sm border-l-2 border-accent/40 pl-3 text-foreground/90"
+            >
+              <div className="mb-1 text-xs uppercase tracking-wide opacity-70">
+                Translated (ES)
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                {translation}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Suggestions */}
+          {message.role === 'assistant' && message.metadata?.suggestions && (
+            <div className="mt-2">
+              <Suggestions>
+                {message.metadata.suggestions.map((suggestion, i) => (
+                  <Suggestion
+                    key={`${message.id}-sug-${i}`}
+                    suggestion={suggestion}
+                    onClick={() => {}}
+                  />
+                ))}
+              </Suggestions>
+            </div>
+          )}
+
+          {/* Actions */}
+          <Actions className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Action
+              tooltip={copiedMessageId === message.id ? 'Copied' : 'Copy'}
+              aria-label="Copy"
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+            >
+              {copiedMessageId === message.id ?
+                <Check className="w-3 h-3 text-green-600" /> :
+                <Copy className="w-3 h-3" />
+              }
+            </Action>
+
+            {message.role === 'user' && (
+              <Action
+                tooltip="Edit"
+                aria-label="Edit message"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Log removed
+                }}
+              >
+                <Edit className="w-3 h-3" />
+              </Action>
+            )}
+
+            {message.role === 'assistant' && (
+              <Action
+                tooltip={isTranslating ? 'Translating…' : 'Translate'}
+                aria-label="Translate"
+                variant="ghost"
+                size="sm"
+                onClick={handleTranslate}
+                disabled={isTranslating}
+              >
+                <Languages className="w-3 h-3" />
+              </Action>
+            )}
+          </Actions>
+        </AIMessageContent>
+      </AIMessage>
+    )
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if key properties change
+    return (
+      prevProps.message.id === nextProps.message.id &&
+      prevProps.message.content === nextProps.message.content &&
+      prevProps.message.metadata?.edited === nextProps.message.metadata?.edited &&
+      prevProps.isLast === nextProps.isLast
+    )
+  }
+)
+
+MessageComponent.displayName = 'MessageComponent'
+
+// Optimized Message List with performance considerations
+const MessageList: React.FC<{
+  messages: UnifiedMessage[];
+  isLoading: boolean;
+  stickyHeader?: React.ReactNode;
+}> = ({ messages, isLoading, stickyHeader }) => {
+  const parentRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isNearBottomRef = useRef(true)
+
+  // Non-virtual rendering for visual stability; we'll re-introduce virtualization behind a flag later
+
+  // Track whether user is near the bottom to decide stick-to-bottom behavior
+  useEffect(() => {
+    const el = parentRef.current
+    if (!el) return
+    const handleScroll = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+      isNearBottomRef.current = distance < 120
+    }
+    handleScroll()
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Auto-scroll to bottom on new messages (only if user is near bottom)
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (!isNearBottomRef.current) return
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+      }
+    }, 80)
+    return () => window.clearTimeout(id)
+  }, [messages.length])
+
+  const handleKeyScroll = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const el = parentRef.current
+    if (!el) return
+    if (e.key === 'PageDown') {
+      e.preventDefault()
+      el.scrollBy({ top: el.clientHeight - 80, behavior: 'smooth' })
+    } else if (e.key === 'PageUp') {
+      e.preventDefault()
+      el.scrollBy({ top: -(el.clientHeight - 80), behavior: 'smooth' })
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      el.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [])
+
+  return (
+    <div
+      ref={parentRef}
+      className="h-full overflow-y-auto"
+      role="region"
+      aria-label="Message list"
+      tabIndex={0}
+      onKeyDown={handleKeyScroll}
+    >
+      {stickyHeader && (
+        <div className="sticky top-0 z-30 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+          <div className="mx-auto max-w-3xl px-4 pt-2 pb-3">
+            {stickyHeader}
+          </div>
+        </div>
+      )}
+      <div className="mx-auto max-w-3xl space-y-4 p-4 pb-32">
+        <AnimatePresence mode="popLayout">
+          {messages.map((message, index) => (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.15) }}
+              layout
+            >
+              <MessageComponent message={message} isLast={index === messages.length - 1} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 text-muted-foreground"
+          >
+            <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
+            <div className="h-2 w-2 rounded-full bg-current animate-pulse" style={{ animationDelay: '75ms' }} />
+            <div className="h-2 w-2 rounded-full bg-current animate-pulse" style={{ animationDelay: '150ms' }} />
+          </div>
+        )}
+
+        <div ref={messagesEndRef} className="h-4" />
+      </div>
+    </div>
+  )
+}
+
+// Main Unified Chat Interface
+export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
+  messages,
+  isLoading = false,
+  sessionId,
+  mode = 'full',
+  onSendMessage,
+  onClearMessages,
+  onToolAction,
+  className,
+  stickyHeaderSlot,
+  composerTopSlot,
+  onAssistantInject
+}) => {
+  const [input, setInput] = useState('')
+  const isDock = mode === 'dock'
+  const [isRoiOpen, setIsRoiOpen] = useState(false)
+  const [localMessages, setLocalMessages] = useState<UnifiedMessage[]>(messages)
+
+  // Keep local copy in sync when prop changes
+  useEffect(() => { setLocalMessages(messages) }, [messages])
+
+  // Listen for tool analysis events to append assistant messages
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ content: string; sources?: unknown; type?: string }>
+      const payload = ce.detail || { content: '' }
+      const msg: UnifiedMessage = {
+        id: `msg-${Date.now()}-tool`,
+        role: 'assistant',
+        content: payload.content,
+        type: payload.type === 'analysis' ? 'analysis' : 'tool',
+        metadata: { timestamp: new Date(), sources: payload.sources }
+      }
+      if (typeof onAssistantInject === 'function') onAssistantInject(msg)
+      else setLocalMessages(prev => [...prev, msg])
+    }
+    window.addEventListener('chat:assistant', handler as EventListener)
+    return () => window.removeEventListener('chat:assistant', handler as EventListener)
+  }, [])
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    if (input.trim() && onSendMessage) {
+      onSendMessage(input.trim())
+      setInput('')
+    }
+  }, [input, onSendMessage])
+
+  return (
+    <TooltipProvider>
+      <div className={cn(
+        isDock ? 'h-full flex flex-col overflow-hidden bg-background' :
+        'fixed inset-0 z-40 flex h-[100dvh] flex-col overflow-hidden bg-background',
+        className
+      )}>
+        {/* Enhanced Header */}
+        {!isDock && (
+          <EnhancedHeader
+            onReset={onClearMessages || (() => {})}
+            onSettings={() => onToolAction?.('settings')}
+            sessionId={sessionId}
+          />
+        )}
+
+        {/* Conversation Area */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <Conversation className="h-full" aria-live="polite" aria-busy={isLoading}>
+            <ConversationContent className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6" aria-label="Chat messages">
+              {messages.length === 0 && !isLoading ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex-1 min-h-[40vh] grid place-items-center"
+                >
+                  <div className="text-center">
+                    <h3 className="text-2xl font-semibold">
+                      Ready to assist you
+                    </h3>
+                    <p className="text-muted-foreground mt-2">
+                      Ask anything or share what you're working on
+                    </p>
+                    <div className="mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => onSendMessage?.('Start with a website analysis for www.farzadbayat.com')}
+                        className="bg-accent/10 hover:bg-accent/20 border-accent/30 hover:border-accent/50"
+                      >
+                        Start with Website Analysis
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <MessageList
+                  messages={localMessages}
+                  isLoading={isLoading}
+                  stickyHeader={stickyHeaderSlot}
+                />
+              )}
+            </ConversationContent>
+            <ConversationScrollButton className="bg-accent hover:bg-accent/90 text-accent-foreground backdrop-blur" />
+          </Conversation>
+        </div>
+
+        {/* Enhanced Composer */}
+        {!isDock && (
+          <EnhancedComposer
+            input={input}
+            setInput={setInput}
+            onSend={() => {
+              if (input.trim()) {
+                onSendMessage?.(input.trim())
+                setInput('')
+              }
+            }}
+            onToolAction={(tool) => {
+              switch (tool) {
+                case 'menu':
+                  onToolAction?.('menu')
+                  break
+                case 'voice':
+                  onToolAction?.('voice')
+                  break
+                case 'suggested':
+                  onToolAction?.('suggested')
+                  break
+                case 'book-call':
+                  onToolAction?.('book-call')
+                  break
+                case 'summary':
+                  onToolAction?.('summary')
+                  break
+                default:
+                  onToolAction?.(tool)
+              }
+            }}
+            disabled={isLoading}
+            placeholder="Type message or /command"
+          />
+        )}
+
+        {/* Status Bar */}
+        {!isDock && (
+          <StatusBar
+            isLoading={isLoading}
+            currentStage={3}
+            totalStages={7}
+          />
+        )}
+
+        {/* Fixed Stage Indicator Overlay */}
+        {!isDock && (
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50">
+            <ActivityDisplay
+              variant="monitor"
+              activities={[
+                { id: '1', type: 'user_action', title: 'User Input', description: 'Processing message', status: 'completed', timestamp: new Date().toISOString() },
+                { id: '2', type: 'ai_thinking', title: 'AI Analysis', description: 'Analyzing context', status: 'in_progress', timestamp: new Date().toISOString() },
+                { id: '3', type: 'ai_stream', title: 'Response Generation', description: 'Generating response', status: 'pending', timestamp: new Date().toISOString() }
+              ]}
+              stages={[
+                { id: '1', label: 'Input Processing', done: true },
+                { id: '2', label: 'Context Analysis', done: true },
+                { id: '3', label: 'AI Reasoning', current: true },
+                { id: '4', label: 'Response Generation', done: false },
+                { id: '5', label: 'Tool Integration', done: false },
+                { id: '6', label: 'Output Formatting', done: false },
+                { id: '7', label: 'Final Delivery', done: false }
+              ]}
+              currentStage="3"
+              stageProgress={3}
+            />
+          </div>
+        )}
+        {/* ROI inline tool host (invisible). Kept for future card-mode hosting if needed */}
+        {false && (
+          <ROICalculator
+            mode="card"
+            onComplete={() => undefined}
+            onEmitMessage={(msg: StructuredChatMessage) => onAssistantInject?.({
+              id: `msg-${Date.now()}-tool`,
+              role: msg.role as any,
+              type: (msg as any).type === 'roi.result' ? 'tool' : 'default',
+              content: 'Tool result',
+              metadata: { tools: [{ type: 'roiResult', data: (msg as any).payload }] }
+            })}
+          />
+        )}
+      </div>
+    </TooltipProvider>
+  )
+}
+
+export default UnifiedChatInterface
                   )
                 }
                 return null

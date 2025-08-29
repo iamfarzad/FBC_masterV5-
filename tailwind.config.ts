@@ -1,62 +1,43 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  darkMode: [
-    'class',
-    '[data-theme="dark"]', // Support attribute strategy
-  ],
+  darkMode: ["class", "[data-theme='dark']"],
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
     "./hooks/**/*.{ts,tsx}",
-    "./*.{js,ts,jsx,tsx,mdx}",
   ],
-  prefix: "",
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
-      fontFamily: {
-        sans: ["var(--font-sans)", "sans-serif"],
-        display: ["var(--font-display)", "sans-serif"],
-        mono: ["var(--font-mono)", "monospace"],
-      },
       colors: {
-        // 🎨 F.B/c THEME SYSTEM - IMMUTABLE BRAND COLORS
-        // 🚫 NEVER MODIFY BRAND COLORS WITHOUT APPROVAL 🚫
-
-        // Primary brand colors (NEVER CHANGE)
-        brand: 'var(--brand)',          // #ff5b04 - F.B/c Orange
-        brandHover: 'var(--brand-hover)', // #e65200 - Orange hover
+        // Core brand colors
+        brand: 'var(--brand)',
+        'brand-hover': 'var(--brand-hover)',
 
         // Surface colors
-        bg: 'var(--bg)',                // Background
-        surface: 'var(--surface)',      // Primary surface
-        surfaceElevated: 'var(--surface-elevated)', // Elevated surface
+        bg: 'var(--bg)',
+        background: 'var(--bg)', // Legacy support
+        surface: 'var(--surface)',
+        'surface-elevated': 'var(--surface-elevated)',
 
         // Text colors
-        text: 'var(--text)',            // Primary text
-        textMuted: 'var(--text-muted)', // Muted text
+        text: 'var(--text)',
+        foreground: 'var(--text)', // Legacy support
+        'text-muted': 'var(--text-muted)',
+        'text-subtle': 'var(--text-subtle)',
 
-        // Border color
-        border: 'var(--border)',        // Border color
+        // Border colors
+        border: 'var(--border)',
+        'border-subtle': 'var(--border-subtle)',
 
-        // Semantic colors (SAFE TO EXTEND)
-        success: 'var(--success)',      // #10b981
-        warning: 'var(--warning)',      // #f59e0b
-        error: 'var(--error)',          // #ef4444
-        info: 'var(--info)',            // #3b82f6
+        // Semantic colors
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        error: 'var(--error)',
+        info: 'var(--info)',
 
-        // 🔄 LEGACY COMPATIBILITY (Safe to remove after migration)
-        // These can be removed once all components use theme tokens
-        background: 'var(--bg)',
-        foreground: 'var(--text)',
+        // Legacy shadcn/ui support (minimal)
         primary: 'var(--brand)',
         'primary-foreground': 'var(--surface)',
         secondary: 'var(--surface-elevated)',
@@ -67,95 +48,80 @@ const config: Config = {
         'accent-foreground': 'var(--surface)',
         destructive: 'var(--error)',
         'destructive-foreground': 'var(--surface)',
-        input: 'var(--surface)',
-        ring: 'var(--brand)',
-        popover: 'var(--surface)',
-        'popover-foreground': 'var(--text)',
         card: 'var(--surface)',
         'card-foreground': 'var(--text)',
+        popover: 'var(--surface)',
+        'popover-foreground': 'var(--text)',
+        input: 'var(--surface)',
+        ring: 'var(--brand)',
 
-        // Backwards-compat brand aliases (DEPRECATED - use theme tokens)
-        "orange-accent": "hsl(var(--brand))",
-        "orange-accent-hover": "hsl(var(--brand-hover))",
-        "gunmetal": "var(--color-gunmetal)",
-        "gunmetal-lighter": "var(--color-gunmetal-lighter)",
-        "light-silver": "var(--color-light-silver)",
-        "light-silver-darker": "var(--color-light-silver-darker)",
+        // Legacy color support for globals.css
+        gunmetal: '#020617',
+        'gunmetal-lighter': '#1e293b',
+        'light-silver': '#fafafa',
+        'light-silver-darker': '#f1f5f9',
+        'orange-accent': '#ff5b04',
+        'orange-accent-hover': '#e65200',
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: 'var(--radius-sm)',
+        DEFAULT: 'var(--radius)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        full: 'var(--radius-full)',
       },
       boxShadow: {
+        xs: 'var(--shadow-xs)',
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
-        lg: 'var(--shadow-lg)'
-      },
-      transitionDuration: {
-        150: "150ms",
-        200: "200ms",
-        300: "300ms",
-        500: "500ms",
-      },
-      transitionTimingFunction: {
-        smooth: "cubic-bezier(0.16, 1, 0.3, 1)",
-        bounce: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        glow: 'var(--shadow-glow)',
       },
       spacing: {
-        'responsive-base': 'var(--spacing-responsive-base, 0.5rem)',
-        'responsive-md': 'var(--spacing-responsive-md, 0.75rem)',
-        'responsive-lg': 'var(--spacing-responsive-lg, 1rem)',
-      },
-      backdropBlur: {
-        xs: "2px",
-        sm: "4px",
-        DEFAULT: "8px",
-        md: "12px",
-        lg: "16px",
-        xl: "24px",
-        "2xl": "40px",
-        "3xl": "64px",
+        1: 'var(--space-1)',
+        2: 'var(--space-2)',
+        3: 'var(--space-3)',
+        4: 'var(--space-4)',
+        5: 'var(--space-5)',
+        6: 'var(--space-6)',
+        8: 'var(--space-8)',
+        10: 'var(--space-10)',
+        12: 'var(--space-12)',
+        16: 'var(--space-16)',
       },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-        shine: {
-          from: { backgroundPosition: "200% 0" },
-          to: { backgroundPosition: "-200% 0" },
-        },
         float: {
-          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
-          "33%": { transform: "translateY(-10px) rotate(1deg)" },
-          "66%": { transform: "translateY(5px) rotate(-1deg)" },
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-200px 0" },
           "100%": { backgroundPosition: "calc(200px + 100%) 0" },
         },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'scale-in': {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-        shine: "shine 6s linear infinite",
         float: "float 6s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "bounce-slow": "bounce 2s infinite",
+        'fade-in': "fade-in 0.5s ease-out",
+        'scale-in': "scale-in 0.3s ease-out",
       },
     },
   },
   plugins: [
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
-    require("./tailwind.tokens-guard")
   ],
-} satisfies Config
+}
 
 export default config

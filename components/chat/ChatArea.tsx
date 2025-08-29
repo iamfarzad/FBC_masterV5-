@@ -15,10 +15,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Loader2, User, AlertTriangle, Info, Clock, Target, Edit } from "lucide-react"
 import { VoiceInput } from "@/components/chat/tools/VoiceInput"
 import { ROICalculator } from "@/components/chat/tools/ROICalculator"
-import { VideoToApp } from "@/components/chat/tools/VideoToApp"
+// VideoToApp moved to dedicated workshop page - redirect users there
+// import { VideoToApp } from "@/components/chat/tools/VideoToApp"
 import { WebcamCapture } from "@/components/chat/tools/WebcamCapture"
 import { ScreenShare } from "@/components/chat/tools/ScreenShare"
 import { BusinessContentRenderer } from "@/components/chat/BusinessContentRenderer"
+import { useToast } from "@/hooks/use-toast"
+import { useVideoToAppDetection } from "@/hooks/use-video-to-app-detection"
 import type { 
   VoiceTranscriptResult, 
   WebcamCaptureResult, 
@@ -53,10 +56,110 @@ export function ChatArea({
   onBusinessInteraction,
   userContext
 }: ChatAreaProps) {
+  const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [videoToAppCards, setVideoToAppCards] = useState<Record<string, any>>({})
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set())
   const [hoveredAction, setHoveredAction] = useState<string | null>(null)
+
+  // Video-to-App detection and handling
+  const handleVideoDetected = useCallback((messageId: string, videoUrl: string, videoToAppCard: any) => {
+    setVideoToAppCards(prev => ({
+      ...prev,
+      [messageId]: videoToAppCard
+    }))
+  }, [])
+
+  const handleVideoToAppStart = useCallback(async (messageId: string, videoUrl: string) => {
+    // Update the card status to analyzing
+    setVideoToAppCards(prev => ({
+      ...prev,
+      [messageId]: {
+        ...prev[messageId],
+        status: 'analyzing',
+        progress: 25
+      }
+    }))
+
+    try {
+      // Start the video analysis
+      const response = await fetch('/api/video-to-app', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateSpec',
+          videoUrl,
+          userPrompt: '',
+          sessionId: messageId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze video')
+      }
+
+      const specResult = await response.json()
+
+      // Update progress to spec generation
+      setVideoToAppCards(prev => ({
+        ...prev,
+        [messageId]: {
+          ...prev[messageId],
+          status: 'generating',
+          progress: 50,
+          spec: specResult.spec || ''
+        }
+      }))
+
+      // Generate the code
+      const codeResponse = await fetch('/api/video-to-app', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateCode',
+          spec: specResult.spec
+        })
+      })
+
+      if (!codeResponse.ok) {
+        throw new Error('Failed to generate app')
+      }
+
+      const codeResult = await codeResponse.json()
+
+      // Complete the generation
+      setVideoToAppCards(prev => ({
+        ...prev,
+        [messageId]: {
+          ...prev[messageId],
+          status: 'completed',
+          progress: 100,
+          code: codeResult.code || '',
+          artifactId: codeResult.artifactId
+        }
+      }))
+
+    } catch (error) {
+      console.error('Video-to-app generation failed:', error)
+      setVideoToAppCards(prev => ({
+        ...prev,
+        [messageId]: {
+          ...prev[messageId],
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Generation failed'
+        }
+      }))
+    }
+  }, [setVideoToAppCards])
+
+  // Use the video detection hook
+  const { startVideoToAppGeneration } = useVideoToAppDetection({
+    messages,
+    onVideoDetected: handleVideoDetected,
+    onVideoToAppStart: handleVideoToAppStart,
+    sessionId: 'chat_session'
+  })
 
   const formatMessageContent = (content: string): string => {
     if (!content) return ''
@@ -174,13 +277,25 @@ export function ChatArea({
       case 'roi_calculator':
         return <ROICalculator mode="card" onCancel={handleCancel} onComplete={(result: ROICalculationResult) => onROICalculation(result)} />
       case 'video_to_app':
-        return <VideoToApp 
-          mode="card"
-          videoUrl=""
-          status="pending"
-          sessionId={messageId}
-          onCancel={handleCancel}
-        />
+        // Redirect to dedicated workshop page
+        React.useEffect(() => {
+          const workshopUrl = '/workshop/video-to-app'
+          window.location.href = workshopUrl
+        }, [])
+
+        return (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand/10 flex items-center justify-center">
+              <Video className="w-8 h-8 text-brand" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Redirecting to Video-to-App Workshop
+            </h3>
+            <p className="text-muted-foreground">
+              Opening the dedicated workshop page for a better experience...
+            </p>
+          </div>
+        )
       case 'screen_share':
         return <ScreenShare mode="card" onCancel={handleCancel} onAnalysis={(analysis: string) => onScreenAnalysis(analysis)} />
       default:
@@ -374,19 +489,141 @@ export function ChatArea({
                           </div>
                         </div>
                         
-                        {/* VideoToApp Card */}
-                        <div className="flex justify-center">
-                          <VideoToApp
-                            mode="card"
-                            videoUrl={message.videoToAppCard.videoUrl}
-                            status={message.videoToAppCard.status}
-                            progress={message.videoToAppCard.progress}
-                            spec={message.videoToAppCard.spec}
-                            code={message.videoToAppCard.code}
-                            error={message.videoToAppCard.error}
-                            sessionId={message.videoToAppCard.sessionId}
-                          />
-                        </div>
+                        {/* Video-to-App Inline Card */}
+                        {videoToAppCards[message.id] && (
+                          <div className="mt-3">
+                            <div className="bg-surface rounded-lg border border-border overflow-hidden">
+                              {/* Header with video preview */}
+                              <div className="p-4 bg-surface-elevated/50 border-b border-border">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center">
+                                    <Video className="w-5 h-5 text-brand" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-foreground text-sm">
+                                      Video-to-Learning App
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {videoToAppCards[message.id].videoUrl}
+                                    </p>
+                                  </div>
+                                  <div className={cn(
+                                    'px-2 py-1 rounded text-xs font-medium',
+                                    videoToAppCards[message.id].status === 'completed' ? 'bg-success/10 text-success' :
+                                    videoToAppCards[message.id].status === 'analyzing' ? 'bg-info/10 text-info' :
+                                    videoToAppCards[message.id].status === 'generating' ? 'bg-warning/10 text-warning' :
+                                    videoToAppCards[message.id].status === 'error' ? 'bg-destructive/10 text-destructive' :
+                                    'bg-muted/10 text-muted-foreground'
+                                  )}>
+                                    {videoToAppCards[message.id].status}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Progress indicator */}
+                              {(videoToAppCards[message.id].status === 'analyzing' || videoToAppCards[message.id].status === 'generating') && (
+                                <div className="px-4 py-3 border-b border-border">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                      <div className="text-xs text-muted-foreground mb-1">
+                                        {videoToAppCards[message.id].status === 'analyzing'
+                                          ? 'Analyzing video content...'
+                                          : 'Generating interactive app...'}
+                                      </div>
+                                      {videoToAppCards[message.id].progress && (
+                                        <div className="w-full bg-surface-elevated rounded-full h-1.5">
+                                          <div
+                                            className="bg-brand h-1.5 rounded-full transition-all duration-300"
+                                            style={{ width: `${videoToAppCards[message.id].progress}%` }}
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {videoToAppCards[message.id].progress}%
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* App preview or action button */}
+                              <div className="p-4">
+                                {videoToAppCards[message.id].status === 'completed' && videoToAppCards[message.id].code ? (
+                                  <div className="space-y-3">
+                                    <div className="aspect-video bg-surface-elevated rounded border overflow-hidden">
+                                      <iframe
+                                        srcDoc={videoToAppCards[message.id].code}
+                                        className="w-full h-full border-0"
+                                        title="Generated Learning App"
+                                        sandbox="allow-scripts allow-same-origin"
+                                      />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => {
+                                          const workshopUrl = `/workshop/video-to-app?url=${encodeURIComponent(videoToAppCards[message.id].videoUrl)}`
+                                          window.open(workshopUrl, '_blank')
+                                        }}
+                                      >
+                                        <Play className="w-3 h-3 mr-1" />
+                                        Open Full Workshop
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          if (videoToAppCards[message.id].code) {
+                                            navigator.clipboard?.writeText(videoToAppCards[message.id].code)
+                                            toast({
+                                              title: "Copied!",
+                                              description: "App HTML copied to clipboard.",
+                                            })
+                                          }
+                                        }}
+                                      >
+                                        <Code className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : videoToAppCards[message.id].status === 'error' ? (
+                                  <div className="text-center py-4">
+                                    <div className="text-sm text-destructive mb-2">
+                                      Generation failed
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mb-3">
+                                      {videoToAppCards[message.id].error || 'Something went wrong'}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const workshopUrl = `/workshop/video-to-app?url=${encodeURIComponent(videoToAppCards[message.id].videoUrl)}`
+                                        window.open(workshopUrl, '_blank')
+                                      }}
+                                    >
+                                      Try in Workshop
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-4">
+                                    <div className="text-sm text-muted-foreground mb-3">
+                                      Ready to create an interactive learning app from this video?
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => startVideoToAppGeneration(message.id, videoToAppCards[message.id].videoUrl)}
+                                    >
+                                      <Sparkles className="w-3 h-3 mr-1" />
+                                      Generate App
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )
                   }

@@ -16,6 +16,7 @@ import { CanvasOrchestrator } from "@/components/chat/CanvasOrchestrator"
 import { SuggestedActions } from "@/components/intelligence/SuggestedActions"
 import { VoiceOverlay } from "@/components/chat/VoiceOverlay"
 import { StageRail } from "@/components/collab/StageRail"
+import { ConsentOverlay } from "@/components/ui/consent-overlay"
 
 import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 // AI Elements - Available for future workflow components
@@ -46,6 +47,8 @@ export default function ChatPage() {
 
   const [showCanvasOverlay, setShowCanvasOverlay] = useState(false)
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false)
+  const [showConsentOverlay, setShowConsentOverlay] = useState(false)
+  const [hasConsent, setHasConsent] = useState(false)
 
   const [showProgressRail, setShowProgressRail] = useState(false)
   const { theme, setTheme } = useTheme()
@@ -60,6 +63,54 @@ export default function ChatPage() {
       window.localStorage.setItem('intelligence-session-id', sessionId)
     }
   }, [sessionId])
+
+  // Check for existing consent on mount
+  useEffect(() => {
+    const checkConsent = async () => {
+      try {
+        const response = await fetch('/api/consent')
+        const data = await response.json()
+        if (data.allow) {
+          setHasConsent(true)
+        } else {
+          setShowConsentOverlay(true)
+        }
+      } catch (error) {
+        console.error('Failed to check consent:', error)
+        setShowConsentOverlay(true)
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      checkConsent()
+    }
+  }, [])
+
+  // Handle consent submission
+  const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
+    try {
+      const response = await fetch('/api/consent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          companyUrl: data.companyUrl,
+          name: data.name,
+        }),
+      })
+
+      if (response.ok) {
+        setHasConsent(true)
+        setShowConsentOverlay(false)
+      } else {
+        console.error('Failed to submit consent')
+      }
+    } catch (error) {
+      console.error('Error submitting consent:', error)
+    }
+  }
 
   // Tool Items - Following Blueprint Pattern
   const toolItems = [
@@ -163,6 +214,9 @@ export default function ChatPage() {
       }
 
       addMessage(systemMessage)
+
+      // Trigger the appropriate tool action to open canvas/modal
+      handleToolAction(toolId)
     }
   }
 
@@ -245,13 +299,18 @@ export default function ChatPage() {
         openCanvas('pdf')
         break
       case 'video':
-        openCanvas('video')
+        // Redirect to dedicated workshop page for video-to-app
+        window.location.href = '/workshop/video-to-app'
         break
       case 'roi':
         openCanvas('roi')
         break
       case 'code':
         openCanvas('code')
+        break
+      case 'workshop':
+        // Redirect to workshop index or specific workshop page
+        window.location.href = '/workshop'
         break
       case 'suggested':
         console.log('Suggested action triggered')
@@ -517,7 +576,7 @@ export default function ChatPage() {
                                     </div>
                                     <div className="flex flex-col flex-1">
                                       <div className="text-sm text-muted-foreground mb-2">
-                                        F.B/c AI {message.type === 'system' && <Badge variant="secondary" className="ml-2 text-xs">System</Badge>}
+                                        F.B/c AI {message.role === 'system' && <Badge variant="secondary" className="ml-2 text-xs">System</Badge>}
                                       </div>
                                       <div className="bg-white dark:bg-gunmetal-lighter rounded-2xl rounded-tl-md px-6 py-4 modern-card shadow-lg">
                                         <div className="prose prose-sm max-w-none dark:prose-invert">
@@ -665,7 +724,7 @@ export default function ChatPage() {
         <CanvasOrchestrator />
 
         {/* Fixed Position Stage Indicator */}
-        <StageRail sessionId={sessionId} />
+        {sessionId && <StageRail sessionId={sessionId} />}
 
         {/* Voice Overlay */}
         <VoiceOverlay
@@ -673,6 +732,12 @@ export default function ChatPage() {
           onCancel={() => setShowVoiceOverlay(false)}
           onAccept={handleVoiceInput}
           sessionId={sessionId}
+        />
+
+        {/* Consent Overlay */}
+        <ConsentOverlay
+          isVisible={showConsentOverlay}
+          onSubmit={handleConsentSubmit}
         />
         </div>
       </div>

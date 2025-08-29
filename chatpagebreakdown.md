@@ -261,7 +261,7 @@ User Voice Input → WebRTC Audio Processor → WebSocket Stream → Gemini Live
 #### **Supported Tools:**
 - `webcam` → WebcamCapture component
 - `screen` → ScreenShare component
-- `video` → VideoToApp component
+- `video` → Redirects to Video-to-App Workshop
 - `pdf` → Document viewer
 - `code` → CodeBlock component
 
@@ -854,7 +854,7 @@ ChatPage
 **Supported Tools:**
 - `webcam` → WebcamCapture component
 - `screen` → ScreenShare component
-- `video` → VideoToApp component
+- `video` → Redirects to Video-to-App Workshop
 - `pdf` → Document viewer
 - `code` → CodeBlock component
 

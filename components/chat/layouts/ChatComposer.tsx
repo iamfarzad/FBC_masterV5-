@@ -67,8 +67,7 @@ export function ChatComposer({
               onWebcam={() => onToolAction?.('webcam')}
               onScreenShare={() => onToolAction?.('screen')}
               onROI={() => onToolAction?.('roi')}
-              onVideoToApp={() => onToolAction?.('video')}
-              comingSoon={['video']} // Only video-to-app is still coming soon
+              comingSoon={[]} // Video-to-app is now available in workshop
             />
           </div>
         </PromptInputToolbar>

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Menu, Languages, Check } from "@/src/core/icon-mapping"
 import { FbcIcon } from "@/components/ui/fbc-icon"
+import { LanguageSelector } from "@/components/ui/language-selector"
+import { useI18n } from "@/contexts/i18n-context"
 
 const FbcLogo = ({ className }: { className?: string }) => (
   <span className={cn("font-bold text-brand drop-shadow-sm", className)}>
@@ -18,30 +20,20 @@ import { cn } from '@/src/core/utils'
 import { useState } from "react"
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/consulting", label: "Consulting" },
-  { href: "/about", label: "About" },
-  // Workshop now accessed via the sidebar in the collab shell
-  { href: "/contact", label: "Contact" },
-]
-
-const languages = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'no', name: 'Norwegian', flag: '🇳🇴' }
+  { href: "/", key: "nav.home" },
+  { href: "/consulting", key: "nav.consulting" },
+  { href: "/about", key: "nav.about" },
+  { href: "/workshop/video-to-app", key: "nav.workshop" },
+  { href: "/contact", key: "nav.contact" },
 ]
 
 export default function Header() {
   const pathname = usePathname()
-  const [currentLanguage, setCurrentLanguage] = useState('en')
-
-  const LanguageSelector = () => (
-    // Language selector temporarily disabled until translations are ready
-    null
-  )
+  const { t, currentLanguage } = useI18n()
 
   const NavLinks = ({ className }: { className?: string }) => (
     <nav className={cn("flex items-center gap-3 md:gap-4 text-sm", className)}>
-      {navLinks.map(({ href, label }) => (
+      {navLinks.map(({ href, key }) => (
         <Link
           key={href}
           href={href}
@@ -51,7 +43,7 @@ export default function Header() {
             pathname === href ? "text-foreground" : "text-foreground/90",
           )}
         >
-          {label}
+          {t(key)}
         </Link>
       ))}
     </nav>
@@ -61,14 +53,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-header">
       <div className="mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-6 flex h-16 items-center">
         <Link href="/" className="flex items-center gap-3" aria-label="F.B/c Home">
-          <FbcIcon className="w-8 h-8" />
+          <FbcIcon variant="default" size={24} />
           <FbcLogo className="text-lg" />
         </Link>
         <div className="hidden md:flex ml-10">
           <NavLinks />
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <LanguageSelector />
+          <LanguageSelector variant="minimal" className="min-h-11 min-w-11" />
           <div className="min-h-11 min-w-11 inline-flex items-center justify-center">
             <ThemeToggle />
           </div>

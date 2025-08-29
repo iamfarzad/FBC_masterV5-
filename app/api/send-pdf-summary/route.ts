@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { generatePdf, generatePdfPath } from '@/lib/pdf-generator'
+import { generatePdfWithPuppeteer, generatePdfPath } from '@/src/core/pdf-generator-puppeteer'
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import fs from 'fs'
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { sessionId, toEmail, leadName = 'Lead' } = await req.json()
+    const { sessionId, toEmail, leadName = 'Lead', language = 'en' } = await req.json()
 
     if (!sessionId || !toEmail) {
       return NextResponse.json({ error: 'sessionId and toEmail are required' }, { status: 400 })
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     const pdfPath = generatePdfPath(sessionId, leadInfo.name)
-    await generatePdf(summaryData as any, pdfPath)
+    await generatePdfWithPuppeteer(summaryData as any, pdfPath, 'client', language)
     const pdfBuffer = fs.readFileSync(pdfPath)
     fs.unlinkSync(pdfPath)
 
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (e: unknown) {
-    console.error('send-pdf-summary error', error)
-    return NextResponse.json({ error: e?.message || 'Internal error' }, { status: 500 })
+    console.error('send-pdf-summary error', e)
+    return NextResponse.json({ error: (e as Error)?.message || 'Internal error' }, { status: 500 })
   }
 }
 

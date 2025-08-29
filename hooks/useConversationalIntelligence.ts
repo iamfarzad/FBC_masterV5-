@@ -1,6 +1,6 @@
 // NOTE: This file defines a single export below. Do not duplicate the hook.
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 export interface IntelligenceContext {
   lead: { email: string; name: string }
@@ -42,6 +42,19 @@ export function useConversationalIntelligence() {
   const [error, setError] = useState<string | null>(null)
   const lastSessionIdRef = useRef<string | null>(null)
   const lastHashRef = useRef<string | null>(null)
+
+  // Multimodal state tracking
+  const [activeModalities, setActiveModalities] = useState<{
+    voice: boolean
+    webcam: boolean
+    screen: boolean
+    text: boolean
+  }>({
+    voice: false,
+    webcam: false,
+    screen: false,
+    text: true // Text is always available
+  })
 
   const getSessionId = useCallback(() => {
     if (typeof window === 'undefined') return null
@@ -139,6 +152,85 @@ export function useConversationalIntelligence() {
     }
   }, [])
 
+  /** Update active modality state **/
+  const setModalityActive = useCallback((modality: keyof typeof activeModalities, active: boolean) => {
+    setActiveModalities(prev => ({
+      ...prev,
+      [modality]: active
+    }))
+  }, [])
+
+  /** Get multimodal status description **/
+  const getMultimodalStatus = useCallback(() => {
+    const active = Object.entries(activeModalities)
+      .filter(([_, isActive]) => isActive)
+      .map(([modality, _]) => modality)
+
+    if (active.length === 0) return 'Text chat only'
+    if (active.length === 1) return `${active[0]} active`
+    if (active.length === 2) return `${active.join(' + ')} active`
+    return `Full multimodal (${active.join(' + ')})`
+  }, [activeModalities])
+
+  /** Update multimodal capabilities in intelligence context **/
+  const updateMultimodalCapabilities = useCallback(async (
+    sessionId: string,
+    modalities: {
+      voice?: boolean
+      webcam?: boolean
+      screen?: boolean
+      text?: boolean
+    }
+  ): Promise<void> => {
+    try {
+      const activeCapabilities: string[] = []
+
+      // Add multimodal capabilities
+      if (modalities.voice) activeCapabilities.push('voice')
+      if (modalities.webcam) activeCapabilities.push('webcam')
+      if (modalities.screen) activeCapabilities.push('screen-share')
+      if (modalities.text) activeCapabilities.push('text-chat')
+
+      // Add combined multimodal capabilities
+      const activeModalities = Object.values(modalities).filter(Boolean)
+      if (activeModalities.length > 1) {
+        activeCapabilities.push('multimodal')
+      }
+
+      if (activeModalities.length === 3) {
+        activeCapabilities.push('full-multimodal')
+      }
+
+      // Update context with new capabilities
+      const currentContext = context
+      if (currentContext) {
+        const updatedContext = {
+          ...currentContext,
+          capabilities: activeCapabilities
+        }
+        setContext(updatedContext)
+      }
+
+      // Optionally persist to backend (for session continuity)
+      // await fetch(`/api/intelligence/capabilities`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ sessionId, capabilities: activeCapabilities })
+      // })
+
+    } catch (error) {
+      console.error('Failed to update multimodal capabilities:', error)
+    }
+  }, [context])
+
+  // Auto-update capabilities when modalities change
+  useEffect(() => {
+    const sessionId = getSessionId()
+    if (sessionId) {
+      updateMultimodalCapabilities(sessionId, activeModalities)
+    }
+  }, [activeModalities, getSessionId, updateMultimodalCapabilities])
+
   return {
     context,
     isLoading,
@@ -148,5 +240,10 @@ export function useConversationalIntelligence() {
     fetchContextFromLocalSession,
     clearContextCache,
     generatePersonalizedGreeting,
+    updateMultimodalCapabilities,
+    // Multimodal state management
+    activeModalities,
+    setModalityActive,
+    getMultimodalStatus
   }
 }

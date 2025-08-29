@@ -2,99 +2,128 @@ import { generatePdfWithPuppeteer } from '../src/core/pdf-generator-puppeteer';
 import fs from 'fs';
 import path from 'path';
 
-// Mock data for sample PDF
+// Updated sample data with more realistic content
 const sampleData = {
   leadInfo: {
-    name: "John Smith",
-    email: "john.smith@techcorp.com",
-    company: "TechCorp Solutions",
-    role: "CTO"
+    name: "Marcus Jensen",
+    email: "marcus.jensen@nordictech.no",
+    company: "Nordic Tech Solutions AS",
+    role: "Chief Technology Officer"
   },
   conversationHistory: [
     {
       role: "user" as const,
-      content: "Hi, I'm looking to implement AI solutions for our customer service operations. We're getting about 1000 support tickets per day and need to automate responses.",
-      timestamp: "2024-01-15T10:30:00Z"
-    },
-    {
-      role: "assistant" as const, 
-      content: "That's a great use case for AI! I can help you implement an intelligent customer service system. Let me understand your current setup better - what channels do you receive tickets through?",
-      timestamp: "2024-01-15T10:31:00Z"
-    },
-    {
-      role: "user" as const,
-      content: "We use Zendesk for email tickets and Intercom for live chat. The main issues are response time and consistency in our support quality.",
-      timestamp: "2024-01-15T10:32:00Z"
+      content: "Hello! I'm exploring AI solutions for our customer support team. We handle approximately 800 support requests daily and need to improve our response times significantly.",
+      timestamp: "2024-01-20T09:15:00Z"
     },
     {
       role: "assistant" as const,
-      content: "Perfect! I can help you implement AI-powered responses that integrate with both Zendesk and Intercom. This would reduce response times from hours to minutes and ensure consistent quality. What's your timeline for implementation?",
-      timestamp: "2024-01-15T10:33:00Z"
+      content: "That's an excellent opportunity! I can help you implement intelligent customer service automation. Could you tell me about your current support channels and main challenges?",
+      timestamp: "2024-01-20T09:16:00Z"
     },
     {
       role: "user" as const,
-      content: "We'd like to start within the next 2-3 weeks. Budget isn't a major constraint if we can see clear ROI. Can you provide a demo and cost estimate?",
-      timestamp: "2024-01-15T10:35:00Z"
+      content: "We use Zendesk for email tickets, Intercom for live chat, and have a phone support team. Our biggest challenges are maintaining consistent response quality and reducing the time from ticket creation to first response.",
+      timestamp: "2024-01-20T09:17:00Z"
     },
     {
       role: "assistant" as const,
-      content: "Absolutely! I'll prepare a personalized demo showing how AI can handle your specific ticket types. Based on your volume, I estimate 60-70% automation rate with 40-50% cost reduction. Let me schedule a detailed consultation.",
-      timestamp: "2024-01-15T10:36:00Z"
+      content: "Perfect! I can help you implement AI-powered responses that integrate seamlessly with all your channels. This would reduce first response times from hours to minutes while maintaining high quality. What's your timeline for implementation?",
+      timestamp: "2024-01-20T09:18:00Z"
     },
     {
       role: "user" as const,
-      content: "That sounds promising. I'm available tomorrow afternoon for a demo. Can you also prepare some case studies from similar companies?",
-      timestamp: "2024-01-15T10:38:00Z"
+      content: "We're looking to start within the next 3-4 weeks. We have budget allocated and are focused on ROI. Can you provide a detailed proposal and demo?",
+      timestamp: "2024-01-20T09:20:00Z"
     },
     {
       role: "assistant" as const,
-      content: "Perfect! I'll send you case studies from tech companies with similar ticket volumes and prepare a demo focused on your Zendesk/Intercom integration. Looking forward to our call tomorrow!",
-      timestamp: "2024-01-15T10:39:00Z"
+      content: "Absolutely! Based on your volume, I can estimate 65-75% automation rate with 40-50% cost reduction. I'll prepare a comprehensive proposal with implementation timeline and ROI projections. Would you be available for a 30-minute discovery call next week?",
+      timestamp: "2024-01-20T09:21:00Z"
     }
   ],
   leadResearch: {
-    conversation_summary: "John Smith, CTO at TechCorp Solutions, is seeking AI solutions to automate their customer service operations handling 1000+ daily support tickets. They need intelligent response automation and are ready for immediate implementation.",
-    consultant_brief: "High-value prospect with clear use case and budget. Ready for immediate engagement. Recommend personalized demo and ROI calculation within 24 hours.",
-    lead_score: 85,
-    ai_capabilities_shown: "Natural language processing, automated response generation, sentiment analysis, and integration capabilities for customer service platforms."
+    conversation_summary: "Marcus Jensen, CTO at Nordic Tech Solutions AS, is seeking AI solutions to optimize their customer service operations handling 800+ daily support requests. They need intelligent automation and are ready for immediate implementation with allocated budget.",
+    consultant_brief: "High-value enterprise prospect with clear technical requirements and budget approval. Strong decision-making authority. Recommend immediate demo booking and comprehensive ROI analysis. Priority: Schedule discovery call within 48 hours.",
+    lead_score: 92,
+    ai_capabilities_shown: "Advanced natural language processing, multi-channel integration, sentiment analysis, automated ticket routing, and real-time response optimization for customer service platforms."
   },
-  sessionId: "session_12345"
+  sessionId: "session_nordic_2024_001"
 };
 
-async function generateSamplePdfs() {
-  // Action logged
-  
+async function generateFreshSamplePdfs() {
+  console.log('🎨 Generating Fresh PDF Samples with Latest Design...\n');
+
   // Ensure samples directory exists
   const samplesDir = path.join(process.cwd(), 'public', 'samples');
   if (!fs.existsSync(samplesDir)) {
     fs.mkdirSync(samplesDir, { recursive: true });
   }
 
-  // Generate client-facing PDF
-  const clientPdfPath = path.join(samplesDir, 'sample-fb-c-client.pdf');
-  try {
-    await generatePdfWithPuppeteer(sampleData, clientPdfPath, 'client');
-    const clientStats = fs.statSync(clientPdfPath);
-    // Action logged
-    // Action logged
-    // Action logged.toFixed(2)} KB`);
-  } catch (error) {
-    console.error('❌ Client PDF generation failed', error)
+  // Clean up old samples first
+  const existingSamples = fs.readdirSync(samplesDir).filter(f => f.endsWith('.pdf'));
+  console.log(`🧹 Cleaning up ${existingSamples.length} existing samples...`);
+  existingSamples.forEach(file => {
+    try {
+      fs.unlinkSync(path.join(samplesDir, file));
+    } catch (err) {
+      console.warn(`Could not delete ${file}:`, err.message);
+    }
+  });
+
+  const samples = [
+    { name: 'Internal Consultant View', file: 'sample-fb-c-internal.pdf', mode: 'internal' as const, language: 'en' },
+    { name: 'Client Presentation', file: 'sample-fb-c-client.pdf', mode: 'client' as const, language: 'en' },
+    { name: 'English Professional', file: 'sample-fb-c-english.pdf', mode: 'client' as const, language: 'en' },
+    { name: 'Norwegian Translation', file: 'sample-fb-c-norwegian.pdf', mode: 'client' as const, language: 'no' },
+    { name: 'Branded Version', file: 'sample-fb-c-branded.pdf', mode: 'internal' as const, language: 'en' },
+    { name: 'Legacy Comparison', file: 'sample-fb-c-legacy.pdf', mode: 'client' as const, language: 'en' }
+  ];
+
+  console.log('📊 Sample Data:');
+  console.log(`   Name: ${sampleData.leadInfo.name}`);
+  console.log(`   Company: ${sampleData.leadInfo.company}`);
+  console.log(`   Lead Score: ${sampleData.leadResearch?.lead_score}/100`);
+  console.log(`   Session: ${sampleData.sessionId}`);
+  console.log('');
+
+  for (const sample of samples) {
+    console.log(`📄 Generating ${sample.name} (${sample.language.toUpperCase()})...`);
+
+    const outputPath = path.join(samplesDir, sample.file);
+
+    try {
+      await generatePdfWithPuppeteer(sampleData, outputPath, sample.mode, sample.language);
+
+      // Check file stats
+      const stats = fs.statSync(outputPath);
+      const fileSizeKB = (stats.size / 1024).toFixed(2);
+
+      console.log(`✅ ${sample.name} Generated Successfully!`);
+      console.log(`📊 File Size: ${fileSizeKB} KB`);
+      console.log(`📁 Location: ${outputPath}`);
+      console.log(`🌍 Language: ${sample.language}`);
+      console.log(`🎯 Mode: ${sample.mode}`);
+      console.log('');
+
+    } catch (error) {
+      console.error(`❌ ${sample.name} Generation Failed:`, error.message);
+      console.error('Stack:', error.stack);
+      console.log('');
+    }
   }
 
-  // Generate internal admin PDF
-  const internalPdfPath = path.join(samplesDir, 'sample-fb-c-internal.pdf');
-  try {
-    await generatePdfWithPuppeteer(sampleData, internalPdfPath, 'internal');
-    const internalStats = fs.statSync(internalPdfPath);
-    // Action logged
-    // Action logged
-    // Action logged.toFixed(2)} KB`);
-  } catch (error) {
-    console.error('❌ Internal PDF generation failed', error)
-  }
-
-  // Action logged
+  console.log('🎉 Fresh PDF Sample Generation Complete!');
+  console.log('📂 Check public/samples/ for all new samples');
+  console.log('');
+  console.log('🔍 New Design Features:');
+  console.log('   • Modern card-based layout with CSS custom properties');
+  console.log('   • Professional gradient header with F.B/c branding');
+  console.log('   • Enhanced typography and spacing');
+  console.log('   • AI-powered translation support');
+  console.log('   • Responsive design elements');
+  console.log('   • Improved visual hierarchy');
+  console.log('   • Brand-consistent color scheme');
 }
 
-generateSamplePdfs().catch(console.error);
+generateFreshSamplePdfs().catch(console.error);

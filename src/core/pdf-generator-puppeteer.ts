@@ -1,7 +1,8 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { GeminiTranslator } from './gemini-translator';
 
 interface SummaryData {
   leadInfo: {
@@ -24,46 +25,65 @@ interface SummaryData {
   sessionId: string;
 }
 
+type Mode = 'client' | 'internal';
+
 /**
  * Generates a PDF summary using Puppeteer for better reliability
  */
+// Initialize Gemini translator for dynamic content translation
+const translator = new GeminiTranslator();
+
 export async function generatePdfWithPuppeteer(
   summaryData: SummaryData,
-  outputPath: string
+  outputPath: string,
+  mode: Mode = 'client',
+  language: string = 'en'
 ): Promise<void> {
-  const preferChrome = process.env.PDF_USE_PUPPETEER === 'true'
-  // Prefer Chrome only if explicitly enabled; otherwise use pure JS pdf-lib
-  if (preferChrome) {
+  const usePdfLib = process.env.PDF_USE_PDFLIB === 'true'
+  // Use Puppeteer by default for modern HTML→PDF, fallback to pdf-lib if explicitly requested
+  if (!usePdfLib) {
     try {
       const browser = await puppeteer.launch({
         headless: 'new' as any,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
       });
       try {
         const page = await browser.newPage();
-        const htmlContent = generateHtmlContent(summaryData);
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        const htmlContent = await generateHtmlContent(summaryData, mode, language);
+        await page.setContent(htmlContent, {
+          waitUntil: 'networkidle0',
+          timeout: 30000
+        });
         await page.pdf({
           path: outputPath,
           format: 'A4',
           margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
           printBackground: true,
+          preferCSSPageSize: true,
         });
         return
       } finally {
         await browser.close();
       }
     } catch (err) {
-    console.error('Puppeteer failed, falling back to pdf-lib?.message || err)', error)
-      await generatePdfWithPdfLib(summaryData, outputPath)
+      console.error('Puppeteer failed, falling back to pdf-lib:', (err as any)?.message || err)
+      await generatePdfWithPdfLib(summaryData, outputPath, mode, language)
       return
     }
   }
-  // default path
-  await generatePdfWithPdfLib(summaryData, outputPath)
+  // Use pdf-lib if explicitly requested
+  await generatePdfWithPdfLib(summaryData, outputPath, mode, language)
 }
 
-async function generatePdfWithPdfLib(summaryData: SummaryData, outputPath: string): Promise<void> {
+async function generatePdfWithPdfLib(summaryData: SummaryData, outputPath: string, mode: Mode = 'client', language: string = 'en'): Promise<void> {
   const pdfDoc = await PDFDocument.create()
   let currentPage = pdfDoc.addPage([595.28, 841.89]) // A4 in points
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -179,526 +199,651 @@ function buildDefaultOrbLogoDataUri(): string {
   }
 }
 
-function generateHtmlContent(data: SummaryData): string {
-  const { leadInfo, conversationHistory, leadResearch } = data;
-  // Embed brand logo as data URI if available via env; avoid fs/path for serverless safety
-  const logoDataUri = process.env.NEXT_PUBLIC_PDF_LOGO_DATA_URI || buildDefaultOrbLogoDataUri()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.farzadbayat.com'
-  const esc = (s: unknown) => String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-  
-  return `
-<!DOCTYPE html>
-<html lang="en">
+// Simple translation utility - in production, use a proper i18n library
+const translations = {
+  en: {
+    leadInformation: 'Lead Information',
+    executiveSummary: 'Executive Summary',
+    consultantBrief: 'Consultant Brief',
+    aiCapabilitiesIdentified: 'AI Capabilities Identified',
+    conversationHighlights: 'Conversation Highlights',
+    strategicRecommendations: 'Strategic Recommendations',
+    leadQualificationStatus: 'Lead Qualification Status',
+    recommendedNextSteps: 'Recommended Next Steps',
+    followUpTimeline: 'Follow-up Timeline',
+    immediate: 'Immediate',
+    shortTerm: 'Short-term',
+    midTerm: 'Mid-term',
+    bookDiscoveryCall: 'Book 30‑min Discovery Call',
+    viewWorkshop: 'View Workshop',
+    nextSteps: 'Next Steps',
+    highValueProspect: 'High-Value Prospect',
+    qualifiedProspect: 'Qualified Prospect',
+    requiresFurtherQualification: 'Requires Further Qualification',
+    name: 'Name',
+    email: 'Email',
+    company: 'Company',
+    role: 'Role',
+    sessionId: 'Session ID',
+    reportDate: 'Report Date'
+  },
+  no: {
+    leadInformation: 'Lead Informasjon',
+    executiveSummary: 'Sammendrag',
+    consultantBrief: 'Konsulent Rapport',
+    aiCapabilitiesIdentified: 'AI Evner Identifisert',
+    conversationHighlights: 'Samtale Høydepunkter',
+    strategicRecommendations: 'Strategiske Anbefalinger',
+    leadQualificationStatus: 'Lead Kvalifikasjonsstatus',
+    recommendedNextSteps: 'Anbefalte Neste Skritt',
+    followUpTimeline: 'Oppfølgingsplan',
+    immediate: 'Umiddelbar',
+    shortTerm: 'Kort sikt',
+    midTerm: 'Mellomlang sikt',
+    bookDiscoveryCall: 'Book 30-min Discovery Call',
+    viewWorkshop: 'Se Workshop',
+    nextSteps: 'Neste Skritt',
+    highValueProspect: 'Høyverdig Prospekt',
+    qualifiedProspect: 'Kvalifisert Prospekt',
+    requiresFurtherQualification: 'Krever Videre Kvalifisering',
+    name: 'Navn',
+    email: 'E-post',
+    company: 'Selskap',
+    role: 'Rolle',
+    sessionId: 'Økt ID',
+    reportDate: 'Rapport Dato'
+  }
+};
+
+function t(key: string, language: string = 'en'): string {
+  const lang = translations[language as keyof typeof translations] || translations.en;
+  return lang[key as keyof typeof lang] || key;
+}
+
+async function generateHtmlContent(data: SummaryData, mode: Mode = 'client', language: string = 'en'): Promise<string> {
+  const esc = (s: any) => String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+
+  const { leadInfo, conversationHistory, leadResearch } = data
+  const isClient = mode === 'client';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.farzadbayat.com"
+
+  // Use actual logo file path
+  const logoPath = isClient
+    ? `${appUrl}/fbc-icon/fbc-voice-orb-light-png/fbc-voice-orb-logo.svg`
+    : `${appUrl}/fbc-icon/fbc-voice-orb-dark-png/fbc-voice-orb-logo-dark.svg`
+
+  const score = typeof leadResearch?.lead_score === "number" ? leadResearch!.lead_score : undefined
+  const scoreClass = score == null ? "" : score > 70 ? "high" : score > 40 ? "mid" : "low"
+
+  const lastMessages = (conversationHistory || []).slice(-8)
+
+  // Translate dynamic content if not English
+  let translatedSummary = leadResearch?.conversation_summary;
+  let translatedBrief = leadResearch?.consultant_brief;
+  let translatedCapabilities = leadResearch?.ai_capabilities_shown;
+
+  if (language !== 'en') {
+    try {
+      if (leadResearch?.conversation_summary) {
+        translatedSummary = await translator.translateSummary(leadResearch.conversation_summary, language);
+      }
+      if (leadResearch?.consultant_brief) {
+        translatedBrief = await translator.translateBrief(leadResearch.consultant_brief, language);
+      }
+      if (leadResearch?.ai_capabilities_shown) {
+        translatedCapabilities = await translator.translate(leadResearch.ai_capabilities_shown, language, {
+          context: 'AI capabilities and technical features'
+        });
+      }
+    } catch (error) {
+      console.warn('Translation failed, using original content:', error);
+      // Fall back to original content if translation fails
+    }
+  }
+
+  return `<!DOCTYPE html>
+<html lang="${language}">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>F.B/c AI Consulting - ${leadInfo.name} Report</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Arial, sans-serif;
-      color: #1f2937;
-      line-height: 1.6;
-      font-size: 10pt;
-      background: #f9fafb;
-    }
-    
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Header Section */
-    header {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 60px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-      animation: pulse 4s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.1); opacity: 0.3; }
-    }
-    
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      justify-content: center;
-      position: relative;
-      z-index: 1;
-      margin-bottom: 8px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Consulting Report - F.B/c</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .brand .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      background: rgba(255,255,255,0.05);
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: #f8f9fa;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
 
-    .brand .title {
-      font-size: 28pt;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
+        .container {
+            width: 800px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
 
-    header .subtitle {
-      font-size: 14pt;
-      font-weight: 400;
-      opacity: 0.9;
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* legacy corner logo removed in favor of inline brand */
-    
-    /* Content Sections */
-    .content {
-      padding: 40px;
-    }
-    
-    .section {
-      margin-bottom: 40px;
-    }
-    
-    .section h2 {
-      font-size: 18pt;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 20px;
-      position: relative;
-      padding-bottom: 10px;
-    }
-    
-    .section h2::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
-      border-radius: 2px;
-    }
-    
-    /* Info Grid */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .info-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .info-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-    
-    .info-card strong {
-      display: block;
-      font-size: 9pt;
-      font-weight: 500;
-      color: #64748b;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    .info-card span {
-      font-size: 11pt;
-      color: #1e293b;
-      font-weight: 500;
-    }
-    
-    /* Score Display */
-    .score-container {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      background: #f8fafc;
-      padding: 16px 24px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-    }
-    
-    .score-value {
-      font-size: 24pt;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-    
-    .score-value.high { color: #059669; }
-    .score-value.medium { color: #f59e0b; }
-    .score-value.low { color: #dc2626; }
-    
-    .score-label {
-      font-size: 10pt;
-      color: #64748b;
-    }
-    
-    .score-bar {
-      width: 120px;
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
-    }
-    
-    .score-bar-fill {
-      height: 100%;
-      transition: width 0.5s ease;
-      border-radius: 4px;
-    }
-    
-    .score-bar-fill.high { background: linear-gradient(90deg, #059669 0%, #10b981 100%); }
-    .score-bar-fill.medium { background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); }
-    .score-bar-fill.low { background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); }
-    
-    /* Conversation Items */
-    .conversation-container {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-    
-    .conversation-item {
-      margin-bottom: 16px;
-      padding: 16px;
-      border-radius: 8px;
-      position: relative;
-      transition: transform 0.2s ease;
-    }
-    
-    .conversation-item.user {
-      background: white;
-      border: 1px solid #e2e8f0;
-      margin-left: 40px;
-    }
-    
-    .conversation-item.assistant {
-      background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
-      border: 1px solid #fcd34d;
-      margin-right: 40px;
-    }
-    
-    .conversation-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 9pt;
-      color: #64748b;
-      margin-bottom: 8px;
-    }
-    
-    .conversation-content {
-      font-size: 10pt;
-      color: #1e293b;
-      line-height: 1.5;
-    }
-    
-    /* Insights Section */
-    .insights-container {
-      background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
-      border-radius: 12px;
-      padding: 32px;
-      border: 1px solid #fcd34d;
-    }
-    
-    .insights-container h3 {
-      font-size: 14pt;
-      font-weight: 600;
-      color: #92400e;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .insights-container p,
-    .insights-container li {
-      color: #78350f;
-      line-height: 1.8;
-    }
-    
-    .insights-container ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    
-    .insights-container li {
-      position: relative;
-      padding-left: 24px;
-      margin-bottom: 8px;
-    }
-    
-    .insights-container li::before {
-      content: '→';
-      position: absolute;
-      left: 0;
-      color: #f59e0b;
-      font-weight: 600;
-    }
-    
-    /* Summary Text */
-    .summary-text {
-      background: #f8fafc;
-      border-left: 4px solid #3b82f6;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-style: italic;
-      color: #475569;
-    }
-    
-    /* Footer */
-    footer {
-      background: #1e293b;
-      color: white;
-      padding: 32px 40px;
-      text-align: center;
-    }
-    
-    footer p {
-      font-size: 10pt;
-      opacity: 0.9;
-      line-height: 1.8;
-    }
-    
-    footer a {
-      color: #fbbf24;
-      text-decoration: none;
-    }
-    
-    /* Watermark */
-    .watermark {
-      position: fixed;
-      bottom: 50%;
-      right: 50%;
-      transform: translate(50%, 50%) rotate(-45deg);
-      opacity: 0.05;
-      z-index: -1;
-      pointer-events: none;
-      font-family: 'Inter', sans-serif;
-      font-size: 120px;
-      font-weight: 700;
-      color: #1e293b;
-      letter-spacing: -0.02em;
-    }
-    
-    /* Page Break */
-    .page-break {
-      page-break-before: always;
-    }
-    
-    /* Print Styles */
-    @media print {
-      body {
-        background: white;
-      }
-      .container {
-        box-shadow: none;
-      }
-    }
-  </style>
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #ff5b04 0%, #ff7a33 100%);
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ff5b04;
+            font-size: 18px;
+        }
+
+        .brand-text {
+            color: white;
+        }
+
+        .brand-name {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-tagline {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .doc-type {
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            z-index: 1;
+        }
+
+        /* Cover */
+        .cover {
+            padding: 80px 48px;
+            text-align: center;
+            background: linear-gradient(180deg, #fafbfc 0%, white 100%);
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: #ff5b04;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+        }
+
+        .cover h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .cover-meta {
+            color: #6b7280;
+            font-size: 15px;
+            margin-top: 24px;
+        }
+
+        .cover-meta-item {
+            margin: 4px 0;
+        }
+
+        .cover-meta-item strong {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        /* Content Sections */
+        .content {
+            padding: 48px;
+        }
+
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff5b04 0%, #ff7a33 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.3px;
+        }
+
+        .card {
+            background: #fafbfc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff5b04 0%, #ff7a33 100%);
+        }
+
+        .card-content {
+            color: #4b5563;
+            line-height: 1.8;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+            min-width: 80px;
+        }
+
+        .info-value {
+            color: #6b7280;
+        }
+
+        /* Capabilities List */
+        .capabilities-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .capabilities-list li {
+            position: relative;
+            padding-left: 32px;
+            margin-bottom: 16px;
+            color: #4b5563;
+        }
+
+        .capabilities-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background: #ff5b04;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Next Steps */
+        .next-steps-list {
+            list-style: none;
+            padding: 0;
+            counter-reset: step-counter;
+        }
+
+        .next-steps-list li {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 20px;
+            color: #4b5563;
+            counter-increment: step-counter;
+        }
+
+        .next-steps-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #ff5b04 0%, #ff7a33 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .cta-link {
+            color: #ff5b04;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .cta-link:hover {
+            border-bottom-color: #ff5b04;
+        }
+
+        /* Priority Badge */
+        .priority-badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 32px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left {
+            flex: 1;
+        }
+
+        .footer-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .footer-contact {
+            font-size: 13px;
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .footer-website {
+            color: #ff5b04;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .footer-website:hover {
+            color: #ff7a33;
+        }
+
+        /* Decorative Elements */
+        .decorative-dots {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            opacity: 0.1;
+            background-image: radial-gradient(circle, #ff5b04 2px, transparent 2px);
+            background-size: 10px 10px;
+        }
+    </style>
 </head>
 <body>
-  <!-- Watermark -->
-  <div class="watermark">
-    F.B/c
-  </div>
-  
-  <div class="container">
-    <header>
-      <div class="brand">
-        ${logoDataUri ? `<img class="logo" src="${logoDataUri}" alt="F.B/c"/>` : ''}
-        <div class="title">F.B/c AI Consulting</div>
-      </div>
-      <p class="subtitle">AI-Powered Lead Generation & Consulting Report</p>
-    </header>
-    
-    <div class="content">
-      <div class="section">
-        <h2>Lead Information</h2>
-        <div class="info-grid">
-          <div class="info-card">
-            <strong>Name</strong>
-            <span>${esc(leadInfo.name)}</span>
-          </div>
-          <div class="info-card">
-            <strong>Email</strong>
-            <span>${esc(leadInfo.email)}</span>
-          </div>
-          ${leadInfo.company ? `
-          <div class="info-card">
-            <strong>Company</strong>
-            <span>${esc(leadInfo.company)}</span>
-          </div>` : ''}
-          ${leadInfo.role ? `
-          <div class="info-card">
-            <strong>Role</strong>
-            <span>${esc(leadInfo.role)}</span>
-          </div>` : ''}
-          <div class="info-card">
-            <strong>Session ID</strong>
-            <span>${esc(data.sessionId)}</span>
-          </div>
-          <div class="info-card">
-            <strong>Report Date</strong>
-            <span>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-          </div>
-        </div>
-      </div>
-
-      ${leadResearch?.lead_score ? `
-      <div class="section">
-        <h2>Lead Qualification Score</h2>
-        <div class="score-container">
-          <div>
-            <div class="score-value ${leadResearch.lead_score > 70 ? 'high' : leadResearch.lead_score > 40 ? 'medium' : 'low'}">
-              ${leadResearch.lead_score}
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="${logoPath}" alt="F.B/c" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+                </div>
+                <div class="brand-text">
+                    <div class="brand-name">F.B/c Consulting</div>
+                    <div class="brand-tagline">AI Solutions & Strategy</div>
+                </div>
             </div>
-            <div class="score-label">out of 100</div>
-          </div>
-          <div class="score-bar">
-            <div class="score-bar-fill ${leadResearch.lead_score > 70 ? 'high' : leadResearch.lead_score > 40 ? 'medium' : 'low'}" 
-                 style="width: ${leadResearch.lead_score}%"></div>
-          </div>
+            <div class="doc-type">${isClient ? 'Executive Report' : 'Lead Analysis'}</div>
         </div>
-      </div>
-      ` : ''}
 
-      ${leadResearch?.conversation_summary ? `
-      <div class="section">
-        <h2>Executive Summary</h2>
-        <div class="summary-text">
-          ${esc(leadResearch.conversation_summary)}
-        </div>
-      </div>
-      ` : ''}
-
-      ${leadResearch?.consultant_brief ? `
-      <div class="section">
-        <h2>Consultant Brief</h2>
-        <p style="line-height: 1.8; color: #475569;">${esc(leadResearch.consultant_brief)}</p>
-      </div>
-      ` : ''}
-
-      ${leadResearch?.ai_capabilities_shown ? `
-      <div class="section">
-        <h2>AI Capabilities Identified</h2>
-        <p style="line-height: 1.8; color: #475569;">${leadResearch.ai_capabilities_shown}</p>
-      </div>
-      ` : ''}
-
-      ${conversationHistory.length > 0 ? `
-      <div class="section">
-        <h2>Conversation Highlights</h2>
-        <div class="conversation-container">
-          ${conversationHistory.slice(-5).map(message => `
-          <div class="conversation-item ${message.role}">
-            <div class="conversation-header">
-              ${message.role === 'user' ? '👤 Lead' : '🤖 F.B/c AI'} • ${new Date(message.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+        <!-- Cover -->
+        <div class="cover">
+            <div class="cover-badge">AI Readiness Assessment</div>
+            <h1>${esc(leadInfo.company || leadInfo.name || "Client")}</h1>
+            <div class="cover-meta">
+                <div class="cover-meta-item"><strong>Prepared by:</strong> Farzad Bayat</div>
+                <div class="cover-meta-item"><strong>Date:</strong> ${new Date().toLocaleDateString(language === 'no' ? 'nb-NO' : 'en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                ${!isClient ? `<div class="cover-meta-item"><strong>Session ID:</strong> ${esc(data.sessionId)}</div>` : ''}
+                <div class="cover-meta-item"><strong>Classification:</strong> ${isClient ? 'Client Deliverable' : 'Internal Analysis'}</div>
             </div>
-            <div class="conversation-content">
-              ${esc(message.content).substring(0, 150)}${(message.content || '').length > 150 ? '...' : ''}
-            </div>
-          </div>
-          `).join('')}
         </div>
-      </div>
-      ` : ''}
 
-      <div class="section">
-        <h2>Strategic Recommendations</h2>
-        <div class="insights-container">
-          <h3>📊 Lead Qualification Status</h3>
-          <p><strong>${leadResearch?.lead_score && leadResearch.lead_score > 70 ? 'High-Value Prospect' : leadResearch?.lead_score && leadResearch.lead_score > 40 ? 'Qualified Prospect' : 'Requires Further Qualification'}</strong></p>
-          <p style="margin-top: 8px; font-size: 9pt;">${leadResearch?.lead_score && leadResearch.lead_score > 70 ? 'This lead shows strong potential for immediate engagement and conversion.' : leadResearch?.lead_score && leadResearch.lead_score > 40 ? 'This lead has good potential and should be nurtured through targeted follow-up.' : 'Additional discovery conversations are recommended to better understand needs.'}</p>
-          
-          <h3 style="margin-top: 24px;">🎯 Recommended Next Steps</h3>
-          <ul>
-            <li>Schedule a personalized AI solution demonstration within 24 hours</li>
-            <li>Send tailored case studies relevant to their industry</li>
-            <li>Provide ROI calculations based on their specific use case</li>
-            <li>Connect with technical team for deep-dive consultation</li>
-            <li>Share testimonials from similar successful implementations</li>
-          </ul>
-          
-          <h3 style="margin-top: 24px;">⏰ Follow-up Timeline</h3>
-          <p><strong>Immediate (0-24 hours):</strong> Send thank you email with session summary</p>
-          <p><strong>Short-term (24-48 hours):</strong> Schedule follow-up consultation call</p>
-          <p><strong>Mid-term (3-7 days):</strong> Share customized proposal and pricing</p>
+        <!-- Content -->
+        <div class="content">
+            <!-- Executive Summary -->
+            ${translatedSummary ? `
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">ES</div>
+                    <h2 class="section-title">${t('executiveSummary', language)}</h2>
+                </div>
+                <div class="card">
+                    <div class="card-content">
+                        ${esc(translatedSummary)}
+                        ${score != null ? `<span class="priority-badge">${score > 70 ? 'High Priority' : score > 40 ? 'Medium Priority' : 'Follow-up Required'}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Lead Information -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">LI</div>
+                    <h2 class="section-title">${t('leadInformation', language)}</h2>
+                </div>
+                <div class="card">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">${t('name', language)}:</span>
+                            <span class="info-value">${esc(leadInfo.name || 'Unknown')}</span>
+                        </div>
+                        ${!isClient ? `<div class="info-item">
+                            <span class="info-label">${t('email', language)}:</span>
+                            <span class="info-value">${esc(leadInfo.email || 'Unknown')}</span>
+                        </div>` : ''}
+                        <div class="info-item">
+                            <span class="info-label">${t('company', language)}:</span>
+                            <span class="info-value">${esc(leadInfo.company || '—')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">${t('role', language)}:</span>
+                            <span class="info-value">${esc(leadInfo.role || '—')}</span>
+                        </div>
+                        ${!isClient ? `<div class="info-item">
+                            <span class="info-label">${t('sessionId', language)}:</span>
+                            <span class="info-value">${esc(data.sessionId)}</span>
+                        </div>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consultant Brief (Internal Only) -->
+            ${translatedBrief && !isClient ? `
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">CB</div>
+                    <h2 class="section-title">${t('consultantBrief', language)}</h2>
+                </div>
+                <div class="card">
+                    <div class="card-content">
+                        ${esc(translatedBrief)}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- AI Capabilities (Internal Only) -->
+            ${!isClient && translatedCapabilities ? `
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">AI</div>
+                    <h2 class="section-title">${t('aiCapabilitiesIdentified', language)}</h2>
+                </div>
+                <div class="card">
+                    <ul class="capabilities-list">
+                        ${translatedCapabilities.split('\\n').filter(item => item.trim()).map(item => `<li>${esc(item.trim())}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Conversation Highlights (Internal Only) -->
+            ${!isClient && lastMessages.length ? `
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">CH</div>
+                    <h2 class="section-title">${t('conversationHighlights', language)}</h2>
+                </div>
+                <div class="card">
+                    <div class="card-content">
+                        <p><strong>Key Conversation Points:</strong></p>
+                        <ul style="margin-top: 12px;">
+                            ${lastMessages.slice(0, 5).map(m => `<li style="margin-bottom: 8px;"><strong>${m.role === 'user' ? 'Lead' : 'F.B/c AI'}:</strong> ${esc(m.content).slice(0, 150)}${m.content.length > 150 ? '...' : ''}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Next Steps -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-icon">NS</div>
+                    <h2 class="section-title">${t('nextSteps', language)}</h2>
+                </div>
+                <div class="card">
+                    <ol class="next-steps-list">
+                        <li>
+                            <strong>${isClient ? 'Schedule consultation call' : 'Immediate: Book 30-minute discovery call'}</strong> to align on specific requirements and success metrics
+                        </li>
+                        <li>
+                            <strong>Within 72 hours:</strong> Deliver tailored demonstration using client's actual data and use cases
+                        </li>
+                        <li>
+                            <strong>Week 1:</strong> Present comprehensive ROI analysis with phased implementation roadmap and resource allocation plan
+                        </li>
+                    </ol>
+                    ${!isClient ? `
+                    <div style="margin-top: 20px; padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #ff5b04;">
+                        <strong>Priority Actions:</strong><br>
+                        <a href="${appUrl}/meetings/book" class="cta-link">Book Discovery Call</a> |
+                        <a href="${appUrl}/workshop" class="cta-link">View Workshop</a><br>
+                        <small style="color: #6b7280; margin-top: 8px; display: block;">Confirm scope, ROI, and first milestone within 24 hours</small>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="section page-break">
-        <h2>Next Steps</h2>
-        <div style="display:flex; gap:16px; align-items:center; margin:16px 0;">
-          <a href="${appUrl}/meetings/book" style="background:#111827;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">Book 30‑min Discovery Call</a>
-          <a href="${appUrl}/workshop" style="background:#f59e0b;color:#111827;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">View Workshop</a>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                <div class="footer-name">Farzad Bayat</div>
+                <div class="footer-contact">
+                    AI Consulting Specialist<br>
+                    contact@farzadbayat.com • +47 944 46 446
+                </div>
+            </div>
+            <div class="footer-right">
+                <a href="https://www.farzadbayat.com" class="footer-website">www.farzadbayat.com</a>
+            </div>
         </div>
-        <p style="color:#475569">Recommended: a focused 30‑minute discovery to confirm scope, quantify ROI, and agree the first milestone.</p>
-      </div>
     </div>
-    
-    <footer>
-      <p>
-        <strong>Farzad Bayat</strong> — AI Consulting Specialist<br>
-        📧 <a href="mailto:contact@farzadbayat.com" style="color:#fbbf24;text-decoration:none;">contact@farzadbayat.com</a>
-        &nbsp;|&nbsp; 📱 <a href="tel:+4794446446" style="color:#fbbf24;text-decoration:none;">+47&nbsp;944&nbsp;46&nbsp;446</a>
-        &nbsp;|&nbsp; 🌐 <a href="https://www.farzadbayat.com">www.farzadbayat.com</a>
-      </p>
-    </footer>
-  </div>
 </body>
-</html>
-  `;
-}
+</html>`;
+    }
 
 /**
  * Generate a temporary PDF file path

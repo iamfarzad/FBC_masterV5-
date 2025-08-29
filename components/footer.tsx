@@ -33,6 +33,10 @@ export default function Footer() {
             <Link href="/contact" className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1">
               Contact
             </Link>
+            <span className="hidden sm:inline">•</span>
+            <Link href="/legal" className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1">
+              Legal
+            </Link>
           </div>
           
           <div className="flex items-center gap-4 text-muted-foreground">

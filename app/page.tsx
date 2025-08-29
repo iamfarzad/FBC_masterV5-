@@ -86,7 +86,7 @@ export default function HomePage() {
           </BookCallButton>
           <Button asChild variant="outline" size="lg" className="border-foreground dark:border-surface text-foreground dark:text-surface hover:bg-foreground/10 dark:hover:bg-surface/10 backdrop-blur-sm">
             <Link href="/chat" className="flex items-center">
-              <FbcIcon className="mr-2 h-4 w-4" />
+              <FbcIcon variant="default" size={16} className="mr-2" />
               Talk with F.B/c AI
             </Link>
           </Button>
@@ -104,7 +104,7 @@ export default function HomePage() {
         
         {/* Large FBC Icon on Right */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none">
-          <FbcIconPolished className="w-96 h-96 text-accent/20" />
+          <FbcIcon variant="large-logo" className="text-accent/20" />
         </div>
         
         <div className="mb-6 flex justify-center">

@@ -505,7 +505,7 @@ All other admin components may be used **internally** within AdminDashboard:
 #### **⚠️ REQUIRES VERIFICATION**
 - **`CourseOutline`** - Used within WorkshopPanel
 - **`GamifiedSection`** - May be standalone
-- **`VideoToAppLauncher`** - May be standalone
+- **`Video-to-App Workshop`** - Dedicated workshop page
 - **`education-modules.ts`** - Configuration file
 
 ### 🤝 **COLLAB COMPONENTS (20 Components) - ANALYSIS COMPLETE**
@@ -696,7 +696,7 @@ export default function ChatPage() {
 **Supported Tools:**
 - `webcam` → WebcamCapture component
 - `screen` → ScreenShare component  
-- `video` → VideoToApp component
+- `video` → Redirects to Video-to-App Workshop
 - `pdf` → Document viewer
 - `code` → CodeBlock component
 
@@ -739,7 +739,7 @@ ChatSidebar.tsx     - Sidebar panel
 1. **ROICalculator** - Financial analysis tool
 2. **WebcamCapture** - Camera integration
 3. **ScreenShare** - Screen recording/sharing
-4. **VideoToApp** - Video processing tool
+4. **Video-to-App Workshop** - Dedicated video processing workshop
 5. **Document Viewer** - PDF/document analysis
 6. **Code Editor** - Code editing/display
 
@@ -1393,13 +1393,13 @@ interface ScreenShareProps {
 - Real-time status badges
 - Progress indicators
 
-#### **4. VideoToApp - Video Processing Tool**
-**File:** `components/chat/tools/VideoToApp/VideoToApp.tsx` (500 lines)
+#### **4. Video-to-App Workshop - Dedicated Video Processing**
+**File:** `app/workshop/video-to-app/` (Workshop implementation)
 **Complexity:** 🔴 **EXTREME HIGH**
 
 **Design Architecture:**
 ```typescript
-interface VideoToAppProps {
+// VideoToApp Workshop Implementation
   mode: 'card' | 'canvas'
   videoUrl?: string
   onAppGenerated?: (appData: GeneratedAppData) => void

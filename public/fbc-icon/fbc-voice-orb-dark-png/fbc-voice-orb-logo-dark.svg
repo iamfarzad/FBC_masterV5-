@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="gAmbientDark" cx="50%" cy="50%" r="48%">
+      <stop offset="0%" stop-color="#ff5b04" stop-opacity="0.55"/>
+      <stop offset="65%" stop-color="#ff5b04" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#ff5b04" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gInnerGlassDark" cx="32%" cy="30%" r="62%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.40"/>
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gRimDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+    </linearGradient>
+    <filter id="fGlowDark" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="fShadowDark" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="20" result="sha"/>
+      <feOffset dx="0" dy="10" result="off"/>
+      <feMerge>
+        <feMergeNode in="off"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="none"/>
+  <g transform="translate(512,512)">
+    <circle cx="0" cy="0" r="420" fill="url(#gAmbientDark)"/>
+    <g filter="url(#fShadowDark)">
+      <circle cx="0" cy="0" r="360" fill="rgba(255,255,255,0.03)"/>
+      <circle cx="0" cy="0" r="360" fill="url(#gRimDark)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+      <circle cx="0" cy="0" r="350" fill="url(#gInnerGlassDark)"/>
+    </g>
+    <path d="M -160 -250 A 300 300 0 0 1 160 -250"
+          fill="none" stroke="#ff5b04" stroke-width="7" stroke-linecap="round"
+          filter="url(#fGlowDark)" opacity="1"/>
+    <path d="M -180 240 A 280 280 0 0 0 180 240"
+          fill="none" stroke="#ff5b04" stroke-width="5" stroke-linecap="round"
+          filter="url(#fGlowDark)" opacity="0.7"/>
+    <circle cx="0" cy="0" r="300" fill="none" stroke="#ff5b04" stroke-opacity="0.25" stroke-width="2"/>
+    <circle cx="0" cy="0" r="330" fill="none" stroke="#ff5b04" stroke-opacity="0.18" stroke-width="2"/>
+    <circle cx="0" cy="0" r="14" fill="#ff5b04" filter="url(#fGlowDark)"/>
+  </g>
+</svg>

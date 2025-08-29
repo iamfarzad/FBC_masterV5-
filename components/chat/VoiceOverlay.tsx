@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { X } from "@/src/core/icon-mapping"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { FbcIcon } from "@/components/ui/fbc-icon"
+import { FbcVoiceOrb } from "@/components/ui/fbc-voice-orb"
 import { useWebSocketVoice } from '@/hooks/use-websocket-voice'
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
 
@@ -15,20 +15,26 @@ export interface VoiceOverlayProps {
   onCancel: () => void
   onAccept: (transcript: string) => void
   sessionId?: string | null
+  activeModalities?: {
+    voice: boolean
+    webcam: boolean
+    screen: boolean
+  }
 }
 
-interface NavigatorExtended extends Navigator {
-  vibrate?: (pattern: number | number[]) => boolean
-}
-
-export function VoiceOverlay({ open, onCancel, onAccept }: VoiceOverlayProps) {
-  const prevFocusRef = React.useRef<HTMLElement | null>(null)
+export function VoiceOverlay({
+  open,
+  onCancel,
+  onAccept,
+  activeModalities = { voice: false, webcam: false, screen: false }
+}: VoiceOverlayProps) {
   const overlayRef = React.useRef<HTMLDivElement | null>(null)
 
   const {
     session,
     isConnected,
     transcript,
+    usageMetadata,
     error: websocketError,
     startSession,
     stopSession,
@@ -49,39 +55,19 @@ export function VoiceOverlay({ open, onCancel, onAccept }: VoiceOverlayProps) {
   React.useEffect(() => {
     if (!open) return
     void (async () => {
-      prevFocusRef.current = (document.activeElement as HTMLElement) || null
       if (!hasPermission) {
-        try {
-          await requestPermission()
-        } catch {
-          // Permission request failed - continue
-        }
+        try { await requestPermission() } catch {}
       }
-      // Do not auto-start Gemini session here; it can idle-close if no audio arrives.
-      // Session will start on first press-to-talk.
     })()
     return () => {
       try { stopRecording() } catch {}
-      try { prevFocusRef.current?.focus() } catch {}
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, hasPermission])
+  }, [open, hasPermission, requestPermission, stopRecording])
 
-
-
-  const handleToggle = useCallback(async () => {
-    if (isRecording) {
-      try {
-        stopRecording()
-        onTurnComplete()
-        if (transcript) onAccept(transcript)
-        try { (navigator as NavigatorExtended)?.vibrate?.(15) } catch {}
-      } catch {
-        // Error stopping recording - continue
-      }
-    } else {
-      // Start mic capture FIRST so early chunks queue and flush as soon as WS opens
-      try {
+  // Auto-start voice session when overlay opens
+  React.useEffect(() => {
+    if (open && !isRecording) {
+      const startVoice = async () => {
         const ok = await requestPermission()
         if (!ok) return
         await startRecording()
@@ -92,122 +78,177 @@ export function VoiceOverlay({ open, onCancel, onAccept }: VoiceOverlayProps) {
             // Error starting session - continue
           }
         }
-        try { (navigator as NavigatorExtended)?.vibrate?.(10) } catch {}
-      } catch {
-        // Error starting recording - continue
       }
+      void startVoice()
     }
-  }, [isRecording, stopRecording, onTurnComplete, transcript, onAccept, requestPermission, startRecording, isConnected, session?.isActive, startSession])
+  }, [open, isRecording, requestPermission, startRecording, isConnected, session?.isActive, startSession])
 
-  const handleAccept = useCallback(() => onAccept(transcript || ""), [onAccept, transcript])
-
-  // Focus trap and keyboard controls
-  React.useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); return }
-      if (e.key === 'Enter') { e.preventDefault(); handleAccept(); return }
-      if (e.key === ' ') {
-        e.preventDefault();
-        void handleToggle();
-        return;
-      }
-      if (e.key === 'Tab') {
-        const root = overlayRef.current
-        if (!root) return
-        const focusables = root.querySelectorAll<HTMLElement>(
-          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
-        )
-        const list = Array.from(focusables).filter(el => !el.hasAttribute('disabled'))
-        if (list.length === 0) return
-        const first = list[0]
-        const last = list[list.length - 1]
-        const active = document.activeElement as HTMLElement
-        if (!e.shiftKey && active === last) { first.focus(); e.preventDefault() }
-        else if (e.shiftKey && active === first) { last.focus(); e.preventDefault() }
-      }
+  const handleToggle = useCallback(async () => {
+    if (isRecording) {
+      // Pause/Resume functionality for Gemini Live API
+      stopRecording()
+      onTurnComplete()
+    } else {
+      // Resume recording
+      await startRecording()
     }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, onCancel, handleAccept, handleToggle])
+  }, [isRecording, stopRecording, onTurnComplete, startRecording])
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           ref={overlayRef}
-          className="fixed inset-0 z-[70] bg-background/95"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[70] glass-card-dark flex flex-col items-center justify-center px-6"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <div className="h-full w-full flex flex-col items-center justify-center gap-10 px-6">
-            {/* Connection status */}
-            <div className="absolute top-6 right-6 inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs">
-              <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-success' : 'bg-warning'}`} />
-              {isConnected ? (isRecording ? 'Listening…' : 'Connected') : 'Connecting…'}
-            </div>
-            {/* Orb */}
-            <div className="relative">
-              <div className="absolute inset-0 -z-10 rounded-full opacity-20" style={{background:'radial-gradient(60% 60% at 50% 50%, hsl(var(--accent)), transparent 70%)'}} />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => void handleToggle()} className="relative size-44 md:size-56 rounded-full outline-none select-none">
-                      <div className="absolute inset-0 rounded-full bg-[hsl(var(--card))] shadow-[0_0_0_1px_hsl(var(--border))_inset]" />
-                      <div className="absolute inset-2 rounded-full" style={{background:'radial-gradient(70% 70% at 50% 40%, hsl(var(--accent)), transparent 70%)', opacity:0.18}} />
-                      {!isRecording && (<div className="absolute -inset-[6px] rounded-full border border-[hsl(var(--border))]" />)}
-                      {isRecording && (<>
-                        <div className="absolute -inset-[10px] rounded-full border border-[hsl(var(--accent))] opacity-60 animate-pulse" />
-                        <div className="absolute -inset-[22px] rounded-full border border-[hsl(var(--accent))] opacity-20 animate-ping" />
-                        <div className="absolute inset-0 rounded-full" style={{maskImage:'radial-gradient(circle at 50% 50%, transparent 45%, black 46%)'}}>
-                          <div className="absolute inset-0 rounded-full animate-[spin_3s_linear_infinite] border border-[hsl(var(--accent))] opacity-30" />
-                        </div>
-                      </>)}
-                      <div className="absolute inset-0 grid place-items-center">
-                        <FbcIcon className="size-8 opacity-90" />
-                      </div>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Press to talk</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+          {/* Enhanced Status Badge */}
+          <motion.div
+            className="absolute top-6 right-6 glass text-xs px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            <motion.span
+              className={`h-2 w-2 rounded-full ${isConnected ? 'bg-success' : 'bg-warning'}`}
+              animate={isConnected ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ repeat: isConnected ? Infinity : 0, duration: 2 }}
+            />
+            <span className="text-text font-medium">
+              {isConnected
+                ? (isRecording ? '🎙️ Listening...' : '✨ Ready')
+                : '🔄 Connecting...'
+              }
+            </span>
+          </motion.div>
 
-            {/* Controls (single cancel action – orb acts as press-to-talk) */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="w-12 h-12 rounded-full"
-                onClick={() => { try { stopRecording() } catch {}; stopSession(); onCancel() }}
-                aria-label="Cancel"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="w-full max-w-xl">
-              {/* Live level meter */}
-              <div className="mb-3 h-2 w-full rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  className="h-full bg-accent"
-                  animate={{ width: `${Math.min(100, Math.max(0, Math.round((volume || 0) * 100)))}%` }}
-                  transition={{ duration: 0.1, ease: 'linear' }}
+          {/* Orb */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FbcVoiceOrb
+                  size="lg"
+                  isRecording={isRecording}
+                  onClick={() => void handleToggle()}
+                  className="cursor-pointer"
                 />
-              </div>
-              <div className="h-24 rounded-xl border bg-card/70 p-3 text-sm overflow-auto" aria-live="polite">
-                {transcript || (isRecording ? "Listening… press again to stop" : "Press the orb to talk, then Accept")}
-              </div>
-              {(websocketError || recorderError) && (
-                <div className="mt-2 text-xs text-destructive">
-                  {websocketError || recorderError}
+              </TooltipTrigger>
+              <TooltipContent>
+                {isRecording ? '⏸️ Pause conversation' : '▶️ Resume conversation'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Cancel */}
+          <div className="mt-6">
+            <Button
+              variant="destructive"
+              size="icon"
+              className="rounded-full"
+              onClick={() => { try { stopRecording() } catch {}; stopSession(); onCancel() }}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Live Conversation Status */}
+          <div className="w-full max-w-md mt-6">
+            <div className="mb-2 h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+              <motion.div
+                className="h-full bg-orange-400"
+                animate={{ width: `${Math.min(100, Math.round((volume || 0) * 100))}%` }}
+                transition={{ duration: 0.1, ease: 'linear' }}
+              />
+            </div>
+
+            {/* Status Display */}
+            <div className="h-32 rounded-lg bg-black/30 border border-white/20 p-4 text-sm text-white overflow-auto">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                  <span className="text-xs">
+                    {isConnected
+                      ? `Gemini Live ${isRecording ? 'Active' : 'Ready'}`
+                      : 'Connecting to Gemini Live API...'
+                    }
+                  </span>
                 </div>
-              )}
-              <div className="mt-4 flex justify-center">
-                <Button onClick={handleAccept} disabled={!transcript}>Use transcript</Button>
+
+                {/* Multimodal Status Indicators */}
+                {(activeModalities.webcam || activeModalities.screen) && (
+                  <div className="flex items-center gap-2 mt-1">
+                    {activeModalities.webcam && (
+                      <div className="flex items-center gap-1 text-xs text-blue-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        <span>📹 Camera</span>
+                      </div>
+                    )}
+                    {activeModalities.screen && (
+                      <div className="flex items-center gap-1 text-xs text-green-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        <span>🖥️ Screen</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Session Duration Warning */}
+                {isConnected && (
+                  <div className="text-xs text-white/50 mt-1">
+                    Session: Audio-only (15min) • Audio+Video (2min)
+                  </div>
+                )}
+
+                <div className="text-center">
+                  {isRecording ? (
+                    <div className="space-y-1">
+                      <div className="text-orange-400 font-medium">🎙️ Listening...</div>
+                      <div className="text-xs text-white/70">AI can see, hear, and respond</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="text-white/60 font-medium">⏸️ Paused</div>
+                      <div className="text-xs text-white/70">Tap orb to resume conversation</div>
+                    </div>
+                  )}
+                </div>
+
+                {transcript && (
+                  <div className="mt-3 p-2 bg-white/10 rounded text-xs">
+                    <div className="text-white/70 mb-1">Latest:</div>
+                    <div className="text-white">{transcript}</div>
+                  </div>
+                )}
+
+                {/* Token Usage Display */}
+                {usageMetadata && (
+                  <div className="mt-3 p-2 bg-white/10 rounded text-xs">
+                    <div className="text-white/70 mb-1">Usage:</div>
+                    <div className="text-white">
+                      {usageMetadata.totalTokenCount} tokens
+                      {usageMetadata.responseTokensDetails.length > 0 && (
+                        <div className="mt-1 space-y-1">
+                          {usageMetadata.responseTokensDetails.map((detail, idx) => (
+                            <div key={idx} className="text-white/60">
+                              {detail.modality}: {detail.tokenCount}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+
+            {(websocketError || recorderError) && (
+              <div className="mt-2 text-xs text-red-300 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-lg px-3 py-2">
+                {websocketError || recorderError}
+              </div>
+            )}
           </div>
         </motion.div>
       )}
@@ -216,5 +257,3 @@ export function VoiceOverlay({ open, onCancel, onAccept }: VoiceOverlayProps) {
 }
 
 export default VoiceOverlay
-
-

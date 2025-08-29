@@ -33,6 +33,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { email, companyUrl, policyVersion, name } = await req.json()
+    if (!name || !email) {
+      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+    }
     let domain: string | null = null
     const inferred = inferDomainFromEmail(email)
     if (inferred) domain = inferred

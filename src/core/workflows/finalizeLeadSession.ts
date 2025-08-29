@@ -1,5 +1,5 @@
 import { saveConversation, updatePdfUrl, updateEmailStatus, logFailedEmail } from "../db/conversations"
-import { generatePdf, generatePdfPath } from "../../../lib/pdf-generator"
+import { generatePdfWithPuppeteer, generatePdfPath } from "../pdf-generator-puppeteer"
 import { EmailService } from "../email-service"
 import type { LeadContext } from "../types/conversations"
 
@@ -75,7 +75,7 @@ async function generateLeadPdf(ctx: LeadContext): Promise<string> {
     sessionId: ctx.researchJson.session?.id || 'unknown'
   }
 
-  await generatePdf(summaryData, pdfPath)
+  await generatePdfWithPuppeteer(summaryData, pdfPath, 'internal')
 
   // In production, you would upload this to Supabase Storage or S3
   // For now, return the local path

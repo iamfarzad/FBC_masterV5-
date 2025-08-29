@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseStorage } from '@/src/services/storage/supabase';
 import { logServerActivity } from '@/src/core/server-activity-logger';
-import { generatePdf, generatePdfPath } from '@/lib/pdf-generator';
+import { generatePdfWithPuppeteer, generatePdfPath } from '@/src/core/pdf-generator-puppeteer';
 import fs from 'fs';
 import { recordCapabilityUsed } from '@/src/core/context/capabilities';
 
@@ -104,7 +104,7 @@ Based on this conversation, here are the key insights and next steps:
 
 export async function POST(req: NextRequest) {
   try {
-    const { sessionId: bodySessionId, leadEmail } = await req.json();
+    const { sessionId: bodySessionId, leadEmail, language = 'en' } = await req.json();
     const sessionId = bodySessionId || req.headers.get('x-intelligence-session-id');
 
     if (!sessionId) {
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
     const pdfPath = generatePdfPath(sessionId, leadInfo.name);
     
     try {
-      await generatePdf(summaryData, pdfPath);
+      await generatePdfWithPuppeteer(summaryData, pdfPath, 'internal', language);
       
       // Read the generated PDF file
       const pdfBuffer = fs.readFileSync(pdfPath);

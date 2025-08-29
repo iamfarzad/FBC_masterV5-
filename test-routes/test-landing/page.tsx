@@ -26,7 +26,7 @@ export default function TestLandingPage() {
                                 opacity-30 blur-2xl animate-[spin_14s_linear_infinite]" />
                 <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/20 animate-pulse" />
               </div>
-              <FbcIconPolished className="w-48 h-48" />
+              <FbcIconPolished variant="large-logo" />
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-6xl">

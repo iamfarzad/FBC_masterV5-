@@ -18,6 +18,14 @@ interface VoiceSession {
 
 type QueuedAudioItem = string | { data: string; mimeType?: string }
 
+interface UsageMetadata {
+  totalTokenCount: number
+  responseTokensDetails: Array<{
+    modality: string
+    tokenCount: number
+  }>
+}
+
 interface WebSocketVoiceHook {
   session: VoiceSession | null
   isConnected: boolean
@@ -25,6 +33,7 @@ interface WebSocketVoiceHook {
   error: string | null
   transcript: string
   audioQueue: QueuedAudioItem[]
+  usageMetadata: UsageMetadata | null
   startSession: (leadContext?: unknown) => Promise<void>
   stopSession: () => void
   sendMessage: (message: string) => Promise<void>
@@ -52,6 +61,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   const transcriptRef = useRef<string>('')
   const [error, setError] = useState<string | null>(null)
   const [audioQueue, setAudioQueue] = useState<QueuedAudioItem[]>([])
+  const [usageMetadata, setUsageMetadata] = useState<UsageMetadata | null>(null)
   const [currentTurn, setCurrentTurn] = useState<{ inputPartials: string[]; inputFinal?: string; outputText?: string; completed: boolean }>({ inputPartials: [], completed: false })
   
   const wsRef = useRef<WebSocket | null>(null)
@@ -176,7 +186,9 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     }
   }, [initAudioContext]);
 
-  // If NEXT_PUBLIC_GEMINI_DIRECT === '1', use direct Live API with ephemeral token instead of proxy WS
+  // Gemini Live API Direct Mode Configuration
+  // Set NEXT_PUBLIC_GEMINI_DIRECT=1 to use direct Live API (bypasses proxy WS)
+  // This enables full Gemini Live API compliance with proper VAD, token counting, and modalities
   const connectWebSocket = useCallback(() => {
     if (reconnectingRef.current) {
       // Action logged
@@ -412,10 +424,21 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           const responseQueue: unknown[] = []
           function onmessage(message: unknown) {
             responseQueue.push(message)
+
+            // Handle usage metadata for token counting
+            if (message?.usageMetadata) {
+              const usage = message.usageMetadata
+              setUsageMetadata({
+                totalTokenCount: usage.totalTokenCount || 0,
+                responseTokensDetails: usage.responseTokensDetails || []
+              })
+            }
+
             // Text stream
             const text = message?.serverContent?.modelTurn?.parts?.[0]?.text
             if (text) setTranscript(prev => prev + text)
-            // Audio stream
+
+            // Audio stream - AI can talk back
             const inline = message?.serverContent?.modelTurn?.parts?.find((p: unknown) => p.inlineData?.data)
             if (inline?.inlineData?.data) {
               setAudioQueue(prev => [...prev, { data: inline.inlineData.data, mimeType: 'audio/pcm;rate=24000' }])
@@ -426,9 +449,26 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           const session = await (ai as any).live.connect({
             model,
             config: {
-              responseModalities: [Modality.AUDIO, Modality.TEXT],
-              inputAudioTranscription: {},
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } },
+              responseModalities: [Modality.AUDIO], // Can only set ONE modality per session
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: 'Puck'
+                  }
+                }
+              },
+              // Automatic Voice Activity Detection (VAD) configuration
+              realtimeInputConfig: {
+                automaticActivityDetection: {
+                  disabled: false, // Enable automatic VAD
+                  startOfSpeechSensitivity: 'START_SENSITIVITY_LOW', // More sensitive to speech start
+                  endOfSpeechSensitivity: 'END_SENSITIVITY_LOW', // More sensitive to speech end
+                  prefixPaddingMs: 20, // Add 20ms before detected speech
+                  silenceDurationMs: 100, // 100ms silence to end speech
+                }
+              },
+              // Media resolution for video input
+              mediaResolution: 'MEDIA_RESOLUTION_LOW', // Low resolution for faster processing
             },
             callbacks: {
               onopen: () => {
@@ -544,7 +584,8 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       setIsProcessing(false)
       setError(null)
       setAudioQueue([])
-      setTranscript('') 
+      setTranscript('')
+      setUsageMetadata(null) // Clear usage metadata on session end
     }
   }, [])
 
@@ -682,6 +723,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     error,
     transcript,
     audioQueue,
+    usageMetadata, // Token usage tracking
     startSession,
     stopSession,
     sendMessage,

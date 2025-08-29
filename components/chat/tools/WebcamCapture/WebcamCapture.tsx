@@ -2,9 +2,9 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Camera, CameraOff, Mic, MicOff, Video, VideoOff, RotateCcw, Download, Settings, Users } from "lucide-react"
+import { motion } from "framer-motion"
+import { Camera, CameraOff, Mic, MicOff, Circle, Square, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -15,32 +15,25 @@ import type { WebcamCaptureProps } from "./WebcamCapture.types"
 export function WebcamCapture({
   mode: _mode = 'card',
   onCapture,
-  onClose: _onClose,
+  onClose,
   onCancel: _onCancel,
   onAIAnalysis: _onAIAnalysis,
   onLog: _onLog,
 }: WebcamCaptureProps) {
+  // Intelligence context integration
+  const sessionId = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
   const { toast } = useToast()
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isAudioOn, setIsAudioOn] = useState(true)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user")
 
   const [stream, setStream] = useState<MediaStream | null>(null)
-
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const recordingInterval = useRef<NodeJS.Timeout>()
-
-  const participants = [
-    { id: "1", name: "You", isVideoOn, isAudioOn },
-    { id: "2", name: "Sarah Chen", isVideoOn: true, isAudioOn: true },
-    { id: "3", name: "Mike Johnson", isVideoOn: false, isAudioOn: true },
-    { id: "4", name: "Alex Rivera", isVideoOn: true, isAudioOn: false },
-  ]
+  const recordingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     return () => {
@@ -54,7 +47,6 @@ export function WebcamCapture({
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode,
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -74,7 +66,7 @@ export function WebcamCapture({
         variant: "destructive",
       })
     }
-  }, [facingMode, toast])
+  }, [toast])
 
   const stopCamera = () => {
     if (stream) {
@@ -105,18 +97,7 @@ export function WebcamCapture({
     }
   }
 
-  const switchCamera = async () => {
-    const newFacingMode = facingMode === "user" ? "environment" : "user"
-    setFacingMode(newFacingMode)
 
-    if (stream) {
-      stopCamera()
-      setTimeout(() => {
-        setFacingMode(newFacingMode)
-        void startCamera()
-      }, 100)
-    }
-  }
 
   const startRecording = () => {
     if (!stream) return
@@ -159,7 +140,7 @@ export function WebcamCapture({
     }
   }
 
-  const takeScreenshot = () => {
+  const takeScreenshot = async () => {
     if (!videoRef.current || !canvasRef.current) return
 
     const canvas = canvasRef.current
@@ -171,16 +152,48 @@ export function WebcamCapture({
       canvas.height = video.videoHeight
       ctx.drawImage(video, 0, 0)
 
+      // Get image data for AI analysis
+      const imageData = canvas.toDataURL("image/jpeg", 0.8)
+
+      // Send to AI for analysis if sessionId is available
+      if (sessionId && _onAIAnalysis) {
+        try {
+          const response = await fetch('/api/intelligence/analyze-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-intelligence-session-id': sessionId,
+            },
+            body: JSON.stringify({
+              imageData,
+              context: 'webcam_screenshot',
+              timestamp: Date.now(),
+            }),
+          })
+
+          if (response.ok) {
+            const analysis = await response.json()
+            toast({
+              title: "AI Analysis Complete",
+              description: `Analysis: ${analysis.summary || 'Image processed successfully'}`,
+            })
+            _onAIAnalysis(analysis)
+          }
+        } catch (error) {
+          console.error('AI analysis failed:', error)
+        }
+      }
+
+      // Download the screenshot
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob)
           const a = document.createElement("a")
           a.href = url
-          a.download = `screenshot-${Date.now()}.png`
+          a.download = `webcam-screenshot-${Date.now()}.png`
           a.click()
-          
-          // Also trigger onCapture callback
-          const imageData = canvas.toDataURL("image/jpeg", 0.8)
+
+          // Trigger onCapture callback
           onCapture?.(imageData)
         }
       })
@@ -193,171 +206,174 @@ export function WebcamCapture({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
+  // Auto-start camera on mount
   useEffect(() => {
     if (!stream) {
       void startCamera()
     }
   }, [stream, startCamera])
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+      }
+      if (recordingInterval.current) {
+        clearInterval(recordingInterval.current)
+      }
+    }
+  }, [stream])
+
   return (
-    <div className="h-full flex">
-      {/* Main Video Area */}
-      <div className="flex-1 p-4">
-        <div className="h-full bg-slate-900 rounded-lg overflow-hidden relative">
-          {isVideoOn && stream ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-              style={{
-                transform: facingMode === "user" ? "scaleX(-1)" : "none",
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center text-surface">
-                <CameraOff className="w-16 h-16 mx-auto mb-4 text-slate-400" />
-                <p className="text-lg">Camera is off</p>
-              </div>
-            </div>
-          )}
-
-          {/* Video Controls Overlay */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-            <div className="flex items-center gap-3 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2">
-              <Button
-                variant={isAudioOn ? "secondary" : "destructive"}
-                size="sm"
-                onClick={toggleAudio}
-                className="rounded-full w-10 h-10 p-0"
-              >
-                {isAudioOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              </Button>
-
-              <Button
-                variant={isVideoOn ? "secondary" : "destructive"}
-                size="sm"
-                onClick={toggleVideo}
-                className="rounded-full w-10 h-10 p-0"
-              >
-                {isVideoOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-              </Button>
-
-              <Button
-                variant="default"
-                size="sm"
-                onClick={takeScreenshot}
-                className="rounded-full w-10 h-10 p-0 bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
-
-              <Button variant="secondary" size="sm" className="rounded-full w-10 h-10 p-0">
-                <Settings className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Recording Indicator */}
-          {isRecording && (
-            <div className="absolute top-4 left-4">
-              <Badge variant="destructive" className="animate-pulse">
-                <div className="w-2 h-2 bg-surface rounded-full mr-2"></div>
-                Recording {formatTime(recordingTime)}
-              </Badge>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <div className="w-80 bg-surface border-l border-border p-4 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5 text-emerald-600" />
-              Participants ({participants.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {participants.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-emerald-700">{participant.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{participant.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {participant.id === "1" ? "host" : "participant"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <div className={`w-4 h-4 rounded ${participant.isVideoOn ? "bg-success" : "bg-error"}`}>
-                    {participant.isVideoOn ? (
-                      <Camera className="w-3 h-3 text-surface m-0.5" />
-                    ) : (
-                      <CameraOff className="w-3 h-3 text-surface m-0.5" />
-                    )}
-                  </div>
-                  <div className={`w-4 h-4 rounded ${participant.isAudioOn ? "bg-success" : "bg-error"}`}>
-                    {participant.isAudioOn ? (
-                      <Mic className="w-3 h-3 text-surface m-0.5" />
-                    ) : (
-                      <MicOff className="w-3 h-3 text-surface m-0.5" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Session Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              variant={isRecording ? "destructive" : "outline"}
-              className="w-full"
-              onClick={isRecording ? stopRecording : startRecording}
+    <div className="h-full w-full bg-black relative overflow-hidden">
+      {/* Enhanced Video Preview with Gradient Overlay */}
+      {isVideoOn && stream ? (
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+          {/* Subtle gradient overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              {isRecording ? "Stop Recording" : "Start Recording"}
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" onClick={() => void switchCamera()}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Switch Camera
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" onClick={takeScreenshot}>
-              <Download className="w-4 h-4 mr-2" />
-              Take Screenshot
-            </Button>
-          </CardContent>
-        </Card>
+              <CameraOff className="w-20 h-20 mx-auto mb-6 text-gray-500 drop-shadow-lg" />
+              <h3 className="text-xl font-semibold text-white mb-2">Camera is off</h3>
+              <p className="text-gray-400">Enable camera to start capturing</p>
+            </motion.div>
+          </div>
+        </div>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Switch to Canvas
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Start Workshop
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
-              Share Screen
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Enhanced Recording Badge - Top-left corner */}
+      {isRecording && (
+        <motion.div
+          className="absolute top-6 left-6 z-10"
+          initial={{ opacity: 0, scale: 0.8, y: -20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: -20 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <div className="glass-card px-4 py-2 flex items-center gap-2 border-red-500/30">
+            <motion.div
+              className="w-3 h-3 bg-error rounded-full"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            />
+            <span className="text-error font-semibold text-sm">
+              🔴 Recording {formatTime(recordingTime)}
+            </span>
+          </div>
+        </motion.div>
+      )}
 
-      {/* Hidden canvas for screenshots */}
+      {/* Enhanced Toolbar (Bottom Center) */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.4, ease: "easeOut" }}
+      >
+        <div className="glass-card px-6 py-4 flex items-center gap-3 shadow-luxe">
+          {/* Mic Toggle */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant={isAudioOn ? "glass" : "destructive"}
+              size="icon"
+              onClick={toggleAudio}
+              className="hover-scale rounded-full w-14 h-14 shadow-md"
+            >
+              <motion.div
+                animate={isAudioOn ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.3 }}
+              >
+                {isAudioOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* Camera Toggle */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant={isVideoOn ? "glass" : "destructive"}
+              size="icon"
+              onClick={toggleVideo}
+              className="hover-scale rounded-full w-14 h-14 shadow-md"
+            >
+              <motion.div
+                animate={isVideoOn ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.3 }}
+              >
+                {isVideoOn ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* Screenshot Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="luxe"
+              size="icon"
+              onClick={takeScreenshot}
+              className="rounded-full w-14 h-14 shadow-glow hover:shadow-glow"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Camera className="w-6 h-6" />
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* Record / Stop Recording Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant={isRecording ? "destructive" : "luxe"}
+              size="icon"
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`rounded-full w-16 h-16 shadow-lg ${isRecording ? 'animate-pulse shadow-red-500/50' : 'hover:shadow-glow'}`}
+            >
+              <motion.div
+                animate={isRecording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                transition={{ duration: 1, repeat: isRecording ? Infinity : 0, ease: "easeInOut" }}
+              >
+                {isRecording ? <Square className="w-7 h-7" /> : <Circle className="w-7 h-7" />}
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          {/* Enhanced Close Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onClose}
+              className="hover-scale rounded-full w-14 h-14 border-border/50 hover:border-border hover:bg-surface-elevated/50 backdrop-blur-sm"
+            >
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="w-6 h-6" />
+              </motion.div>
+            </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Hidden Canvas - For capturing screenshots */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   )

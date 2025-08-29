@@ -29,7 +29,7 @@ export function ChatHeader({
       {/* Left: Branding */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg">
-          <FbcIcon className="h-4 w-4 text-accent-foreground" />
+          <FbcIcon variant="default" size={16} />
         </div>
         <div>
           <h1 className="text-lg font-semibold text-foreground">F.B/c AI Assistant</h1>
