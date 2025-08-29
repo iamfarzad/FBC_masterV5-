@@ -239,7 +239,7 @@ DELIVERY STATUS:
     })
   }
 
-  // Enhanced send message with conversation context using persistent storage
+  // 🔧 SMART MESSAGE ROUTING - System Status vs Business Intelligence
   const sendMessageWithContext = async (message: string) => {
     if (!currentSessionId) {
       setError('No active session. Please refresh and try again.')
@@ -258,39 +258,78 @@ DELIVERY STATUS:
     setMessages(prev => [...prev, userMessage])
 
     try {
-      const conversationIds = selectedConversation ? [selectedConversation.id] : []
+      // 🔍 DETECT SYSTEM STATUS QUERIES
+      const isSystemQuery = isSystemStatusQuery(message)
 
-      const response = await fetch('/api/admin/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          sessionId: currentSessionId,
-          conversationIds,
-          adminId
+      let response
+      if (isSystemQuery) {
+        // 🚀 Route to System Status API
+        response = await fetch('/api/admin/system-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: message,
+            context: 'admin-dashboard',
+            priority: 'high'
+          })
         })
-      })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to send message')
+        if (!response.ok) {
+          throw new Error('System status check failed')
+        }
+
+        const data = await response.json()
+
+        // Format system status response
+        const assistantMessage = {
+          role: 'assistant' as const,
+          content: formatSystemStatusResponse(data),
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, assistantMessage])
+
+        // Show system status toast
+        toast({
+          title: "System Status Updated",
+          description: `Health Score: ${data.metrics?.healthScore || 'N/A'}/100`,
+        })
+
+      } else {
+        // 📊 Route to Business Intelligence API (original logic)
+        const conversationIds = selectedConversation ? [selectedConversation.id] : []
+
+        response = await fetch('/api/admin/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            sessionId: currentSessionId,
+            conversationIds,
+            adminId
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to send message')
+        }
+
+        const data = await response.json()
+
+        // Add AI response to local state
+        const assistantMessage = {
+          role: 'assistant' as const,
+          content: data.response,
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, assistantMessage])
+
+        // Show business intelligence toast
+        toast({
+          title: "AI Analysis Complete",
+          description: `Business insights generated${data.leadsReferenced > 0 ? ` with ${data.leadsReferenced} lead(s) referenced` : ''}`,
+        })
       }
-
-      const data = await response.json()
-
-      // Add AI response to local state
-      const assistantMessage = {
-        role: 'assistant' as const,
-        content: data.response,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, assistantMessage])
-
-      // Show success toast
-      toast({
-        title: "AI Analysis Complete",
-        description: `Response generated${data.leadsReferenced > 0 ? ` with ${data.leadsReferenced} lead(s) referenced` : ''}`,
-      })
 
     } catch (error: any) {
       console.error('Failed to send message:', error)
@@ -312,6 +351,65 @@ DELIVERY STATUS:
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // 🔍 DETECT SYSTEM STATUS QUERIES
+  const isSystemStatusQuery = (message: string): boolean => {
+    const systemKeywords = [
+      'system', 'health', 'status', 'performance', 'memory', 'cache',
+      'streaming', 'storage', 'browser', 'error', 'crash', 'slow',
+      'fast', 'working', 'doing', 'comprehensive', 'overview'
+    ]
+
+    const lowerMessage = message.toLowerCase()
+    return systemKeywords.some(keyword => lowerMessage.includes(keyword))
+  }
+
+  // 📊 FORMAT SYSTEM STATUS RESPONSE
+  const formatSystemStatusResponse = (data: any): string => {
+    if (!data.success) {
+      return `❌ System Status Error: ${data.error || 'Unable to retrieve system status'}`
+    }
+
+    const { answer, metrics, recommendations, severity } = data
+
+    let formattedResponse = `## 🔧 System Status Report\n\n${answer}\n\n`
+
+    // Add key metrics if available
+    if (metrics && Object.keys(metrics).length > 0) {
+      formattedResponse += `### 📈 Key Metrics\n`
+      if (metrics.healthScore) {
+        formattedResponse += `• **Health Score:** ${metrics.healthScore}/100\n`
+      }
+      if (metrics.memoryUsage) {
+        formattedResponse += `• **Memory Usage:** ${metrics.memoryUsage}MB\n`
+      }
+      if (metrics.activeStreams) {
+        formattedResponse += `• **Active Streams:** ${metrics.activeStreams}\n`
+      }
+      formattedResponse += `\n`
+    }
+
+    // Add recommendations if available
+    if (recommendations && recommendations.length > 0) {
+      formattedResponse += `### 💡 Recommendations\n`
+      recommendations.forEach((rec: string, index: number) => {
+        formattedResponse += `${index + 1}. ${rec}\n`
+      })
+      formattedResponse += `\n`
+    }
+
+    // Add severity indicator
+    const severityEmoji = {
+      good: '🟢',
+      warning: '🟡',
+      critical: '🔴'
+    }[severity] || '⚪'
+
+    formattedResponse += `**Status:** ${severityEmoji} ${severity.toUpperCase()}\n\n`
+    formattedResponse += `*For detailed metrics, check the System Health dashboard.*`
+
+    return formattedResponse
   }
 
   // Clear messages from current session
@@ -529,26 +627,61 @@ DELIVERY STATUS:
               <Sparkles className="w-4 h-4" />
               Quick Actions
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {QUICK_ACTIONS.map((action, index) => {
-                const Icon = action.icon
-                return (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="h-auto p-2 text-xs justify-start"
-                    onClick={() => handleQuickAction(action.prompt)}
-                    disabled={isLoading}
-                  >
-                    <Icon className="w-3 h-3 mr-2" />
-                    <div className="text-left">
-                      <div className="font-medium">{action.title}</div>
-                      <div className="text-muted-foreground">{action.description}</div>
-                    </div>
-                  </Button>
-                )
-              })}
+
+            {/* 🔧 System Health Actions */}
+            <div className="mb-4">
+              <h5 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                🔧 System Health
+              </h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {QUICK_ACTIONS.filter(action => action.category === 'system').map((action, index) => {
+                  const Icon = action.icon
+                  return (
+                    <Button
+                      key={`system-${index}`}
+                      variant="outline"
+                      size="sm"
+                      className="h-auto p-2 text-xs justify-start border-blue-200 hover:bg-blue-50"
+                      onClick={() => handleQuickAction(action.prompt)}
+                      disabled={isLoading}
+                    >
+                      <Icon className="w-3 h-3 mr-2 text-blue-600" />
+                      <div className="text-left">
+                        <div className="font-medium">{action.title}</div>
+                        <div className="text-muted-foreground">{action.description}</div>
+                      </div>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 📊 Business Intelligence Actions */}
+            <div>
+              <h5 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                📊 Business Intelligence
+              </h5>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {QUICK_ACTIONS.filter(action => action.category === 'business').map((action, index) => {
+                  const Icon = action.icon
+                  return (
+                    <Button
+                      key={`business-${index}`}
+                      variant="outline"
+                      size="sm"
+                      className="h-auto p-2 text-xs justify-start"
+                      onClick={() => handleQuickAction(action.prompt)}
+                      disabled={isLoading}
+                    >
+                      <Icon className="w-3 h-3 mr-2" />
+                      <div className="text-left">
+                        <div className="font-medium">{action.title}</div>
+                        <div className="text-muted-foreground">{action.description}</div>
+                      </div>
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
