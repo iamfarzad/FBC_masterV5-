@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Confetti } from "@/components/ui/confetti"
+// import { Confetti } from "@/components/ui/confetti" // Removed
 import { getAllModules } from '@/src/core/education/modules'
 import { useModuleProgress } from "@/hooks/workshop/use-module-progress"
 import { BookOpen, Award, TrendingUp, Brain, ChevronRight } from "lucide-react"
@@ -22,7 +22,7 @@ export function WorkshopPanel() {
   const [activeSection, setActiveSection] = useState<
     "dashboard" | "modules" | "outline" | "lab" | "achievements" | "stats"
   >("dashboard")
-  const [showConfetti, setShowConfetti] = useState(false)
+  // const [showConfetti, setShowConfetti] = useState(false) // Confetti removed
   const [activeModuleSlug, setActiveModuleSlug] = useState<string | null>(null)
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({})
   const [quizSubmitted, setQuizSubmitted] = useState(false)
@@ -72,8 +72,7 @@ export function WorkshopPanel() {
   }
 
   function handleCelebrate() {
-    setShowConfetti(true)
-    setTimeout(() => setShowConfetti(false), 1500)
+    // Confetti removed - could show toast notification instead
   }
 
   function Dashboard() {
@@ -171,7 +170,7 @@ export function WorkshopPanel() {
                 disabled={isCompleted || (hasQuizFor(activeModuleSlug) && !allCorrect)}
                 onClick={() => {
                   if (hasQuizFor(activeModuleSlug) && !allCorrect) { setQuizSubmitted(true); return }
-                  setShowConfetti(true)
+                  // setShowConfetti(true) // Confetti removed
                   try {
                     fetch('/api/intelligence/education', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -268,8 +267,8 @@ export function WorkshopPanel() {
               </Button>
               <Button variant="outline" onClick={() => {
                 fetch('/api/intelligence/education', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleId: 'lab-chat', stepId: 'open-chat', xp: 20, moduleTitle: 'Hands-on Lab' }) }).catch(() => {})
-                setShowConfetti(true)
-                setTimeout(() => setShowConfetti(false), 1200)
+                // setShowConfetti(true) // Confetti removed
+                // setTimeout(() => setShowConfetti(false), 1200) // Confetti removed
               }}>Mark done</Button>
             </div>
           </CardContent>
@@ -286,8 +285,8 @@ export function WorkshopPanel() {
               </Button>
               <Button variant="outline" onClick={() => {
                 fetch('/api/intelligence/education', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleId: 'lab-roi', stepId: 'roi-card', xp: 20, moduleTitle: 'Hands-on Lab' }) }).catch(() => {})
-                setShowConfetti(true)
-                setTimeout(() => setShowConfetti(false), 1200)
+                // setShowConfetti(true) // Confetti removed
+                // setTimeout(() => setShowConfetti(false), 1200) // Confetti removed
               }}>Mark done</Button>
             </div>
           </CardContent>
@@ -304,8 +303,8 @@ export function WorkshopPanel() {
               </Button>
               <Button variant="outline" onClick={() => {
                 fetch('/api/intelligence/education', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleId: 'lab-video2app', stepId: 'launcher', xp: 20, moduleTitle: 'Hands-on Lab' }) }).catch(() => {})
-                setShowConfetti(true)
-                setTimeout(() => setShowConfetti(false), 1200)
+                // setShowConfetti(true) // Confetti removed
+                // setTimeout(() => setShowConfetti(false), 1200) // Confetti removed
               }}>Mark done</Button>
             </div>
           </CardContent>
@@ -362,7 +361,6 @@ export function WorkshopPanel() {
 
   return (
     <div className="h-[100dvh]">
-      <Confetti isActive={showConfetti} onComplete={() => setShowConfetti(false)} />
       <div className="h-full container mx-auto px-4 py-4">
         <div className="h-full grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
           <aside className="min-h-0 overflow-auto lg:sticky lg:top-4 self-start">

@@ -8,17 +8,17 @@ import Link from "next/link"
 import { ArrowRight, Lightbulb, Star, Users } from "lucide-react"
 import { FbcIcon } from "@/components/ui/fbc-icon"
 import { FbcIcon as FbcIconPolished } from "@/components/ui/fbc-icon"
-import { ClientBrain, ClientZap, ClientSparkles, ClientTarget } from "@/components/ui/client-icons"
+import { Brain, Zap, Sparkles, Target } from "lucide-react"
 import type { Metadata } from "next"
 import { MotionCard } from "@/components/ui/motion-card"
 import { FadeIn } from "@/components/ui/fade-in"
 import { ProgressTracker } from "@/components/experience/progress-tracker"
 import { CitationsDemo } from "@/components/experience/citations-demo"
-import { DotScreenShader } from "@/components/ui/dot-shader-background"
+// import { DotScreenShader } from "@/components/ui/dot-shader-background" // Removed
 
 const features = [
   {
-    icon: ClientBrain,
+    icon: Brain,
     title: "AI Strategy & Implementation",
     description: "Custom AI solutions designed for your specific business needs and workflows."
   },
@@ -28,12 +28,12 @@ const features = [
     description: "Advanced conversational AI that understands context and delivers real value."
   },
   {
-    icon: ClientZap,
+    icon: Zap,
     title: "Workflow Automation",
     description: "Streamline repetitive tasks with smart automation that learns and adapts."
   },
   {
-    icon: ClientTarget,
+    icon: Target,
     title: "Rapid Prototyping",
     description: "Quick proof-of-concepts to validate AI solutions before full implementation."
   }
@@ -70,7 +70,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="min-h-screen w-full flex flex-col gap-6 sm:gap-8 items-center justify-center relative overflow-hidden px-4 py-8">
         <div className="absolute inset-0 z-0">
-          <DotScreenShader />
+          {/* <DotScreenShader /> */}
         </div>
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground dark:text-white text-center px-4 pointer-events-none relative z-20 drop-shadow-lg">
           Build AI That Actually <span className="text-accent drop-shadow-sm">Works</span>
@@ -193,7 +193,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <ClientTarget className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+                <Target className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-primary">Rapid Implementation</h3>
                   <p className="text-muted-foreground">Quick prototypes and fast deployment to get results sooner.</p>
