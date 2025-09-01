@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminChatService } from '@/src/core/admin/admin-chat-service'
-import { getProvider } from '@/src/core/ai'
+import { unifiedChatProvider } from '@/src/core/chat/unified-provider'
+import { unifiedStreamingService } from '@/src/core/streaming/unified-stream'
+import { validateRequest, chatRequestSchema } from '@/src/core/validation'
+import { unifiedErrorHandler } from '@/src/core/chat/unified-error-handler'
+import type { UnifiedMessage } from '@/src/core/chat/unified-types'
+
+// Edge Function Configuration for optimal performance
+export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 export async function POST(request: NextRequest) {
+  let sessionId = 'unknown'
+  let adminId = 'unknown'
+
   try {
-    const { message, sessionId, conversationIds, adminId } = await request.json()
+    const body = await request.json()
+    const { message, sessionId: reqSessionId, conversationIds, adminId: reqAdminId } = body
+    sessionId = reqSessionId || sessionId
+    adminId = reqAdminId || adminId
 
     if (!message || !sessionId) {
       return NextResponse.json(
@@ -13,75 +28,101 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ensure session exists
-    await adminChatService.getOrCreateSession(sessionId, adminId)
+    // Initialize admin session
+    await unifiedChatProvider.initializeAdminSession(sessionId, adminId)
 
-    // Save user message
-    await adminChatService.saveMessage({
-      sessionId,
-      adminId,
-      type: 'user',
+    // Create user message
+    const userMessage: UnifiedMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
       content: message,
-      contextLeads: conversationIds
-    })
-
-    // Build AI context from conversation history and lead data
-    const context = await adminChatService.buildAIContext(
-      sessionId,
-      message,
-      conversationIds
-    )
-
-    // Get AI response
-    const provider = getProvider()
-    const messages = [
-      {
-        role: 'system' as const,
-        content: `You are an AI assistant helping with lead management and business operations. You have access to conversation history and can reference specific leads when asked. Always be helpful, accurate, and professional.`
-      },
-      {
-        role: 'user' as const,
-        content: `${context}\n\nCurrent User Query: ${message}\n\nPlease provide a helpful response based on the available context.`
-      }
-    ]
-
-    let responseContent = ''
-    try {
-      for await (const chunk of provider.generate({ messages })) {
-        if (chunk) {
-          responseContent += chunk
-        }
-      }
-    } catch (error) {
-      console.error('AI generation error:', error)
-      responseContent = 'I apologize, but I encountered an error processing your request. Please try again.'
+      timestamp: new Date(),
+      type: 'text'
     }
 
-    // Save assistant response
-    await adminChatService.saveMessage({
+    // Prepare base context for admin mode
+    let context = {
       sessionId,
       adminId,
-      type: 'assistant',
-      content: responseContent,
-      contextLeads: conversationIds,
-      metadata: {
-        context_used: context.length > 0,
-        leads_referenced: conversationIds?.length || 0
+      conversationIds,
+      leadContext: conversationIds ? { conversationIds } : undefined
+    }
+
+    // INTEGRATE INTELLIGENCE: If conversationIds provided, get intelligence context
+    let intelligenceContext = null
+    if (conversationIds && conversationIds.length > 0) {
+      try {
+        // Call server-side intelligence handler
+        const intelligenceResponse = await fetch(`${request.nextUrl.origin}/api/admin/server-handler`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'build_admin_context',
+            conversationIds,
+            sessionId,
+            userMessage: message
+          })
+        })
+
+        if (intelligenceResponse.ok) {
+          const intelligenceData = await intelligenceResponse.json()
+          intelligenceContext = intelligenceData.context
+          // Add intelligence context to unified context
+          context = {
+            ...context,
+            intelligenceContext: intelligenceData.context.adminContext,
+            leadResearch: intelligenceData.context.leadResearch
+          }
+        } else {
+          console.warn('Intelligence integration failed:', await intelligenceResponse.text())
+        }
+      } catch (intelligenceError) {
+        console.warn('Intelligence integration error:', intelligenceError)
+        // Continue without intelligence data - don't break admin chat
       }
+    }
+
+    // Generate response using unified provider
+    const messageStream = unifiedChatProvider.generate({
+      messages: [userMessage],
+      context,
+      mode: 'admin'
     })
+
+    // Convert to array for response (admin chat doesn't use streaming)
+    const responseMessages: UnifiedMessage[] = []
+    for await (const msg of messageStream) {
+      responseMessages.push(msg)
+    }
+
+    const responseContent = responseMessages.map(m => m.content).join('') || 'I apologize, but I encountered an error processing your request. Please try again.'
+
+    // Update admin session activity
+    await unifiedChatProvider.updateAdminActivity(sessionId)
 
     return NextResponse.json({
       response: responseContent,
       sessionId,
-      contextUsed: context.length > 0,
-      leadsReferenced: conversationIds?.length || 0
+      contextUsed: conversationIds?.length > 0,
+      leadsReferenced: conversationIds?.length || 0,
+      intelligenceIntegrated: intelligenceContext !== null,
+      leadResearchCount: intelligenceContext?.leadResearch?.length || 0
     })
 
   } catch (error) {
-    console.error('Admin chat error:', error)
+    const chatError = unifiedErrorHandler.handleError(error, {
+      sessionId: 'unknown',
+      mode: 'admin',
+      userId: 'unknown'
+    }, 'admin_chat_api')
+
     return NextResponse.json(
-      { error: 'Failed to process chat message' },
-      { status: 500 }
+      {
+        error: chatError.message,
+        code: chatError.code,
+        recoverable: chatError.recoverable
+      },
+      { status: chatError.recoverable ? 500 : 400 }
     )
   }
 }
@@ -101,12 +142,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (query) {
-      // Semantic search across all conversations
-      const results = await adminChatService.searchAllConversations(query, 10, adminId || undefined)
+      // Semantic search across all conversations using unified provider
+      const results = await unifiedChatProvider.searchAdminConversations(query, 10, adminId || undefined)
       return NextResponse.json({ results })
     } else {
-      // Get conversation context
-      const context = await adminChatService.getConversationContext(sessionId, '', 50)
+      // Get conversation context using unified provider
+      const context = await unifiedChatProvider.getAdminConversationContext(sessionId, '', 50)
       return NextResponse.json({ context })
     }
 
