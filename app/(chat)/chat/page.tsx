@@ -8,10 +8,14 @@ import { Badge } from "@/components/ui/badge"
 import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sparkles, Sun, Moon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useChat } from "@/hooks/useChat-ui"
+import { useUnifiedChat } from "@/hooks/useUnifiedChat"
 import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence"
 import { generateSecureSessionId } from "@/src/core/security/session"
-import { useRealtimeChat } from "@/hooks/useRealtimeChat"
+
+// Legacy imports removed:
+// - useChat (replaced by useUnifiedChat)
+// - useRealtimeChat (replaced by useUnifiedChat)
+// - RT/Fast toggle removed (unified system)
 import { useCanvas } from "@/components/providers/canvas-provider"
 import { useTheme } from "next-themes"
 import { CanvasOrchestrator } from "@/components/chat/CanvasOrchestrator"
@@ -29,7 +33,6 @@ import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 
 export default function ChatPage() {
   // Session Management
-  const [useRealtimeMode, setUseRealtimeMode] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const existingId = window.localStorage.getItem('intelligence-session-id')
@@ -257,51 +260,34 @@ export default function ChatPage() {
     }
   }, [context])
 
-  // Chat Hook
+  // Unified Chat Hook - Single source for all chat functionality
   const {
     messages: chatMessages,
     isLoading,
+    isStreaming,
     error,
-    send: sendMessageHook,
-    clear: clearMessages,
+    sendMessage,
+    clearMessages,
+    updateContext,
     addMessage
-  } = useChat({
+  } = useUnifiedChat({
+    sessionId: sessionId || 'default-session',
+    mode: 'standard', // Unified system - single optimized mode
     context: {
-      sessionId: sessionId || null,
+      sessionId: sessionId || 'default-session',
       leadContext: leadContextData,
       intelligenceContext: context
-    }
-  })
-
-  // Real-time Chat Hook
-  const realtimeChat = useRealtimeChat({
-    sessionId: sessionId || 'default-session',
-    context: {
-      mode: 'unified_chat',
-      userType: 'professional_user',
-      intelligenceEnabled: true
     },
     onMessage: (message) => {
-      if (message.type === 'text' && message.data) {
-        // Add real-time messages to chat state
-        addMessage({
-          role: 'assistant',
-          content: message.data,
-          timestamp: new Date()
-        })
-      }
+      // Handle message updates
+      console.log('Unified chat message:', message)
     },
     onComplete: () => {
-      console.log('Real-time response completed')
+      console.log('Unified chat response completed')
     },
     onError: (error) => {
-      console.error('Real-time chat error:', error)
-      addMessage({
-        role: 'assistant',
-        content: `I apologize, but I encountered an error: ${error}. The conversation will continue with standard mode.`,
-        timestamp: new Date()
-      })
-      setUseRealtimeMode(false) // Fall back to regular mode
+      console.error('Unified chat error:', error)
+      // Error handling is now built into the unified hook
     }
   })
 
@@ -311,32 +297,20 @@ export default function ChatPage() {
     // Event Handlers
   const handleSendMessage = useCallback(async (content?: string) => {
     const messageContent = content || input.trim()
-    if (messageContent && !isLoading && !realtimeChat.isLoading) {
+    if (messageContent && !isLoading && !isStreaming) {
       // Clear input
       setInput('')
 
-      // Add user message to chat
-      addMessage({
-        role: 'user',
-        content: messageContent,
-        timestamp: new Date()
-      })
-
       try {
-        if (useRealtimeMode) {
-          // Use real-time Edge Function
-          await realtimeChat.sendMessage(messageContent)
-        } else {
-          // Use regular chat backend
-          await sendMessageHook(messageContent)
-        }
+        // Use unified chat system - single source for all modes
+        await sendMessage(messageContent)
         setCurrentStage(prev => Math.min(prev + 1, 7))
       } catch (err) {
         console.error('Failed to send message:', err)
-        // Error handling is managed by respective hooks
+        // Error handling is now managed by unified hook
       }
     }
-  }, [input, isLoading, sendMessageHook, useRealtimeMode, realtimeChat, addMessage])
+  }, [input, isLoading, isStreaming, sendMessage])
 
   const handleToolAction = useCallback((tool: string) => {
     console.log('Tool action:', tool)
@@ -447,7 +421,7 @@ export default function ChatPage() {
       setInput(transcript)
       setShowVoiceOverlay(false)
     }
-  }, [intelligence, addMessage])
+  }, [sendRealtimeVoice, addMessage])
 
   return (
     <TooltipProvider>
@@ -751,20 +725,6 @@ export default function ChatPage() {
                   />
 
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-10 px-3 text-xs rounded-full modern-button ${
-                        useRealtimeMode
-                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                          : 'text-muted-foreground hover:text-orange-accent'
-                      }`}
-                      onClick={() => setUseRealtimeMode(!useRealtimeMode)}
-                      title={useRealtimeMode ? 'Using Real-Time Mode (5x faster)' : 'Switch to Real-Time Mode'}
-                    >
-                      <Zap className="h-4 w-4 mr-1" />
-                      {useRealtimeMode ? 'RT' : 'Fast'}
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
