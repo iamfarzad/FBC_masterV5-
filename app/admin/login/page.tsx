@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+// import { Alert, AlertDescription } from "@/components/ui/alert" // Component removed
 import { Loader2, Shield } from "lucide-react"
 
 export default function AdminLoginPage() {
@@ -68,9 +68,9 @@ export default function AdminLoginPage() {
             </div>
 
             {error && (
-              <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+                {error}
+              </div>
             )}
 
             <Button type="submit" className="w-full btn-primary" disabled={isLoading}>
