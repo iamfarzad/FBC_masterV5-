@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { Camera, CameraOff, Mic, MicOff, Circle, Square, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 import type { WebcamCaptureProps } from "./WebcamCapture.types"
 

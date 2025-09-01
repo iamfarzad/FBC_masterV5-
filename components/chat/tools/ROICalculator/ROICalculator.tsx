@@ -1,39 +1,36 @@
 "use client"
 
-import type React from "react"
-import { useEffect, useMemo, useState } from "react"
-import { Calculator, ArrowLeft, Check } from "@/src/core/icon-mapping"
-import { useToast } from "@/components/ui/use-toast"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import React, { useState, useRef, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ToolCardWrapper } from "@/components/chat/ToolCardWrapper"
+import { Calculator } from "@/src/core/icon-mapping"
+import { useToast } from "@/hooks/use-toast"
+import { markCapabilityUsed } from "@/components/experience/progress-tracker"
 
 import type { ROICalculatorProps, ROICalculationResult, WizardStep } from "./ROICalculator.types"
 import type { ChatMessage, ROIResultPayload } from '@/src/core/types/chat'
-import { markCapabilityUsed } from "@/components/experience/progress-tracker"
 
-// Type for the API response data
-type ROICalculationAPIResponse = {
-  roi: number;
-  paybackPeriod: number | null;
-  initialInvestment: number;
-  monthlyRevenue: number;
-  monthlyExpenses: number;
-  monthlyProfit: number;
-  totalRevenue: number;
-  totalExpenses: number;
-  totalProfit: number;
-  netProfit: number;
-  timePeriod: number;
-  calculatedAt: string;
-}
-
-const WIZARD_STEPS: WizardStep[] = ["company-info", "metrics", "results"];
+// Import extracted components
+import {
+  WIZARD_STEPS,
+  STEP_CONTENT,
+  type ROICalculationAPIResponse
+} from "./ROICalculatorConstants"
+import { CompanyInfoStep } from "./CompanyInfoStep"
+import { MetricsStep } from "./MetricsStep"
+import { ResultsStep } from "./ResultsStep"
+import { ProgressSidebar } from "./ProgressSidebar"
+import {
+  generateCacheKey,
+  loadCachedResult,
+  saveCachedResult,
+  clearAllCachedResults,
+  createDefaultFormData,
+  createDefaultCompanyInfo,
+  validateFormData,
+  validateCompanyInfo
+} from "./ROICalculatorUtils"
 
 export function ROICalculator({
   mode = 'card',
@@ -44,294 +41,187 @@ export function ROICalculator({
   defaults
 }: ROICalculatorProps) {
   const { toast } = useToast()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // State management
   const [currentStep, setCurrentStep] = useState<WizardStep>("company-info")
-  const [formData, setFormData] = useState({
-    initialInvestment: 5000,
-    monthlyRevenue: 10000,
-    monthlyExpenses: 6500,
-    timePeriod: 12
-  })
-  const [companyInfo, setCompanyInfo] = useState({
-    companySize: defaults?.companySize || "",
-    industry: defaults?.industry || "",
-    useCase: defaults?.useCase || ""
-  })
+  const [formData, setFormData] = useState(() => createDefaultFormData(defaults))
+  const [companyInfo, setCompanyInfo] = useState(() => createDefaultCompanyInfo(defaults))
   const [lastHash, setLastHash] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<ROICalculationAPIResponse | null>(null)
 
-  const fieldLabels: Record<string, string> = {
-    initialInvestment: "Initial Investment ($)",
-    monthlyRevenue: "Monthly Revenue ($)",
-    monthlyExpenses: "Monthly Expenses ($)",
-    timePeriod: "Time Period (months)"
-  }
+  // Generate cache key
+  const cacheKey = React.useMemo(() => generateCacheKey(sessionId, formData), [sessionId, formData])
 
-  const cacheKey = useMemo(() => {
-    const key = `${sessionId || 'anon'}:${formData.initialInvestment}:${formData.monthlyRevenue}:${formData.monthlyExpenses}:${formData.timePeriod}`
-    return `fbc:roi:${key}`
-  }, [sessionId, formData])
-
+  // Load cached result on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(cacheKey)
-      if (raw) {
-        const cached = JSON.parse(raw) as { output: ROICalculationAPIResponse, ts: number }
-        setResult(cached.output)
-        setCurrentStep("results")
-        setLastHash(cacheKey)
-      }
-    } catch {
-      // Cache read failed - continue without cached data
+    const cachedResult = loadCachedResult(cacheKey)
+    if (cachedResult) {
+      setResult(cachedResult)
+      setCurrentStep("results")
+      setLastHash(cacheKey)
+    } else {
+      // Auto-calculate if no cache and not already calculated
+      const timer = window.setTimeout(() => {
+        if (!lastHash) void handleCalculate(true)
+      }, 200)
+      return () => window.clearTimeout(timer)
     }
-    const t = window.setTimeout(() => { if (!lastHash) void handleCalculate(true) }, 200)
-    return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Handle calculation
   const handleCalculate = async (isAuto?: boolean) => {
+    if (!validateFormData(formData)) {
+      toast({
+        title: "Invalid Data",
+        description: "Please provide valid financial metrics.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsRunning(true)
+
     try {
-      setIsRunning(true)
       const response = await fetch('/api/tools/roi', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(sessionId ? { 'x-intelligence-session-id': sessionId } : {}) },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionId ? { 'x-intelligence-session-id': sessionId } : {})
+        },
         body: JSON.stringify(formData)
-      });
-      if (!response.ok) throw new Error("Calculation failed");
-      const data: { ok: boolean; output: ROICalculationAPIResponse } = await response.json();
-      if (!data?.ok || !data?.output) throw new Error("Invalid ROI API response");
-      setResult(data.output);
-      setCurrentStep("results");
-      if (!isAuto) toast({ title: "ROI Calculation Complete", description: "Your ROI analysis is ready!" });
+      })
 
-      // mark capability as explored (only in browser)
+      if (!response.ok) throw new Error("Calculation failed")
+
+      const data: { ok: boolean; output: ROICalculationAPIResponse } = await response.json()
+      if (!data?.ok || !data?.output) throw new Error("Invalid ROI API response")
+
+      setResult(data.output)
+      setCurrentStep("results")
+
+      if (!isAuto) {
+        toast({
+          title: "ROI Calculation Complete",
+          description: "Your ROI analysis is ready!"
+        })
+      }
+
+      // Mark capability as used
       if (typeof window !== 'undefined') {
         markCapabilityUsed("roi")
-        try { localStorage.setItem(cacheKey, JSON.stringify({ output: data.output, ts: Date.now() })) } catch {
-          // Cache operation failed - continue
-        }
+        saveCachedResult(cacheKey, data.output)
       }
+
       setLastHash(cacheKey)
 
-      // Emit structured chat message for inline rendering
+      // Emit structured chat message
       try {
-        const output = data.output;
         const payload: ROIResultPayload = {
-          roi: output.roi,
-          paybackMonths: output.paybackPeriod,
-          netProfit: output.netProfit,
-          monthlyProfit: output.monthlyProfit,
-          totalRevenue: output.totalRevenue,
-          totalExpenses: output.totalExpenses,
+          roi: data.output.roi,
+          paybackMonths: data.output.paybackPeriod,
+          netProfit: data.output.netProfit,
+          monthlyProfit: data.output.monthlyProfit,
+          totalRevenue: data.output.totalRevenue,
+          totalExpenses: data.output.totalExpenses,
           inputs: { ...formData, ...companyInfo },
-          calculatedAt: output.calculatedAt,
+          calculatedAt: data.output.calculatedAt,
         }
         const msg: ChatMessage = { role: 'tool', type: 'roi.result', payload }
-        if (typeof props?.onEmitMessage === 'function') {
-          props.onEmitMessage(msg as ChatMessage)
+        if (typeof (globalThis as any).onEmitMessage === 'function') {
+          (globalThis as any).onEmitMessage(msg)
         }
       } catch {
-        // Cache operation failed - continue
+        // Message emission failed - continue
       }
-    } catch {
-      console.error('ROI calculation error')
-      toast({ 
-        title: "Calculation Error", 
-        description: "Failed to calculate ROI", 
-        variant: "destructive" 
-      });
-    } finally { setIsRunning(false) }
+
+    } catch (error) {
+      console.error('ROI calculation error:', error)
+      toast({
+        title: "Calculation Error",
+        description: "Failed to calculate ROI",
+        variant: "destructive"
+      })
+    } finally {
+      setIsRunning(false)
+    }
   }
 
-  const resetForm = () => {
-    // Reset all form state
+  // Handle form reset
+  const handleReset = () => {
     setCurrentStep("company-info")
-    setFormData({
-      initialInvestment: 5000,
-      monthlyRevenue: 10000,
-      monthlyExpenses: 6500,
-      timePeriod: 12
-    })
-    setCompanyInfo({
-      companySize: defaults?.companySize || "",
-      industry: defaults?.industry || "",
-      useCase: defaults?.useCase || ""
-    })
+    setFormData(createDefaultFormData(defaults))
+    setCompanyInfo(createDefaultCompanyInfo(defaults))
     setLastHash(null)
     setIsRunning(false)
     setResult(null)
 
-    // Clear localStorage cache
+    // Clear cache
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(cacheKey)
-        // Clear any other cached results that might exist
-        const keys = Object.keys(localStorage).filter(key => key.startsWith('fbc:roi:'))
-        keys.forEach(key => localStorage.removeItem(key))
-      } catch {
-        // Cache operation failed - continue
-      }
-    }
-
-    // Reset progress tracker (exploredCount = 0)
-    if (typeof window !== 'undefined') {
-      try {
+        clearAllCachedResults()
         window.dispatchEvent(new CustomEvent('roi-reset'))
       } catch {
         // Cache operation failed - continue
       }
     }
 
-    toast({ title: "Form Reset", description: "All fields have been cleared. Start fresh!" })
+    toast({
+      title: "Form Reset",
+      description: "All fields have been cleared. Start fresh!"
+    })
   }
 
-  const renderStep = () => {
+  // Handle step navigation
+  const handleStepBack = () => {
+    const currentIndex = WIZARD_STEPS.indexOf(currentStep)
+    if (currentIndex > 0) {
+      setCurrentStep(WIZARD_STEPS[currentIndex - 1])
+    }
+  }
+
+  const handleNextStep = () => {
+    setCurrentStep("metrics")
+  }
+
+  // Render current step content
+  const renderStepContent = () => {
     switch (currentStep) {
       case "company-info":
         return (
-          <div className="space-y-4">
-            <h3 className="font-semibold">Company Information</h3>
-            <div>
-              <Label htmlFor="companySize">Company Size</Label>
-              <Select value={companyInfo.companySize} onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, companySize: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select company size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="startup">Startup (1-10 employees)</SelectItem>
-                  <SelectItem value="small">Small (11-50 employees)</SelectItem>
-                  <SelectItem value="medium">Medium (51-200 employees)</SelectItem>
-                  <SelectItem value="large">Large (200+ employees)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="industry">Industry</Label>
-              <Select value={companyInfo.industry} onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, industry: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technology">Technology</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="retail">Retail</SelectItem>
-                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="useCase">Primary Use Case</Label>
-              <Input
-                id="useCase"
-                value={companyInfo.useCase}
-                onChange={(e) => setCompanyInfo(prev => ({ ...prev, useCase: e.target.value }))}
-                placeholder="e.g., Process automation, Customer service, Data analysis"
-              />
-            </div>
-            <Button 
-              onClick={() => setCurrentStep("metrics")} 
-              className="w-full"
-              disabled={!companyInfo.companySize || !companyInfo.industry}
-            >
-              Next: Enter Metrics
-            </Button>
-          </div>
+          <CompanyInfoStep
+            companyInfo={companyInfo}
+            onCompanyInfoChange={setCompanyInfo}
+            onNext={handleNextStep}
+          />
         )
       case "metrics":
         return (
-          <div className="space-y-4">
-            <h3 className="font-semibold">Financial Metrics</h3>
-            <p className="text-sm text-muted-foreground">Enter your business metrics to calculate ROI</p>
-            {Object.entries(formData).map(([key, value]) => (
-              <div key={key}>
-                <Label htmlFor={key}>{fieldLabels[key] || key}</Label>
-                <Input
-                  id={key}
-                  type="number"
-                  value={value}
-                  onChange={(e) => setFormData(prev => ({ ...prev, [key]: Number(e.target.value) }))}
-                  min="0"
-                  step={key === 'timePeriod' ? '1' : '0.01'}
-                />
-              </div>
-            ))}
-            <Button onClick={() => void handleCalculate()} className="w-full" disabled={Object.values(formData).some(v => v <= 0)}>
-              Calculate ROI
-            </Button>
-          </div>
+          <MetricsStep
+            formData={formData}
+            onFormDataChange={setFormData}
+            onCalculate={() => handleCalculate(false)}
+            isRunning={isRunning}
+          />
         )
       case "results":
         return (
-          <div className="space-y-3">
-            <h3 className="font-semibold">ROI Analysis Results</h3>
-            {result && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 rounded-md bg-accent/10">
-                    <div className="text-xl font-bold text-accent">{result.roi}%</div>
-                    <div className="text-xs text-muted-foreground">ROI</div>
-                  </div>
-                  <div className="text-center p-3 rounded-md bg-accent/5">
-                    <div className="text-xl font-bold">{result.paybackPeriod ?? '—'}</div>
-                    <div className="text-xs text-muted-foreground">Payback (mo)</div>
-                  </div>
-                  <div className="text-center p-3 rounded-md bg-accent/5">
-                    <div className={`text-lg font-bold ${result.netProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>${result.netProfit?.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Net Profit</div>
-                  </div>
-                </div>
-
-                <Accordion type="single" collapsible defaultValue="details">
-                  <AccordionItem value="details">
-                    <AccordionTrigger className="text-sm">Financial Breakdown</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Monthly Profit</span>
-                          <strong>${result.monthlyProfit?.toLocaleString()}</strong>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total Revenue ({result.timePeriod} mo)</span>
-                          <strong>${result.totalRevenue?.toLocaleString()}</strong>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total Expenses</span>
-                          <strong>${result.totalExpenses?.toLocaleString()}</strong>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            )}
-            <Button 
-              onClick={() => {
-                if (!result) return;
-                const combinedResult: ROICalculationResult = {
-                  ...companyInfo,
-                  estimatedROI: result.roi,
-                  paybackPeriod: result.paybackPeriod || 0,
-                  currentProcessTime: 0,
-                  currentCost: result.monthlyExpenses,
-                  automationPotential: 0,
-                  timeSavings: 0,
-                  costSavings: result.netProfit
-                }
-                onComplete?.(combinedResult)
-              }} 
-              className="w-full"
-            >
-              Complete Analysis
-            </Button>
-          </div>
+          <ResultsStep
+            result={result}
+            companyInfo={companyInfo}
+            formData={formData}
+            onComplete={onComplete || (() => {})}
+          />
         )
       default:
         return null
     }
   }
 
+  // Main UI component
   const ROICalculatorUI = ({ showSidebar = true }: { showSidebar?: boolean } = {}) => (
     <div className="h-full lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] gap-4 flex">
       {/* Main ROI Calculator Area */}
@@ -340,18 +230,14 @@ export function ROICalculator({
           <Card className="w-full bg-card border border-border">
             <CardHeader className="text-center">
               <CardTitle className="text-xl mb-2">
-                {currentStep === "company-info" && "Company Information"}
-                {currentStep === "metrics" && "Financial Metrics"}
-                {currentStep === "results" && "ROI Analysis Results"}
+                {STEP_CONTENT[currentStep].title}
               </CardTitle>
               <p className="text-muted-foreground">
-                {currentStep === "company-info" && "Tell us about your company to get started"}
-                {currentStep === "metrics" && "Enter your business metrics to calculate ROI"}
-                {currentStep === "results" && "Your ROI analysis is complete"}
+                {STEP_CONTENT[currentStep].description}
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
-              {renderStep()}
+              {renderStepContent()}
             </CardContent>
           </Card>
         </div>
@@ -359,98 +245,15 @@ export function ROICalculator({
 
       {/* Sidebar */}
       {showSidebar && (
-      <div className="w-72 p-4 space-y-4 hidden lg:block">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calculator className="w-5 h-5" />
-              Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              {WIZARD_STEPS.map((step, index) => (
-                <div key={step} className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    WIZARD_STEPS.indexOf(currentStep) > index 
-                      ? 'bg-accent/10 text-accent' 
-                      : WIZARD_STEPS.indexOf(currentStep) === index 
-                        ? 'bg-accent/20 text-accent' 
-                        : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {WIZARD_STEPS.indexOf(currentStep) > index ? <Check className="w-4 h-4" /> : index + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {step === "company-info" && "Company Info"}
-                      {step === "metrics" && "Financial Data"}
-                      {step === "results" && "Results"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {step === "company-info" && "Basic information"}
-                      {step === "metrics" && "Revenue & expenses"}
-                      {step === "results" && "ROI calculation"}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {currentStep === "results" && result && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Key Metrics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3" aria-live="polite">
-              <div className="grid grid-cols-1 gap-3">
-                <div className="text-center p-3 rounded-lg bg-accent/10">
-                  <div className="text-2xl font-bold text-accent">{result?.roi}%</div>
-                  <div className="text-sm text-muted-foreground">Return on Investment</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-accent/5">
-                  <div className="text-2xl font-bold">{result?.paybackPeriod || 'N/A'}</div>
-                  <div className="text-sm text-muted-foreground">Payback Period (months)</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-accent/5">
-                  <div className="text-lg font-bold">${result?.netProfit?.toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">Net Profit</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {currentStep !== "company-info" && (
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={() => setCurrentStep(WIZARD_STEPS[WIZARD_STEPS.indexOf(currentStep) - 1])}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isRunning} onClick={() => void handleCalculate(false)}>
-              Re-run Analysis
-            </Button>
-            <Button variant="outline" className="w-full" onClick={resetForm} disabled={isRunning}>
-              Reset Form
-            </Button>
-            {onCancel && (
-              <Button variant="ghost" className="w-full" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        <ProgressSidebar
+          currentStep={currentStep}
+          result={result}
+          isRunning={isRunning}
+          onStepBack={handleStepBack}
+          onRecalculate={() => handleCalculate(false)}
+          onReset={handleReset}
+          onCancel={onCancel}
+        />
       )}
     </div>
   )
@@ -476,7 +279,11 @@ export function ROICalculator({
 
   // Card variant
   return (
-    <ToolCardWrapper title="ROI Calculator" description="Calculate the ROI for your business." icon={<Calculator className="w-4 h-4" />}>
+    <ToolCardWrapper
+      title="ROI Calculator"
+      description="Calculate the ROI for your business."
+      icon={<Calculator className="w-4 h-4" />}
+    >
       <ROICalculatorUI />
     </ToolCardWrapper>
   )
