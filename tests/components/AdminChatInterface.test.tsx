@@ -29,7 +29,7 @@ jest.mock('@/hooks/useAdminChat', () => ({
 }))
 
 // Mock toast hook
-jest.mock('@/components/ui/use-toast', () => ({
+jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toast: jest.fn()
   })

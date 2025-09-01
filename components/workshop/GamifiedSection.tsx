@@ -7,7 +7,7 @@ import { ProgressTracker } from "@/components/experience/progress-tracker"
 import { cn } from '@/src/core/utils'
 import type { WorkshopModule, WorkshopStep } from "./education-modules"
 import { QuizQuestion } from "./education-modules"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 type Props = {
   module: WorkshopModule

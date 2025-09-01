@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { webAppI18n, Language } from '@/src/core/i18n';
 
@@ -30,7 +30,6 @@ interface I18nProviderProps {
 export function I18nProvider({ children }: I18nProviderProps) {
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [supportedLanguages, setSupportedLanguages] = useState<Language[]>([]);
-  const searchParams = useSearchParams();
 
   // Initialize i18n system
   useEffect(() => {
@@ -55,28 +54,6 @@ export function I18nProvider({ children }: I18nProviderProps) {
       }
     };
   }, []);
-
-  // Handle URL parameter changes (for navigation within the app)
-  useEffect(() => {
-    const langParam = searchParams.get('lang');
-    if (langParam && supportedLanguages.some(lang => lang.code === langParam)) {
-      webAppI18n.setLanguage(langParam);
-      setCurrentLanguage(langParam);
-    }
-  }, [searchParams, supportedLanguages]);
-
-  // Check for URL parameter on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && supportedLanguages.length > 0) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const langParam = urlParams.get('lang');
-      if (langParam && supportedLanguages.some(lang => lang.code === langParam)) {
-        console.log('Found URL language parameter:', langParam);
-        webAppI18n.setLanguage(langParam);
-        setCurrentLanguage(langParam);
-      }
-    }
-  }, [supportedLanguages]);
 
   // Translation function
   const translate = async (text: string, options?: any): Promise<string> => {
@@ -104,9 +81,55 @@ export function I18nProvider({ children }: I18nProviderProps) {
 
   return (
     <I18nContext.Provider value={contextValue}>
+      <Suspense fallback={null}>
+        <SearchParamsHandler 
+          currentLanguage={currentLanguage}
+          setCurrentLanguage={setCurrentLanguage}
+          supportedLanguages={supportedLanguages}
+        />
+      </Suspense>
       {children}
     </I18nContext.Provider>
   );
+}
+
+/**
+ * Separate component to handle search params with Suspense
+ */
+function SearchParamsHandler({ 
+  currentLanguage, 
+  setCurrentLanguage, 
+  supportedLanguages 
+}: { 
+  currentLanguage: string;
+  setCurrentLanguage: (lang: string) => void;
+  supportedLanguages: Language[];
+}) {
+  const searchParams = useSearchParams();
+
+  // Handle URL parameter changes (for navigation within the app)
+  useEffect(() => {
+    const langParam = searchParams.get('lang');
+    if (langParam && supportedLanguages.some(lang => lang.code === langParam)) {
+      webAppI18n.setLanguage(langParam);
+      setCurrentLanguage(langParam);
+    }
+  }, [searchParams, supportedLanguages, setCurrentLanguage]);
+
+  // Check for URL parameter on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && supportedLanguages.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const langParam = urlParams.get('lang');
+      if (langParam && supportedLanguages.some(lang => lang.code === langParam)) {
+        console.log('Found URL language parameter:', langParam);
+        webAppI18n.setLanguage(langParam);
+        setCurrentLanguage(langParam);
+      }
+    }
+  }, [supportedLanguages, setCurrentLanguage]);
+
+  return null;
 }
 
 /**
