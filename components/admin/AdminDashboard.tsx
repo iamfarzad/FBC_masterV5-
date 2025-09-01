@@ -28,6 +28,7 @@ import {
   Search,
   Filter,
   Download,
+  Server,
 } from "lucide-react"
 
 type DashboardSection =
