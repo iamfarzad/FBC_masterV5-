@@ -1,0 +1,50 @@
+---
+alwaysApply: true
+description: Prevents duplicate files, imports, and code duplication across the codebase
+globs: *.ts,*.tsx,*.js,*.jsx
+---
+
+# 🚫 Duplicate Prevention Protocol
+
+## Pre-Change Analysis (MANDATORY)
+**BEFORE any file modification:**
+- Run `git status` to see ALL current changes
+- Check for duplicate file names: `find . -name "*.ts" -o -name "*.tsx" | sed 's|.*/||' | sort | uniq -c | sort -nr | grep -v " 1 "`
+- Verify no empty files: `find . -name "*.ts" -o -name "*.tsx" | xargs wc -l | grep " 0 "`
+- Check import patterns: `find . -name "*.ts" -o -name "*.tsx" | xargs grep -l "import.*from.*@/lib/"`
+
+## File Organization Rules
+**NEVER create:**
+- Parallel structures like `chat/` and `chat/tools/`
+- Duplicate components in different directories
+- Multiple implementations of same hook
+- Type definitions in multiple locations
+
+## Duplicate Detection Script
+**Run before every commit:**
+```bash
+#!/bin/bash
+echo "🔍 Running duplicate detection..."
+
+# Check for duplicate filenames
+find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | sed 's|.*/||' | sort | uniq -c | sort -nr | grep -v " 1 " > duplicate_files.txt
+if [ -s duplicate_files.txt ]; then echo "❌ DUPLICATE FILENAMES"; cat duplicate_files.txt; exit 1; fi
+
+# Check for inconsistent imports
+IMPORT_ISSUES=$(grep -r "from.*lib/" . --include="*.ts" --include="*.tsx" | grep -v "@/lib/" | wc -l)
+if [ $IMPORT_ISSUES -gt 0 ]; then echo "❌ INCONSISTENT IMPORTS: $IMPORT_ISSUES files"; exit 1; fi
+
+# Check for empty files
+find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | xargs wc -l | grep " 0 " > empty_files.txt
+if [ -s empty_files.txt ]; then echo "❌ EMPTY FILES"; cat empty_files.txt; exit 1; fi
+
+echo "✅ No duplicates found"
+```
+
+## Legacy Cleanup Protocol
+**When duplicates found:**
+- Document ALL duplicates
+- Choose ONE canonical location
+- Update ALL imports to canonical location
+- Delete duplicates in same commit
+- Test with `pnpm build` after changes

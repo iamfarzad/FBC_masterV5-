@@ -1,0 +1,176 @@
+---
+alwaysApply: true
+description: Complete refactoring workflow for component extraction and replacement
+---
+
+# 🔄 Complete Refactoring Cycle Protocol
+
+**MANDATORY WORKFLOW**: Always follow this exact cycle when refactoring components:
+
+## 📋 Refactoring Cycle Checklist
+
+### Phase 1: Extract Components
+- [ ] Identify component to extract
+- [ ] Create new component file in appropriate directory (`components/`, `ui/`, etc.)
+- [ ] Extract logic, styles, and types
+- [ ] Add proper TypeScript interfaces
+- [ ] Export component with named export
+- [ ] Add JSDoc comments for complex components
+
+### Phase 2: Replace Original
+- [ ] Import new component in original file
+- [ ] Replace original component usage
+- [ ] Preserve all props and functionality
+- [ ] Update component references in JSX
+
+### Phase 3: Update Imports
+- [ ] Run `pnpm lint` to check for unused imports
+- [ ] Remove unused imports from original file
+- [ ] Verify all import paths use `@/` aliases
+- [ ] Check for circular dependencies
+
+### Phase 4: Test Green Path
+- [ ] Run `pnpm build` - must pass without errors
+- [ ] Run `pnpm lint` - must pass without warnings
+- [ ] Run `pnpm tsc --noEmit` - must pass without type errors
+- [ ] Test component functionality manually
+- [ ] Check browser console for runtime errors
+
+### Phase 5: Delete Legacy
+- [ ] Verify new component works identically
+- [ ] Remove old component code from original file
+- [ ] Clean up any leftover variables/types
+- [ ] Update file comments if needed
+
+### Phase 6: Final Test
+- [ ] Run full test suite: `pnpm test`
+- [ ] Run build again: `pnpm build`
+- [ ] Check for any broken references
+- [ ] Verify no regressions in functionality
+
+## 🚨 Critical Rules
+
+### NEVER Skip Steps
+- **All 6 phases must be completed** in order
+- **Never commit** until Phase 6 passes
+- **Always test** after each phase
+
+### Import Standards
+```typescript
+// ✅ CORRECT - Always use aliases
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/hooks/use-auth'
+
+// ❌ WRONG - Never use relative imports
+import { Button } from '../../../components/ui/button'
+```
+
+### Component Standards
+```tsx
+// ✅ CORRECT - Named exports, proper typing
+interface ButtonProps {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary'
+  onClick?: () => void
+}
+
+export function Button({ children, variant = 'primary', onClick }: ButtonProps) {
+  return (
+    <button
+      className={cn("btn", variant === 'primary' && "btn-primary")}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+## 🛠️ Automation Scripts
+
+### Quick Test Command
+```bash
+# Run this after each refactoring phase
+pnpm build && pnpm lint && pnpm tsc --noEmit
+```
+
+### Import Cleanup
+```bash
+# Check for unused imports
+pnpm eslint --ext .ts,.tsx . --rule 'no-unused-vars: error'
+```
+
+### Duplicate Detection
+```bash
+# Run before committing
+find . -name "*.ts" -o -name "*.tsx" | sed 's|.*/||' | sort | uniq -c | sort -nr | grep -v " 1 "
+```
+
+## 📊 Success Metrics
+
+### Must Pass Before Commit:
+- [ ] Build succeeds: `pnpm build`
+- [ ] Lint passes: `pnpm lint`
+- [ ] Type check passes: `pnpm tsc --noEmit`
+- [ ] Tests pass: `pnpm test`
+- [ ] No duplicate files
+- [ ] No unused imports
+- [ ] No broken references
+
+## 🔄 Common Refactoring Patterns
+
+### Component Extraction
+1. Identify reusable logic
+2. Extract to separate file
+3. Add proper typing
+4. Update all usages
+5. Remove original code
+
+### Hook Extraction
+1. Identify side effect logic
+2. Create custom hook
+3. Move state and effects
+4. Update component to use hook
+5. Test functionality
+
+### Utility Extraction
+1. Identify repeated functions
+2. Move to `lib/` or `utils/`
+3. Update imports everywhere
+4. Add proper documentation
+5. Remove duplicates
+
+## 🚫 Never Do This
+
+### ❌ DON'T:
+- Skip testing phases
+- Commit with build errors
+- Leave unused imports
+- Use relative imports
+- Create duplicate components
+- Break existing functionality
+
+### ✅ DO:
+- Test after each change
+- Clean up imports immediately
+- Use absolute imports with `@/`
+- Preserve all existing behavior
+- Document complex refactors
+
+## 🎯 Quality Gates
+
+### Pre-Refactor Checklist
+- [ ] Component is actually reusable
+- [ ] No existing duplicate exists
+- [ ] Proper naming convention
+- [ ] TypeScript types defined
+
+### Post-Refactor Verification
+- [ ] All tests pass
+- [ ] No console errors
+- [ ] No lint warnings
+- [ ] No type errors
+- [ ] Functionality identical
+- [ ] Performance not degraded
+
+**REMEMBER**: Refactoring is complete only when the cycle is fully closed with green tests and clean code. Never leave legacy code behind! 🧹✨

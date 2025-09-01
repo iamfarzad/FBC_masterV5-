@@ -1,0 +1,89 @@
+---
+alwaysApply: true
+description: Enforces clean git workflow and commit practices
+---
+
+# 📝 Git Commit Discipline Protocol
+
+## Commit Standards
+**Every commit must:**
+- Have a clear, specific purpose
+- Include cleanup in the same commit as creation
+- Use `git add -p` for selective staging
+- Never commit without duplicate/import checks
+
+## Commit Message Template
+```bash
+# Format
+type(scope): description
+
+# Examples
+feat: add user authentication system
+fix: resolve duplicate import paths in components
+refactor: consolidate chat components structure
+docs: update API documentation
+test: add unit tests for auth service
+
+# Detailed format
+feat: add new feature
+- Added component X
+- Removed duplicate Y
+- Updated imports Z
+- Fixed issue W
+
+fix: resolve issue
+- Fixed duplicate import paths
+- Consolidated component locations
+- Cleaned up unused files
+- Updated type definitions
+```
+
+## Pre-Commit Checklist
+**MANDATORY verification:**
+- [ ] Run duplicate detection script
+- [ ] Check import consistency
+- [ ] Verify no empty files
+- [ ] Test build with `pnpm build`
+- [ ] Run linter: `pnpm lint`
+- [ ] Check TypeScript: `pnpm tsc --noEmit`
+
+## Branch Strategy
+**Clean branching:**
+- `main` branch always deployable
+- Feature branches: `feat/description`
+- Bug fixes: `fix/description`
+- Refactors: `refactor/description`
+
+## Commit Hygiene
+**NEVER commit:**
+- Debug/console.log statements
+- Empty files
+- Duplicate files
+- Inconsistent import paths
+- Build artifacts
+
+## Git Workflow Commands
+```bash
+# Check current status
+git status
+
+# Selective staging
+git add -p
+
+# Clean commits
+git commit -m "feat: add feature description"
+
+# Amend if needed (for fixing issues)
+git commit --amend
+
+# Never force push to main
+git push origin feature-branch
+```
+
+## Review Process
+**Before merge:**
+- All pre-commit checks pass
+- No duplicates introduced
+- Import paths consistent
+- Build successful
+- Tests passing
