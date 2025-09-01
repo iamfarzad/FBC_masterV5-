@@ -7,8 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PageShell, PageHeader } from '@/components/page-shell'
 import { ArrowLeft, Maximize2, Minimize2, Play, Sparkles, Wand2, Video, Code, BookOpen, HelpCircle } from 'lucide-react'
-import { VideoToApp } from '@/components/workshop/VideoToApp'
-import { VideoToAppHelp } from '@/components/workshop/VideoToAppHelp'
+// import { VideoToApp } from '@/components/workshop/VideoToApp' // Component removed
+// import { VideoToAppHelp } from '@/components/workshop/VideoToAppHelp' // Component removed
 import { cn } from '@/src/core/utils'
 
 interface VideoLearningToolClientProps {
@@ -291,7 +291,12 @@ export function VideoLearningToolClient({
               Video-to-App Help & Documentation
             </DialogTitle>
           </DialogHeader>
-          <VideoToAppHelp />
+          <div className="p-6 text-center">
+            <h3 className="text-lg font-semibold mb-4">Video-to-App Feature</h3>
+            <p className="text-muted-foreground">
+              This feature converts YouTube videos into interactive app blueprints using AI analysis.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
 
