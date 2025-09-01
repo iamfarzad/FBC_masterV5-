@@ -117,6 +117,14 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateX(20px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
+        'smooth-fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'modern-bounce': {
+          '0%, 80%, 100%': { transform: 'scale(0.8)', opacity: '0.5' },
+          '40%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
         float: "float 6s ease-in-out infinite",
@@ -125,6 +133,8 @@ const config: Config = {
         'scale-in': "scale-in 0.3s ease-out",
         'modern-pulse': "modern-pulse 2s ease-in-out infinite",
         'smooth-slide-in': "smooth-slide-in 0.3s ease-out",
+        'smooth-fade-in': "smooth-fade-in 0.6s ease-out",
+        'modern-bounce': "modern-bounce 1.4s ease-in-out infinite",
       },
     },
   },

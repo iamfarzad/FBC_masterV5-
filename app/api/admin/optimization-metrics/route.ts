@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuthMiddleware } from '@/src/core/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { getSupabase } from '@/src/core/supabase/server'
 
 export async function GET(request: NextRequest) {

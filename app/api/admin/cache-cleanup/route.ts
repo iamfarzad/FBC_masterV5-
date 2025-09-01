@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuthMiddleware } from '@/src/core/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { geminiConfig } from '@/src/core/models/gemini'
 
 export async function POST(request: NextRequest) {

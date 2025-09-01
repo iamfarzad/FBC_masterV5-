@@ -186,6 +186,31 @@
   @apply transition-all duration-200 hover:shadow-lg;
 }
 
+/* Modern Color Classes */
+.bg-gunmetal { background-color: #020617; }
+.bg-gunmetal-lighter { background-color: #1e293b; }
+.border-gunmetal-lighter { border-color: #1e293b; }
+.text-light-silver { color: #e2e8f0; }
+.text-light-silver-darker { color: #cbd5e1; }
+.bg-light-silver-darker { background-color: #cbd5e1; }
+.bg-light-silver { background-color: #f1f5f9; }
+.border-light-silver { border-color: #f1f5f9; }
+.border-light-silver-darker { border-color: #cbd5e1; }
+.hover\:bg-gunmetal-lighter:hover { background-color: #1e293b; }
+
+/* Modern Animation Classes */
+.animate-smooth-fade-in { animation: smooth-fade-in 0.6s ease-out; }
+.animate-modern-bounce { animation: modern-bounce 1.4s ease-in-out infinite; }
+.text-gradient { 
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.modern-card { @apply hover:shadow-xl transition-shadow duration-300; }
+.modern-input-focus { @apply focus-within:shadow-lg focus-within:border-brand; }
+.scrollbar-modern { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
 .btn-brand {
   background: var(--brand);
   color: white;
