@@ -1,7 +1,7 @@
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { type NextRequest, NextResponse } from "next/server"
 import { adminAuthMiddleware } from '@/app/api-utils/auth'
-import { adminRateLimit } from "@/app/api-utils/security-rate-limiting"
+import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 import { withAdminAuth } from "@/app/api-utils/security"
 
 export const GET = withAdminAuth(async function(request: NextRequest) {
