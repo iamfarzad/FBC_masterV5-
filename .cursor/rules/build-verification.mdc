@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+description: Ensures build quality and prevents deployment issues
+globs: *.ts,*.tsx,*.js,*.jsx,next.config.mjs,tailwind.config.ts
+---
+
+# 🏗️ Build Verification Protocol
+
+## Build Requirements
+**MANDATORY checks:**
+- `pnpm build` passes without errors
+- `pnpm tsc --noEmit` passes without type errors
+- `pnpm lint` passes without linting errors
+- All imports resolve correctly
+- No console.log statements in production code
+
+## Pre-Deployment Verification
+**Run before ANY deployment:**
+```bash
+# Clean build
+pnpm clean
+rm -rf .next
+
+# Fresh install
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+
+# Full verification
+pnpm lint
+pnpm tsc --noEmit
+pnpm build
+pnpm test
+```
+
+## Build Optimization
+**Ensure:**
+- Bundle size under 5MB
+- No unused dependencies
+- Tree-shaking working
+- Images optimized
+- CSS minified
+
+## Environment Checks
+**Verify:**
+- Environment variables configured
+- Database connections working
+- API endpoints accessible
+- External services integrated
+
+## Error Prevention
+**Check for:**
+- Broken imports
+- Undefined variables
+- Type mismatches
+- Missing dependencies
+- Circular dependencies
+
+## Deployment Checklist
+- [ ] Build passes locally
+- [ ] Tests pass
+- [ ] Linting passes
+- [ ] Type checking passes
+- [ ] No console statements
+- [ ] Bundle size acceptable
+- [ ] Environment variables set
+- [ ] Database migrations run
+- [ ] Backup created
+
+## Vercel-Specific Checks
+**For Vercel deployments:**
+- [ ] `vercel.json` configured correctly
+- [ ] Build command set to `pnpm build`
+- [ ] Install command set to `pnpm install`
+- [ ] Environment variables configured in Vercel
+- [ ] Build hooks set up
+- [ ] Domain configured

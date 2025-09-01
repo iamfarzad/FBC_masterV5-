@@ -1,0 +1,224 @@
+---
+alwaysApply: true
+description: F.B/c Brand Colors Law - Immutable brand colors and theme system
+globs: *.tsx,*.ts,*.jsx,*.js,*.css
+---
+
+# 🚫 F.B/c BRAND COLORS LAW - NEVER CHANGE THESE COLORS 🚫
+
+## 📜 THE LAW (MANDATORY)
+These brand colors are **LAW**. They **MUST NEVER** be changed under any circumstances:
+
+### 🎨 IMMUTABLE BRAND COLORS
+```css
+/* PRIMARY BRAND COLORS - NEVER CHANGE */
+--brand: #ff5b04;          /* F.B/c Orange - THE BRAND */
+--brand-hover: #e65200;    /* Orange hover state */
+
+/* BACKGROUND COLORS */
+--bg: #f5f5f5;             /* Light Silver background */
+--surface: #ffffff;        /* White surface */
+--surface-elevated: #e5e5e5; /* Elevated surface */
+
+/* TEXT COLORS */
+--text: #111111;           /* Primary text */
+--text-muted: #666666;     /* Muted text */
+
+/* BORDER */
+--border: #e5e5e5;        /* Default border */
+```
+
+### 🌙 DARK MODE COLORS (ALSO IMMUTABLE)
+```css
+/* DARK MODE - NEVER CHANGE */
+--bg: #0b1620;             /* Dark navy background */
+--surface: #1d2a35;        /* Dark surface */
+--surface-elevated: #1f2f3a; /* Elevated dark surface */
+--text: #e5e9ec;          /* Light text */
+--text-muted: #a0a5aa;    /* Muted light text */
+--border: #2a3a46;        /* Dark border */
+```
+
+## ⚠️ VIOLATIONS (FORBIDDEN)
+### ❌ NEVER USE THESE:
+```css
+/* FORBIDDEN - Will break the law */
+color: #ff0000;           /* No random reds */
+background: #000000;      /* No pure black */
+border: 1px solid #ccc;   /* No generic grays */
+
+/* FORBIDDEN - Old color system */
+primary: #some-other-color;  /* No variations */
+accent: #different-orange;   /* No changes to brand */
+```
+
+## ✅ REQUIRED USAGE
+### 🎯 ALL COMPONENTS MUST USE:
+```tsx
+// ✅ CORRECT - Always use theme tokens
+<div className="bg-brand text-surface border border-border">
+  <button className="bg-brand-hover hover:bg-brand text-surface">
+    Brand Button
+  </button>
+</div>
+
+// ❌ WRONG - Never use hardcoded colors
+<div style={{ backgroundColor: '#ff5b04' }}> // FORBIDDEN
+  <button style={{ color: '#ffffff' }}> // FORBIDDEN
+</div>
+```
+
+### 🔧 TAILWIND CLASSES (REQUIRED):
+```tsx
+// ✅ CORRECT - Always use theme tokens
+bg-brand           // Brand orange background
+bg-brand-hover     // Brand orange hover
+bg-surface         // White/dark surface
+bg-surface-elevated // Elevated surface
+text-text          // Primary text color
+text-text-muted    // Muted text
+border-border      // Theme border
+```
+
+## 🚨 ENFORCEMENT RULES
+### 1. **NEW COMPONENTS LAW**
+Every new component **MUST** use theme tokens:
+```tsx
+// ✅ REQUIRED for all new components
+interface ComponentProps {
+  className?: string;
+}
+
+export function MyComponent({ className }: ComponentProps) {
+  return (
+    <div className={cn("bg-surface border border-border text-text", className)}>
+      <button className="bg-brand hover:bg-brand-hover text-surface">
+        Action
+      </button>
+    </div>
+  );
+}
+```
+
+### 2. **CSS-IN-JS LAW**
+All styled-components/emotion must use theme:
+```tsx
+// ✅ CORRECT
+const StyledDiv = styled.div`
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+`;
+
+// ❌ FORBIDDEN
+const StyledDiv = styled.div`
+  background: #ffffff;  // NEVER
+  color: #000000;       // NEVER
+`;
+```
+
+### 3. **CHART COLORS LAW**
+All charts must use brand colors:
+```tsx
+// ✅ CORRECT
+const chartColors = {
+  primary: 'hsl(var(--brand))',      // #ff5b04
+  secondary: 'hsl(var(--text-muted))', // #666666
+  success: '#10b981',                 // Green for success
+  warning: '#f59e0b',                 // Amber for warning
+  error: '#ef4444',                   // Red for errors
+};
+```
+
+## 🔍 SEARCH & REPLACE PATTERNS
+### When refactoring old code, ALWAYS replace:
+
+```typescript
+// OLD → NEW mappings (MANDATORY)
+'#ff5b04' → 'hsl(var(--brand))'
+'#ffffff' → 'hsl(var(--surface))'
+'#000000' → 'hsl(var(--text))'
+'#f5f5f5' → 'hsl(var(--bg))'
+'#e5e5e5' → 'hsl(var(--border))'
+'#666666' → 'hsl(var(--text-muted))'
+
+// Tailwind classes
+bg-white → bg-surface
+bg-gray-100 → bg-surface-elevated
+text-gray-900 → text-text
+text-gray-600 → text-text-muted
+border-gray-200 → border-border
+```
+
+## 🎯 THEME SYSTEM USAGE
+### Theme Provider Setup:
+```tsx
+// ✅ CORRECT theme setup
+import { ThemeProvider } from 'next-themes';
+
+export default function App({ children }) {
+  return (
+    <ThemeProvider
+      attribute="data-theme"  // Use data-theme attribute
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange={false}
+    >
+      {children}
+    </ThemeProvider>
+  );
+}
+```
+
+### Theme Detection:
+```tsx
+// ✅ CORRECT theme usage
+'use client';
+import { useTheme } from 'next-themes';
+
+export function ThemeAwareComponent() {
+  const { theme } = useTheme();
+
+  return (
+    <div className={cn(
+      "bg-surface text-text border border-border",
+      theme === 'dark' ? "shadow-lg" : "shadow-sm"
+    )}>
+      Content adapts to theme
+    </div>
+  );
+}
+```
+
+## 🚫 PENALTIES FOR VIOLATIONS
+### Immediate Actions Required:
+1. **Revert** any color changes immediately
+2. **Replace** hardcoded colors with theme tokens
+3. **Test** in both light and dark modes
+4. **Document** the fix in commit message
+
+### Prevention:
+- **All PRs** must be reviewed for color compliance
+- **New components** must use theme tokens
+- **Design system** must be the single source of truth
+
+## 📚 REFERENCE FILES
+- `[styles/theme.css](mdc:styles/theme.css)` - Theme definitions
+- `[src/core/theme/tokens.ts](mdc:src/core/theme/tokens.ts)` - Theme tokens
+- `[tailwind.config.ts](mdc:tailwind.config.ts)` - Tailwind configuration
+- `[app/globals.css](mdc:app/globals.css)` - Global styles
+
+## 🎨 BRAND IDENTITY
+- **Primary Brand**: #ff5b04 (F.B/c Orange)
+- **Brand Voice**: Professional, technical, trustworthy
+- **Color Psychology**: Orange = innovation, energy, success
+- **Usage**: Primary CTAs, accents, branding elements
+
+## ⚡ QUICK CHECKLIST
+- [ ] No hardcoded hex colors (#ff0000, #ffffff, etc.)
+- [ ] All colors use theme tokens (var(--brand), var(--surface))
+- [ ] Components work in both light and dark modes
+- [ ] Brand colors never changed (#ff5b04, #e65200)
+- [ ] Tailwind classes use theme colors (bg-brand, text-text)
+
+**REMEMBER**: These colors represent the F.B/c brand. Changing them breaks brand consistency and user trust. **PROTECT THE BRAND** - use theme tokens always! 🎯

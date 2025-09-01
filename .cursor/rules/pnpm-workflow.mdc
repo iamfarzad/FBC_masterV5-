@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+description: Enforces PNPM usage and build verification protocols
+globs: package.json,pnpm-lock.yaml
+---
+
+# 📦 PNPM Workflow Protocol
+
+## Package Manager Mandate
+**ALWAYS use PNPM:**
+- `pnpm dev` for development server
+- `pnpm build` for production builds
+- `pnpm lint` for code linting
+- `pnpm test` for running tests
+- `pnpm type-check` for TypeScript checking
+- `pnpm clean` for cleaning build artifacts
+
+## NEVER use:
+- `npm install` → use `pnpm install`
+- `npm run dev` → use `pnpm dev`
+- `npm run build` → use `pnpm build`
+- `yarn add` → use `pnpm add`
+
+## Build Verification (MANDATORY)
+**After ANY change:**
+- Test build locally: `pnpm build`
+- Check for unused imports: `pnpm eslint --ext .ts,.tsx . --rule 'no-unused-vars: error'`
+- Verify no broken imports: `pnpm tsc --noEmit`
+- Run tests: `pnpm test`
+
+## Development Workflow
+```bash
+# Start development
+pnpm dev
+
+# Add new dependency
+pnpm add package-name
+
+# Add dev dependency
+pnpm add -D package-name
+
+# Remove dependency
+pnpm remove package-name
+
+# Clean and reinstall
+pnpm clean
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
+
+## CI/CD Pipeline
+**All CI/CD must use:**
+- `pnpm install --frozen-lockfile`
+- `pnpm build`
+- `pnpm test`
+- `pnpm lint`

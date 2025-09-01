@@ -1,0 +1,87 @@
+---
+alwaysApply: true
+description: Comprehensive code review checklist for quality assurance
+globs: *.ts,*.tsx,*.js,*.jsx
+---
+
+# ✅ Code Review Checklist Protocol
+
+## Duplicate Prevention
+- [ ] No duplicate files with same names exist
+- [ ] No duplicate implementations of same functionality
+- [ ] No duplicate type definitions
+- [ ] No duplicate import statements
+
+## Import Quality
+- [ ] All imports use consistent `@/` aliases
+- [ ] No relative imports (`../../../`)
+- [ ] No unused imports
+- [ ] Import order follows convention (React → external → internal)
+- [ ] No circular dependencies
+
+## File Organization
+- [ ] Components in correct directories (`ui/`, `feature/`)
+- [ ] Hooks follow naming convention (`useXxx`)
+- [ ] Types in appropriate locations (`types/`, `src/core/types/`)
+- [ ] No files in wrong directories
+- [ ] File names match content
+
+## Code Quality
+- [ ] TypeScript types properly defined
+- [ ] No `any` types without justification
+- [ ] Error handling implemented
+- [ ] Functions have proper JSDoc comments
+- [ ] Variables use descriptive names
+- [ ] No console.log in production code
+
+## Build & Performance
+- [ ] `pnpm build` passes
+- [ ] `pnpm lint` passes
+- [ ] `pnpm tsc --noEmit` passes
+- [ ] No TypeScript errors
+- [ ] Bundle size acceptable
+- [ ] No performance regressions
+
+## Testing
+- [ ] Unit tests written for new functionality
+- [ ] Integration tests pass
+- [ ] E2E tests updated if needed
+- [ ] Test coverage maintained
+
+## Security
+- [ ] No sensitive data in code
+- [ ] Input validation implemented
+- [ ] SQL injection prevention
+- [ ] XSS protection in place
+- [ ] Authentication/authorization proper
+
+## Documentation
+- [ ] Code is self-documenting
+- [ ] Complex logic has comments
+- [ ] API endpoints documented
+- [ ] Breaking changes documented
+
+## Git Standards
+- [ ] Commit message follows format
+- [ ] No large files committed
+- [ ] `.gitignore` respected
+- [ ] No merge conflicts
+- [ ] Clean git history
+
+## Pre-Merge Checklist
+**ALL must pass before merge:**
+- [ ] Duplicate detection script passes
+- [ ] Import consistency check passes
+- [ ] Build verification complete
+- [ ] Code review checklist complete
+- [ ] Tests pass
+- [ ] Documentation updated
+
+## Automated Checks
+**CI/CD must verify:**
+- Build success
+- Test success
+- Lint success
+- Type check success
+- Security scan passes
+- Bundle size check passes

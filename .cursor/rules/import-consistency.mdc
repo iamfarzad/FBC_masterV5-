@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+description: Ensures consistent import paths and prevents import chaos
+globs: *.ts,*.tsx
+---
+
+# 🔗 Import Consistency Protocol
+
+## Import Path Standards
+**ALWAYS use these patterns:**
+- `@/lib/` for utility functions and shared code
+- `@/src/core/` for business logic and services
+- `@/components/` for React components
+- `@/hooks/` for custom React hooks
+- `@/types/` for global type definitions
+
+## NEVER use:
+- Relative imports like `../../../lib/utils`
+- Mixed import styles in same file
+- Direct file paths without aliases
+
+## Import Consolidation Rules
+```typescript
+// ✅ CORRECT - Use alias imports
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/src/core/auth'
+import { Button } from '@/components/ui/button'
+
+// ❌ WRONG - Mixed styles
+import { cn } from '../../../lib/utils'  // No relative
+import { useAuth } from 'src/core/auth'  // No alias
+```
+
+## Import Organization
+**Order imports consistently:**
+```typescript
+// 1. React imports
+import React from 'react'
+
+// 2. Third-party libraries
+import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+// 3. Internal imports (alphabetical)
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/src/core/auth'
+```
+
+## Import Audit Commands
+**Run regularly:**
+```bash
+# Check for inconsistent lib imports
+grep -r "from.*lib/" . --include="*.ts" --include="*.tsx" | grep -v "@/lib/"
+
+# Find relative imports
+grep -r "from.*\.\./" . --include="*.ts" --include="*.tsx"
+
+# Check for mixed import styles
+find . -name "*.ts" -o -name "*.tsx" | xargs grep -l "from.*lib/" | xargs grep -L "@/lib/"
+```
+
+## ESLint Configuration
+**Enforce with ESLint:**
+```json
+{
+  "rules": {
+    "import/no-relative-parent-imports": "error",
+    "import/order": ["error", {
+      "groups": ["builtin", "external", "internal", "parent", "sibling", "index"]
+    }]
+  }
+}
+```
