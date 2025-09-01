@@ -11,7 +11,7 @@ import {
 import { ProcessNode } from './ProcessNode'
 import { ActivityChip } from './ActivityChip'
 import { StageIndicator } from './StageIndicator'
-import { ActivityTooltip, StageTooltip, formatDuration } from './ActivityDisplay/'
+import { ActivityTooltip, StageTooltip, formatDuration } from './ActivityDisplayComponents'
 
 // Main component props
 export interface ActivityDisplayProps {

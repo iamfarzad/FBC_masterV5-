@@ -1,5 +1,5 @@
 // Main component
-export { AdminChatInterface } from './AdminChatInterfaceRefactored'
+export { AdminChatInterface } from '../AdminChatInterface'
 
 // Extracted components
 export { QuickActions } from './QuickActions'

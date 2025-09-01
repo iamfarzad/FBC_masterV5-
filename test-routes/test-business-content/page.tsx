@@ -206,7 +206,7 @@ export default function TestBusinessContentPage() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => // Log removed}
+                      onClick={() => console.log('View all clicked')}
                     >
                       View All in Console
                     </Button>

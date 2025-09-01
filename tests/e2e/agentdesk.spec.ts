@@ -7,7 +7,7 @@ test.describe('AgentDesk E2E: TC → Stage4 → PDF → Email', () => {
     // ensure we always see the consent overlay
     await context.clearCookies();
     // Debug console messages
-    page.on('console', msg => // Log removed, msg.text()));
+    page.on('console', msg => console.log('Browser console:', msg.text()));
   });
 
   test('happy path consulting/workshop flow', async ({ page, context, request, baseURL }) => {

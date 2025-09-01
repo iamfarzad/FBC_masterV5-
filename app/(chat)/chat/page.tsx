@@ -5,17 +5,12 @@ import { DemoSessionProvider } from "@/components/demo-session-manager"
 import { FbcIcon } from "@/components/ui/fbc-icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sparkles, Sun, Moon } from "lucide-react"
+import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sun, Moon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUnifiedChat } from "@/hooks/useUnifiedChat"
 import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence"
 import { generateSecureSessionId } from "@/src/core/security/session"
-
-// Legacy imports removed:
-// - useChat (replaced by useUnifiedChat)
-// - useRealtimeChat (replaced by useUnifiedChat)
-// - RT/Fast toggle removed (unified system)
 import { useCanvas } from "@/components/providers/canvas-provider"
 import { useTheme } from "next-themes"
 import { CanvasOrchestrator } from "@/components/chat/CanvasOrchestrator"
@@ -24,12 +19,7 @@ import { VoiceOverlay } from "@/components/chat/VoiceOverlay"
 import { StageRail } from "@/components/collab/StageRail"
 import { ConsentOverlay } from "@/components/ui/consent-overlay"
 
-import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
-// AI Elements - Available for future workflow components
-// import { Message, MessageAvatar, MessageContent } from '@/components/ai-elements/message'
-// import { Response } from '@/components/ai-elements/response'
-// import { Loader } from '@/components/ai-elements/loader'
-// import { ActivityDisplay } from '@/components/chat/activity/ActivityDisplay'
+import { UnifiedChatInterface } from "@/components/chat/unified/UnifiedChatInterface"
 
 export default function ChatPage() {
   // Session Management
@@ -48,7 +38,6 @@ export default function ChatPage() {
   })
 
   // Component State - Following Blueprint Pattern
-  const [input, setInput] = useState('')
   const [feature, setFeature] = useState<'chat' | 'webcam' | 'screen' | 'document' | 'video' | 'workshop'>('chat')
 
   const [showCanvasOverlay, setShowCanvasOverlay] = useState(false)
@@ -218,17 +207,6 @@ export default function ChatPage() {
     if (toolId !== 'chat') {
       setShowProgressRail(true)
 
-      // Add system message when switching tools
-      const systemMessage = {
-        id: `system-${Date.now()}`,
-        content: `Switched to ${tool.label}. ${tool.description}`,
-        role: 'assistant' as const,
-        timestamp: new Date(),
-        type: 'system' as const
-      }
-
-      addMessage(systemMessage)
-
       // Trigger the appropriate tool action to open canvas/modal
       handleToolAction(toolId)
     }
@@ -295,22 +273,18 @@ export default function ChatPage() {
   const { openCanvas } = useCanvas()
 
     // Event Handlers
-  const handleSendMessage = useCallback(async (content?: string) => {
-    const messageContent = content || input.trim()
-    if (messageContent && !isLoading && !isStreaming) {
-      // Clear input
-      setInput('')
-
+  const handleSendMessage = useCallback(async (content: string) => {
+    if (content.trim()) {
       try {
         // Use unified chat system - single source for all modes
-        await sendMessage(messageContent)
+        await sendMessage(content.trim())
         setCurrentStage(prev => Math.min(prev + 1, 7))
       } catch (err) {
         console.error('Failed to send message:', err)
         // Error handling is now managed by unified hook
       }
     }
-  }, [input, isLoading, isStreaming, sendMessage])
+  }, [sendMessage])
 
   const handleToolAction = useCallback((tool: string) => {
     console.log('Tool action:', tool)
@@ -369,66 +343,21 @@ export default function ChatPage() {
   const handleClearMessages = useCallback(() => {
     clearMessages()
     clearContextCache()
-    setInput('')
     setCurrentStage(1)
     const newSessionId = generateSecureSessionId()
     setSessionId(newSessionId)
   }, [clearMessages, clearContextCache])
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage(input)
-    }
-  }, [handleSendMessage, input])
 
-  const handleVoiceInput = useCallback(async (transcript: string, audioData?: string, duration?: number) => {
-    try {
-      // If we have audio data, use real-time voice functionality
-      if (audioData && duration && transcript) {
-        console.log('Sending real-time voice input:', { transcript, duration })
 
-        // Use the unified multimodal system with real-time voice
-        const success = await sendRealtimeVoice(
-          transcript,
-          audioData,
-          duration,
-          `voice_${Date.now()}`
-        )
 
-        if (success) {
-          console.log('Real-time voice sent successfully')
-          // Add to chat UI for immediate feedback
-          addMessage({
-            role: 'user',
-            content: `[Voice] ${transcript}`,
-            timestamp: new Date(),
-            metadata: { modality: 'voice', duration }
-          })
-        } else {
-          console.warn('Real-time voice failed, falling back to text input')
-          setInput(transcript)
-        }
-      } else {
-        // Fallback to text input for simple voice transcripts
-        setInput(transcript)
-      }
-
-      setShowVoiceOverlay(false)
-    } catch (error) {
-      console.error('Voice input error:', error)
-      // Fallback to text input on error
-      setInput(transcript)
-      setShowVoiceOverlay(false)
-    }
-  }, [sendRealtimeVoice, addMessage])
 
   return (
     <TooltipProvider>
       <DemoSessionProvider>
-        {/* BLUEPRINT-COMPLIANT LAYOUT - Following Inspiration Files */}
+        {/* MODERN BLUEPRINT-COMPLIANT LAYOUT - Following Inspiration Files */}
         <div className="h-screen w-full flex overflow-hidden bg-background">
-          {/* Slim Left Sidebar - Optimized Spacing */}
+          {/* Slim Left Sidebar - Modern Design with Gradients */}
           <div className="w-16 bg-gunmetal border-r border-gunmetal-lighter flex flex-col py-4 relative">
             {/* Logo/Brand with glow effect */}
             <div className="px-3 mb-6">
@@ -582,179 +511,33 @@ export default function ChatPage() {
               </header>
             )}
 
-            {/* Main Panel */}
+            {/* Main Panel - Now using UnifiedChatInterface */}
             <main className={`overflow-hidden bg-background ${
               feature === 'chat' ? "h-full" : "h-[calc(100vh-4rem)]"
             }`}>
-              {/* Chat Interface Content - Following Blueprint Pattern */}
-              <div className="h-full flex">
-                {/* Main Chat Area - Takes full width */}
-                <div className="flex-1 flex flex-col bg-gradient-to-br from-white via-gray-50/50 to-light-silver/30 dark:from-gunmetal dark:via-gunmetal dark:to-gunmetal-lighter">
-                  {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto px-6 py-8 scrollbar-modern">
-                    <div className="max-w-4xl mx-auto space-y-8">
-                      {chatMessages.length === 0 && !isLoading ? (
-                        <div className="text-center space-y-8 py-16 animate-smooth-fade-in">
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-orange-accent to-orange-accent-hover rounded-2xl flex items-center justify-center mb-6 animate-modern-pulse">
-                                <Sparkles className="h-8 w-8 text-white" />
-                              </div>
-                              <div className="absolute -inset-2 bg-orange-accent/20 rounded-3xl blur-xl animate-modern-pulse opacity-50"></div>
-                            </div>
-                            <h1 className="text-3xl font-bold text-gradient mb-2">What can we build together?</h1>
-                            <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                              Select a tool to start collaborating or describe your project vision
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {chatMessages.map((message, index) => (
-                            <div
-                              key={message.id}
-                              className="animate-smooth-fade-in"
-                              style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                              {message.role === 'user' ? (
-                                // User message - Original design with modern styling
-                                <div className="flex justify-end">
-                                  <div className="flex gap-4 max-w-2xl">
-                                    <div className="flex flex-col items-end flex-1">
-                                      <div className="text-sm text-muted-foreground mb-2 text-right">
-                                        You
-                                      </div>
-                                      <div className="bg-gradient-to-r from-orange-accent to-orange-accent-hover text-white rounded-2xl rounded-tr-md px-6 py-4 max-w-full modern-button shadow-lg shadow-orange-accent/20">
-                                        <p className="text-sm leading-relaxed font-medium">
-                                          {message.content}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gunmetal to-gunmetal-lighter flex items-center justify-center flex-shrink-0 mt-8 modern-hover shadow-lg">
-                                      <User className="h-5 w-5 text-white" />
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                // AI message - Original design with modern styling
-                                <div className="flex justify-start">
-                                  <div className="flex gap-4 max-w-3xl">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover flex items-center justify-center flex-shrink-0 mt-8 modern-hover shadow-lg">
-                                      <Zap className="h-5 w-5 text-white" />
-                                    </div>
-                                    <div className="flex flex-col flex-1">
-                                      <div className="text-sm text-muted-foreground mb-2">
-                                        F.B/c AI {message.role === 'system' && <Badge variant="secondary" className="ml-2 text-xs">System</Badge>}
-                                      </div>
-                                      <div className="bg-white dark:bg-gunmetal-lighter rounded-2xl rounded-tl-md px-6 py-4 modern-card shadow-lg">
-                                        <div className="prose prose-sm max-w-none dark:prose-invert">
-                                          {message.content && message.content.trim() ? (
-                                            <p className="text-sm leading-relaxed whitespace-pre-wrap text-gunmetal dark:text-light-silver m-0">
-                                              {message.content}
-                                            </p>
-                                          ) : (
-                                            <div className="flex items-center gap-2">
-                                              <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce"></div>
-                                              <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce [animation-delay:0.2s]"></div>
-                                              <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce [animation-delay:0.4s]"></div>
-                                              <span className="text-sm text-muted-foreground ml-2">Thinking...</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                        {/* AI Elements ready for workflow components */}
-                                        {/* Uncomment to add: <Response>...</Response> */}
-                                        {/* <Reasoning>...</Reasoning> */}
-                                        {/* <CodeBlock>...</CodeBlock> */}
-                                        {/* <Actions>...</Actions> */}
-                                        {/* <Suggestions>...</Suggestions> */}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {isLoading && (
-                            <div className="animate-smooth-fade-in">
-                              <div className="flex justify-start">
-                                <div className="flex gap-4 max-w-3xl">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover flex items-center justify-center flex-shrink-0 mt-8 shadow-lg">
-                                    <Zap className="h-5 w-5 text-white" />
-                                  </div>
-                                  <div className="flex flex-col flex-1">
-                                    <div className="text-sm text-muted-foreground mb-2">
-                                      F.B/c AI
-                                    </div>
-                                    <div className="bg-white dark:bg-gunmetal-lighter rounded-2xl rounded-tl-md px-6 py-4 modern-card shadow-lg">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce"></div>
-                                        <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce [animation-delay:0.2s]"></div>
-                                        <div className="w-2 h-2 bg-orange-accent rounded-full animate-modern-bounce [animation-delay:0.4s]"></div>
-                                      </div>
-                                      {/* AI Elements ready for enhanced loading */}
-                                      {/* <Loader type="typing" text="AI is thinking..." /> */}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                )}
-              </div>
-            </div>
-
-            {/* Clean Input Area - No Redundant Tools */}
-            <div className="border-t border-light-silver-darker dark:border-gunmetal-lighter bg-light-silver/90 dark:bg-gunmetal backdrop-blur-lg p-6">
-              <div className="max-w-4xl mx-auto">
-                {/* SuggestedActions Component - Connected to Composer Top Slot */}
+              <UnifiedChatInterface
+                messages={chatMessages}
+                isLoading={isLoading}
+                sessionId={sessionId}
+                mode="full"
+                onSendMessage={handleSendMessage}
+                onClearMessages={handleClearMessages}
+                onToolAction={handleToolAction}
+                stickyHeaderSlot={
                 <SuggestedActions
                   sessionId={sessionId}
                   stage="BACKGROUND_RESEARCH"
                   mode="static"
                 />
-                <div className="relative bg-light-silver dark:bg-light-silver border border-light-silver-darker dark:border-light-silver rounded-3xl shadow-lg modern-input-focus overflow-hidden">
-                  <PromptInputTextarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask anything..."
-                    className="px-6 pr-20 py-6 border-none text-base bg-transparent focus:ring-0 focus:outline-none rounded-3xl placeholder:text-muted-foreground text-gunmetal dark:text-gunmetal resize-none"
-                                              disabled={isLoading}
-                  />
-
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 w-10 p-0 text-muted-foreground hover:text-orange-accent dark:text-muted-foreground dark:hover:text-orange-accent rounded-full modern-button"
-                      onClick={() => setShowVoiceOverlay(true)}
-                    >
-                      <Mic className="h-5 w-5" />
-                    </Button>
-                    {input.trim() && (
-                      <Button
-                        onClick={() => handleSendMessage(input)}
-                        size="sm"
-                        className="h-10 w-10 p-0 bg-gradient-to-r from-orange-accent to-orange-accent-hover hover:from-orange-accent-hover hover:to-orange-accent text-white rounded-full modern-button shadow-lg shadow-orange-accent/30"
-                                                  disabled={isLoading}
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center mt-4">
+                }
+                composerTopSlot={
+                  <div className="text-center mb-4">
                 <p className="text-xs text-muted-foreground">
                   F.B-c AI can make mistakes. Please verify important information.
                 </p>
               </div>
-            </div>
-            </div>
-          </div>
+                }
+              />
             </main>
 
           {/* Progress Rail - Original Design */}
@@ -794,11 +577,15 @@ export default function ChatPage() {
         {/* Fixed Position Stage Indicator */}
         {sessionId && <StageRail sessionId={sessionId} />}
 
-        {/* Voice Overlay */}
+        {/* Voice Overlay - Now handled by UnifiedChatInterface */}
         <VoiceOverlay
           open={showVoiceOverlay}
           onCancel={() => setShowVoiceOverlay(false)}
-          onAccept={handleVoiceInput}
+          onAccept={(transcript, audioData, duration) => {
+            // UnifiedChatInterface handles voice input internally
+            handleToolAction('voice')
+            setShowVoiceOverlay(false)
+          }}
           sessionId={sessionId}
         />
 

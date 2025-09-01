@@ -2,48 +2,22 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-// Virtual scrolling removed - can be added with @tanstack/react-virtual package
 import { cn } from '@/src/core/utils'
 import { Button } from '@/components/ui/button'
-import { FbcIcon } from '@/components/ui/fbc-icon'
-import { Send, Settings, Copy, Check, Edit, Languages, User, Mic, Phone, Download, BookOpen, FileText, Camera, Monitor, Calculator, Video, Code, Plus, X } from 'lucide-react'
-import { 
-  Conversation, 
-  ConversationContent, 
-  ConversationScrollButton 
-} from '@/components/ai-elements/conversation'
-import { 
-  Message as AIMessage, 
-  MessageContent as AIMessageContent, 
-  MessageAvatar 
-} from '@/components/ai-elements/message'
-import { Response } from '@/components/ai-elements/response'
-import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
-import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ai-elements/source'
-import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
-import { Actions, Action } from '@/components/ai-elements/actions'
-import { 
-  PromptInput, 
-  PromptInputToolbar, 
-  PromptInputTools, 
-  PromptInputTextarea, 
-  PromptInputSubmit 
-} from '@/components/ai-elements/prompt-input'
-import { ToolMenu } from '@/components/chat/ToolMenu'
-import { ROICalculator } from '@/components/chat/tools/ROICalculator'
-import type { StructuredChatMessage, UnifiedMessage } from '@/src/core/types/chat'
-import { ToolCardWrapper } from '@/components/chat/ToolCardWrapper'
+import { Send, Mic, BookOpen, Download, Plus, X, Camera, Monitor, Calculator, FileText, Video, Code, Phone } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Card, CardContent } from '@/components/ui/card'
-import CitationDisplay from '@/components/chat/CitationDisplay'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { ActivityDisplay } from '@/components/chat/activity/ActivityDisplay'
-import type { Options } from 'react-markdown'
+import type { UnifiedMessage, StructuredChatMessage } from '@/src/core/types/chat'
 import { StatusBar } from './StatusBar'
 import { ChatHeader } from './ChatHeader'
-import { ChatComposer } from '@/components/chat/layouts/ChatComposer'
-import { ChatMessages } from '@/components/chat/layouts/ChatMessages'
+// Temporary fallback imports - using simple components instead of complex ones
+// import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
+// import { PromptInputTextarea } from '@/components/ai-elements/prompt-input'
+// import { MessageComponent } from '@/components/chat/layouts/ChatMessages/MessageComponent'
+// import { ROICalculator } from '@/components/chat/tools/ROICalculator'
 
 
 
@@ -245,13 +219,13 @@ export const EnhancedComposer = memo<{
           )}
 
           <div className="flex-1 relative">
-            <PromptInputTextarea
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder={placeholder}
               disabled={disabled}
-              className="min-h-[40px] max-h-[120px] resize-none"
+              className="w-full min-h-[40px] max-h-[120px] resize-none rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             />
           </div>
 
@@ -479,10 +453,10 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
           />
         )}
         
-        {/* Conversation Area */}
+        {/* Conversation Area - Simplified Fallback */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          <Conversation className="h-full" aria-live="polite" aria-busy={isLoading}>
-            <ConversationContent className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6" aria-label="Chat messages">
+          <div className="h-full overflow-y-auto" aria-live="polite" aria-busy={isLoading}>
+            <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6" aria-label="Chat messages">
               {messages.length === 0 && !isLoading ? (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -508,15 +482,29 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                   </div>
                 </motion.div>
               ) : (
-                <MessageList 
-                  messages={localMessages} 
-                  isLoading={isLoading}
-                  stickyHeader={stickyHeaderSlot}
-                />
+                <div className="space-y-4">
+                  {localMessages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-3"
+                    >
+                      <div className="flex-1">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          {message.role === 'user' ? 'You' : 'Assistant'}
+                        </div>
+                        <div className="text-sm">
+                          {message.content}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               )}
-            </ConversationContent>
-            <ConversationScrollButton className="bg-accent hover:bg-accent/90 text-accent-foreground backdrop-blur" />
-          </Conversation>
+            </div>
+            {/* Scroll button removed for simplicity */}
+          </div>
         </div>
         
         {/* Enhanced Composer */}
@@ -589,19 +577,9 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             />
           </div>
         )}
-        {/* ROI inline tool host (invisible). Kept for future card-mode hosting if needed */}
+        {/* ROI inline tool host (disabled for simplified fallback) */}
         {false && (
-          <ROICalculator 
-            mode="card"
-            onComplete={() => undefined}
-            onEmitMessage={(msg: StructuredChatMessage) => onAssistantInject?.({
-              id: `msg-${Date.now()}-tool`,
-              role: msg.role as any,
-              type: (msg as any).type === 'roi.result' ? 'tool' : 'default',
-              content: 'Tool result',
-              metadata: { tools: [{ type: 'roiResult', data: (msg as any).payload }] }
-            })}
-          />
+          <div>ROI Calculator placeholder</div>
         )}
       </div>
     </TooltipProvider>

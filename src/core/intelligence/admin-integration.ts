@@ -101,3 +101,5 @@ export class AdminIntelligenceHandler {
 
 // Export singleton instance
 export const adminIntelligenceHandler = new AdminIntelligenceHandler()
+
+

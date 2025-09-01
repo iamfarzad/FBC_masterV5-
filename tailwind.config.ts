@@ -109,12 +109,22 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
+        'modern-pulse': {
+          '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.05)' },
+        },
+        'smooth-slide-in': {
+          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
       },
       animation: {
         float: "float 6s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         'fade-in': "fade-in 0.5s ease-out",
         'scale-in': "scale-in 0.3s ease-out",
+        'modern-pulse': "modern-pulse 2s ease-in-out infinite",
+        'smooth-slide-in': "smooth-slide-in 0.3s ease-out",
       },
     },
   },

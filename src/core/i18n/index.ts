@@ -101,6 +101,15 @@ export class WebAppI18n {
       de: 'Beratung',
       fr: 'Conseil',
       es: 'Consultoría'
+    },
+    'nav.workshop': {
+      en: 'Workshop',
+      no: 'Workshop',
+      sv: 'Workshop',
+      da: 'Workshop',
+      de: 'Workshop',
+      fr: 'Atelier',
+      es: 'Taller'
     }
   };
 

@@ -177,6 +177,15 @@
 .text-brand { color: var(--brand); }
 .bg-brand { background: var(--brand); }
 
+/* Modern UI Classes */
+.modern-button {
+  @apply transition-all duration-300 transform hover:scale-105;
+}
+
+.modern-hover {
+  @apply transition-all duration-200 hover:shadow-lg;
+}
+
 .btn-brand {
   background: var(--brand);
   color: white;
