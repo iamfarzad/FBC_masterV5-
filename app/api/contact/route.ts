@@ -1,71 +1,29 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { z } from "zod"
+import { withApiHandler, parseJson, api } from "@/src/core/api/api-utils"
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { name, email, company, subject, message } = body
+// Input validation schema
+const ContactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email format"),
+  company: z.string().optional(),
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(1, "Message is required")
+})
 
-    // Validate required fields
-    if (!name || !email || !subject || !message) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
-    }
+export const POST = withApiHandler(async (req: NextRequest) => {
+  const body = await parseJson(req)
+  const { name, email, company, subject, message } = ContactSchema.parse(body)
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      )
-    }
+  // Log contact form submission (replace with actual email service later)
+  console.log('Contact form submission:', { name, email, company, subject, message })
 
-    // In a real implementation, you would:
-    // 1. Send email via service like Resend, SendGrid, or Nodemailer
-    // 2. Store in database for tracking
-    // 3. Send auto-reply confirmation
+  // TODO: Integrate with actual email service (Resend, SendGrid, etc.)
+  // const emailService = new EmailService()
+  // await emailService.sendContactForm({ name, email, company, subject, message })
 
-    // For now, we'll log the contact form submission
-    // Contact form submission logged
-
-    return NextResponse.json({
-      success: true,
-      message: "Contact form submitted successfully"
-    })
-
-    // Simulate email sending (replace with actual email service)
-    const emailData = {
-      to: 'hello@farzadbayat.com',
-      from: 'noreply@farzadbayat.com',
-      subject: `Contact Form: ${subject}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-        <hr>
-        <p><small>Submitted at: ${new Date().toLocaleString()}</small></p>
-      `
-    }
-
-    // TODO: Integrate with actual email service
-    // await sendEmail(emailData)
-
-    return NextResponse.json({
-      success: true,
-      message: "Contact form submitted successfully"
-    })
-
-  } catch (error) {
-    console.error('Contact form error', error)
-    return NextResponse.json(
-      { error: "Failed to submit contact form" },
-      { status: 500 }
-    )
-  }
-}
+  return api.success(
+    { submitted: true },
+    "Contact form submitted successfully"
+  )
+})
