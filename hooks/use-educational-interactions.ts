@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import type { EducationalInteractionData, VideoLearningContext } from "@/lib/educational-gemini-service"
+import type { EducationalInteractionData, VideoLearningContext } from "@/src/core/educational-gemini-service"
 
 export function useEducationalInteractions() {
   const [interactionHistory, setInteractionHistory] = useState<EducationalInteractionData[]>([])

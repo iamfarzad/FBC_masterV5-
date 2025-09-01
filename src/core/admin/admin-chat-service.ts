@@ -48,7 +48,7 @@ export class AdminChatService {
   async getOrCreateSession(sessionId: string, adminId?: string, sessionName?: string): Promise<AdminSession> {
     // Check if session exists
     const { data: existingSession } = await supabaseService
-      .schema('admin')
+
       .from('admin_sessions')
       .select('*')
       .eq('id', sessionId)
@@ -57,7 +57,7 @@ export class AdminChatService {
     if (existingSession) {
       // Update last activity
       await supabaseService
-        .schema('admin')
+  
         .from('admin_sessions')
         .update({ last_activity: new Date().toISOString() })
         .eq('id', sessionId)
@@ -65,9 +65,8 @@ export class AdminChatService {
       return existingSession
     }
 
-    // Create new session
+    // Create new session with explicit ID
     const { data: newSession, error } = await supabaseService
-      .schema('admin')
       .from('admin_sessions')
       .insert({
         id: sessionId,
@@ -86,17 +85,23 @@ export class AdminChatService {
    * Save message to persistent storage with embeddings
    */
   async saveMessage(message: AdminMessage): Promise<AdminConversation> {
-    // Generate embeddings for the message content
-    const embeddings = await this.generateEmbeddings(message.content)
+    console.log('Saving admin message:', { sessionId: message.sessionId, type: message.type, contentLength: message.content.length })
+
+    // Generate embeddings for the message content (optional - don't fail if it doesn't work)
+    let embeddings: number[] | undefined
+    try {
+      embeddings = await this.generateEmbeddings(message.content)
+    } catch (embeddingError) {
+      console.warn('Embeddings generation failed, saving without embeddings:', embeddingError)
+    }
 
     const { data, error } = await supabaseService
-      .schema('admin')
       .from('admin_conversations')
       .insert({
         conversation_id: message.conversationId,
         admin_id: message.adminId,
         session_id: message.sessionId,
-        message_type: message.type,
+        message_type: message.role,
         message_content: message.content,
         message_metadata: message.metadata,
         embeddings,
@@ -105,7 +110,10 @@ export class AdminChatService {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error saving admin message:', error)
+      throw error
+    }
     return data
   }
 
@@ -119,7 +127,7 @@ export class AdminChatService {
   ): Promise<AdminChatContext> {
     // Get recent messages from current session
     const { data: recentMessages } = await supabaseService
-      .schema('admin')
+
       .from('admin_conversations')
       .select('*')
       .eq('session_id', sessionId)
@@ -129,7 +137,7 @@ export class AdminChatService {
     // Generate embeddings for current message and find semantically similar messages
     const currentEmbeddings = await this.generateEmbeddings(currentMessage)
     const { data: similarMessages } = await supabaseService
-      .schema('admin')
+
       .rpc('search_admin_conversations', {
         query_embedding: currentEmbeddings,
         session_id_filter: sessionId,
@@ -247,29 +255,20 @@ export class AdminChatService {
    * Generate embeddings using OpenAI (placeholder - implement based on your setup)
    */
   private async generateEmbeddings(text: string): Promise<number[]> {
-    // This is a placeholder - implement with your embedding provider
-    // For now, return empty array to avoid errors
-    // In production, you'd call OpenAI's embedding API or similar
+    try {
+      // Import the embeddings service dynamically to avoid circular dependencies
+      const { embedText } = await import('../embeddings/gemini')
 
-    // Example implementation:
-    /*
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        input: text,
-        model: 'text-embedding-ada-002'
-      })
-    })
+      // Generate embeddings using the Gemini service
+      const embeddings = await embedText([text])
 
-    const data = await response.json()
-    return data.data[0].embedding
-    */
-
-    return [] // Placeholder - implement with your embedding service
+      // Return the first embedding array, or empty array if failed
+      return embeddings?.[0] || []
+    } catch (error) {
+      console.warn('Embeddings generation failed:', error)
+      // Return empty array to avoid breaking the admin chat
+      return []
+    }
   }
 
   /**
@@ -283,7 +282,7 @@ export class AdminChatService {
     const queryEmbeddings = await this.generateEmbeddings(query)
 
     const { data } = await supabaseService
-      .schema('admin')
+
       .rpc('search_admin_conversations', {
         query_embedding: queryEmbeddings,
         limit_count: limit,
@@ -305,7 +304,7 @@ export class AdminChatService {
    */
   async getAdminSessions(adminId?: string, limit: number = 20): Promise<AdminSession[]> {
     let query = supabaseService
-      .schema('admin')
+
       .from('admin_sessions')
       .select('*')
       .order('last_activity', { ascending: false })
@@ -320,6 +319,20 @@ export class AdminChatService {
   }
 
   /**
+   * Update last activity timestamp for admin session
+   */
+  async updateLastActivity(sessionId: string): Promise<void> {
+    const { error } = await supabaseService
+      .from('admin_sessions')
+      .update({ last_activity: new Date().toISOString() })
+      .eq('id', sessionId)
+
+    if (error) {
+      console.warn('Failed to update admin session activity:', error)
+    }
+  }
+
+  /**
    * Clean up old sessions (optional maintenance)
    */
   async cleanupOldSessions(daysOld: number = 90): Promise<number> {
@@ -327,7 +340,7 @@ export class AdminChatService {
     cutoffDate.setDate(cutoffDate.getDate() - daysOld)
 
     const { count } = await supabaseService
-      .schema('admin')
+
       .from('admin_sessions')
       .delete({ count: 'exact' })
       .eq('is_active', false)

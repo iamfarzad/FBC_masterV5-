@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { GoogleGenAI, Modality } from '@google/genai'
 import { useAudioPlayer } from '@/hooks/useAudioPlayer'
-import { logTokenUsage } from '@/lib/token-usage-logger'
-import { TokenCostCalculator } from '@/lib/token-cost-calculator'
-import { supabase } from '@/lib/supabase/client'
+import { logTokenUsage } from '@/src/core/token-usage-logger'
+import { TokenCostCalculator } from '@/src/core/token-cost-calculator'
+import { supabase } from '@/src/core/supabase/client'
 
 // Helper function to estimate tokens (fallback implementation)
 function estimateTokens(text: string): number {

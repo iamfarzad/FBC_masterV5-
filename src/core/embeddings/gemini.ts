@@ -12,4 +12,7 @@ export async function embedTexts(texts: string[], dims: 768 | 1536 = 1536): Prom
   return vectors
 }
 
+// Export the functions for compatibility
+export { embedTexts as embedText }
+
 

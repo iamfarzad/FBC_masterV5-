@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
-import { detectYouTubeUrls, createVideoToAppCard, isValidYouTubeUrl } from '@/lib/youtube-url-detection'
+import { detectYouTubeUrls, createVideoToAppCard, isValidYouTubeUrl } from '@/src/core/youtube-url-detection'
 import type { Message } from '@/app/(chat)/chat/types/chat'
 
 interface UseVideoToAppDetectionProps {

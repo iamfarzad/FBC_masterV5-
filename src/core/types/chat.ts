@@ -11,12 +11,66 @@ export interface ActivityItem {
   metadata?: Record<string, unknown>
 }
 
-export interface ChatMessage {
+// Base message interface - foundation for all message types
+export interface BaseMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+}
+
+// Standard chat message with basic metadata
+export interface ChatMessage extends BaseMessage {
   timestamp?: Date
   metadata?: Record<string, unknown>
+}
+
+// Legacy message type - being phased out in favor of UnifiedMessage
+export interface Message extends BaseMessage {
+  createdAt: Date
+  imageUrl?: string
+  sources?: Array<{
+    title?: string
+    url: string
+  }>
+  videoToAppCard?: {
+    videoUrl: string
+    status: 'pending' | 'analyzing' | 'generating' | 'completed' | 'error'
+    sessionId: string
+    progress?: number
+    spec?: string
+    code?: string
+    error?: string
+  }
+  businessContent?: {
+    type: 'roi_calculator' | 'lead_capture' | 'consultation_planner' | 'business_analysis' | 'proposal_generator' | 'educational_module'
+    htmlContent: string
+    context?: {
+      industry?: string
+      companySize?: string
+      stage?: string
+      customData?: Record<string, unknown>
+    }
+  }
+}
+
+// Unified message with advanced features - preferred for new code
+export interface UnifiedMessage extends BaseMessage {
+  type?: 'default' | 'code' | 'image' | 'analysis' | 'tool' | 'insight'
+  metadata?: {
+    timestamp?: Date
+    edited?: boolean
+    sources?: Array<{ url: string; title?: string; description?: string }>
+    citations?: Array<{ uri: string; title?: string }>
+    tools?: Array<{ type: string; data: unknown }>
+    suggestions?: string[]
+    imageUrl?: string
+    activities?: Array<{ type: 'in' | 'out'; label: string }>
+  }
+  rendering?: {
+    format?: 'markdown' | 'html' | 'plain'
+    theme?: 'default' | 'code' | 'insight'
+    showReasoning?: boolean
+  }
 }
 
 export interface ChatSession {
