@@ -9,7 +9,7 @@ import ModuleRenderer from '@/components/workshop/ModuleRenderer'
 import { getAllModules, getModuleBySlug } from '@/src/core/education/modules'
 import { useModuleProgress } from '@/hooks/workshop/use-module-progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Confetti } from '@/components/ui/confetti'
+// import { Confetti } from '@/components/ui/confetti' // Removed
 import { MODULE_QUIZZES, hasQuizFor, type QuizQuestion } from '@/src/core/education/quizzes'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -24,7 +24,7 @@ export default function WorkshopModulePage() {
   const [showCompletionDialog, setShowCompletionDialog] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [nextModule, setNextModule] = useState<string | null>(null)
-  const [showConfetti, setShowConfetti] = useState(false)
+  // const [showConfetti, setShowConfetti] = useState(false) // Confetti removed
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({})
   const [quizSubmitted, setQuizSubmitted] = useState(false)
 
@@ -52,7 +52,7 @@ export default function WorkshopModulePage() {
         return
       }
     }
-    setShowConfetti(true)
+    // setShowConfetti(true) // Confetti removed
     completeModule(slug, { title: module.title, phase: module.phase })
     try {
       fetch('/api/intelligence/education', {
@@ -62,7 +62,7 @@ export default function WorkshopModulePage() {
       }).catch(() => {})
     } catch {}
     setIsCompleted(true)
-    setTimeout(() => { setShowCompletionDialog(true); setShowConfetti(false) }, 1200)
+    setTimeout(() => { setShowCompletionDialog(true) }, 1200)
   }
 
   return (
@@ -132,7 +132,7 @@ export default function WorkshopModulePage() {
         </div>
       )}
 
-      <Confetti isActive={showConfetti} />
+      {/* <Confetti isActive={showConfetti} /> */}
 
       <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
         <DialogContent className="sm:max-w-md">
