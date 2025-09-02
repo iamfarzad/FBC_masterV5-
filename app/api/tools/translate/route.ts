@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { isMockEnabled } from '@/src/core/mock-control'
+
 import type { NextRequest } from 'next/server'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { translationRequestSchema, validateRequest, sanitizeString } from '@/src/core/validation'
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const cleanText = sanitizeString(text)
     const sessionId = bodySessionId || req.headers.get('x-intelligence-session-id') || null
 
-    if (!process.env.GEMINI_API_KEY || isMockEnabled()) {
+    if (!process.env.GEMINI_API_KEY) {
       const mocked = `[mock-${targetLang}] ${cleanText}`
       if (sessionId) {
         try { await recordCapabilityUsed(String(sessionId), 'translate', { targetLang, sourceLang, inputLength: cleanText.length, outputLength: mocked.length, mocked: true }) } catch {}
