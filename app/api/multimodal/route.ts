@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
             audioData: metadata.transcription,
             mimeType: 'text/plain'
           },
-          intelligenceContext: intelligenceContext
+          intelligenceContext
         }
 
         // Generate response using unified provider
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
             },
             body: JSON.stringify({
               action: 'send',
-              sessionId: sessionId,
+              sessionId,
               audioData: metadata.fileData, // base64 audio data
               mimeType: 'audio/pcm;rate=16000'
             })
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
         await multimodalContextManager.addVisualAnalysis(
           sessionId,
           content,
-          visionType as 'webcam' | 'screen',
+          visionType,
           metadata.imageSize,
           metadata.fileData
         )
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
             imageData: metadata.fileData,
             mimeType: metadata.fileType || 'image/jpeg'
           },
-          intelligenceContext: intelligenceContext
+          intelligenceContext
         }
 
         // Generate response using unified provider

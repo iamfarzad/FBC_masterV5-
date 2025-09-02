@@ -58,15 +58,15 @@ export function ResultsStep({
       <h3 className="font-semibold">ROI Analysis Results</h3>
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 rounded-md bg-accent/10">
+          <div className="bg-accent/10 rounded-md p-3 text-center">
             <div className="text-xl font-bold text-accent">{result.roi}%</div>
             <div className="text-xs text-muted-foreground">ROI</div>
           </div>
-          <div className="text-center p-3 rounded-md bg-accent/5">
+          <div className="bg-accent/5 rounded-md p-3 text-center">
             <div className="text-xl font-bold">{result.paybackPeriod ?? '—'}</div>
             <div className="text-xs text-muted-foreground">Payback (mo)</div>
           </div>
-          <div className="text-center p-3 rounded-md bg-accent/5">
+          <div className="bg-accent/5 rounded-md p-3 text-center">
             <div className={`text-lg font-bold ${result.netProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>
               ${result.netProfit?.toLocaleString()}
             </div>

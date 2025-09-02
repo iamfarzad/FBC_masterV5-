@@ -3,14 +3,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from '@/src/core/utils'
 
 const cardVariants = cva(
-  "rounded-2xl border text-card-foreground shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-accent/20 focus-within:ring-offset-2 focus-within:ring-offset-background",
+  "focus-within:ring-accent/20 rounded-2xl border text-card-foreground shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-background",
   {
     variants: {
       variant: {
-        default: "bg-card border-border/20",
+        default: "border-border/20 bg-card",
         minimal: "bg-card/80 border-border/30 backdrop-blur-sm",
-        glass: "bg-card/60 border-border/20 backdrop-blur-2xl shadow-xl",
-        elevated: "bg-card border-border/20 shadow-2xl hover:shadow-3xl hover:-translate-y-1",
+        glass: "bg-card/60 border-border/20 shadow-xl backdrop-blur-2xl",
+        elevated: "border-border/20 hover:shadow-3xl bg-card shadow-2xl hover:-translate-y-1",
         neu: "bg-card/90 border-border/20 backdrop-blur-sm hover:shadow-xl",
       },
       padding: {

@@ -91,17 +91,17 @@ export class ErrorBoundary extends Component<Props, State> {
           "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20",
           "rounded-lg border border-red-200 dark:border-red-800"
         )}>
-          <div className="text-center space-y-4">
+          <div className="space-y-4 text-center">
             <div className="relative">
-              <AlertTriangle className="h-16 w-16 text-red-500 mx-auto" />
-              <div className="absolute -inset-2 bg-red-500/20 rounded-full blur-xl animate-pulse" />
+              <AlertTriangle className="mx-auto size-16 text-red-500" />
+              <div className="absolute -inset-2 animate-pulse rounded-full bg-red-500/20 blur-xl" />
             </div>
 
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Oops! Something went wrong
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md">
+              <p className="max-w-md text-gray-600 dark:text-gray-400">
                 We encountered an unexpected error. This has been reported to our team.
               </p>
             </div>
@@ -110,10 +110,10 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.retryCount < this.maxRetries && (
               <Button
                 onClick={this.handleRetry}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 size="lg"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="mr-2 size-4" />
                 Try Again ({this.maxRetries - this.state.retryCount} attempts left)
               </Button>
             )}
@@ -125,17 +125,17 @@ export class ErrorBoundary extends Component<Props, State> {
               size="lg"
               className="mt-2"
             >
-              <Home className="h-4 w-4 mr-2" />
+              <Home className="mr-2 size-4" />
               Go to Homepage
             </Button>
 
             {/* Show error details in development */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-4 text-left max-w-2xl">
+              <details className="mt-4 max-w-2xl text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                   Error Details (Development Only)
                 </summary>
-                <pre className="mt-2 p-4 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-auto">
+                <pre className="mt-2 overflow-auto rounded bg-gray-100 p-4 text-xs dark:bg-gray-800">
                   {this.state.error.toString()}
                   {this.state.errorInfo?.componentStack}
                 </pre>
@@ -177,7 +177,7 @@ export class StreamingErrorHandler {
         type: 'recovery',
         message: `Connection interrupted. Retrying... (${this.retryCount}/${this.maxRetries})`,
         retryCount: this.retryCount,
-        delay: delay
+        delay
       })}\n\n`))
 
       // Wait with exponential backoff

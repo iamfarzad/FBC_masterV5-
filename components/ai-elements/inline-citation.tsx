@@ -94,13 +94,13 @@ export const InlineCitationSource = ({
 }: InlineCitationSourceProps) => (
   <div className={cn('space-y-1', className)} {...props}>
     {title && (
-      <h4 className="text-sm font-medium leading-tight truncate">{title}</h4>
+      <h4 className="truncate text-sm font-medium leading-tight">{title}</h4>
     )}
     {url && (
-      <p className="text-xs text-muted-foreground break-all truncate">{url}</p>
+      <p className="truncate break-all text-xs text-muted-foreground">{url}</p>
     )}
     {description && (
-      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
     )}
@@ -143,7 +143,7 @@ export const GroundedCitation = ({ citations, className }: GroundedCitationProps
     <InlineCitationCard>
       <InlineCitationCardTrigger sources={citations.map(c => c.uri)} />
       <InlineCitationCardBody>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <h4 className="text-sm font-medium">Sources</h4>
           {citations.map((citation, index) => (
             <InlineCitationSource
@@ -252,7 +252,7 @@ export const InlineCitationCarouselPrev = ({ className, children, ...props }: In
       className={cn('inline-flex h-6 w-6 items-center justify-center rounded border bg-card hover:bg-accent/10', className)}
       {...props}
     >
-      {children || <ArrowLeftIcon className="h-3.5 w-3.5" />}
+      {children || <ArrowLeftIcon className="size-3.5" />}
     </button>
   )
 }
@@ -266,7 +266,7 @@ export const InlineCitationCarouselNext = ({ className, children, ...props }: In
       className={cn('inline-flex h-6 w-6 items-center justify-center rounded border bg-card hover:bg-accent/10', className)}
       {...props}
     >
-      {children || <ArrowRightIcon className="h-3.5 w-3.5" />}
+      {children || <ArrowRightIcon className="size-3.5" />}
     </button>
   )
 }

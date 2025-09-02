@@ -6,20 +6,26 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { Button } from "@/components/ui/button"
 import { ChevronDown, TrendingUp } from "lucide-react"
 import { cn } from "@/src/core/utils"
+import { useStage } from "@/contexts/stage-context"
 
 type Context = { stage?: number; exploredCount?: number; total?: number }
 
+// Import proper stage instructions from src/core
+import { StageInstructions } from '@/src/core/conversation/stages'
+
 const STAGE_DESCRIPTIONS = {
   1: "Discovery & Setup",
-  2: "Requirements Analysis", 
-  3: "Solution Design",
-  4: "Implementation Planning",
-  5: "Development & Testing",
-  6: "Deployment & Integration",
-  7: "Review & Optimization"
+  2: "Identity Collection", 
+  3: "Consent & Context",
+  4: "Research & Analysis",
+  5: "Requirements Discovery",
+  6: "Solution Presentation",
+  7: "Next Steps & Action"
 }
 
 export function StageRail({ sessionId }: { sessionId?: string }) {
+  // Use the StageProvider context for proper stage management
+  const { currentStageIndex, stages, getProgressPercentage } = useStage()
   const [ctx, setCtx] = useState<Context>({ stage: 1, exploredCount: 0, total: 16 })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -72,8 +78,9 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
     }
   }, [fetchContext])
 
-  const currentStage = ctx.stage || 1
-  const progressPercentage = Math.round(((ctx.exploredCount || 0) / (ctx.total || 16)) * 100)
+  // Use stage context for current stage, fallback to API context
+  const currentStage = currentStageIndex + 1 || ctx.stage || 1
+  const progressPercentage = getProgressPercentage() || Math.round(((ctx.exploredCount || 0) / (ctx.total || 16)) * 100)
 
   // Desktop: Fixed centered on right side
   // Mobile: Dropdown trigger button
@@ -81,11 +88,11 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
     <>
       {/* Desktop: Fixed centered layout */}
       <aside
-        className="hidden md:flex fixed z-20 flex-col items-center right-4 top-1/2 -translate-y-1/2 gap-3"
+        className="fixed right-4 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex"
         role="complementary"
         aria-label="Session progress and stage information"
       >
-        <div className="text-xs text-muted-foreground font-medium tracking-wide" aria-live="polite" data-testid="stage-indicator">
+        <div className="text-xs font-medium tracking-wide text-muted-foreground" aria-live="polite" data-testid="stage-indicator">
           Stage {currentStage} of 7
         </div>
         <ol className={cn("flex flex-col gap-2")} role="list">
@@ -114,7 +121,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
                           disabled={isUpcoming}
                         >
                           {isCompleted ? (
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="size-5" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           ) : (
@@ -129,8 +136,12 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
                         <p className="text-xs text-muted-foreground">
                           {STAGE_DESCRIPTIONS[stageNumber as keyof typeof STAGE_DESCRIPTIONS]}
                         </p>
+                        {/* Show stage instruction for context */}
+                        <p className="text-xs text-muted-foreground/70 mt-1 italic">
+                          {Object.values(StageInstructions)[stageNumber - 1]}
+                        </p>
                         {isCurrent && (
-                          <p className="text-xs text-primary font-medium">Current stage</p>
+                          <p className="text-xs font-medium text-primary">Current stage</p>
                         )}
                       </div>
                     </TooltipContent>
@@ -140,39 +151,39 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
             )
           })}
         </ol>
-        <div className="text-xs text-muted-foreground text-center space-y-1">
+        <div className="space-y-1 text-center text-xs text-muted-foreground">
           <div className="text-[10px] opacity-70">Exploration</div>
           <div className="flex items-center justify-center gap-1">
             <span>{ctx.exploredCount}</span>
             <span>of</span>
             <span>{ctx.total}</span>
           </div>
-          <div className="w-12 h-1 bg-muted rounded-full overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercentage} aria-label="Exploration progress">
+          <div className="h-1 w-12 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercentage} aria-label="Exploration progress">
             <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progressPercentage}%` }} />
           </div>
         </div>
         {isLoading && (
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="Loading progress" />
+          <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading progress" />
         )}
       </aside>
 
       {/* Mobile: Dropdown trigger */}
-      <div className="md:hidden fixed bottom-4 right-4 z-20">
+      <div className="fixed bottom-4 right-4 z-20 md:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="bg-background/80 backdrop-blur-sm border-border/50 shadow-lg"
+              className="bg-background/80 border-border/50 shadow-lg backdrop-blur-sm"
               aria-label="View session stages"
             >
-              <TrendingUp className="w-4 h-4 mr-1" />
+              <TrendingUp className="mr-1 size-4" />
               Stage {currentStage}/7
-              <ChevronDown className="w-3 h-3 ml-1" />
+              <ChevronDown className="ml-1 size-3" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64 max-h-96 overflow-y-auto">
-            <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
+          <DropdownMenuContent align="end" className="max-h-96 w-64 overflow-y-auto">
+            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
               Session Progress
             </div>
             <DropdownMenuSeparator />
@@ -201,7 +212,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
                           : "bg-muted text-muted-foreground"
                       )}>
                         {isCompleted ? (
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="size-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         ) : (
@@ -220,7 +231,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
                         </div>
                       </div>
                       {isCurrent && (
-                        <div className="w-2 h-2 bg-primary rounded-full" />
+                        <div className="size-2 rounded-full bg-primary" />
                       )}
                     </DropdownMenuItem>
                   </li>
@@ -228,7 +239,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
               })}
             </ol>
             <DropdownMenuSeparator />
-            <div className="px-2 py-2 space-y-2">
+            <div className="space-y-2 p-2">
               <div className="text-xs text-muted-foreground">
                 Exploration Progress
               </div>
@@ -236,7 +247,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
                 <span>{ctx.exploredCount} of {ctx.total}</span>
                 <span className="text-xs text-muted-foreground">{progressPercentage}%</span>
               </div>
-              <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full bg-primary transition-all duration-500 ease-out"
                   style={{ width: `${progressPercentage}%` }}
@@ -245,7 +256,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
             </div>
             {isLoading && (
               <div className="flex justify-center py-2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             )}
           </DropdownMenuContent>

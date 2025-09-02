@@ -90,7 +90,7 @@ export class ContentFilter {
     }
 
     // Basic sanitization
-    let sanitized = input
+    const sanitized = input
       .trim()
       .replace(/\s+/g, ' ') // Normalize whitespace
       .slice(0, 10000) // Limit length

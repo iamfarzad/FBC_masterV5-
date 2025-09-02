@@ -100,7 +100,8 @@ export class TabSync {
   /**
    * Update activity data across tabs
    */
-  updateActivity(activityId: string, updates: any): void {
+  // Removed updateActivity - using ai-elements instead
+  updateActivityLegacy(activityId: string, updates: any): void {
     this.broadcast('activity_update', { activityId, updates })
   }
 

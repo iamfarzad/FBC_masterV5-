@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic"
 export default function WorkshopPage() {
   return (
     <>
-      <section className="min-h-[100dvh] grid grid-rows-[auto,1fr]">
+      <section className="grid min-h-dvh grid-rows-[auto,1fr]">
         <div className="container py-6 md:py-8">
           <PageHeader
             title="AI Fundamentals Workshop"

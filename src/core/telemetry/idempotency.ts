@@ -2,7 +2,7 @@ export function makeIdempotencyKey(...parts: Array<string | number | undefined |
   const s = parts.filter(Boolean).join('|')
   let hash = 0
   for (let i = 0; i < s.length; i++) hash = ((hash << 5) - hash) + s.charCodeAt(i)
-  return 'idem_' + (hash >>> 0).toString(36)
+  return `idem_${  (hash >>> 0).toString(36)}`
 }
 const keys = new Set<string>()
 

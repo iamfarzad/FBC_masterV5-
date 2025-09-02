@@ -336,7 +336,7 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
         const adminUserMessage = {
           sessionId,
           adminId,
-          type: userMessage.role as 'user' | 'assistant' | 'system',
+          type: userMessage.role,
           content: userMessage.content,
           contextLeads: context?.conversationIds,
           metadata: {
@@ -374,7 +374,7 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
 
       // INTEGRATE INTELLIGENCE CONTEXT: If intelligence context is provided, add it
       if (context?.intelligenceContext) {
-        adminContext += '\n\nINTELLIGENCE RESEARCH DATA:\n' + context.intelligenceContext
+        adminContext += `\n\nINTELLIGENCE RESEARCH DATA:\n${  context.intelligenceContext}`
       }
 
       // Get conversation history for context
@@ -535,7 +535,7 @@ Response Style:
     try {
       // Get the underlying AI provider
       const aiProvider = getProvider()
-      let chunkId = 0
+      const chunkId = 0
       let responseText = ''
 
       // Process multimodal data if provided

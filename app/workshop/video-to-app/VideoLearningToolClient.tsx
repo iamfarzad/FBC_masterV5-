@@ -7,8 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PageShell, PageHeader } from '@/components/page-shell'
 import { ArrowLeft, Maximize2, Minimize2, Play, Sparkles, Wand2, Video, Code, BookOpen, HelpCircle } from 'lucide-react'
-// import { VideoToApp } from '@/components/workshop/VideoToApp' // Component removed
-// import { VideoToAppHelp } from '@/components/workshop/VideoToAppHelp' // Component removed
+// VideoToApp components temporarily disabled during refactor
 import { cn } from '@/src/core/utils'
 
 interface VideoLearningToolClientProps {
@@ -87,9 +86,9 @@ export function VideoLearningToolClient({
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 z-50 bg-background">
-        <div className="h-full flex flex-col">
+        <div className="flex h-full flex-col">
           {/* Minimal Header for Fullscreen */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border p-4">
             <h1 className="text-xl font-semibold text-foreground">Video to Learning App Generator</h1>
             <div className="flex items-center gap-2">
               <Button
@@ -98,7 +97,7 @@ export function VideoLearningToolClient({
                 onClick={toggleFullscreen}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <Minimize2 className="h-4 w-4 mr-2" />
+                <Minimize2 className="mr-2 size-4" />
                 Exit Fullscreen
               </Button>
               <Button
@@ -107,7 +106,7 @@ export function VideoLearningToolClient({
                 onClick={handleBackToChat}
                 className="text-muted-foreground hover:text-foreground"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="mr-2 size-4" />
                 {fromChat ? 'Back to Chat' : 'Back'}
               </Button>
             </div>
@@ -115,13 +114,10 @@ export function VideoLearningToolClient({
 
           {/* Fullscreen Content */}
           <div className="flex-1 p-4">
-            <VideoToApp
-              mode="fullscreen"
-              videoUrl={currentVideoUrl}
-              onVideoUrlChange={setCurrentVideoUrl}
-              onAppGenerated={handleAppGenerated}
-              className="h-full"
-            />
+            {/* VideoToApp fullscreen temporarily disabled */}
+            <div className="flex h-full items-center justify-center">
+              <p className="text-muted-foreground">VideoToApp feature temporarily unavailable</p>
+            </div>
           </div>
         </div>
       </div>
@@ -139,15 +135,15 @@ export function VideoLearningToolClient({
               size="sm"
               onClick={handleBackToChat}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 size-4" />
               {fromChat ? 'Back to Chat' : 'Back'}
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">
-                <Video className="inline-block w-8 h-8 mr-3 text-brand" />
+              <h1 className="font-display text-2xl font-semibold text-foreground md:text-3xl">
+                <Video className="mr-3 inline-block size-8 text-brand" />
                 Video to Learning App Workshop
               </h1>
-              <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              <p className="mt-1 text-sm text-muted-foreground md:text-base">
                 Transform YouTube videos into interactive learning experiences with AI
               </p>
             </div>
@@ -159,7 +155,7 @@ export function VideoLearningToolClient({
               onClick={() => setShowHelp(true)}
               className="text-muted-foreground hover:text-foreground"
             >
-              <HelpCircle className="h-4 w-4 mr-2" />
+              <HelpCircle className="mr-2 size-4" />
               Help
             </Button>
             <Button
@@ -168,7 +164,7 @@ export function VideoLearningToolClient({
               onClick={toggleFullscreen}
               className="hidden md:flex"
             >
-              <Maximize2 className="h-4 w-4 mr-2" />
+              <Maximize2 className="mr-2 size-4" />
               Fullscreen
             </Button>
           </div>
@@ -183,26 +179,26 @@ export function VideoLearningToolClient({
             <Card variant="elevated" className="border-l-4 border-l-brand">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-brand/10">
-                    <BookOpen className="w-6 h-6 text-brand" />
+                  <div className="bg-brand/10 rounded-full p-3">
+                    <BookOpen className="size-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-foreground">
                       F.B/c Video-to-App Workshop
                     </h3>
-                    <p className="text-muted-foreground mb-4">
+                    <p className="mb-4 text-muted-foreground">
                       Transform educational videos into powerful learning applications. Our AI analyzes
                       video content, extracts key concepts, and generates interactive apps with quizzes,
                       flashcards, and personalized learning experiences tailored to your needs.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-success/10 text-success rounded-full text-sm">
+                      <span className="bg-success/10 rounded-full px-3 py-1 text-sm text-success">
                         AI-Powered Analysis
                       </span>
-                      <span className="px-3 py-1 bg-info/10 text-info rounded-full text-sm">
+                      <span className="bg-info/10 rounded-full px-3 py-1 text-sm text-info">
                         Interactive Learning
                       </span>
-                      <span className="px-3 py-1 bg-warning/10 text-warning rounded-full text-sm">
+                      <span className="bg-warning/10 rounded-full px-3 py-1 text-sm text-warning">
                         Custom Apps
                       </span>
                     </div>
@@ -229,23 +225,23 @@ export function VideoLearningToolClient({
           {generatedApps.length > 0 && (
             <Card variant="elevated">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand" />
+                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Sparkles className="size-5 text-brand" />
                   Your Generated Apps
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {generatedApps.map((app) => (
-                    <Card key={app.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <Card key={app.id} className="overflow-hidden transition-shadow hover:shadow-md">
                       <CardContent className="p-4">
-                        <div className="aspect-video bg-surface-elevated rounded mb-3 overflow-hidden">
+                        <div className="mb-3 aspect-video overflow-hidden rounded bg-surface-elevated">
                           <iframe
                             src={app.url}
-                            className="w-full h-full border-0"
+                            className="size-full border-0"
                             title="Generated Learning App"
                           />
                         </div>
                         <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground truncate">
+                          <p className="truncate text-sm text-muted-foreground">
                             {app.videoUrl}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -258,7 +254,7 @@ export function VideoLearningToolClient({
                               className="flex-1"
                               onClick={() => window.open(app.url, '_blank')}
                             >
-                              <Play className="w-3 h-3 mr-1" />
+                              <Play className="mr-1 size-3" />
                               Open
                             </Button>
                             <Button
@@ -268,7 +264,7 @@ export function VideoLearningToolClient({
                                 navigator.clipboard?.writeText(app.url)
                               }}
                             >
-                              <Code className="w-3 h-3" />
+                              <Code className="size-3" />
                             </Button>
                           </div>
                         </div>
@@ -284,15 +280,15 @@ export function VideoLearningToolClient({
 
       {/* Help Modal */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-brand" />
+              <HelpCircle className="size-5 text-brand" />
               Video-to-App Help & Documentation
             </DialogTitle>
           </DialogHeader>
           <div className="p-6 text-center">
-            <h3 className="text-lg font-semibold mb-4">Video-to-App Feature</h3>
+            <h3 className="mb-4 text-lg font-semibold">Video-to-App Feature</h3>
             <p className="text-muted-foreground">
               This feature converts YouTube videos into interactive app blueprints using AI analysis.
             </p>
@@ -307,7 +303,7 @@ export function VideoLearningToolClient({
           size="lg"
           className="rounded-full shadow-xl"
         >
-          <Maximize2 className="h-5 w-5" />
+          <Maximize2 className="size-5" />
         </Button>
       </div>
     </>

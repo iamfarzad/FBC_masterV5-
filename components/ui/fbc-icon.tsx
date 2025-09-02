@@ -83,7 +83,7 @@ export function FbcIcon({
           alt="F.B/c Logo"
           width={size}
           height={size}
-          className="w-full h-full object-contain"
+          className="size-full object-contain"
           priority
         />
       </motion.div>
@@ -105,7 +105,7 @@ export function FbcIcon({
         alt="F.B/c Logo"
         width={iconSize}
         height={iconSize}
-        className="w-full h-full object-contain"
+        className="size-full object-contain"
         priority
         onError={(e) => {
           // Fallback to light version if dark version doesn't exist

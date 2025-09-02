@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 import type { NextRequest } from 'next/server'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
-import { translationRequestSchema, validateRequest, sanitizeString } from '@/src/core/validation'
+import { translationRequestSchema, validateRequest, sanitizeString } from '@/src/core/validation/index'
 import { logServerActivity } from '@/src/core/server-activity-logger'
 import type { ToolRunResult } from '@/src/core/types/intelligence'
 
@@ -43,16 +43,42 @@ export async function POST(req: NextRequest) {
       metadata: { correlationId, length: cleanText.length }
     })
 
-    const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
     const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
-    const prompt = `Translate the following text${sourceLang ? ` from ${sourceLang}` : ''} into ${targetLang}.
-Preserve meaning, tone, and formatting. Return only the translated text, no preface.
+    const getLanguageName = (code: string): string => {
+      const languages: Record<string, string> = {
+        'en': 'English', 'no': 'Norwegian', 'sv': 'Swedish', 'da': 'Danish',
+        'de': 'German', 'fr': 'French', 'es': 'Spanish', 'it': 'Italian',
+        'pt': 'Portuguese', 'nl': 'Dutch'
+      };
+      return languages[code] || code;
+    };
 
-Text:
+    const prompt = `
+You are a professional translator specializing in AI and technology content.
+
+TRANSLATE the following text${sourceLang ? ` from ${getLanguageName(sourceLang)}` : ''} to ${getLanguageName(targetLang)}.
+
+CONTEXT: AI consulting and business development platform
+TONE: professional
+PRESERVE THESE TERMS (do not translate): AI, API, ROI, CRM, SaaS, F.B/c, OAuth, JWT, SQL, NoSQL, MLOps
+
+IMPORTANT RULES:
+- Maintain professional business language
+- Preserve technical terms and acronyms  
+- Keep company names and product names unchanged (especially F.B/c)
+- Maintain the original formatting and structure
+- Ensure natural, fluent ${getLanguageName(targetLang)} text
+- Use appropriate business terminology for the target market
+- Return ONLY the translated text, no explanations or metadata
+
+TEXT TO TRANSLATE:
 """
 ${cleanText}
-"""`
+"""
+
+TRANSLATED TEXT:`
 
     const result = await model.generateContent({
       contents: [ { role: 'user', parts: [{ text: prompt }] } ],

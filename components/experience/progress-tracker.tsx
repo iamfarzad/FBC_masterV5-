@@ -76,7 +76,7 @@ export function ProgressTracker({ className }: { className?: string }) {
               className
             )}
           >
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/15 text-accent text-xs font-semibold">
+            <span className="bg-accent/15 inline-flex size-5 items-center justify-center rounded-full text-xs font-semibold text-accent">
               {count}
             </span>
             <span className="text-muted-foreground">Explored</span>

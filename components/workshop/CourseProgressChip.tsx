@@ -24,7 +24,7 @@ export function CourseProgressChip({ className }: { className?: string }) {
       'inline-flex items-center gap-2 rounded-full border border-border/40 bg-card/70 px-3 py-1 text-sm backdrop-blur-md shadow-sm',
       className
     )}>
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/15 text-accent text-xs font-semibold">
+      <span className="bg-accent/15 inline-flex size-5 items-center justify-center rounded-full text-xs font-semibold text-accent">
         {doneSteps}
       </span>
       <span className="text-muted-foreground">Course</span>

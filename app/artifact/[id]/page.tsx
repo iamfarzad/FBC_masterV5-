@@ -12,7 +12,7 @@ export default async function ArtifactPage({ params }: { params: { id: string } 
     return (
       <div className="p-6">
         <h1 className="text-lg font-semibold">Artifact not found</h1>
-        <p className="text-sm text-muted-foreground mt-2">The link may have expired or is invalid.</p>
+        <p className="mt-2 text-sm text-muted-foreground">The link may have expired or is invalid.</p>
       </div>
     )
   }
@@ -22,7 +22,7 @@ export default async function ArtifactPage({ params }: { params: { id: string } 
     return (
       <div className="p-6">
         <h1 className="text-lg font-semibold">Unsupported artifact</h1>
-        <p className="text-sm text-muted-foreground mt-2">This artifact type cannot be rendered.</p>
+        <p className="mt-2 text-sm text-muted-foreground">This artifact type cannot be rendered.</p>
       </div>
     )
   }
@@ -30,7 +30,7 @@ export default async function ArtifactPage({ params }: { params: { id: string } 
   return (
     <div className="h-screen">
       <iframe
-        className="w-full h-full"
+        className="size-full"
         srcDoc={data.content as string}
         sandbox="allow-scripts"
         title="Artifact"

@@ -84,7 +84,7 @@ const TypingDots = () => (
     {[0, 1, 2].map((i) => (
       <div
         key={i}
-        className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse"
+        className="bg-muted-foreground/50 size-2 animate-pulse rounded-full"
         style={{
           animationDelay: `${i * 0.2}s`,
           animationDuration: '1.2s'

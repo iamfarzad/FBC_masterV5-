@@ -56,7 +56,7 @@ export function formatDateTime(date: Date | string): string {
 
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
-  return text.substring(0, maxLength - 3) + '...'
+  return `${text.substring(0, maxLength - 3)  }...`
 }
 
 export function slugify(text: string): string {

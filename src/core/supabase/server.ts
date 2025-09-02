@@ -21,10 +21,10 @@ const createMockSupabaseClient = () => {
       insert: () => ({ data: null, error: new Error('Mock client - insert not available') }),
       update: () => ({ data: null, error: new Error('Mock client - update not available') }),
       delete: () => ({ data: null, error: new Error('Mock client - delete not available') }),
-      eq: function(column: string, value: unknown) { return this },
-      order: function(column: string, options?: unknown) { return this },
-      limit: function(count: number) { return this },
-      single: function() { return Promise.resolve({ data: null, error: new Error('Mock client') }) }
+      eq(column: string, value: unknown) { return this },
+      order(column: string, options?: unknown) { return this },
+      limit(count: number) { return this },
+      single() { return Promise.resolve({ data: null, error: new Error('Mock client') }) }
     }),
     storage: {
       from: () => ({

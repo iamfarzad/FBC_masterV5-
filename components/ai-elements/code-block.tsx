@@ -62,7 +62,7 @@ export const CodeBlock = ({
           codeTagProps={{
             className: 'font-mono text-sm',
           }}
-          className="dark:hidden overflow-hidden"
+          className="overflow-hidden dark:hidden"
         >
           {code}
         </SyntaxHighlighter>
@@ -85,7 +85,7 @@ export const CodeBlock = ({
           codeTagProps={{
             className: 'font-mono text-sm',
           }}
-          className="hidden dark:block overflow-hidden"
+          className="hidden overflow-hidden dark:block"
         >
           {code}
         </SyntaxHighlighter>

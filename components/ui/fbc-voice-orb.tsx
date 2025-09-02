@@ -210,7 +210,7 @@ export function FbcVoiceOrb({
     >
       {/* Ambient Background Glow */}
       <motion.div
-        className="absolute inset-0 rounded-full blur-3xl opacity-20"
+        className="absolute inset-0 rounded-full opacity-20 blur-3xl"
         style={{
           background: `radial-gradient(circle, ${colors.primary} 0%, transparent 70%)`
         }}
@@ -251,7 +251,7 @@ export function FbcVoiceOrb({
         >
           <svg
             viewBox="0 0 100 100"
-            className="w-full h-full"
+            className="size-full"
             style={{ overflow: 'visible' }}
           >
             {/* Primary Arc */}
@@ -328,7 +328,7 @@ export function FbcVoiceOrb({
 
         {/* Neural Network Lines for Thinking */}
         {state === 'thinking' && (
-          <svg className="absolute inset-0 w-full h-full opacity-30">
+          <svg className="absolute inset-0 size-full opacity-30">
             {[...Array(3)].map((_, i) => (
               <motion.line
                 key={i}
@@ -391,7 +391,7 @@ export function FbcVoiceOrb({
 
         {/* Hover Enhancement */}
         <motion.div
-          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           style={{
             background: `radial-gradient(circle at 50% 50%, ${colors.primary}10 0%, transparent 60%)`
           }}
@@ -400,7 +400,7 @@ export function FbcVoiceOrb({
         {/* Recording Indicator */}
         {isRecording && (
           <motion.div
-            className="absolute -top-2 -right-2 w-5 h-5 bg-accent rounded-full shadow-lg"
+            className="absolute -right-2 -top-2 size-5 rounded-full bg-accent shadow-lg"
             style={{
               boxShadow: `0 0 15px ${colors.primary}80`
             }}

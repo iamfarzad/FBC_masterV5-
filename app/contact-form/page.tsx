@@ -79,16 +79,16 @@ export default function ContactFormPage() {
         <div className="mb-6">
           <Link 
             href="/contact" 
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="size-4" />
             Back to Contact Options
           </Link>
         </div>
 
         <Card className="neu-card p-8">
           <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -157,12 +157,12 @@ export default function ContactFormPage() {
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4 mr-2" />
+                  <Send className="mr-2 size-4" />
                   Send Message
                 </>
               )}

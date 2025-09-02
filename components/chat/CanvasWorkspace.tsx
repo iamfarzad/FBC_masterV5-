@@ -32,11 +32,11 @@ export function CanvasWorkspace({ open, title = 'Canvas', onClose, left, console
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[70] bg-background/95">
+    <div className="bg-background/95 fixed inset-0 z-[70]">
       {/* Toolbar */}
       <div className={compact ? "flex h-10 items-center justify-between border-b px-2" : "flex h-12 items-center justify-between border-b px-3"}>
         <div className="flex items-center gap-2">
-          <div className={compact ? "h-1.5 w-1.5 rounded-full bg-accent" : "h-2 w-2 rounded-full bg-accent"} />
+          <div className={compact ? "size-1.5 rounded-full bg-accent" : "size-2 rounded-full bg-accent"} />
           <span className={compact ? "text-xs font-medium" : "text-sm font-medium"}>{title}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -51,11 +51,11 @@ export function CanvasWorkspace({ open, title = 'Canvas', onClose, left, console
             </Sheet>
           ) : (
             <Button variant="ghost" size="icon" aria-label="Open in new window" title="Open in new window">
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="size-4" />
             </Button>
           )}
           <Button variant="ghost" size="icon" aria-label="Close canvas" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </div>
       </div>
@@ -71,37 +71,37 @@ export function CanvasWorkspace({ open, title = 'Canvas', onClose, left, console
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full">Console</Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 rounded-md border bg-card p-2 text-xs max-h-[30vh] overflow-auto">
+                <CollapsibleContent className="mt-2 max-h-[30vh] overflow-auto rounded-md border bg-card p-2 text-xs">
                   {consoleArea}
                 </CollapsibleContent>
               </Collapsible>
             ) : null}
           </div>
         ) : (
-          <PanelGroup direction="vertical" className="h-full w-full rounded-lg border bg-card">
+          <PanelGroup direction="vertical" className="size-full rounded-lg border bg-card">
             <Panel defaultSize={80} minSize={60}>
-              <PanelGroup direction="horizontal" className="h-full w-full">
+              <PanelGroup direction="horizontal" className="size-full">
                 {left ? (
                   <Panel defaultSize={26} minSize={18} maxSize={36} className="max-md:min-w-[220px] max-md:max-w-[280px]">
-                    <div className="h-full w-full overflow-auto border-r p-3 text-sm md:text-xs">
+                    <div className="size-full overflow-auto border-r p-3 text-sm md:text-xs">
                       {left}
                     </div>
                   </Panel>
                 ) : null}
-                {left ? <PanelResizeHandle className="w-1 bg-border/60 hover:bg-border" /> : null}
+                {left ? <PanelResizeHandle className="bg-border/60 w-1 hover:bg-border" /> : null}
                 <Panel minSize={50}>
-                  <div className="h-full w-full overflow-hidden p-1 md:p-3">
-                    <div className="h-full w-full rounded-md border bg-background min-h-[60vh] md:min-h-0">
+                  <div className="size-full overflow-hidden p-1 md:p-3">
+                    <div className="size-full min-h-[60vh] rounded-md border bg-background md:min-h-0">
                       {children}
                     </div>
                   </div>
                 </Panel>
               </PanelGroup>
             </Panel>
-            {consoleArea ? <PanelResizeHandle className="h-1 bg-border/60 hover:bg-border" /> : null}
+            {consoleArea ? <PanelResizeHandle className="bg-border/60 h-1 hover:bg-border" /> : null}
             {consoleArea ? (
               <Panel defaultSize={20} minSize={12}>
-                <div className="h-full w-full overflow-auto border-t p-2 md:p-3 text-xs">
+                <div className="size-full overflow-auto border-t p-2 text-xs md:p-3">
                   {consoleArea}
                 </div>
               </Panel>

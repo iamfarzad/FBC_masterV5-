@@ -84,7 +84,7 @@ export class ModelSelector {
       if (!modelCap) return { model: modelName, score: -Infinity, cost: Infinity }
 
       let score = 0
-      let estimatedCost = calculateCost(modelName, 1000, maxTokens)
+      const estimatedCost = calculateCost(modelName, 1000, maxTokens)
 
       // Cost optimization
       if (prioritizeCost) {

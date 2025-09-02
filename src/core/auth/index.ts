@@ -29,7 +29,7 @@ export class AuthService {
 
       // Mock verification - in production use jose or jsonwebtoken
       const payload: JWTPayload = {
-        userId: 'user-' + Math.random().toString(36).substring(7),
+        userId: `user-${  Math.random().toString(36).substring(7)}`,
         email: 'user@example.com',
         role: 'user',
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour

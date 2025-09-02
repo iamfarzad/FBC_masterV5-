@@ -119,10 +119,10 @@ export function VoiceInput({
     <div className={`flex flex-col items-center gap-4 p-6 ${className || ''}`}>
       {!isRecording && !transcript && (
         <div className="flex flex-col items-center gap-4">
-          <Mic className="w-12 h-12 text-muted-foreground" />
-          <p className="text-muted-foreground text-center">Click to start voice input</p>
+          <Mic className="size-12 text-muted-foreground" />
+          <p className="text-center text-muted-foreground">Click to start voice input</p>
           <Button onClick={startRecording} className="w-full">
-            <Mic className="w-4 h-4 mr-2" />
+            <Mic className="mr-2 size-4" />
             Start Recording
           </Button>
         </div>
@@ -131,26 +131,26 @@ export function VoiceInput({
       {isRecording && (
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-              <Mic className="w-8 h-8 text-white" />
+            <div className="flex size-16 animate-pulse items-center justify-center rounded-full bg-red-500">
+              <Mic className="size-8 text-white" />
             </div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-red-500 rounded-full animate-ping" />
+            <div className="absolute inset-0 size-16 animate-ping rounded-full border-4 border-red-500" />
           </div>
-          <p className="text-red-500 font-medium">Recording... Speak now</p>
+          <p className="font-medium text-red-500">Recording... Speak now</p>
           <Button variant="outline" onClick={stopRecording}>
-            <Square className="w-4 h-4 mr-2" />
+            <Square className="mr-2 size-4" />
             Stop Recording
           </Button>
         </div>
       )}
 
       {transcript && !isRecording && (
-        <div className="flex flex-col items-center gap-4 w-full">
-          <div className="w-full p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Transcript:</p>
+        <div className="flex w-full flex-col items-center gap-4">
+          <div className="w-full rounded-lg bg-muted p-4">
+            <p className="mb-2 text-sm text-muted-foreground">Transcript:</p>
             <p className="text-sm">{transcript}</p>
           </div>
-          <div className="flex gap-2 w-full">
+          <div className="flex w-full gap-2">
             <Button onClick={() => handleTranscript(transcript)} className="flex-1">
               Use This Text
             </Button>
@@ -163,7 +163,7 @@ export function VoiceInput({
 
       {isProcessing && (
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin w-8 h-8 border-2 border-accent border-t-transparent rounded-full" />
+          <div className="size-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
           <p className="text-muted-foreground">Processing...</p>
         </div>
       )}
@@ -180,10 +180,10 @@ export function VoiceInput({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 rounded-full"
+              className="size-6 rounded-full"
               onClick={onClose}
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           </DialogHeader>
           

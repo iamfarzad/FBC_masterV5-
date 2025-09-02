@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
-// Mock functionality removed for production
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
@@ -8,12 +7,13 @@ import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { ScreenShareSchema } from '@/src/core/services/tool-service'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
+// import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const validatedData = ScreenShareSchema.parse(body)
-    const { image, type } = validatedData as any
+    const { image, type, context } = validatedData as any
     const capability = type === 'document' ? 'doc' : type === 'screen' ? 'screenshot' : 'screen'
 
     const sessionId = req.headers.get('x-intelligence-session-id') || undefined
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
 
     const estimatedTokens = estimateTokens('screen analysis') + 2000
-    const modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens, !!sessionId)
+    const modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens)
 
 
 
@@ -39,11 +39,22 @@ export async function POST(req: NextRequest) {
     let analysisResult = ''
 
     try {
+      // 🔍 ENHANCED SCREEN ANALYSIS PROMPT
+      let analysisPrompt = 'Analyze this screen for business insights'
+      
+      if (context?.prompt) {
+        analysisPrompt += ` with focus on: ${context.prompt}`
+      }
+      
+      if (context?.trigger === 'manual') {
+        analysisPrompt += '. Provide detailed manual analysis.'
+      }
+
       const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1024, temperature: 0.3, topP: 0.8, topK: 40 })
       const result = await genAI.models.generateContent({
         model: modelSelection.model,
         config: optimizedConfig,
-        contents: [{ role: 'user', parts: [ { text: 'Analyze this screen for business insights.' }, { inlineData: { mimeType: 'image/jpeg', data: image.split(',')[1] } } ] }],
+        contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType: 'image/jpeg', data: image.split(',')[1] } } ] }],
       })
       analysisResult = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
     } catch (e) {
@@ -55,7 +66,9 @@ export async function POST(req: NextRequest) {
       insights: ["UI elements detected", "Content structure analyzed"],
       imageSize: image.length,
       isBase64: image.startsWith('data:image'),
-      processedAt: new Date().toISOString()
+      processedAt: new Date().toISOString(),
+      trigger: context?.trigger || 'manual',
+      hasContext: !!(context?.prompt || sessionId)
     }}
     if (sessionId) {
       try {

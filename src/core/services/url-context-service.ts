@@ -62,7 +62,7 @@ export class URLContextService {
       // Content-type validation
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
-        throw new Error('Unsupported content type: ' + contentType);
+        throw new Error(`Unsupported content type: ${  contentType}`);
       }
 
       // Stream-based reading with 5MB limit
@@ -105,7 +105,7 @@ export class URLContextService {
       
       // Limit content size
       const limitedContent = extractedText.length > this.MAX_CONTENT_LENGTH 
-        ? extractedText.substring(0, this.MAX_CONTENT_LENGTH) + '...'
+        ? `${extractedText.substring(0, this.MAX_CONTENT_LENGTH)  }...`
         : extractedText;
 
       return {
@@ -141,7 +141,7 @@ export class URLContextService {
     try {
       // Add protocol if missing
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
+        url = `https://${  url}`;
       }
       
       const urlObj = new URL(url);
@@ -246,7 +246,7 @@ export class URLContextService {
    */
   private static extractMainContent(html: string): string {
     // Remove unwanted elements with regex
-    let cleanHtml = html
+    const cleanHtml = html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
       .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')

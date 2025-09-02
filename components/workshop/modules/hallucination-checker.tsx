@@ -37,20 +37,20 @@ export default function HallucinationChecker() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Hallucination Detector</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Hallucination Detector</h2>
           <p className="text-xl text-muted-foreground">Learn to identify and mitigate AI hallucinations</p>
         </motion.div>
         <div className="w-full max-w-5xl">
           <Tabs defaultValue="factual" value={activeTab} onValueChange={handleTabChange}>
-            <div className="flex justify-center mb-6"><TabsList className="grid grid-cols-4 w-full max-w-xl"><TabsTrigger value="factual">Factual</TabsTrigger><TabsTrigger value="partial">Partial Truth</TabsTrigger><TabsTrigger value="hallucination">Hallucination</TabsTrigger><TabsTrigger value="custom">Custom</TabsTrigger></TabsList></div>
+            <div className="mb-6 flex justify-center"><TabsList className="grid w-full max-w-xl grid-cols-4"><TabsTrigger value="factual">Factual</TabsTrigger><TabsTrigger value="partial">Partial Truth</TabsTrigger><TabsTrigger value="hallucination">Hallucination</TabsTrigger><TabsTrigger value="custom">Custom</TabsTrigger></TabsList></div>
             <TabsContent value="factual"><ExampleTab prompt={prompt} response={response} analysis={analysis} /></TabsContent>
             <TabsContent value="partial"><ExampleTab prompt={prompt} response={response} analysis={analysis} /></TabsContent>
             <TabsContent value="hallucination"><ExampleTab prompt={prompt} response={response} analysis={analysis} /></TabsContent>
             <TabsContent value="custom">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
                   <Card><CardHeader><CardTitle>Custom Input</CardTitle><CardDescription>Enter a prompt and response to analyze</CardDescription></CardHeader><CardContent className="space-y-4">
                     <div className="space-y-2"><label className="text-sm font-medium">Prompt</label><Textarea value={customPrompt} onChange={(e) => setCustomPrompt(e.target.value)} className="min-h-[100px]" /></div>
@@ -62,11 +62,11 @@ export default function HallucinationChecker() {
                   <Card><CardHeader><CardTitle>Analysis</CardTitle><CardDescription>Hallucination detection results</CardDescription></CardHeader><CardContent>
                     {showCustomAnalysis ? (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-500" /><span className="font-medium">Potential hallucination detected</span></div>
+                        <div className="flex items-center gap-2"><AlertTriangle className="size-5 text-yellow-500" /><span className="font-medium">Potential hallucination detected</span></div>
                         <p className="text-sm text-muted-foreground">The response contains statements that cannot be verified or may be fabricated. Fact-check important claims.</p>
                       </div>
                     ) : (
-                      <div className="h-[300px] flex items-center justify-center text-muted-foreground">Enter a prompt and response, then click "Analyze Response"</div>
+                      <div className="flex h-[300px] items-center justify-center text-muted-foreground">Enter a prompt and response, then click "Analyze Response"</div>
                     )}
                   </CardContent></Card>
                 </motion.div>
@@ -81,15 +81,15 @@ export default function HallucinationChecker() {
 
 function ExampleTab({ prompt, response, analysis }: { prompt: string; response: string; analysis: { isHallucination: boolean; confidence: number; explanation: string; sources: string[] } }) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-        <Card><CardHeader><CardTitle>Prompt</CardTitle></CardHeader><CardContent><div className="bg-muted/30 p-4 rounded-md">{prompt}</div></CardContent></Card>
-        <Card><CardHeader><CardTitle>Response</CardTitle></CardHeader><CardContent><div className="bg-muted/30 p-4 rounded-md">{response}</div></CardContent></Card>
+        <Card><CardHeader><CardTitle>Prompt</CardTitle></CardHeader><CardContent><div className="bg-muted/30 rounded-md p-4">{prompt}</div></CardContent></Card>
+        <Card><CardHeader><CardTitle>Response</CardTitle></CardHeader><CardContent><div className="bg-muted/30 rounded-md p-4">{response}</div></CardContent></Card>
       </motion.div>
       <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
         <Card><CardHeader><CardTitle>Analysis</CardTitle></CardHeader><CardContent className="space-y-4">
-          <div className="flex items-center gap-2">{analysis.isHallucination ? (<><XCircle className="h-5 w-5 text-red-500" /><span className="font-medium">Hallucination Detected</span></>) : (<><CheckCircle className="h-5 w-5 text-green-500" /><span className="font-medium">Factually Accurate</span></>)}<span className="text-sm text-muted-foreground ml-auto">Confidence: {(analysis.confidence * 100).toFixed(0)}%</span></div>
-          <div><h4 className="font-medium mb-2">Explanation</h4><p className="text-sm text-muted-foreground">{analysis.explanation}</p></div>
+          <div className="flex items-center gap-2">{analysis.isHallucination ? (<><XCircle className="size-5 text-red-500" /><span className="font-medium">Hallucination Detected</span></>) : (<><CheckCircle className="size-5 text-green-500" /><span className="font-medium">Factually Accurate</span></>)}<span className="ml-auto text-sm text-muted-foreground">Confidence: {(analysis.confidence * 100).toFixed(0)}%</span></div>
+          <div><h4 className="mb-2 font-medium">Explanation</h4><p className="text-sm text-muted-foreground">{analysis.explanation}</p></div>
         </CardContent></Card>
       </motion.div>
     </div>

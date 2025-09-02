@@ -27,7 +27,7 @@ class AuthService {
       return { success: false, error: 'Invalid token format' }
     }
 
-    return { success: true, userId: 'admin-user-' + Math.random().toString(36).substring(7) }
+    return { success: true, userId: `admin-user-${  Math.random().toString(36).substring(7)}` }
   }
 }
 
@@ -39,7 +39,7 @@ export async function handleAdminChat(body: unknown, options?: AdminChatOptions)
   if (options?.headers) {
     const authResult = await authService.authenticateRequest(options.headers)
     if (!authResult.success) {
-      throw new Error('Unauthorized: ' + (authResult.error || 'Invalid credentials'))
+      throw new Error(`Unauthorized: ${  authResult.error || 'Invalid credentials'}`)
     }
   }
 

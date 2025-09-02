@@ -15,7 +15,7 @@ export function BookCallButtonStatic({
     <Button {...rest}>
       <span>
         {children ?? 'Book a Call'}
-        <ArrowRight className="ml-2 h-4 w-4" />
+        <ArrowRight className="ml-2 size-4" />
       </span>
     </Button>
   )

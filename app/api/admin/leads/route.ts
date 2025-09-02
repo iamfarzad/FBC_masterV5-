@@ -4,7 +4,7 @@ import { adminAuthMiddleware } from '@/app/api-utils/auth'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 import { withAdminAuth } from "@/app/api-utils/security"
 
-export const GET = withAdminAuth(async function(request: NextRequest) {
+export const GET = withAdminAuth(async (request: NextRequest) => {
   // Check rate limiting
   const rateLimitResult = adminRateLimit(request);
   if (rateLimitResult) {

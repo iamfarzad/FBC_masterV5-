@@ -70,15 +70,15 @@ export default function EmbeddingExplorer() {
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="flex flex-col items-center justify-center">
-        <motion.div className="max-w-3xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Embedding Explorer</h2>
+        <motion.div className="mb-8 w-full max-w-3xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Embedding Explorer</h2>
           <p className="text-xl text-muted-foreground">Visualize how words and concepts are represented in vector space</p>
         </motion.div>
         <div className="w-full max-w-5xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <motion.div className="bg-card border rounded-xl p-6 shadow-sm h-full" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                <div className="flex justify-between items-center mb-6">
+              <motion.div className="h-full rounded-xl border bg-card p-6 shadow-sm" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                <div className="mb-6 flex items-center justify-between">
                   <h3 className="text-xl font-medium">Vector Space Visualization</h3>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant={showRelationships ? "default" : "outline"} onClick={() => setShowRelationships(!showRelationships)}>
@@ -86,8 +86,8 @@ export default function EmbeddingExplorer() {
                     </Button>
                   </div>
                 </div>
-                <div className="relative h-[400px] mb-4 bg-muted/30 rounded-lg overflow-hidden">
-                  <canvas ref={canvasRef} width={800} height={600} className="w-full h-full" />
+                <div className="bg-muted/30 relative mb-4 h-[400px] overflow-hidden rounded-lg">
+                  <canvas ref={canvasRef} width={800} height={600} className="size-full" />
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-1">
@@ -96,7 +96,7 @@ export default function EmbeddingExplorer() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedWords.map((word) => (
-                      <div key={word} className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 cursor-pointer ${word === selectedWord ? 'bg-accent text-accent-foreground' : 'bg-muted hover:bg-muted/80'}`} onClick={() => setSelectedWord(word === selectedWord ? null : word)}>
+                      <div key={word} className={`flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-sm ${word === selectedWord ? 'bg-accent text-accent-foreground' : 'hover:bg-muted/80 bg-muted'}`} onClick={() => setSelectedWord(word === selectedWord ? null : word)}>
                         {word}
                         <button className="ml-1 text-xs opacity-60 hover:opacity-100" onClick={(e) => { e.stopPropagation(); setSelectedWords(selectedWords.filter((w) => w !== word)); if (selectedWord === word) setSelectedWord(null) }}>×</button>
                       </div>
@@ -106,8 +106,8 @@ export default function EmbeddingExplorer() {
               </motion.div>
             </div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <div className="bg-card border rounded-xl p-6 shadow-sm h-full">
-                <h3 className="text-xl font-medium mb-4">Controls</h3>
+              <div className="h-full rounded-xl border bg-card p-6 shadow-sm">
+                <h3 className="mb-4 text-xl font-medium">Controls</h3>
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Add Word</label>

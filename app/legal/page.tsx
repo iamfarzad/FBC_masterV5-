@@ -13,15 +13,15 @@ export default function LegalPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border/20 bg-background/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="border-border/20 bg-background/95 sticky top-0 z-40 border-b backdrop-blur-sm">
+        <div className="mx-auto max-w-4xl p-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => router.back()}
-              className="flex items-center gap-2 hover:bg-accent/10"
+              className="hover:bg-accent/10 flex items-center gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="size-4" />
               Back
             </Button>
             <h1 className="text-xl font-bold text-foreground">F.B/c Legal</h1>
@@ -31,12 +31,12 @@ export default function LegalPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         {/* Introduction */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-accent" />
+              <Shield className="size-5 text-accent" />
               Legal Information
             </CardTitle>
             <CardDescription>
@@ -62,13 +62,13 @@ export default function LegalPage() {
           </CardHeader>
           <CardContent>
             <nav className="space-y-2">
-              <a href="#privacy" className="block text-accent hover:text-accent/80 transition-colors">
+              <a href="#privacy" className="hover:text-accent/80 block text-accent transition-colors">
                 1. Privacy Policy
               </a>
-              <a href="#terms" className="block text-accent hover:text-accent/80 transition-colors ml-4">
+              <a href="#terms" className="hover:text-accent/80 ml-4 block text-accent transition-colors">
                 2. Terms of Service
               </a>
-              <a href="#cookies" className="block text-accent hover:text-accent/80 transition-colors ml-4">
+              <a href="#cookies" className="hover:text-accent/80 ml-4 block text-accent transition-colors">
                 3. Cookie Policy
               </a>
             </nav>
@@ -79,13 +79,13 @@ export default function LegalPage() {
         <Card id="privacy">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+              <Shield className="size-5" />
               1. Privacy Policy
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3">Information We Collect</h3>
+              <h3 className="mb-3 text-lg font-semibold">Information We Collect</h3>
               <div className="space-y-3 text-muted-foreground">
                 <p>
                   <strong>Personal Information:</strong> When you provide consent, we collect your name,
@@ -105,7 +105,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">How We Use Your Information</h3>
+              <h3 className="mb-3 text-lg font-semibold">How We Use Your Information</h3>
               <ul className="space-y-2 text-muted-foreground">
                 <li>• <strong>Personalization:</strong> To provide personalized AI responses and recommendations</li>
                 <li>• <strong>Service Delivery:</strong> To operate and maintain our AI consultation platform</li>
@@ -118,7 +118,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Information Sharing</h3>
+              <h3 className="mb-3 text-lg font-semibold">Information Sharing</h3>
               <p className="text-muted-foreground">
                 We do not sell, trade, or otherwise transfer your personal information to third parties
                 without your consent, except as described in this policy or required by law.
@@ -128,7 +128,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Data Security</h3>
+              <h3 className="mb-3 text-lg font-semibold">Data Security</h3>
               <p className="text-muted-foreground">
                 We implement appropriate technical and organizational measures to protect your personal
                 information against unauthorized access, alteration, disclosure, or destruction.
@@ -138,7 +138,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Your Rights</h3>
+              <h3 className="mb-3 text-lg font-semibold">Your Rights</h3>
               <ul className="space-y-2 text-muted-foreground">
                 <li>• <strong>Access:</strong> You can request access to your personal information</li>
                 <li>• <strong>Correction:</strong> You can request correction of inaccurate information</li>
@@ -151,7 +151,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
+              <h3 className="mb-3 text-lg font-semibold">Contact Us</h3>
               <p className="text-muted-foreground">
                 If you have questions about this Privacy Policy, please contact us at:
                 <br />
@@ -167,13 +167,13 @@ export default function LegalPage() {
         <Card id="terms">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <FileText className="size-5" />
               2. Terms of Service
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3">Acceptance of Terms</h3>
+              <h3 className="mb-3 text-lg font-semibold">Acceptance of Terms</h3>
               <p className="text-muted-foreground">
                 By accessing and using F.B/c AI consultation services, you accept and agree to be bound
                 by the terms and provision of this agreement.
@@ -183,7 +183,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Service Description</h3>
+              <h3 className="mb-3 text-lg font-semibold">Service Description</h3>
               <p className="text-muted-foreground">
                 F.B/c provides AI-powered business consultation services through our web platform.
                 Our services include personalized AI chat interactions, business analysis tools,
@@ -194,7 +194,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">User Responsibilities</h3>
+              <h3 className="mb-3 text-lg font-semibold">User Responsibilities</h3>
               <ul className="space-y-2 text-muted-foreground">
                 <li>• Provide accurate and truthful information when using our services</li>
                 <li>• Use the services in accordance with applicable laws and regulations</li>
@@ -207,7 +207,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Intellectual Property</h3>
+              <h3 className="mb-3 text-lg font-semibold">Intellectual Property</h3>
               <p className="text-muted-foreground">
                 All content, features, and functionality of our services are owned by F.B Consulting
                 and are protected by copyright, trademark, and other intellectual property laws.
@@ -217,7 +217,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Limitation of Liability</h3>
+              <h3 className="mb-3 text-lg font-semibold">Limitation of Liability</h3>
               <p className="text-muted-foreground">
                 F.B/c services are provided "as is" without warranties of any kind. We shall not be
                 liable for any indirect, incidental, special, or consequential damages arising out
@@ -228,7 +228,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Termination</h3>
+              <h3 className="mb-3 text-lg font-semibold">Termination</h3>
               <p className="text-muted-foreground">
                 We reserve the right to terminate or suspend your access to our services at our
                 sole discretion, without prior notice, for conduct that we believe violates these
@@ -239,7 +239,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Governing Law</h3>
+              <h3 className="mb-3 text-lg font-semibold">Governing Law</h3>
               <p className="text-muted-foreground">
                 These terms shall be governed by and construed in accordance with the laws of
                 the jurisdiction in which F.B Consulting operates, without regard to its conflict
@@ -253,13 +253,13 @@ export default function LegalPage() {
         <Card id="cookies">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Cookie className="h-5 w-5" />
+              <Cookie className="size-5" />
               3. Cookie Policy
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-3">What Are Cookies</h3>
+              <h3 className="mb-3 text-lg font-semibold">What Are Cookies</h3>
               <p className="text-muted-foreground">
                 Cookies are small text files that are stored on your device when you visit our website.
                 They help us provide you with a better browsing experience and allow certain features
@@ -270,14 +270,14 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Cookies We Use</h3>
+              <h3 className="mb-3 text-lg font-semibold">Cookies We Use</h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">Essential Cookies</h4>
-                  <p className="text-muted-foreground text-sm">
+                  <h4 className="mb-2 font-medium">Essential Cookies</h4>
+                  <p className="text-sm text-muted-foreground">
                     Required for the website to function properly. These include:
                   </p>
-                  <ul className="text-muted-foreground text-sm mt-2 space-y-1">
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <li>• Session management cookies</li>
                     <li>• Security and authentication cookies</li>
                     <li>• Consent preference cookies</li>
@@ -285,11 +285,11 @@ export default function LegalPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">Functional Cookies</h4>
-                  <p className="text-muted-foreground text-sm">
+                  <h4 className="mb-2 font-medium">Functional Cookies</h4>
+                  <p className="text-sm text-muted-foreground">
                     Enhance your experience on our site:
                   </p>
-                  <ul className="text-muted-foreground text-sm mt-2 space-y-1">
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <li>• Language and localization preferences</li>
                     <li>• Theme and display settings</li>
                     <li>• Chat session preferences</li>
@@ -297,11 +297,11 @@ export default function LegalPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">Analytics Cookies</h4>
-                  <p className="text-muted-foreground text-sm">
+                  <h4 className="mb-2 font-medium">Analytics Cookies</h4>
+                  <p className="text-sm text-muted-foreground">
                     Help us understand how you use our services:
                   </p>
-                  <ul className="text-muted-foreground text-sm mt-2 space-y-1">
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <li>• Usage patterns and feature adoption</li>
                     <li>• Performance and error monitoring</li>
                     <li>• Service improvement insights</li>
@@ -313,11 +313,11 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Third-Party Cookies</h3>
+              <h3 className="mb-3 text-lg font-semibold">Third-Party Cookies</h3>
               <p className="text-muted-foreground">
                 We may use third-party services that place their own cookies. These include:
               </p>
-              <ul className="text-muted-foreground text-sm mt-2 space-y-1">
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 <li>• AI service providers for chat functionality</li>
                 <li>• Analytics services for usage insights</li>
                 <li>• Cloud infrastructure providers</li>
@@ -327,7 +327,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Managing Cookies</h3>
+              <h3 className="mb-3 text-lg font-semibold">Managing Cookies</h3>
               <div className="space-y-3 text-muted-foreground">
                 <p>
                   <strong>Browser Settings:</strong> You can control and delete cookies through your
@@ -347,7 +347,7 @@ export default function LegalPage() {
             <Separator />
 
             <div>
-              <h3 className="text-lg font-semibold mb-3">Updates to This Policy</h3>
+              <h3 className="mb-3 text-lg font-semibold">Updates to This Policy</h3>
               <p className="text-muted-foreground">
                 We may update this Cookie Policy from time to time. We will notify you of any material
                 changes by posting the new policy on this page and updating the "Last updated" date.

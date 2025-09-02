@@ -40,7 +40,7 @@ const getGeminiClient = () => {
   }
 
   return new GoogleGenAI({
-    apiKey: apiKey,
+    apiKey,
   })
 }
 

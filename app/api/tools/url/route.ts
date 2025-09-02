@@ -1,123 +1,211 @@
 import { NextRequest, NextResponse } from 'next/server'
-import URLContextService from '@/src/core/services/url-context-service'
+import { GoogleGenAI } from '@google/genai'
+import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
+import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
-import { validateOutboundUrl, checkAllowedDomain, headPreflight } from '@/src/core/security/url-guards'
+import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 
-// Force dynamic rendering and disable caching
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
-
-// Simple per-session rate limiter and idempotency cache (in-memory)
-const rl = new Map<string, { count: number; reset: number }>()
-const idem = new Map<string, { expires: number; body: unknown }>()
-
-function checkRate(key: string, max: number, windowMs: number) {
-  const now = Date.now()
-  const rec = rl.get(key)
-  if (!rec || rec.reset < now) {
-    rl.set(key, { count: 1, reset: now + windowMs })
-    return true
-  }
-  if (rec.count >= max) return false
-  rec.count++
-  return true
+interface URLAnalysisRequest {
+  url: string
+  analysisType?: string
+  extractContent?: boolean
+  contextPrompt?: string
 }
 
+// 🌐 GOOGLE URL CONTEXT ANALYSIS - Advanced web content processing
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}))
-    const { url, text } = body || {}
-    const sessionId = req.headers.get('x-intelligence-session-id') || body?.sessionId || undefined
-    const idemKey = req.headers.get('x-idempotency-key') || undefined
+    const body: URLAnalysisRequest = await req.json()
+    const { url, analysisType, extractContent = true, contextPrompt } = body
+    const sessionId = req.headers.get('x-intelligence-session-id') || undefined
+    const userId = req.headers.get('x-user-id') || undefined
 
-    // Rate limit per session
-    const rlKey = `url:${sessionId || 'anon'}`
-    if (!checkRate(rlKey, 10, 60_000)) {
-      return NextResponse.json({ ok: false, error: 'Rate limit exceeded' }, { 
-        status: 429,
-        headers: { 'Cache-Control': 'no-store' }
+    if (!url || !isValidUrl(url)) {
+      return NextResponse.json({ ok: false, error: 'Valid URL required' }, { status: 400 })
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ ok: false, error: 'AI service not configured' }, { status: 503 })
+    }
+
+    // 📄 FETCH AND PROCESS WEB CONTENT
+    let webContent = ''
+    let contentType = 'text/html'
+    
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'F.B/c AI Assistant (https://farzadbayat.com)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        timeout: 10000 // 10 second timeout
       })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      contentType = response.headers.get('content-type') || 'text/html'
+      webContent = await response.text()
+      
+      // Basic content extraction for HTML
+      if (contentType.includes('text/html') && extractContent) {
+        // Remove scripts, styles, and extract main content
+        webContent = webContent
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 10000) // Limit content size
+      }
+      
+    } catch (fetchError) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Failed to fetch URL content',
+        details: fetchError instanceof Error ? fetchError.message : 'Unknown error'
+      }, { status: 400 })
     }
 
-    // Idempotency (optional via header)
-    if (sessionId && idemKey) {
-      const k = `${sessionId}:${idemKey}`
-      const cached = idem.get(k)
-      if (cached && cached.expires > Date.now()) {
-        return NextResponse.json(cached.body, { headers: { 'Cache-Control': 'no-store' } })
+    // Budget and model selection
+    const estimatedTokens = estimateTokens(webContent) + 3000
+    const modelSelection = selectModelForFeature('url_analysis', estimatedTokens, !!sessionId)
+
+    if (userId && process.env.NODE_ENV !== 'test') {
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'url_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.6, true)
+      if (!budgetCheck.allowed) {
+        return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
       }
     }
 
-    if (!url && !text) {
-      return NextResponse.json({ ok: false, error: 'Provide url or text' }, { 
-        status: 400,
-        headers: { 'Cache-Control': 'no-store' }
-      })
-    }
-
-    let analysis: unknown = null
-    if (url) {
-      // URL validation and security checks
-      try {
-        const urls = Array.isArray(url) ? url : [String(url)]
-        
-        // Validate each URL before processing
-        for (const rawUrl of urls) {
-          const validatedUrl = await validateOutboundUrl(rawUrl)
-          
-          // Check allowed domains if configured
-          const allowedDomains = process.env.URL_CONTEXT_ALLOWED_DOMAINS?.split(',').map(d => d.trim()).filter(Boolean) || []
-          if (!checkAllowedDomain(validatedUrl, allowedDomains)) {
-            return NextResponse.json({ ok: false, error: 'Domain not allowed' }, { 
-              status: 403,
-              headers: { 'Cache-Control': 'no-store' }
-            })
-          }
-          
-          // Preflight check for content type and size
-          await headPreflight(validatedUrl, 8000, 5_000_000)
-        }
-        
-        const results = await URLContextService.analyzeMultipleURLs(urls)
-        analysis = results?.[0] || null
-      } catch (error: unknown) {
-        return NextResponse.json({ ok: false, error: error.message || 'URL validation failed' }, { 
-          status: 400,
-          headers: { 'Cache-Control': 'no-store' }
-        })
-      }
-    } else if (text) {
-      const content = String(text)
-      analysis = {
-        url: null,
-        title: 'Provided Text',
-        description: content.slice(0, 160),
-        wordCount: content.trim().split(/\s+/).length,
-        readingTime: Math.max(1, Math.ceil(content.length / 900)),
-        extractedText: content.slice(0, 4000),
-        metadata: {},
-      }
-    }
-
-    const response = { ok: true, output: analysis }
-
-    if (sessionId) {
-      try { await recordCapabilityUsed(String(sessionId), 'urlContext', { source: url ? 'url' : 'text', size: analysis?.wordCount || 0 }) } catch {}
-    }
-
-    if (sessionId && idemKey) {
-      const k = `${sessionId}:${idemKey}`
-      idem.set(k, { expires: Date.now() + 5 * 60_000, body: response })
-    }
-
-    return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } })
-  } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: error?.message || 'Unknown error' }, { 
-      status: 500,
-      headers: { 'Cache-Control': 'no-store' }
+    // 🤖 ENHANCED AI ANALYSIS WITH CONTEXT
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+    const optimizedConfig = createOptimizedConfig('analysis', { 
+      maxOutputTokens: 2048,
+      temperature: 0.3,
+      topP: 0.8,
+      topK: 40
     })
+
+    let analysisText = ''
+    try {
+      // 🔍 SMART CONTEXT INTEGRATION
+      const existingContext = sessionId ? await multimodalContextManager.getSessionContext(sessionId) : null
+      
+      // 📋 BUILD CONTEXT-AWARE ANALYSIS PROMPT
+      let analysisPrompt = `🌐 WEB CONTENT ANALYSIS\n\n`
+      analysisPrompt += `URL: ${url}\n\n`
+      analysisPrompt += `Analyze this web content and provide:\n`
+      analysisPrompt += `• Executive Summary\n• Key Information & Insights\n• Business Relevance\n• Actionable Recommendations\n\n`
+      
+      if (analysisType) {
+        analysisPrompt += `SPECIAL FOCUS: ${analysisType}\n\n`
+      }
+      
+      if (contextPrompt) {
+        analysisPrompt += `CONTEXT: ${contextPrompt}\n\n`
+      }
+      
+      if (existingContext?.textMessages?.length > 0) {
+        const recentContext = existingContext.textMessages.slice(-3).map(m => m.content).join(' ')
+        analysisPrompt += `CONVERSATION CONTEXT: ${recentContext.slice(0, 500)}\n\n`
+      }
+      
+      analysisPrompt += `Connect the analysis to business context and provide specific actionable insights.\n\n`
+      analysisPrompt += `WEB CONTENT:\n${webContent}`
+
+      const result = await genAI.models.generateContent({
+        model: modelSelection.model,
+        config: optimizedConfig,
+        contents: [{
+          role: 'user',
+          parts: [{ text: analysisPrompt }]
+        }]
+      })
+      
+      analysisText = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || 
+                    result.candidates?.[0]?.content?.parts?.[0]?.text || 
+                    'Analysis completed'
+                    
+      console.log(`🌐 URL analysis completed: ${url}, ${analysisText.length} characters`)
+      
+    } catch (e) {
+      console.error('URL analysis failed:', e)
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'AI analysis failed', 
+        details: e instanceof Error ? e.message : 'Unknown error' 
+      }, { status: 500 })
+    }
+
+    // 📊 ENHANCED RESPONSE WITH METADATA
+    const response = { 
+      ok: true, 
+      output: {
+        analysis: analysisText,
+        url,
+        contentType,
+        contentLength: webContent.length,
+        source: 'url_analysis',
+        processedAt: new Date().toISOString(),
+        capabilities: ['web_analysis', 'business_insights', 'url_context'],
+        hasConversationContext: !!(existingContext?.textMessages?.length)
+      }
+    }
+    
+    // 🔄 ADVANCED CONTEXT MANAGEMENT
+    if (sessionId) {
+      try { 
+        await recordCapabilityUsed(String(sessionId), 'url', { 
+          url,
+          contentType,
+          contentLength: webContent.length,
+          analysisType
+        })
+        
+        // Add URL analysis to multimodal context
+        await multimodalContextManager.addDocumentAnalysis(
+          sessionId,
+          analysisText,
+          {
+            filename: url,
+            mimeType: 'text/html',
+            source: 'url_context',
+            urlContext: url,
+            size: webContent.length,
+            timestamp: new Date().toISOString(),
+            contentType
+          }
+        )
+      } catch (contextError) {
+        console.warn('Context management failed:', contextError)
+      }
+    }
+    
+    return NextResponse.json(response)
+    
+  } catch (error) {
+    console.error('URL analysis API error:', error)
+    return NextResponse.json({ 
+      ok: false, 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
+// 🔗 URL VALIDATION HELPER
+function isValidUrl(string: string): boolean {
+  try {
+    const url = new URL(string)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 
+// Force dynamic rendering for real-time processing
+export const dynamic = 'force-dynamic'
+export const revalidate = 0

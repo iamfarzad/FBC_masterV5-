@@ -72,7 +72,7 @@ export const ToolHeader = ({
   >
     <div className="flex items-center gap-2">
       <WrenchIcon className="size-4 text-muted-foreground" />
-      <span className="font-medium text-sm">{type}</span>
+      <span className="text-sm font-medium">{type}</span>
       {getStatusBadge(state)}
     </div>
     <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
@@ -97,10 +97,10 @@ export type ToolInputProps = ComponentProps<'div'> & {
 
 export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
   <div className={cn('space-y-2 overflow-hidden p-4', className)} {...props}>
-    <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+    <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
       Parameters
     </h4>
-    <div className="rounded-md bg-muted/50">
+    <div className="bg-muted/50 rounded-md">
       <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
     </div>
   </div>
@@ -123,7 +123,7 @@ export const ToolOutput = ({
 
   return (
     <div className={cn('space-y-2 p-4', className)} {...props}>
-      <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {errorText ? 'Error' : 'Result'}
       </h4>
       <div

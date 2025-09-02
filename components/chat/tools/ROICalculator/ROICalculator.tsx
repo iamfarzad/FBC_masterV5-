@@ -223,13 +223,13 @@ export function ROICalculator({
 
   // Main UI component
   const ROICalculatorUI = ({ showSidebar = true }: { showSidebar?: boolean } = {}) => (
-    <div className="h-full lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] gap-4 flex">
+    <div className="flex h-full gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem]">
       {/* Main ROI Calculator Area */}
       <div className="flex-1 p-4">
         <div>
-          <Card className="w-full bg-card border border-border">
+          <Card className="w-full border border-border bg-card">
             <CardHeader className="text-center">
-              <CardTitle className="text-xl mb-2">
+              <CardTitle className="mb-2 text-xl">
                 {STEP_CONTENT[currentStep].title}
               </CardTitle>
               <p className="text-muted-foreground">
@@ -262,10 +262,10 @@ export function ROICalculator({
   if (mode === 'modal') {
     return (
       <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl p-0">
-          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
+        <DialogContent className="p-0 sm:max-w-2xl md:max-w-3xl">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 px-6 pb-2 pt-6">
             <DialogTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5" />
+              <Calculator className="size-5" />
               ROI Calculator
             </DialogTitle>
           </DialogHeader>
@@ -282,7 +282,7 @@ export function ROICalculator({
     <ToolCardWrapper
       title="ROI Calculator"
       description="Calculate the ROI for your business."
-      icon={<Calculator className="w-4 h-4" />}
+      icon={<Calculator className="size-4" />}
     >
       <ROICalculatorUI />
     </ToolCardWrapper>

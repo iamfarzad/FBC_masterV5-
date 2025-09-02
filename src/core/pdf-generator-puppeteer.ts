@@ -149,7 +149,7 @@ async function generatePdfWithPdfLib(summaryData: SummaryData, outputPath: strin
     const words = text.split(/\s+/)
     let line = ''
     for (const word of words) {
-      const test = line ? line + ' ' + word : word
+      const test = line ? `${line  } ${  word}` : word
       const width = (font.widthOfTextAtSize(test, size))
       if (width > maxWidth) {
         currentPage.drawText(line, { x: marginX, y, size, font, color: rgb(0.28, 0.32, 0.35) })
@@ -277,7 +277,7 @@ async function generateHtmlContent(data: SummaryData, mode: Mode = 'client', lan
     ? `${appUrl}/fbc-icon/fbc-voice-orb-light-png/fbc-voice-orb-logo.svg`
     : `${appUrl}/fbc-icon/fbc-voice-orb-dark-png/fbc-voice-orb-logo-dark.svg`
 
-  const score = typeof leadResearch?.lead_score === "number" ? leadResearch!.lead_score : undefined
+  const score = typeof leadResearch?.lead_score === "number" ? leadResearch.lead_score : undefined
   const scoreClass = score == null ? "" : score > 70 ? "high" : score > 40 ? "mid" : "low"
 
   const lastMessages = (conversationHistory || []).slice(-8)

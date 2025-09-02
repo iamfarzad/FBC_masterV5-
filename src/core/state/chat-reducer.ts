@@ -10,9 +10,6 @@ export interface ChatState {
   error: Error | null
   sessionId: string | null
   feature: 'chat' | 'webcam' | 'screen' | 'document' | 'video' | 'workshop'
-  showProgressRail: boolean
-  activities: Activity[]
-  currentStage: number
   input: string
   showVoiceOverlay: boolean
   showCanvasOverlay: boolean
@@ -21,15 +18,7 @@ export interface ChatState {
   theme: 'light' | 'dark' | 'system'
 }
 
-export interface Activity {
-  id: string
-  type: string
-  title: string
-  description: string
-  status: 'pending' | 'in_progress' | 'completed' | 'failed'
-  progress: number
-  timestamp: Date
-}
+// Removed Activity interface - using ai-elements instead
 
 export type ChatAction =
   | { type: 'SEND_MESSAGE'; payload: { content: string } }
@@ -37,8 +26,7 @@ export type ChatAction =
   | { type: 'SET_LOADING'; payload: { loading: boolean } }
   | { type: 'SET_ERROR'; payload: { error: Error | null } }
   | { type: 'SET_FEATURE'; payload: { feature: ChatState['feature'] } }
-  | { type: 'ADD_ACTIVITY'; payload: { activity: Omit<Activity, 'id' | 'timestamp'> } }
-  | { type: 'UPDATE_ACTIVITY'; payload: { id: string; updates: Partial<Activity> } }
+  // Removed activity actions - using ai-elements instead
   | { type: 'CLEAR_MESSAGES' }
   | { type: 'SET_SESSION_ID'; payload: { sessionId: string } }
   | { type: 'SET_INPUT'; payload: { input: string } }
@@ -47,7 +35,7 @@ export type ChatAction =
   | { type: 'SET_CONSENT_OVERLAY'; payload: { show: boolean } }
   | { type: 'SET_CONSENT'; payload: { hasConsent: boolean } }
   | { type: 'SET_THEME'; payload: { theme: ChatState['theme'] } }
-  | { type: 'SET_CURRENT_STAGE'; payload: { stage: number } }
+  // Removed stage actions - using StageRail context instead
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
@@ -89,39 +77,15 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'SET_FEATURE':
       return {
         ...state,
-        feature: action.payload.feature,
-        showProgressRail: action.payload.feature !== 'chat'
-      }
-
-    case 'ADD_ACTIVITY':
-      const newActivity: Activity = {
-        ...action.payload.activity,
-        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date()
-      }
-      return {
-        ...state,
-        activities: [newActivity, ...state.activities].slice(0, 10) // Keep only last 10
-      }
-
-    case 'UPDATE_ACTIVITY':
-      return {
-        ...state,
-        activities: state.activities.map(activity =>
-          activity.id === action.payload.id
-            ? { ...activity, ...action.payload.updates }
-            : activity
-        )
+        feature: action.payload.feature
       }
 
     case 'CLEAR_MESSAGES':
       return {
         ...state,
         messages: [],
-        activities: [],
         error: null,
-        isLoading: false,
-        currentStage: 1
+        isLoading: false
       }
 
     case 'SET_SESSION_ID':
@@ -167,11 +131,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         theme: action.payload.theme
       }
 
-    case 'SET_CURRENT_STAGE':
-      return {
-        ...state,
-        currentStage: action.payload.stage
-      }
+    // Removed stage handling - using StageRail context instead
 
     default:
       return state

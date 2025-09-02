@@ -25,21 +25,21 @@ export default function TokenizationVisualizer() {
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="flex flex-col items-center justify-center">
-        <motion.div className="max-w-3xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Tokenization Visualizer</h2>
+        <motion.div className="mb-8 w-full max-w-3xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Tokenization Visualizer</h2>
           <p className="text-xl text-muted-foreground">See how text splits into tokens and fills a context window</p>
         </motion.div>
         <div className="w-full max-w-5xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
               <Textarea value={text} onChange={(e) => setText(e.target.value)} className="min-h-[200px]" />
               <Button onClick={handleTokenize} className="w-full">Tokenize</Button>
             </motion.div>
             <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <div className="bg-card border rounded-xl p-6 shadow-sm">
+              <div className="rounded-xl border bg-card p-6 shadow-sm">
                 <div className="flex flex-wrap gap-2">
                   {tokens.map((tok, i) => (
-                    <span key={`${tok}-${i}`} className="px-2 py-1 rounded bg-info/20 text-info dark:text-info text-sm border border-info/30">{tok}</span>
+                    <span key={`${tok}-${i}`} className="bg-info/20 border-info/30 rounded border px-2 py-1 text-sm text-info dark:text-info">{tok}</span>
                   ))}
                 </div>
                 <div className="mt-4 text-sm text-muted-foreground">Tokens: {tokens.length} • Approx. chars: {text.length}</div>
@@ -47,7 +47,7 @@ export default function TokenizationVisualizer() {
             </motion.div>
           </div>
         </div>
-        <div className="w-full max-w-3xl mt-10">
+        <div className="mt-10 w-full max-w-3xl">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Quick check</CardTitle>

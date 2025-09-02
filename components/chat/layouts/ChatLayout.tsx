@@ -32,23 +32,23 @@ export function ChatLayout({
     )}>
       {/* Header */}
       {header && (
-        <div className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/20">
+        <div className="bg-background/80 border-border/20 sticky top-0 z-40 border-b backdrop-blur-xl">
           {header}
         </div>
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex min-h-0 flex-1">
         {/* Chat Messages */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col">
           <ErrorBoundary 
             variant="inline"
             fallback={({ error, resetError }) => (
               <div className="mx-auto max-w-2xl p-6">
-                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
-                  <p className="font-medium mb-2 text-destructive">Chat Error</p>
-                  <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
-                  <div className="flex gap-2 justify-center">
+                <div className="border-destructive/20 bg-destructive/5 rounded-xl border p-6 text-center">
+                  <p className="mb-2 font-medium text-destructive">Chat Error</p>
+                  <p className="mb-4 text-sm text-muted-foreground">{error.message}</p>
+                  <div className="flex justify-center gap-2">
                     <Button variant="outline" onClick={resetError} size="sm">
                       Retry
                     </Button>
@@ -66,7 +66,7 @@ export function ChatLayout({
 
         {/* Sidebar */}
         {sidebar && (
-          <div className="w-80 border-l border-border/20 bg-card/30 backdrop-blur-sm">
+          <div className="border-border/20 bg-card/30 w-80 border-l backdrop-blur-sm">
             {sidebar}
           </div>
         )}
@@ -74,8 +74,8 @@ export function ChatLayout({
 
       {/* Composer */}
       {composer && (
-        <div className="sticky bottom-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent">
-          <div className="max-w-4xl mx-auto p-4">
+        <div className="via-background/95 sticky bottom-0 z-50 bg-gradient-to-t from-background to-transparent">
+          <div className="mx-auto max-w-4xl p-4">
             {composer}
           </div>
         </div>

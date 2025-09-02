@@ -28,19 +28,19 @@ export const StatusBar = memo<StatusBarProps>(({
         <div className="flex items-center gap-2">
           {isLoading ? (
             <>
-              <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+              <div className="size-2 animate-pulse rounded-full bg-accent" />
               <span className="text-muted-foreground">AI is processing...</span>
             </>
           ) : (
             <>
-              <Check className="w-3 h-3 text-accent" />
+              <Check className="size-3 text-accent" />
               <span className="text-muted-foreground">Ready</span>
             </>
           )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Stage {currentStage}/{totalStages}</span>
-          <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full bg-accent transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
