@@ -8,10 +8,28 @@ import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
-// import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
+import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
   try {
+    // 🚀 Rate Limiting: 30 requests per minute for webcam analysis
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const isAllowed = rateLimiter.isAllowed(`webcam-${clientIP}`, 30, 60 * 1000) // 30 requests per minute
+
+    if (!isAllowed) {
+      return APIErrorHandler.createErrorResponse({
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many webcam analysis requests. Please wait before trying again.',
+        details: 'Rate limit exceeded for webcam API',
+        retryable: true,
+        statusCode: 429
+      })
+    }
+
+    // 📊 Performance Monitoring: Start tracking
+    const operationId = `webcam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const metrics = performanceMonitor.startOperation(operationId)
+
     const body = await req.json()
     const validatedData = WebcamCaptureSchema.parse(body)
     const { image, type, context } = validatedData as any
@@ -89,12 +107,27 @@ export async function POST(req: NextRequest) {
         )
       } catch {}
     }
+
+    // 📊 Performance Monitoring: Complete successful operation
+    performanceMonitor.endOperation(operationId, {
+      success: true,
+      tokensUsed: estimatedTokens,
+      model: modelSelection.model,
+      errorCode: undefined
+    })
+
     return NextResponse.json(response, { status: 200 })
   } catch (error: unknown) {
-    if ((error as any)?.name === 'ZodError') {
-      return NextResponse.json({ ok: false, error: 'Invalid input data' }, { status: 400 })
-    }
-    return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 })
+    // 📊 Performance Monitoring: Complete failed operation
+    performanceMonitor.endOperation(operationId, {
+      success: false,
+      tokensUsed: estimatedTokens,
+      model: modelSelection?.model,
+      errorCode: (error as any)?.code || 'UNKNOWN_ERROR'
+    })
+
+    // 🚨 Enhanced Error Handling
+    return APIErrorHandler.createErrorResponse(error)
   }
 }
 
