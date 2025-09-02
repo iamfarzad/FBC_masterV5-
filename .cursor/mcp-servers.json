@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "github.com/AgentDeskAI/browser-tools-mcp": {
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "@agentdeskai/browser-tools-mcp@1.2.0"
+      ],
+      "env": {
+        "BROWSER_TOOLS_SERVER_URL": "http://localhost:3025"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "getConsoleLogs",
+        "getConsoleErrors",
+        "getNetworkLogs",
+        "takeScreenshot",
+        "runNextJSAudit"
+      ],
+      "timeout": 1800
+    },
+    "supabase/mcp-server-supabase": {
+      "command": "pnpm",
+      "args": [
+        "mcp:supabase"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_SERVICE_ROLE_KEY}",
+        "SUPABASE_URL": "${SUPABASE_URL}"
+      },
+      "disabled": false,
+      "timeout": 1800
+    },
+    "supabase/mcp-server-postgrest": {
+      "command": "pnpm",
+      "args": [
+        "mcp:postgrest"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_SERVICE_ROLE_KEY}",
+        "SUPABASE_URL": "${SUPABASE_URL}"
+      },
+      "disabled": false,
+      "timeout": 1800
+    }
+  }
+}

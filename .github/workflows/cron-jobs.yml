@@ -1,0 +1,209 @@
+name: Cron Jobs - Database Maintenance & Analytics
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+    # Run every Monday at 3 AM UTC for weekly tasks
+    - cron: '0 3 * * 1'
+    # Run every 1st of month at 4 AM UTC for monthly tasks
+    - cron: '0 4 1 * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      job_type:
+        description: 'Type of job to run'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - weekly
+          - monthly
+          - cleanup
+          - analytics
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+jobs:
+  daily-maintenance:
+    name: Daily Database Maintenance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run daily maintenance
+        run: |
+          node scripts/cron-jobs.js daily
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log job completion
+        run: |
+          echo "Daily maintenance completed at $(date)"
+          echo "Job ID: ${{ github.run_id }}"
+
+  weekly-maintenance:
+    name: Weekly Database Maintenance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run weekly maintenance
+        run: |
+          node scripts/cron-jobs.js weekly
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Generate weekly report
+        run: |
+          node scripts/generate-weekly-report.js
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log job completion
+        run: |
+          echo "Weekly maintenance completed at $(date)"
+          echo "Job ID: ${{ github.run_id }}"
+
+  monthly-maintenance:
+    name: Monthly Database Maintenance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 4 1 * *'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run monthly maintenance
+        run: |
+          node scripts/cron-jobs.js monthly
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Generate monthly report
+        run: |
+          node scripts/generate-monthly-report.js
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Archive old data
+        run: |
+          node scripts/archive-old-data.js
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log job completion
+        run: |
+          echo "Monthly maintenance completed at $(date)"
+          echo "Job ID: ${{ github.run_id }}"
+
+  manual-job:
+    name: Manual Job Execution
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run manual job
+        run: |
+          node scripts/cron-jobs.js ${{ github.event.inputs.job_type }}
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log job completion
+        run: |
+          echo "Manual job '${{ github.event.inputs.job_type }}' completed at $(date)"
+          echo "Job ID: ${{ github.run_id }}"
+
+  cleanup:
+    name: Cleanup Old Data
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cleanup old cron logs
+        run: |
+          node scripts/cleanup-cron-logs.js
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Cleanup expired cache
+        run: |
+          node scripts/cleanup-expired-cache.js
+        env:
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Log cleanup completion
+        run: |
+          echo "Cleanup completed at $(date)"
+          echo "Job ID: ${{ github.run_id }}"

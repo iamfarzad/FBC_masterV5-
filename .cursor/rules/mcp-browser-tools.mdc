@@ -1,0 +1,149 @@
+# 🔍 MCP Browser Tools Integration
+
+## 🚀 When to Use Browser Tools
+
+Use Browser Tools MCP when you need:
+- **Real-time debugging**: Console logs, errors, network requests
+- **UI/UX analysis**: Screenshots, accessibility audits, performance monitoring
+- **Browser state inspection**: Current page analysis, SEO audits
+- **Interactive debugging**: Debugger mode, real-time monitoring
+
+## 🛠️ Available Commands
+
+### Console & Network Monitoring
+```typescript
+// Get console logs
+mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleLogs()
+
+// Get console errors
+mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleErrors()
+
+// Get network logs
+mcp_github_comAgentDeskAIbrowser-tools-mcp_getNetworkLogs()
+
+// Get network errors
+mcp_github_comAgentDeskAIbrowser-tools-mcp_getNetworkErrors()
+```
+
+### Visual & Performance Analysis
+```typescript
+// Take screenshots
+mcp_github_comAgentDeskAIbrowser-tools-mcp_takeScreenshot()
+
+// Run SEO audit
+mcp_github_comAgentDeskAIbrowser-tools-mcp_runSEOAudit()
+
+// Run Next.js audit
+mcp_github_comAgentDeskAIbrowser-tools-mcp_runNextJSAudit()
+
+// Run performance audit
+mcp_github_comAgentDeskAIbrowser-tcp_runAuditMode()
+```
+
+### Debugging Tools
+```typescript
+// Enable debugger mode
+mcp_github_comAgentDeskAIbrowser-tools-mcp_runDebuggerMode()
+
+// Clear all logs
+mcp_github_comAgentDeskAIbrowser-tools-mcp_wipeLogs()
+```
+
+## 🎯 Common Use Cases
+
+### 1. **UI Component Debugging**
+```typescript
+// Debug a React component issue
+const logs = await mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleLogs()
+const errors = await mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleErrors()
+const screenshot = await mcp_github_comAgentDeskAIbrowser-tools-mcp_takeScreenshot()
+```
+
+### 2. **Performance Analysis**
+```typescript
+// Analyze page performance
+const audit = await mcp_github_comAgentDeskAIbrowser-tools-mcp_runNextJSAudit()
+const performance = await mcp_github_comAgentDeskAIbrowser-tools-mcp_runAuditMode()
+```
+
+### 3. **SEO & Accessibility**
+```typescript
+// Check SEO compliance
+const seoAudit = await mcp_github_comAgentDeskAIbrowser-tools-mcp_runSEOAudit()
+```
+
+## 🔧 Setup Requirements
+
+### Chrome Extension
+- Load BrowserTools extension from `chrome-extension/` folder
+- Open DevTools → "BrowserTools" panel
+- Ensure extension is connected
+
+### MCP Configuration
+```json
+{
+  "mcpServers": {
+    "github.com/AgentDeskAI/browser-tools-mcp": {
+      "command": "pnpm",
+      "args": ["dlx", "@agentdeskai/browser-tools-mcp@1.2.0"],
+      "env": { "BROWSER_TOOLS_SERVER_URL": "http://localhost:3025" },
+      "disabled": false
+    }
+  }
+}
+```
+
+### Bridge Server
+```bash
+# Start bridge server
+pnpm mcp:bridge
+
+# Expected: "Aggregator listening on http://0.0.0.0:3025"
+```
+
+## 📱 Browser Tools Panel
+
+The BrowserTools panel in DevTools provides:
+- **Real-time logging**: Console, network, errors
+- **Screenshot capture**: Full page or viewport
+- **Audit tools**: SEO, performance, accessibility
+- **Debug controls**: Enable/disable debugging modes
+
+## 🚨 Troubleshooting
+
+### Extension Not Appearing
+1. Restart Cursor after saving MCP config
+2. Verify extension is loaded in Chrome
+3. Check DevTools → "BrowserTools" tab exists
+
+### Connection Issues
+1. Ensure bridge server is running on port 3025
+2. Check MCP server discovery logs
+3. Verify Chrome extension is active
+
+### Port Conflicts
+```bash
+# Free ports if needed
+for p in 3000 3001 3025; do 
+  PID=$(lsof -ti tcp:$p)
+  [ -n "$PID" ] && kill -9 $PID || true
+done
+```
+
+## 🎯 Best Practices
+
+1. **Use for debugging**: When console/network issues occur
+2. **Performance monitoring**: Regular audits during development
+3. **UI validation**: Screenshots for design reviews
+4. **Error tracking**: Monitor console errors in real-time
+5. **SEO compliance**: Regular audits for public pages
+
+## 📚 Reference Files
+
+- [chrome-extension/](mdc:chrome-extension/) - Browser extension files
+- [docs/MCP_SETUP.md](mdc:docs/MCP_SETUP.md) - MCP setup documentation
+- [README_MCP.md](mdc:README_MCP.md) - MCP usage guide
+description:
+globs:
+alwaysApply: true
+---
