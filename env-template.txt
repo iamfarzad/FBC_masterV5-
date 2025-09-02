@@ -1,0 +1,61 @@
+# Complete Environment Variables for FBC Master V5
+# Copy from v0-fb-c-ai-clone project
+# ==========================================
+
+# Supabase Configuration (CRITICAL)
+SUPABASE_URL=your-supabase-url-here
+SUPABASE_ANON_KEY=your-supabase-anon-key-here
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url-here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+SUPABASE_JWT_SECRET=your-supabase-jwt-secret-here
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
+
+# Supabase MCP Configuration (NEW)
+SUPABASE_ACCESS_TOKEN=your-supabase-access-token-here
+SUPABASE_PROJECT_ID=your-supabase-project-id-here
+
+# Database Configuration
+POSTGRES_URL=your-postgres-url-here
+POSTGRES_PRISMA_URL=your-postgres-prisma-url-here
+POSTGRES_URL_NON_POOLING=your-postgres-non-pooling-url-here
+POSTGRES_USER=your-postgres-user-here
+POSTGRES_PASSWORD=your-postgres-password-here
+POSTGRES_DATABASE=your-postgres-database-here
+POSTGRES_HOST=your-postgres-host-here
+
+# AI Services - Google Gemini
+GEMINI_API_KEY=your-gemini-api-key-here
+GEMINI_API_KEY_SERVER=your-gemini-api-key-server-here
+NEXT_PUBLIC_GEMINI_API_KEY=your-gemini-api-key-here
+VITE_GEMINI_API_KEY=your-gemini-api-key-here
+
+# Email Services - Resend
+RESEND_API_KEY=your-resend-api-key-here
+RESEND_WEBHOOK_SECRET=your-resend-webhook-secret-here
+
+# Security & Authentication
+JWT_SECRET=your-jwt-secret-here
+ADMIN_PASSWORD=your-admin-password-here
+
+# File Storage & Media
+BLOB_READ_WRITE_TOKEN=your-blob-token-here
+NEXT_PUBLIC_PDF_LOGO_DATA_URI=your-pdf-logo-data-uri-here
+
+# Live Server & Real-time
+NEXT_PUBLIC_LIVE_SERVER_URL=your-live-server-url-here
+
+# Application Configuration
+BASE_URL=your-base-url-here
+PORT=your-port-here
+
+# Vite Configuration (if using Vite)
+VITE_SUPABASE_URL=your-supabase-url-here
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+
+# ==========================================
+# INSTRUCTIONS:
+# 1. Replace all "your-*-here" values with actual values from v0-fb-c-ai-clone
+# 2. Copy from Vercel dashboard: Settings → Environment Variables
+# 3. Upload this file to fbc-master-v5 project
+# 4. Run: pnpm verify-env to check
+# ==========================================

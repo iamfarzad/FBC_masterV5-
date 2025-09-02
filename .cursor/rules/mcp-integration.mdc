@@ -1,0 +1,239 @@
+# 🔌 MCP Integration Guide
+
+## 🎯 What is MCP?
+
+MCP (Model Context Protocol) allows AI assistants to interact with external tools and services through a standardized interface. This project integrates two key MCP servers:
+
+1. **Browser Tools MCP** - Real-time browser debugging and monitoring
+2. **Supabase MCP** - Database operations and real-time data
+
+## 🚀 Quick Start Commands
+
+### Start All Services
+```bash
+# Terminal 1: Start bridge server
+pnpm mcp:bridge
+
+# Terminal 2: Start MCP server
+pnpm mcp:server
+
+# Terminal 3: Start app servers
+pnpm dev:all
+```
+
+### Health Checks
+```bash
+# Check if services are running
+curl -sSI http://localhost:3000/chat    # Next.js app
+curl -sSI http://localhost:3001         # WebSocket server
+curl -sSI http://localhost:3025         # MCP bridge
+```
+
+## 🔧 MCP Configuration
+
+### Cursor MCP Settings
+```json
+{
+  "mcpServers": {
+    "github.com/AgentDeskAI/browser-tools-mcp": {
+      "command": "pnpm",
+      "args": ["dlx", "@agentdeskai/browser-tools-mcp@1.2.0"],
+      "env": { "BROWSER_TOOLS_SERVER_URL": "http://localhost:3025" },
+      "disabled": false,
+      "autoApprove": [
+        "getConsoleLogs",
+        "getConsoleErrors",
+        "getNetworkLogs",
+        "takeScreenshot",
+        "runNextJSAudit"
+      ],
+      "timeout": 1800
+    }
+  }
+}
+```
+
+### Environment Setup
+```bash
+# Copy environment template
+cp env-template.txt .env.local
+
+# Fill in required values:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+```
+
+## 🎯 When to Use Each MCP Tool
+
+### Browser Tools MCP
+- **Debugging**: Console errors, network issues, UI problems
+- **Performance**: Page audits, SEO analysis, accessibility checks
+- **Visual**: Screenshots, layout inspection, responsive testing
+- **Real-time**: Live monitoring during development
+
+### Supabase MCP
+- **Data**: CRUD operations, complex queries, migrations
+- **Real-time**: Live subscriptions, presence, collaborative features
+- **Auth**: User management, authentication flows, permissions
+- **Storage**: File uploads, media management, CDN operations
+
+## 🔍 Integration Patterns
+
+### Combined Debugging Workflow
+```typescript
+// 1. Check browser state
+const logs = await mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleLogs()
+const errors = await mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleErrors()
+
+// 2. If database errors found, investigate with Supabase
+if (errors.some(e => e.message.includes('database'))) {
+  // Use Supabase client to check database state
+  const { data, error } = await supabase.from('table').select('*')
+}
+
+// 3. Take screenshot for visual debugging
+const screenshot = await mcp_github_comAgentDeskAIbrowser-tools-mcp_takeScreenshot()
+```
+
+### Real-time Development
+```typescript
+// Browser Tools: Monitor console in real-time
+const logs = await mcp_github_comAgentDeskAIbrowser-tools-mcp_getConsoleLogs()
+
+// Supabase: Subscribe to data changes
+const subscription = supabase
+  .channel('dev_channel')
+  .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+    console.log('Database change:', payload)
+  })
+  .subscribe()
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues & Solutions
+
+#### 1. **MCP Server Not Found**
+```bash
+# Check bridge is running
+lsof -ti tcp:3025
+
+# Restart bridge
+pnpm mcp:bridge
+```
+
+#### 2. **Browser Extension Not Working**
+- Restart Cursor after MCP config changes
+- Verify extension is loaded in Chrome
+- Check DevTools → "BrowserTools" tab exists
+
+#### 3. **Supabase Connection Issues**
+```bash
+# Check environment variables
+echo $NEXT_PUBLIC_SUPABASE_URL
+echo $NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Verify Supabase status
+pnpm supabase status
+```
+
+#### 4. **Port Conflicts**
+```bash
+# Free all project ports
+for p in 3000 3001 3025; do 
+  PID=$(lsof -ti tcp:$p)
+  [ -n "$PID" ] && kill -9 $PID || true
+done
+```
+
+## 📊 Development Workflow
+
+### 1. **Setup Phase**
+```bash
+# Install dependencies
+pnpm install
+
+# Start MCP services
+pnpm mcp:bridge & pnpm mcp:server &
+
+# Start development servers
+pnpm dev:all
+```
+
+### 2. **Development Phase**
+- Use Browser Tools for UI debugging
+- Use Supabase for data operations
+- Monitor both tools for issues
+
+### 3. **Testing Phase**
+```bash
+# Run tests
+pnpm test
+
+# Check builds
+pnpm build
+pnpm lint
+pnpm tsc --noEmit
+```
+
+### 4. **Deployment Phase**
+```bash
+# Build for production
+pnpm build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+## 🎯 Best Practices
+
+### 1. **Tool Selection**
+- **Browser Tools**: UI/UX issues, performance, debugging
+- **Supabase**: Data operations, authentication, real-time features
+
+### 2. **Error Handling**
+- Always check for errors in both tools
+- Use appropriate fallbacks when tools are unavailable
+- Log issues for debugging
+
+### 3. **Performance**
+- Don't overuse MCP calls
+- Cache results when appropriate
+- Use tools efficiently
+
+### 4. **Security**
+- Never expose sensitive keys in client code
+- Use RLS policies in Supabase
+- Validate all inputs
+
+## 📚 Reference Documentation
+
+- [MCP Browser Tools Rule](mdc:.cursor/rules/mcp-browser-tools.mdc)
+- [MCP Supabase Rule](mdc:.cursor/rules/mcp-supabase.mdc)
+- [MCP Setup Guide](mdc:docs/MCP_SETUP.md)
+- [README MCP](mdc:README_MCP.md)
+- [Supabase Summary](mdc:SUPABASE_MCP_SUMMARY.md)
+
+## 🔄 Maintenance
+
+### Regular Checks
+- [ ] MCP servers running correctly
+- [ ] Browser extension functional
+- [ ] Supabase connection stable
+- [ ] Environment variables set
+- [ ] Ports available (3000, 3001, 3025)
+
+### Updates
+```bash
+# Update MCP packages
+pnpm update @agentdeskai/browser-tools-mcp
+pnpm update @supabase/supabase-js
+
+# Check for new features
+pnpm dlx @agentdeskai/browser-tools-mcp --help
+```
+description:
+globs:
+alwaysApply: true
+---

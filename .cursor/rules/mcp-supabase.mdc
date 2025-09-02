@@ -1,0 +1,310 @@
+# 🗄️ MCP Supabase Integration
+
+## 🚀 When to Use Supabase MCP
+
+Use Supabase MCP when you need:
+- **Database operations**: CRUD operations, queries, migrations
+- **Real-time subscriptions**: Live data updates, presence
+- **Authentication**: User management, auth flows
+- **Storage**: File uploads, media management
+- **Edge Functions**: Serverless function execution
+- **Database schema**: Table creation, relationships, policies
+
+## 🛠️ Available Supabase Features
+
+### Database Operations
+```typescript
+// Query data
+const { data, error } = await supabase
+  .from('table_name')
+  .select('*')
+  .eq('column', 'value')
+
+// Insert data
+const { data, error } = await supabase
+  .from('table_name')
+  .insert([{ column: 'value' }])
+
+// Update data
+const { data, error } = await supabase
+  .from('table_name')
+  .update({ column: 'new_value' })
+  .eq('id', 1)
+
+// Delete data
+const { data, error } = await supabase
+  .from('table_name')
+  .delete()
+  .eq('id', 1)
+```
+
+### Real-time Subscriptions
+```typescript
+// Subscribe to table changes
+const subscription = supabase
+  .channel('table_changes')
+  .on('postgres_changes', 
+    { event: '*', schema: 'public', table: 'table_name' },
+    (payload) => {
+      console.log('Change received!', payload)
+    }
+  )
+  .subscribe()
+```
+
+### Authentication
+```typescript
+// Sign up user
+const { data, error } = await supabase.auth.signUp({
+  email: 'user@example.com',
+  password: 'password'
+})
+
+// Sign in user
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password'
+})
+
+// Get current user
+const { data: { user } } = await supabase.auth.getUser()
+```
+
+### Storage
+```typescript
+// Upload file
+const { data, error } = await supabase.storage
+  .from('bucket_name')
+  .upload('file_path', file)
+
+// Download file
+const { data, error } = await supabase.storage
+  .from('bucket_name')
+  .download('file_path')
+
+// Get public URL
+const { data } = supabase.storage
+  .from('bucket_name')
+  .getPublicUrl('file_path')
+```
+
+## 🎯 Common Use Cases
+
+### 1. **User Management System**
+```typescript
+// Create user profile
+const { data, error } = await supabase
+  .from('profiles')
+  .insert([{
+    id: user.id,
+    username: 'username',
+    full_name: 'Full Name',
+    avatar_url: 'https://example.com/avatar.jpg'
+  }])
+```
+
+### 2. **Real-time Chat Application**
+```typescript
+// Subscribe to messages
+const subscription = supabase
+  .channel('chat_room')
+  .on('postgres_changes', 
+    { event: 'INSERT', schema: 'public', table: 'messages' },
+    (payload) => {
+      // Handle new message
+      addMessage(payload.new)
+    }
+  )
+  .subscribe()
+```
+
+### 3. **File Upload System**
+```typescript
+// Upload with progress tracking
+const { data, error } = await supabase.storage
+  .from('uploads')
+  .upload(`${Date.now()}_${file.name}`, file, {
+    onUploadProgress: (progress) => {
+      const percent = (progress.loaded / progress.total) * 100
+      setUploadProgress(percent)
+    }
+  })
+```
+
+## 🔧 Setup Requirements
+
+### Environment Variables
+```bash
+# Required Supabase environment variables
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### Supabase Client Configuration
+```typescript
+// lib/supabase.ts
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+```
+
+### Database Schema
+```sql
+-- Example table structure
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  username TEXT UNIQUE,
+  full_name TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Row Level Security (RLS)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy for users to read their own profile
+CREATE POLICY "Users can view own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+```
+
+## 🚨 Best Practices
+
+### 1. **Error Handling**
+```typescript
+// Always check for errors
+const { data, error } = await supabase.from('table').select('*')
+
+if (error) {
+  console.error('Database error:', error)
+  // Handle error appropriately
+  return
+}
+
+// Use data safely
+if (data && data.length > 0) {
+  // Process data
+}
+```
+
+### 2. **Type Safety**
+```typescript
+// Define database types
+interface Profile {
+  id: string
+  username: string
+  full_name: string
+  avatar_url?: string
+  created_at: string
+}
+
+// Use typed queries
+const { data, error } = await supabase
+  .from('profiles')
+  .select<'profiles', Profile>('*')
+```
+
+### 3. **Security**
+```typescript
+// Always use RLS policies
+// Never expose service role key to client
+// Validate user permissions before operations
+```
+
+### 4. **Performance**
+```typescript
+// Use select() to limit columns
+const { data } = await supabase
+  .from('profiles')
+  .select('id, username') // Only fetch needed columns
+
+// Use pagination for large datasets
+const { data } = await supabase
+  .from('profiles')
+  .select('*')
+  .range(0, 9) // First 10 records
+```
+
+## 🔍 Database Management
+
+### Migrations
+```bash
+# Apply migrations
+pnpm supabase db push
+
+# Reset database
+pnpm supabase db reset
+
+# Generate migration from schema changes
+pnpm supabase db diff --schema public
+```
+
+### Edge Functions
+```typescript
+// supabase/functions/example/index.ts
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+
+serve(async (req) => {
+  const { name } = await req.json()
+  const data = { message: `Hello ${name}!` }
+  
+  return new Response(JSON.stringify(data), {
+    headers: { 'Content-Type': 'application/json' }
+  })
+})
+```
+
+## 📊 Monitoring & Debugging
+
+### Database Logs
+```bash
+# View real-time logs
+pnpm supabase logs
+
+# Filter by function
+pnpm supabase logs --function-name=example
+```
+
+### Performance Monitoring
+```typescript
+// Monitor query performance
+const start = performance.now()
+const { data, error } = await supabase.from('table').select('*')
+const end = performance.now()
+
+console.log(`Query took ${end - start}ms`)
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+1. **RLS blocking queries**: Check policies and user authentication
+2. **Connection timeouts**: Verify environment variables and network
+3. **Permission errors**: Ensure proper service role usage
+4. **Migration conflicts**: Use `supabase db reset` for development
+
+### Debug Commands
+```bash
+# Check Supabase status
+pnpm supabase status
+
+# View local database
+pnpm supabase db dump
+
+# Check function logs
+pnpm supabase functions logs
+```
+
+## 📚 Reference Files
+
+- [supabase/](mdc:supabase/) - Database migrations and functions
+- [SUPABASE_MCP_SUMMARY.md](mdc:SUPABASE_MCP_SUMMARY.md) - Setup summary
+- [scripts/](mdc:scripts/) - Database management scripts
+- [env-template.txt](mdc:env-template.txt) - Environment variables template
+description:
+globs:
+alwaysApply: true
+---
