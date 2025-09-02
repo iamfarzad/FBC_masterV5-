@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
-import { isMockEnabled } from '@/src/core/mock-control'
+// Mock functionality removed for production
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
-import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/demo-budget-manager'
+
 import { ScreenShareSchema } from '@/src/core/services/tool-service'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
@@ -19,22 +19,8 @@ export async function POST(req: NextRequest) {
     const sessionId = req.headers.get('x-intelligence-session-id') || undefined
     const userId = req.headers.get('x-user-id') || undefined
 
-    if (!process.env.GEMINI_API_KEY || isMockEnabled()) {
-      const response = { ok: true, output: {
-        analysis: "Screen analysis completed (mock).",
-        insights: ["UI elements detected", "Structure analyzed", "Mock mode"],
-        imageSize: image.length,
-        isBase64: image.startsWith('data:image'),
-        processedAt: new Date().toISOString()
-      }}
-      if (sessionId) {
-        try {
-          await recordCapabilityUsed(String(sessionId), capability, { mode: 'fallback', imageSize: image.length })
-          // Back-compat for tests expecting 'screenShare'
-          if (capability === 'screenshot') await recordCapabilityUsed(String(sessionId), 'screenShare', { alias: true })
-        } catch {}
-      }
-      return NextResponse.json(response, { status: 200 })
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ ok: false, error: 'AI service not configured' }, { status: 503 })
     }
 
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
@@ -42,10 +28,7 @@ export async function POST(req: NextRequest) {
     const estimatedTokens = estimateTokens('screen analysis') + 2000
     const modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens, !!sessionId)
 
-    if (sessionId && process.env.NODE_ENV !== 'test') {
-      const accessCheck = await checkDemoAccess(sessionId, 'screenshot_analysis' as DemoFeature, estimatedTokens)
-      if (!accessCheck.allowed) return NextResponse.json({ ok: false, error: 'Demo limit reached' }, { status: 429 })
-    }
+
 
     if (userId && process.env.NODE_ENV !== 'test') {
       const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'screenshot_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)

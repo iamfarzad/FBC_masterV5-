@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { GoogleGenAI } from '@google/genai'
-import { isMockEnabled } from '@/src/core/mock-control'
+// Mock functionality removed for production
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
-import { checkDemoAccess, DemoFeature } from '@/src/core/demo-budget-manager'
+
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 
 type SupportedDocType = 'application/pdf' | 'text/plain' | 'application/json' | 'text/csv' | 'application/xml'
@@ -50,28 +50,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'No document provided or unsupported type' }, { status: 400 })
     }
 
-    // Mock or no key → return structured mock-ish analysis
-    if (!process.env.GEMINI_API_KEY || isMockEnabled()) {
-      const mock = {
-        summary: 'Document analyzed (mock). Provides a business summary and key points.',
-        keyPoints: ['Key point A', 'Key point B', 'Key point C'],
-        type: mimeType,
-        bytes: Math.ceil((base64Data.length * 3) / 4),
-      }
-      if (sessionId) {
-        try { await recordCapabilityUsed(String(sessionId), 'doc', { mode: 'mock', type: mimeType }) } catch {}
-      }
-      return NextResponse.json({ ok: true, output: { analysis: mock, processedAt: new Date().toISOString(), mock: true } })
+    // No API key → return error
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ ok: false, error: 'AI service not configured' }, { status: 503 })
     }
 
     // Budget and access checks
     const estimatedTokens = estimateTokens('document analysis') + 2500
     const modelSelection = selectModelForFeature('document_analysis', estimatedTokens, !!sessionId)
 
-    if (sessionId && process.env.NODE_ENV !== 'test') {
-      const accessCheck = await checkDemoAccess(sessionId, 'document_analysis' as DemoFeature, estimatedTokens)
-      if (!accessCheck.allowed) return NextResponse.json({ ok: false, error: 'Demo limit reached' }, { status: 429 })
-    }
+
 
     if (userId && process.env.NODE_ENV !== 'test') {
       const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'document_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)

@@ -6,9 +6,9 @@
 
 import { GoogleGenerativeAI, type GenerateContentRequest, type GenerateContentResponse } from '@google/generative-ai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens, estimateTokensForMessages } from '@/src/core/model-selector'
+import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
-import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/demo-budget-manager'
+import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/monitoring/budget'
 import { getSupabase } from '@/src/core/supabase/server'
 
 export interface GeminiServiceOptions {

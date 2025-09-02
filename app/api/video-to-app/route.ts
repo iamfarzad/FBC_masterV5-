@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { GoogleGenAI } from "@google/genai"
 import { createHash } from "crypto"
 import { createOptimizedConfig } from "@/src/core/gemini-config-enhanced"
-import { isMockEnabled } from "@/src/core/mock-control"
+
 import { parseJSON, parseHTML } from "@/src/core/parse-utils"
 import { SPEC_FROM_VIDEO_PROMPT, CODE_REGION_OPENER, CODE_REGION_CLOSER, SPEC_ADDENDUM } from "@/src/core/ai-prompts"
 import { getYouTubeVideoId } from "@/src/core/youtube"
@@ -32,7 +32,7 @@ async function generateText(options: {
 }): Promise<string> {
   const { modelName, prompt, videoUrl, temperature = 0.75, correlationId } = options
 
-  if (!process.env.GEMINI_API_KEY || isMockEnabled()) {
+  if (!process.env.GEMINI_API_KEY) {
     // Mock fallback so UI can function without budget/keys
     const isSpec = options.prompt.includes("pedagogist and product designer")
     if (isSpec) {

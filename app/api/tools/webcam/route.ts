@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { WebcamCaptureSchema } from '@/src/core/services/tool-service'
-import { isMockEnabled } from '@/src/core/mock-control'
+
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { GoogleGenAI } from '@google/genai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
-import { checkDemoAccess, DemoFeature } from '@/src/core/demo-budget-manager'
+
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 
 export async function POST(req: NextRequest) {
@@ -17,18 +17,8 @@ export async function POST(req: NextRequest) {
     const sessionId = req.headers.get('x-intelligence-session-id') || undefined
     const userId = req.headers.get('x-user-id') || undefined
 
-    // Fast path: mock or missing API key → echo analyzer
-    if (!process.env.GEMINI_API_KEY || isMockEnabled()) {
-      const analysis = {
-        format: image.startsWith('data:image') ? 'base64' : 'url',
-        size: image.length,
-        hasData: image.length > 0,
-      }
-      const response = { ok: true, output: { image, analysis, processedAt: new Date().toISOString(), mock: true } }
-      if (sessionId) {
-        try { await recordCapabilityUsed(String(sessionId), 'image', { analysis, imageSize: image.length, format: analysis.format, mode: 'mock' }) } catch {}
-      }
-      return NextResponse.json(response, { status: 200 })
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ ok: false, error: 'AI service not configured' }, { status: 503 })
     }
 
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
@@ -43,10 +33,7 @@ export async function POST(req: NextRequest) {
     const estimatedTokens = estimateTokens('image analysis') + 1500
     const modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
 
-    if (sessionId && process.env.NODE_ENV !== 'test') {
-      const accessCheck = await checkDemoAccess(sessionId, 'image_analysis' as DemoFeature, estimatedTokens)
-      if (!accessCheck.allowed) return NextResponse.json({ ok: false, error: 'Demo limit reached' }, { status: 429 })
-    }
+
 
     if (userId && process.env.NODE_ENV !== 'test') {
       const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'image_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
