@@ -102,16 +102,16 @@ export default function WorkshopWaitlistPage() {
         <div className="mb-6">
           <Link 
             href="/workshop" 
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="size-4" />
             Back to Workshop Details
           </Link>
         </div>
 
         <Card className="neu-card p-8">
           <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -137,7 +137,7 @@ export default function WorkshopWaitlistPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="compunknown">Company *</Label>
                 <Input
@@ -174,7 +174,7 @@ export default function WorkshopWaitlistPage() {
 
             <div className="space-y-3">
               <Label>Workshop Interests (select all that apply)</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {workshopTypes.map((type) => (
                   <div key={type} className="flex items-center space-x-2">
                     <Checkbox
@@ -209,30 +209,30 @@ export default function WorkshopWaitlistPage() {
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   Joining Waitlist...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4 mr-2" />
+                  <Send className="mr-2 size-4" />
                   Join AI Training Waitlist
                 </>
               )}
             </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-border/20">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="border-border/20 mt-8 border-t pt-6">
+            <div className="grid grid-cols-1 gap-4 text-center md:grid-cols-3">
               <div className="flex flex-col items-center gap-2">
-                <Users className="w-5 h-5 text-accent" />
+                <Users className="size-5 text-accent" />
                 <span className="text-sm text-muted-foreground">Team Training</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Calendar className="w-5 h-5 text-accent" />
+                <Calendar className="size-5 text-accent" />
                 <span className="text-sm text-muted-foreground">Flexible Scheduling</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <MapPin className="w-5 h-5 text-accent" />
+                <MapPin className="size-5 text-accent" />
                 <span className="text-sm text-muted-foreground">On-site or Remote</span>
               </div>
             </div>

@@ -30,17 +30,17 @@ export default function AttentionMechanismDemo() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Attention Mechanism Demo</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Attention Mechanism Demo</h2>
           <p className="text-xl text-muted-foreground">Visualize how LLMs focus on different parts of text to understand context</p>
         </motion.div>
         <div className="w-full max-w-5xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <motion.div className="bg-card border rounded-xl p-6 shadow-sm" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                <div className="flex justify-between items-center mb-6">
+              <motion.div className="rounded-xl border bg-card p-6 shadow-sm" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                <div className="mb-6 flex items-center justify-between">
                   <h3 className="text-xl font-medium">Attention Visualization</h3>
                   <div className="flex gap-2">
                     {examples.map((example, index) => (
@@ -48,8 +48,8 @@ export default function AttentionMechanismDemo() {
                     ))}
                   </div>
                 </div>
-                <div ref={containerRef} className="min-h-[300px] flex flex-col items-center justify-center p-4 bg-muted/30 rounded-lg mb-6">
-                  <div className="flex flex-wrap justify-center gap-2 mb-16">
+                <div ref={containerRef} className="bg-muted/30 mb-6 flex min-h-[300px] flex-col items-center justify-center rounded-lg p-4">
+                  <div className="mb-16 flex flex-wrap justify-center gap-2">
                     {words.map((word, index) => {
                       const isHighlightable = word === activeExample.focusWord
                       const isSelected = word === focusWord
@@ -60,7 +60,7 @@ export default function AttentionMechanismDemo() {
                             {word}
                           </motion.div>
                           {attentionScores && attentionScores[word] > 0.1 && (
-                            <motion.div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                            <motion.div className="absolute -bottom-8 left-1/2 -translate-x-1/2 transform text-xs font-medium" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                               <span className={cn("px-1.5 py-0.5 rounded", attentionScores[word] > 0.5 ? "bg-info text-surface" : "bg-info/10 dark:bg-info/30")}>{(attentionScores[word] * 100).toFixed(0)}%</span>
                             </motion.div>
                           )}
@@ -70,9 +70,9 @@ export default function AttentionMechanismDemo() {
                   </div>
                   {focusWord && (
                     <div className="w-full">
-                      <motion.div className="h-[2px] bg-info/50 w-full mb-8" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.5 }} />
+                      <motion.div className="bg-info/50 mb-8 h-[2px] w-full" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.5 }} />
                       {showExplanation && (
-                        <motion.div className="text-center max-w-lg mx-auto" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                        <motion.div className="mx-auto max-w-lg text-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                           <p className="text-lg">{activeExample.explanation}</p>
                         </motion.div>
                       )}
@@ -89,13 +89,13 @@ export default function AttentionMechanismDemo() {
               </motion.div>
             </div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <div className="bg-card border rounded-xl p-6 shadow-sm h-full">
-                <h3 className="text-xl font-medium mb-4">About Attention</h3>
+              <div className="h-full rounded-xl border bg-card p-6 shadow-sm">
+                <h3 className="mb-4 text-xl font-medium">About Attention</h3>
                 <div className="space-y-4">
                   <p>Attention is a key mechanism in transformer models that allows them to focus on different parts of the input when generating each word of output.</p>
                   <div>
-                    <h4 className="font-medium mb-2">How it works:</h4>
-                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                    <h4 className="mb-2 font-medium">How it works:</h4>
+                    <ol className="list-decimal space-y-2 pl-5 text-sm">
                       <li>For each word, the model calculates attention scores for all other words in the context.</li>
                       <li>Higher scores mean the model pays more attention to that word when processing the current word.</li>
                       <li>This helps resolve references (like pronouns) and understand relationships.</li>

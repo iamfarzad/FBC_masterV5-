@@ -33,13 +33,13 @@ export function CanvasOrchestrator({ onClose }: CanvasOrchestratorProps = {}) {
     switch (type) {
       case 'webcam':
         return (
-          <div className="h-full w-full">
+          <div className="size-full">
             <WebcamCapture mode="canvas" onClose={handleClose} onAIAnalysis={() => {}} />
           </div>
         )
       case 'screen':
         return (
-          <div className="h-full w-full">
+          <div className="size-full">
             <ScreenShare mode="canvas" onClose={handleClose} />
           </div>
         )
@@ -54,10 +54,10 @@ export function CanvasOrchestrator({ onClose }: CanvasOrchestratorProps = {}) {
         }
 
         return (
-          <div className="h-full flex items-center justify-center p-8">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand/10 flex items-center justify-center">
-                <svg className="w-8 h-8 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex h-full items-center justify-center p-8">
+            <div className="space-y-4 text-center">
+              <div className="bg-brand/10 mx-auto mb-4 flex size-16 items-center justify-center rounded-full">
+                <svg className="size-8 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -71,12 +71,12 @@ export function CanvasOrchestrator({ onClose }: CanvasOrchestratorProps = {}) {
       case 'pdf':
         return (
           <div className="h-full p-3">
-            <iframe className="h-full w-full rounded border" src={(props?.url as string) || ''} />
+            <iframe className="size-full rounded border" src={(props?.url as string) || ''} />
           </div>
         )
       case 'code':
         return (
-          <div className="h-full p-3 overflow-auto">
+          <div className="h-full overflow-auto p-3">
             <CodeBlock code={(props?.code as string) || ''} language={(props?.lang as string) || 'tsx'} />
           </div>
         )

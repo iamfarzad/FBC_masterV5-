@@ -24,7 +24,7 @@ function RootLayoutClient({
   children: React.ReactNode
 }) {
   return (
-    <I18nProvider autoDetect={true}>
+    <I18nProvider>
       <TooltipProvider>
         <MeetingProvider>
           <CanvasProvider>

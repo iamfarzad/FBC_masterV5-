@@ -90,10 +90,10 @@ export function ChatComposer({
                 variant="ghost"
                 size="icon"
                 onClick={onOpenVoice}
-                className="h-10 w-10 hover:bg-accent/10 rounded-lg"
+                className="hover:bg-accent/10 size-10 rounded-lg"
                 title="Voice input"
               >
-                <Mic className="h-4 w-4" />
+                <Mic className="size-4" />
               </Button>
             )}
             <PromptInputSubmit disabled={isLoading} />

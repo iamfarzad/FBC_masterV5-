@@ -155,29 +155,29 @@ export function WebcamCapture({
       // Get image data for AI analysis
       const imageData = canvas.toDataURL("image/jpeg", 0.8)
 
-      // Send to AI for analysis if sessionId is available
+      // Send to AI for analysis using the real Gemini Vision API
       if (sessionId && _onAIAnalysis) {
         try {
-          const response = await fetch('/api/intelligence/analyze-image', {
+          const response = await fetch('/api/tools/webcam', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'x-intelligence-session-id': sessionId,
             },
             body: JSON.stringify({
-              imageData,
-              context: 'webcam_screenshot',
-              timestamp: Date.now(),
+              image: imageData,
+              type: 'webcam',
             }),
           })
 
           if (response.ok) {
             const analysis = await response.json()
+            const analysisText = analysis?.output?.analysis || 'Image analysis completed'
             toast({
               title: "AI Analysis Complete",
-              description: `Analysis: ${analysis.summary || 'Image processed successfully'}`,
+              description: analysisText.slice(0, 100) + (analysisText.length > 100 ? '...' : ''),
             })
-            _onAIAnalysis(analysis)
+            _onAIAnalysis(analysisText)
           }
         } catch (error) {
           console.error('AI analysis failed:', error)
@@ -226,7 +226,7 @@ export function WebcamCapture({
   }, [stream])
 
   return (
-    <div className="h-full w-full bg-black relative overflow-hidden">
+    <div className="relative size-full overflow-hidden bg-black">
       {/* Enhanced Video Preview with Gradient Overlay */}
       {isVideoOn && stream ? (
         <>
@@ -235,21 +235,21 @@ export function WebcamCapture({
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className="size-full object-cover"
           />
           {/* Subtle gradient overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="flex size-full items-center justify-center bg-gradient-to-br from-gray-900 to-black">
           <div className="text-center">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <CameraOff className="w-20 h-20 mx-auto mb-6 text-gray-500 drop-shadow-lg" />
-              <h3 className="text-xl font-semibold text-white mb-2">Camera is off</h3>
+              <CameraOff className="mx-auto mb-6 size-20 text-gray-500 drop-shadow-lg" />
+              <h3 className="mb-2 text-xl font-semibold text-white">Camera is off</h3>
               <p className="text-gray-400">Enable camera to start capturing</p>
             </motion.div>
           </div>
@@ -259,20 +259,20 @@ export function WebcamCapture({
       {/* Enhanced Recording Badge - Top-left corner */}
       {isRecording && (
         <motion.div
-          className="absolute top-6 left-6 z-10"
+          className="absolute left-6 top-6 z-10"
           initial={{ opacity: 0, scale: 0.8, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.8, y: -20 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <div className="glass-card px-4 py-2 flex items-center gap-2 border-red-500/30">
+          <div className="glass-card flex items-center gap-2 border-red-500/30 px-4 py-2">
             <motion.div
-              className="w-3 h-3 bg-error rounded-full"
+              className="size-3 rounded-full bg-error"
               animate={{ scale: [1, 1.3, 1] }}
               transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
             />
-            <span className="text-error font-semibold text-sm">
-              🔴 Recording {formatTime(recordingTime)}
+            <span className="text-sm font-semibold text-error">
+              Recording {formatTime(recordingTime)}
             </span>
           </div>
         </motion.div>
@@ -280,25 +280,25 @@ export function WebcamCapture({
 
       {/* Enhanced Toolbar (Bottom Center) */}
       <motion.div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
+        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 transform"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.4, ease: "easeOut" }}
       >
-        <div className="glass-card px-6 py-4 flex items-center gap-3 shadow-luxe">
+        <div className="glass-card shadow-luxe flex items-center gap-3 px-6 py-4">
           {/* Mic Toggle */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant={isAudioOn ? "glass" : "destructive"}
               size="icon"
               onClick={toggleAudio}
-              className="hover-scale rounded-full w-14 h-14 shadow-md"
+              className="hover-scale size-14 rounded-full shadow-md"
             >
               <motion.div
                 animate={isAudioOn ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.3 }}
               >
-                {isAudioOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                {isAudioOn ? <Mic className="size-6" /> : <MicOff className="size-6" />}
               </motion.div>
             </Button>
           </motion.div>
@@ -309,13 +309,13 @@ export function WebcamCapture({
               variant={isVideoOn ? "glass" : "destructive"}
               size="icon"
               onClick={toggleVideo}
-              className="hover-scale rounded-full w-14 h-14 shadow-md"
+              className="hover-scale size-14 rounded-full shadow-md"
             >
               <motion.div
                 animate={isVideoOn ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
                 transition={{ duration: 0.3 }}
               >
-                {isVideoOn ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
+                {isVideoOn ? <Camera className="size-6" /> : <CameraOff className="size-6" />}
               </motion.div>
             </Button>
           </motion.div>
@@ -326,13 +326,13 @@ export function WebcamCapture({
               variant="luxe"
               size="icon"
               onClick={takeScreenshot}
-              className="rounded-full w-14 h-14 shadow-glow hover:shadow-glow"
+              className="size-14 rounded-full shadow-glow hover:shadow-glow"
             >
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Camera className="w-6 h-6" />
+                <Camera className="size-6" />
               </motion.div>
             </Button>
           </motion.div>
@@ -343,13 +343,13 @@ export function WebcamCapture({
               variant={isRecording ? "destructive" : "luxe"}
               size="icon"
               onClick={isRecording ? stopRecording : startRecording}
-              className={`rounded-full w-16 h-16 shadow-lg ${isRecording ? 'animate-pulse shadow-red-500/50' : 'hover:shadow-glow'}`}
+              className={`size-16 rounded-full shadow-lg ${isRecording ? 'animate-pulse shadow-red-500/50' : 'hover:shadow-glow'}`}
             >
               <motion.div
                 animate={isRecording ? { scale: [1, 1.1, 1] } : { scale: 1 }}
                 transition={{ duration: 1, repeat: isRecording ? Infinity : 0, ease: "easeInOut" }}
               >
-                {isRecording ? <Square className="w-7 h-7" /> : <Circle className="w-7 h-7" />}
+                {isRecording ? <Square className="size-7" /> : <Circle className="size-7" />}
               </motion.div>
             </Button>
           </motion.div>
@@ -360,13 +360,13 @@ export function WebcamCapture({
               variant="outline"
               size="icon"
               onClick={onClose}
-              className="hover-scale rounded-full w-14 h-14 border-border/50 hover:border-border hover:bg-surface-elevated/50 backdrop-blur-sm"
+              className="hover-scale border-border/50 hover:bg-surface-elevated/50 size-14 rounded-full backdrop-blur-sm hover:border-border"
             >
               <motion.div
                 whileHover={{ rotate: 90 }}
                 transition={{ duration: 0.2 }}
               >
-                <X className="w-6 h-6" />
+                <X className="size-6" />
               </motion.div>
             </Button>
           </motion.div>

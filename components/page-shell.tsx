@@ -30,10 +30,10 @@ interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 export function PageHeader({ title, subtitle, className, ...props }: PageHeaderProps) {
   return (
     <div className={cn("mx-auto max-w-3xl text-center", className)} {...props}>
-      <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl lg:text-6xl text-balance">
+      <h1 className="text-balance text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl lg:text-6xl">
         {title}
       </h1>
-      {subtitle && <p className="mt-6 text-lg leading-8 text-muted-foreground text-balance">{subtitle}</p>}
+      {subtitle && <p className="mt-6 text-balance text-lg leading-8 text-muted-foreground">{subtitle}</p>}
     </div>
   )
 }

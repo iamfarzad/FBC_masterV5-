@@ -34,21 +34,21 @@ export default function PromptEngineeringSandbox() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Prompt Engineering Sandbox</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Prompt Engineering Sandbox</h2>
           <p className="text-xl text-muted-foreground">Experiment with prompting techniques and compare outputs</p>
         </motion.div>
         <div className="w-full max-w-5xl">
           <Tabs defaultValue="zero-shot" value={activeTab} onValueChange={handleTabChange}>
-            <div className="flex justify-center mb-6"><TabsList className="grid grid-cols-4 w-full max-w-xl"><TabsTrigger value="zero-shot">Zero‑Shot</TabsTrigger><TabsTrigger value="few-shot">Few‑Shot</TabsTrigger><TabsTrigger value="chain-of-thought">Chain‑of‑Thought</TabsTrigger><TabsTrigger value="role-based">Role‑Based</TabsTrigger></TabsList></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="mb-6 flex justify-center"><TabsList className="grid w-full max-w-xl grid-cols-4"><TabsTrigger value="zero-shot">Zero‑Shot</TabsTrigger><TabsTrigger value="few-shot">Few‑Shot</TabsTrigger><TabsTrigger value="chain-of-thought">Chain‑of‑Thought</TabsTrigger><TabsTrigger value="role-based">Role‑Based</TabsTrigger></TabsList></div>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                <Card><CardHeader><CardTitle>Prompt</CardTitle><CardDescription>Write or edit the input</CardDescription></CardHeader><CardContent><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="min-h-[300px] font-mono text-sm" /><Button className="w-full mt-4" onClick={handleGenerate} disabled={isGenerating}>{isGenerating ? 'Generating…' : 'Generate Response'}</Button></CardContent></Card>
+                <Card><CardHeader><CardTitle>Prompt</CardTitle><CardDescription>Write or edit the input</CardDescription></CardHeader><CardContent><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="min-h-[300px] font-mono text-sm" /><Button className="mt-4 w-full" onClick={handleGenerate} disabled={isGenerating}>{isGenerating ? 'Generating…' : 'Generate Response'}</Button></CardContent></Card>
               </motion.div>
               <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-                <Card><CardHeader><CardTitle>Response</CardTitle><CardDescription>Sample output</CardDescription></CardHeader><CardContent><div className={`min-h-[300px] p-4 rounded-md bg-muted/30 whitespace-pre-wrap ${isGenerating ? 'animate-pulse' : ''}`}>{response}</div></CardContent></Card>
+                <Card><CardHeader><CardTitle>Response</CardTitle><CardDescription>Sample output</CardDescription></CardHeader><CardContent><div className={`bg-muted/30 min-h-[300px] whitespace-pre-wrap rounded-md p-4 ${isGenerating ? 'animate-pulse' : ''}`}>{response}</div></CardContent></Card>
               </motion.div>
             </div>
           </Tabs>

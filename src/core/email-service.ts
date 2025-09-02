@@ -137,7 +137,7 @@ export class EmailService {
       `DTSTART:${dtStart}`,
       `DTEND:${dtEnd}`,
       'SUMMARY:AI Consultation with F.B/c',
-      `DESCRIPTION:AI consultation with F.B/c. ${meeting.meetingLink ? 'Link: ' + meeting.meetingLink : ''}`,
+      `DESCRIPTION:AI consultation with F.B/c. ${meeting.meetingLink ? `Link: ${  meeting.meetingLink}` : ''}`,
       `ORGANIZER;CN=F.B/c:mailto:${organizerEmail}`,
       `ATTENDEE;CN=${meeting.attendeeName};RSVP=TRUE:mailto:${meeting.attendeeEmail}`,
       `${meeting.meetingLink ? `LOCATION:${meeting.meetingLink}` : 'LOCATION:Online'}`,

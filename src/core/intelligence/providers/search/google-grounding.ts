@@ -77,7 +77,7 @@ export class GoogleGroundingProvider {
 
       // SIMPLIFIED: Direct prompt construction like chat-with-docs
       const prompt = useUrls
-        ? `${query}\n\nRelevant URLs for context:\n${urls!.slice(0, 20).join('\n')}`
+        ? `${query}\n\nRelevant URLs for context:\n${urls.slice(0, 20).join('\n')}`
         : query
 
       const res = await this.genAI.models.generateContent({

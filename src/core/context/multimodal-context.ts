@@ -173,7 +173,7 @@ export class MultimodalContextManager {
       timestamp: convEntry.timestamp,
       type,
       analysis,
-      imageData: imageData ? imageData.substring(0, 1000) + '...' : undefined, // Store truncated version
+      imageData: imageData ? `${imageData.substring(0, 1000)  }...` : undefined, // Store truncated version
       metadata: {
         size: imageSize || 0,
         format: type,

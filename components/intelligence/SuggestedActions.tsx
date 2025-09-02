@@ -88,15 +88,15 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
     return (
       <div className="mt-2 w-full">
         {/* Desktop/Tablet: full buttons */}
-        <div className="hidden sm:flex items-center justify-end gap-2">
+        <div className="hidden items-center justify-end gap-2 sm:flex">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="rounded-full h-9 px-4 bg-accent hover:bg-accent/90 text-surface"
+                className="hover:bg-accent/90 h-9 rounded-full bg-accent px-4 text-surface"
                 data-testid="generate-pdf"
               >
-                <FileText className="mr-2 h-4 w-4" /> Share Summary
+                <FileText className="mr-2 size-4" /> Share Summary
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -129,28 +129,28 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
                 className="gap-2"
                 data-testid="download-pdf"
               >
-                <FileText className="h-4 w-4" /> Download PDF
+                <FileText className="size-4" /> Download PDF
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFinishOpen(true)} className="gap-2" data-testid="send-email">
-                <Mail className="h-4 w-4" /> Send via Email
+                <Mail className="size-4" /> Send via Email
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <BookCallButton
             size="sm"
             variant="outline"
-            className={outlineCtaClasses + ' rounded-full h-9 px-4'}
+            className={`${outlineCtaClasses  } h-9 rounded-full px-4`}
           >
-            <PhoneCall className="mr-2 h-4 w-4" /> Book a Call
+            <PhoneCall className="mr-2 size-4" /> Book a Call
           </BookCallButton>
         </div>
 
         {/* Mobile: condensed menu */}
-        <div className="sm:hidden flex items-center justify-end">
+        <div className="flex items-center justify-end sm:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 rounded-full px-2">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="size-4" />
                 <span className="sr-only">Open actions</span>
               </Button>
             </DropdownMenuTrigger>
@@ -181,15 +181,15 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
                 }}
                 className="gap-2"
               >
-                <FileText className="h-4 w-4" /> Generate PDF summary
+                <FileText className="size-4" /> Generate PDF summary
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="gap-2">
                 <BookCallButton variant="ghost" size="sm" className="justify-start">
-                  <PhoneCall className="h-4 w-4" /> Book a Call
+                  <PhoneCall className="size-4" /> Book a Call
                 </BookCallButton>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFinishOpen(true)} className="gap-2">
-                <Mail className="h-4 w-4" /> Finish & Email
+                <Mail className="size-4" /> Finish & Email
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -15,7 +15,7 @@ import { Image } from '@/components/ai-elements/image'
 import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from '@/components/ai-elements/tool'
 import { Task, TaskTrigger, TaskContent, TaskItem } from '@/components/ai-elements/task'
 import { WebPreview, WebPreviewNavigation, WebPreviewUrl, WebPreviewBody } from '@/components/ai-elements/web-preview'
-import { ActivityDisplay } from '@/components/chat/activity/ActivityDisplay'
+// Removed ActivityDisplay - using ai-elements instead
 import { Message as ChatMessage } from '@/src/core/types/chat'
 
 interface MessageComponentProps {
@@ -96,30 +96,30 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
         {message.role === 'assistant' && message.businessContent?.type === 'business_analysis' && (
           <Reasoning defaultOpen={false} isStreaming={isLast && isLoading}>
             <ReasoningTrigger>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="size-2 animate-pulse rounded-full bg-accent" />
                 <p>AI Analysis Process</p>
               </div>
             </ReasoningTrigger>
             <ReasoningContent>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-green-500" />
+                  <div className="size-1 rounded-full bg-green-500" />
                   <span>Analyzing business context and requirements</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-green-500" />
+                  <div className="size-1 rounded-full bg-green-500" />
                   <span>Identifying key performance indicators and metrics</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-green-500" />
+                  <div className="size-1 rounded-full bg-green-500" />
                   <span>Researching industry benchmarks and best practices</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
+                  <div className="size-1 animate-pulse rounded-full bg-accent" />
                   <span>Generating actionable recommendations and ROI projections</span>
                 </div>
-                <div className="mt-3 p-3 bg-muted/20 rounded-lg text-xs">
+                <div className="bg-muted/20 mt-3 rounded-lg p-3 text-xs">
                   <strong>Confidence:</strong> 94% • <strong>Processing time:</strong> 2.3s • <strong>Sources:</strong> 15 validated
                 </div>
               </div>
@@ -128,7 +128,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
         )}
 
         {/* Main content with activity chips */}
-        <div className="prose prose-sm max-w-none leading-relaxed break-words dark:prose-invert">
+        <div className="prose prose-sm max-w-none break-words leading-relaxed dark:prose-invert">
           {contentParts.map((part, idx) => {
             if (part.type === 'activity' && part.dir) {
               return (
@@ -175,15 +175,15 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
                 <ToolOutput
                   output={
                     <div className="grid grid-cols-3 gap-3 text-sm">
-                      <div className="text-center p-3 rounded-lg bg-accent/10">
+                      <div className="bg-accent/10 rounded-lg p-3 text-center">
                         <div className="font-semibold text-accent">140%</div>
                         <div className="text-xs text-muted-foreground">ROI</div>
                       </div>
-                      <div className="text-center p-3 rounded-lg bg-accent/5">
+                      <div className="bg-accent/5 rounded-lg p-3 text-center">
                         <div className="font-semibold">5 months</div>
                         <div className="text-xs text-muted-foreground">Payback</div>
                       </div>
-                      <div className="text-center p-3 rounded-lg bg-accent/5">
+                      <div className="bg-accent/5 rounded-lg p-3 text-center">
                         <div className="font-semibold">$14,000</div>
                         <div className="text-xs text-muted-foreground">Net Profit</div>
                       </div>
@@ -229,7 +229,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
             <WebPreview defaultUrl={message.videoToAppCard.videoUrl}>
               <WebPreviewNavigation>
                 <WebPreviewUrl />
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="ml-auto flex items-center gap-2">
                   <div className={cn(
                     'px-2 py-1 rounded text-xs font-medium',
                     message.videoToAppCard.status === 'completed' ? 'bg-green-500/10 text-green-600' :
@@ -251,13 +251,13 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
                 {message.videoToAppCard.code ? (
                   <iframe
                     srcDoc={message.videoToAppCard.code}
-                    className="w-full h-full border-0"
+                    className="size-full border-0"
                     title="Generated App Preview"
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-muted/20">
+                  <div className="bg-muted/20 flex h-full items-center justify-center">
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-2">
+                      <div className="mb-2 text-sm text-muted-foreground">
                         Converting video to interactive app...
                       </div>
                       {message.videoToAppCard.status === 'analyzing' && (
@@ -352,7 +352,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 text-sm border-l-2 border-accent/40 pl-3 text-foreground/90"
+            className="border-accent/40 text-foreground/90 mt-3 border-l-2 pl-3 text-sm"
           >
             <div className="mb-1 text-xs uppercase tracking-wide opacity-70">
               Translated (ES)
@@ -399,7 +399,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
         )}
 
         {/* Actions using ai-elements */}
-        <Actions className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Actions className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
           <Action
             tooltip={copiedMessageId === message.id ? 'Copied' : 'Copy'}
             aria-label="Copy"
@@ -408,8 +408,8 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
             onClick={handleCopy}
           >
             {copiedMessageId === message.id ?
-              <div className="w-3 h-3 text-green-600">✓</div> :
-              <div className="w-3 h-3">📋</div>
+              <div className="size-3 text-green-600">✓</div> :
+              <div className="size-3">📋</div>
             }
           </Action>
 
@@ -423,7 +423,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
                 // Log removed
               }}
             >
-              <div className="w-3 h-3">✏️</div>
+              <div className="size-3">✏️</div>
             </Action>
           )}
 
@@ -436,7 +436,7 @@ export function MessageComponent({ message, isLast, isLoading, sessionId, onExec
               onClick={handleTranslate}
               disabled={isTranslating}
             >
-              <Languages className="w-3 h-3" />
+              <Languages className="size-3" />
             </Action>
           )}
         </Actions>

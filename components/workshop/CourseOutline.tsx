@@ -18,7 +18,7 @@ export function CourseOutline() {
       <CardContent>
         <div className="grid gap-3">
           {mods.map((m) => (
-            <a key={m.slug} href={`/workshop/modules/${m.slug}`} className="group rounded-md border bg-card p-3 hover:bg-accent/20 transition-colors">
+            <a key={m.slug} href={`/workshop/modules/${m.slug}`} className="hover:bg-accent/20 group rounded-md border bg-card p-3 transition-colors">
               <div className="flex items-center justify-between"><div className="font-medium">{m.title}</div><span className="text-xs text-muted-foreground">Phase {m.phase}</span></div>
               <div className="text-sm text-muted-foreground">{m.description}</div>
             </a>

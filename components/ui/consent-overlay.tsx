@@ -30,7 +30,7 @@ export function ConsentOverlay({ isVisible, onSubmit, isLoading = false }: Conse
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" data-testid="consent-overlay">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" data-testid="consent-overlay">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Help us personalize your experience</CardTitle>

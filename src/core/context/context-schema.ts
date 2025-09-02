@@ -16,7 +16,6 @@ export const SessionInitInput = z.object({
 export type ConsentInput = z.infer<typeof ConsentInput>
 export type SessionInitInput = z.infer<typeof SessionInitInput>
 
-import { z } from 'zod'
 
 export const CompanySchema = z.object({
   name: z.string(),

@@ -5,11 +5,13 @@ import type { ComponentProps, HTMLAttributes } from 'react';
 import { memo } from 'react';
 import ReactMarkdown, { type Options } from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { cn } from '@/src/core/utils';
 import 'katex/dist/katex.min.css';
 import hardenReactMarkdown from 'harden-react-markdown';
+import { Button } from '@/components/ui/button';
 
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
@@ -273,6 +275,39 @@ const components: Options['components'] = {
       </CodeBlock>
     );
   },
+  // 🎯 AI TOOL BUTTON RENDERER
+  // Handles <button data-coach-cta data-tool="..."> from AI responses
+  button: ({ node, children, className, ...props }) => {
+    const isCoachCTA = node?.properties?.['data-coach-cta'] !== undefined;
+    const tool = node?.properties?.['data-tool'] as string;
+    const query = node?.properties?.['data-query'] as string;
+
+    if (isCoachCTA) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          className={cn(
+            'mx-1 my-1 border-accent/30 hover:border-accent hover:bg-accent/10 text-accent',
+            className
+          )}
+          data-coach-cta="true"
+          data-tool={tool}
+          data-query={query}
+          {...props}
+        >
+          {children}
+        </Button>
+      );
+    }
+
+    // Regular button - render as default button
+    return (
+      <button className={cn('underline text-primary hover:text-accent', className)} {...props}>
+        {children}
+      </button>
+    );
+  },
 };
 
 export const Response = memo(
@@ -304,11 +339,26 @@ export const Response = memo(
       >
         <HardenedMarkdown
           components={components}
-          rehypePlugins={[rehypeKatex]}
+          rehypePlugins={[rehypeRaw, rehypeKatex]}
           remarkPlugins={[remarkGfm, remarkMath]}
           allowedImagePrefixes={allowedImagePrefixes ?? ['*']}
           allowedLinkPrefixes={allowedLinkPrefixes ?? ['*']}
           defaultOrigin={defaultOrigin}
+          allowedElements={[
+            // Standard markdown elements
+            'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'strong', 'em', 'u', 'del', 'code', 'pre',
+            'ul', 'ol', 'li', 'blockquote', 'hr', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+            // AI tool buttons - CRITICAL for functionality
+            'button'
+          ]}
+          allowedAttributes={{
+            // Standard attributes
+            '*': ['className', 'style', 'id'],
+            'a': ['href', 'title', 'rel', 'target'],
+            'img': ['src', 'alt', 'title', 'width', 'height'],
+            // AI tool button attributes - REQUIRED
+            'button': ['data-coach-cta', 'data-tool', 'data-query', 'className', 'style']
+          }}
           {...options}
         >
           {parsedChildren}

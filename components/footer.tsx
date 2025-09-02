@@ -20,21 +20,21 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-border/20 bg-background/50 backdrop-blur-sm mt-auto">
-      <div className="mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-6 py-6 md:py-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+    <footer className="border-border/20 bg-background/50 mt-auto border-t backdrop-blur-sm">
+      <div className="mx-auto w-full max-w-7xl px-2 py-6 sm:px-4 md:px-6 md:py-4">
+        <div className="flex flex-col items-center justify-between gap-4 text-sm sm:flex-row">
           <div className="flex items-center gap-4 text-muted-foreground">
             <span>&copy; {currentYear} F.B Consulting</span>
             <span className="hidden sm:inline">•</span>
-            <Link href="/about" className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1">
+            <Link href="/about" className="rounded px-1 transition-colors hover:text-foreground focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
               About
             </Link>
             <span className="hidden sm:inline">•</span>
-            <Link href="/contact" className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1">
+            <Link href="/contact" className="rounded px-1 transition-colors hover:text-foreground focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
               Contact
             </Link>
             <span className="hidden sm:inline">•</span>
-            <Link href="/legal" className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1">
+            <Link href="/legal" className="rounded px-1 transition-colors hover:text-foreground focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">
               Legal
             </Link>
           </div>
@@ -44,14 +44,14 @@ export default function Footer() {
               href="https://linkedin.com/in/farzadbayat"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1"
+              className="rounded px-1 transition-colors hover:text-foreground focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               LinkedIn
             </a>
             <span className="hidden sm:inline">•</span>
             <a
               href="mailto:hello@farzadbayat.com"
-              className="hover:text-foreground transition-colors focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded px-1"
+              className="rounded px-1 transition-colors hover:text-foreground focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               hello@farzadbayat.com
             </a>

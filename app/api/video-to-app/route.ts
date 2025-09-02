@@ -51,7 +51,7 @@ async function generateText(options: {
   }
 
   const genAI = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY!,
+    apiKey: process.env.GEMINI_API_KEY,
   })
 
   // Use optimized configuration with token limits for video processing
@@ -159,7 +159,7 @@ Based on this video content, create a comprehensive spec for an interactive lear
   }
 }
 
-export const POST = withFullSecurity(async function POST(request: NextRequest) {
+export const POST = withFullSecurity(async (request: NextRequest) => {
   const startTime = Date.now()
   const correlationId = Math.random().toString(36).substring(7)
   

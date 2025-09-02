@@ -162,7 +162,7 @@ export type Database = {
         Returns: string
       }
       urlencode: {
-        Args: { data: Json } | { string: string } | { string: string }
+        Args: { data: Json } | { string: string }  
         Returns: string
       }
     }

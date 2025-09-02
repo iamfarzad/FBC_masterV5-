@@ -415,7 +415,7 @@ export class StreamingOptimizer {
 
   private async cacheStream(cacheKey: string, stream: ReadableStream): Promise<void> {
     const cacheData = {
-      stream: stream, // Note: This is simplified - real implementation would serialize
+      stream, // Note: This is simplified - real implementation would serialize
       timestamp: Date.now()
     }
 

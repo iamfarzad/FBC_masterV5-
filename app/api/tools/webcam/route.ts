@@ -8,12 +8,13 @@ import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
+// import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const validatedData = WebcamCaptureSchema.parse(body)
-    const { image, type } = validatedData as any
+    const { image, type, context } = validatedData as any
     const sessionId = req.headers.get('x-intelligence-session-id') || undefined
     const userId = req.headers.get('x-user-id') || undefined
 
@@ -40,14 +41,25 @@ export async function POST(req: NextRequest) {
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
-    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     let analysisResult = ''
     try {
+      // 🔍 ENHANCED CONTEXT-AWARE ANALYSIS  
+      let analysisPrompt = 'Analyze this webcam image and provide business insights:'
+      
+      if (context?.prompt) {
+        analysisPrompt += ` ${context.prompt}`
+      }
+      
+      if (context?.trigger === 'manual') {
+        analysisPrompt += ' Provide detailed insights for this manual analysis.'
+      }
+
       const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1024, temperature: 0.3, topP: 0.8, topK: 40 })
       const result = await genAI.models.generateContent({
         model: modelSelection.model,
         config: optimizedConfig,
-        contents: [{ role: 'user', parts: [ { text: 'Analyze this image for business insights.' }, { inlineData: { mimeType, data: base64Data } } ] }],
+        contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType, data: base64Data } } ] }],
       })
       analysisResult = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
     } catch (e) {
@@ -59,7 +71,9 @@ export async function POST(req: NextRequest) {
       insights: ["Objects and context analyzed", "Business relevance extracted"],
       imageSize: image.length,
       isBase64: image.startsWith('data:image'),
-      processedAt: new Date().toISOString()
+      processedAt: new Date().toISOString(),
+      trigger: context?.trigger || 'manual',
+      hasContext: !!(context?.prompt || sessionId)
     }}
     if (sessionId) {
       try {
@@ -77,7 +91,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(response, { status: 200 })
   } catch (error: unknown) {
-    if (error?.name === 'ZodError') {
+    if ((error as any)?.name === 'ZodError') {
       return NextResponse.json({ ok: false, error: 'Invalid input data' }, { status: 400 })
     }
     return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 })

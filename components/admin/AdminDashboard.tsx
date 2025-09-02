@@ -59,9 +59,9 @@ export function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="text-center py-8">
-              <Brain className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">Admin Features Coming Soon</h3>
+            <div className="py-8 text-center">
+              <Brain className="mx-auto mb-4 size-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">Admin Features Coming Soon</h3>
               <p className="text-muted-foreground">
                 Advanced admin features will be available when needed for business operations.
               </p>
@@ -79,13 +79,13 @@ export function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+      <div className="mx-auto max-w-7xl p-6">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <header className="border-b border-border p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">Admin Dashboard</h2>
-                <p className="text-muted-foreground mt-1">System overview and management</p>
+                <p className="mt-1 text-muted-foreground">System overview and management</p>
               </div>
             </div>
           </header>

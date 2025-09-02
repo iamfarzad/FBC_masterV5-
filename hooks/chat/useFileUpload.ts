@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { useChatContext } from '../context/ChatProvider';
+// Removed ChatProvider dependency - using ai-elements instead
 
 export const useFileUpload = () => {
-  const { addActivity } = useChatContext();
+  // Activity tracking removed - using ai-elements tool status instead
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 

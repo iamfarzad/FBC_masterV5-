@@ -43,11 +43,11 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md card-glass">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="card-glass w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-            <Shield className="h-6 w-6 text-accent" />
+          <div className="bg-accent/10 mx-auto flex size-12 items-center justify-center rounded-full">
+            <Shield className="size-6 text-accent" />
           </div>
           <CardTitle className="mt-4 text-2xl font-bold text-foreground">F.B/c AI Admin</CardTitle>
           <CardDescription className="text-muted-foreground">Enter your admin password to continue</CardDescription>
@@ -62,21 +62,21 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 input-enhanced"
+                className="input-enhanced mt-1"
                 placeholder="Enter admin password"
               />
             </div>
 
             {error && (
-              <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
+              <div className="bg-destructive/10 border-destructive/30 rounded-lg border p-4 text-sm text-destructive">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full btn-primary" disabled={isLoading}>
+            <Button type="submit" className="btn-primary w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                   Signing in...
                 </>
               ) : (

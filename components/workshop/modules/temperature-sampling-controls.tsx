@@ -23,13 +23,13 @@ export default function TemperatureSamplingControls() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Temperature & Sampling</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Temperature & Sampling</h2>
           <p className="text-xl text-muted-foreground">Explore how decoding settings affect generation</p>
         </motion.div>
-        <div className="w-full max-w-3xl bg-card border rounded-xl p-6 shadow-sm space-y-6">
+        <div className="w-full max-w-3xl space-y-6 rounded-xl border bg-card p-6 shadow-sm">
           <div className="space-y-2">
             <div className="flex justify-between text-sm"><span>Temperature</span><span>{temperature.toFixed(2)}</span></div>
             <Slider value={[temperature]} min={0} max={1.5} step={0.05} onValueChange={(v) => setTemperature(v[0])} />
@@ -43,7 +43,7 @@ export default function TemperatureSamplingControls() {
             <Slider value={[topK]} min={0} max={100} step={5} onValueChange={(v) => setTopK(v[0])} />
           </div>
           <div className="space-y-2">
-            <div className={`min-h-[120px] p-4 rounded-md bg-muted/30 whitespace-pre-wrap ${isGenerating ? 'animate-pulse' : ''}`}>{output}</div>
+            <div className={`bg-muted/30 min-h-[120px] whitespace-pre-wrap rounded-md p-4 ${isGenerating ? 'animate-pulse' : ''}`}>{output}</div>
             <Button onClick={handleGenerate} className="w-full" disabled={isGenerating}>{isGenerating ? 'Generating…' : 'Generate Sample'}</Button>
           </div>
         </div>

@@ -12,7 +12,7 @@ export async function recordCapabilityUsed(sessionId: string, capabilityName: st
   try {
     // Preferred path: server-side RPC handles dedupe + logging
     const { error: rpcError } = await supabaseClient.rpc('append_capability_if_missing', {
-      p_session_id: sessionId as string,
+      p_session_id: sessionId,
       p_capability: capabilityName as any, // Cast to any to handle enum/text type mismatch
     })
     if (!rpcError) {

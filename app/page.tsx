@@ -5,10 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BookCallButton } from '@/components/meeting/BookCallButton'
 import Link from "next/link"
-import { ArrowRight, Lightbulb, Star, Users } from "lucide-react"
-import { FbcIcon } from "@/components/ui/fbc-icon"
-import { FbcIcon as FbcIconPolished } from "@/components/ui/fbc-icon"
-import { Brain, Zap, Sparkles, Target } from "lucide-react"
+import { ArrowRight, Lightbulb, Star, Users , Brain, Zap, Sparkles, Target } from "lucide-react"
+import { FbcIcon , FbcIcon as FbcIconPolished } from "@/components/ui/fbc-icon"
 import type { Metadata } from "next"
 import { MotionCard } from "@/components/ui/motion-card"
 import { FadeIn } from "@/components/ui/fade-in"
@@ -68,29 +66,29 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <div className="min-h-screen w-full flex flex-col gap-6 sm:gap-8 items-center justify-center relative overflow-hidden px-4 py-8">
+      <div className="relative flex min-h-screen w-full flex-col items-center justify-center gap-6 overflow-hidden px-4 py-8 sm:gap-8">
         <div className="absolute inset-0 z-0">
           {/* <DotScreenShader /> */}
         </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-foreground dark:text-white text-center px-4 pointer-events-none relative z-20 drop-shadow-lg">
+        <h1 className="pointer-events-none relative z-20 px-4 text-center text-4xl font-light tracking-tight text-foreground drop-shadow-lg dark:text-white sm:text-5xl md:text-6xl lg:text-7xl">
           Build AI That Actually <span className="text-accent drop-shadow-sm">Works</span>
         </h1>
-        <p className="text-base sm:text-lg md:text-xl font-light text-center text-foreground dark:text-white max-w-2xl leading-relaxed pointer-events-none relative z-20 px-4 drop-shadow-md">
+        <p className="pointer-events-none relative z-20 max-w-2xl px-4 text-center text-base font-light leading-relaxed text-foreground drop-shadow-md dark:text-white sm:text-lg md:text-xl">
           I'm Farzad Bayat, an AI consultant with 10,000+ hours of hands-on experience.
           I build practical AI automation solutions that deliver real business results—not just hype.
         </p>
-        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 relative z-20 px-4">
-          <BookCallButton size="lg" className="bg-accent hover:bg-accent/90 shadow-lg text-white" title="Book Your Free AI Consultation">
+        <div className="relative z-20 flex flex-col flex-wrap items-center justify-center gap-4 px-4 sm:flex-row">
+          <BookCallButton size="lg" className="hover:bg-accent/90 bg-accent text-white shadow-lg" title="Book Your Free AI Consultation">
             Start Your AI Project
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-2 size-4" />
           </BookCallButton>
-          <Button asChild variant="outline" size="lg" className="border-foreground dark:border-surface text-foreground dark:text-surface hover:bg-foreground/10 dark:hover:bg-surface/10 backdrop-blur-sm">
+          <Button asChild variant="outline" size="lg" className="hover:bg-foreground/10 dark:hover:bg-surface/10 border-foreground text-foreground backdrop-blur-sm dark:border-surface dark:text-surface">
             <Link href="/chat" className="flex items-center">
               <FbcIcon variant="default" size={16} className="mr-2" />
               Talk with F.B/c AI
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="text-foreground dark:text-surface hover:text-foreground/80 dark:hover:text-surface/80">
+          <Button asChild variant="ghost" size="lg" className="hover:text-foreground/80 dark:hover:text-surface/80 text-foreground dark:text-surface">
             <Link href="/about">Learn My Story</Link>
           </Button>
         </div>
@@ -100,33 +98,33 @@ export default function HomePage() {
       {/* Features Section */}
       <PageShell className="relative overflow-hidden">
         {/* Subtle Transition Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-background" />
+        <div className="via-accent/5 absolute inset-0 bg-gradient-to-b from-transparent to-background" />
         
         {/* Large FBC Icon on Right */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none">
+        <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 opacity-10">
           <FbcIcon variant="large-logo" className="text-accent/20" />
         </div>
         
         <div className="mb-6 flex justify-center">
           <ProgressTracker />
         </div>
-        <div className="text-center mb-16">
+        <div className="mb-16 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             AI Solutions That Drive Results
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             From intelligent chatbots to workflow automation, I build AI systems that solve real business problems.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+        <div className="relative z-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, i) => (
             <FadeIn key={feature.title} delay={i * 0.06}>
               <MotionCard className="neu-card transition-all hover:shadow-lg">
                 <CardContent className="p-6 text-center">
-                  <feature.icon className="mx-auto h-12 w-12 text-accent mb-4 transition-transform group-hover:scale-110" />
-                  <h3 className="text-lg font-semibold text-primary mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
+                  <feature.icon className="mx-auto mb-4 size-12 text-accent transition-transform group-hover:scale-110" />
+                  <h3 className="mb-2 text-lg font-semibold text-primary">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </MotionCard>
             </FadeIn>
@@ -136,7 +134,7 @@ export default function HomePage() {
 
       {/* Testimonials Section */}
       <PageShell className="bg-secondary">
-        <div className="text-center mb-16">
+        <div className="mb-16 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             What Clients Say
           </h2>
@@ -149,12 +147,12 @@ export default function HomePage() {
           {testimonials.map((testimonial) => (
             <Card key={testimonial.name} className="neu-card">
               <CardContent className="p-6">
-                <div className="flex mb-4">
+                <div className="mb-4 flex">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                    <Star key={i} className="size-4 fill-accent text-accent" />
                   ))}
                 </div>
-                <p className="text-muted-foreground mb-4">"{testimonial.content}"</p>
+                <p className="mb-4 text-muted-foreground">"{testimonial.content}"</p>
                 <div>
                   <div className="font-semibold text-primary">{testimonial.name}</div>
                   <div className="text-sm text-muted-foreground">{testimonial.role}</div>
@@ -172,28 +170,28 @@ export default function HomePage() {
 
       {/* Why Choose Me Section */}
       <PageShell>
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid items-center gap-12 md:grid-cols-2">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-6">
+            <h2 className="mb-6 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
               Why Work With Me?
             </h2>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Lightbulb className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+                <Lightbulb className="mt-1 size-6 flex-shrink-0 text-accent" />
                 <div>
                   <h3 className="font-semibold text-primary">Practical Experience</h3>
                   <p className="text-muted-foreground">10,000+ hours building real AI solutions, not just theory.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Users className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+                <Users className="mt-1 size-6 flex-shrink-0 text-accent" />
                 <div>
                   <h3 className="font-semibold text-primary">Business-Focused</h3>
                   <p className="text-muted-foreground">I understand business needs and build AI that delivers ROI.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Target className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+                <Target className="mt-1 size-6 flex-shrink-0 text-accent" />
                 <div>
                   <h3 className="font-semibold text-primary">Rapid Implementation</h3>
                   <p className="text-muted-foreground">Quick prototypes and fast deployment to get results sooner.</p>
@@ -201,23 +199,23 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-accent/10 to-primary/10 rounded-lg p-8">
-            <h3 className="text-xl font-bold text-primary mb-4">Ready to Transform Your Business?</h3>
-            <p className="text-muted-foreground mb-6">
+          <div className="from-accent/10 to-primary/10 rounded-lg bg-gradient-to-br p-8">
+            <h3 className="mb-4 text-xl font-bold text-primary">Ready to Transform Your Business?</h3>
+            <p className="mb-6 text-muted-foreground">
               Let's discuss how AI automation can streamline your workflows and boost productivity.
             </p>
-            <BookCallButton className="w-full bg-accent hover:bg-accent/90" title="Schedule Free Consultation" />
+            <BookCallButton className="hover:bg-accent/90 w-full bg-accent" title="Schedule Free Consultation" />
           </div>
         </div>
       </PageShell>
 
       {/* Services Preview */}
       <PageShell className="bg-secondary">
-        <div className="text-center mb-12">
+        <div className="mb-12 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             How I Can Help Your Business
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             From strategy to implementation, I provide end-to-end AI solutions.
           </p>
         </div>
@@ -225,8 +223,8 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <Card className="neu-card">
             <CardContent className="p-8">
-              <h3 className="text-xl font-bold text-primary mb-4">AI Consulting & Strategy</h3>
-              <p className="text-muted-foreground mb-6">
+              <h3 className="mb-4 text-xl font-bold text-primary">AI Consulting & Strategy</h3>
+              <p className="mb-6 text-muted-foreground">
                 Comprehensive AI assessment and strategic planning to identify the best opportunities for automation in your business.
               </p>
               <Button asChild variant="outline">
@@ -237,8 +235,8 @@ export default function HomePage() {
           
           <Card className="neu-card">
             <CardContent className="p-8">
-              <h3 className="text-xl font-bold text-primary mb-4">Hands-On AI Workshop</h3>
-              <p className="text-muted-foreground mb-6">
+              <h3 className="mb-4 text-xl font-bold text-primary">Hands-On AI Workshop</h3>
+              <p className="mb-6 text-muted-foreground">
                 Interactive workshop where you'll build your first AI automation tool and learn practical implementation strategies.
               </p>
               <Button asChild variant="outline">
@@ -251,18 +249,18 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <PageShell>
-        <div className="text-center bg-gradient-to-r from-accent/10 to-primary/10 rounded-2xl p-12">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-4">
+        <div className="from-accent/10 to-primary/10 rounded-2xl bg-gradient-to-r p-12 text-center">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             Ready to Build AI That Works?
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
             Stop wasting time on AI solutions that don't deliver. Let's build something that actually moves your business forward.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-accent hover:bg-accent/90">
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <Button asChild size="lg" className="hover:bg-accent/90 bg-accent">
               <Link href="/contact">
                 Start Your Project Today
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">

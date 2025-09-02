@@ -22,14 +22,17 @@ export interface StageContextType {
   getProgressPercentage: () => number
 }
 
+// Import stage instructions from the superior src/core architecture
+import { StageInstructions } from '@/src/core/conversation/stages'
+
 const INITIAL_STAGES: StageItem[] = [
   { id: 'GREETING', label: 'Discovery & Setup', done: false, current: true },
-  { id: 'NAME_COLLECTION', label: 'Identity', done: false, current: false },
+  { id: 'NAME_COLLECTION', label: 'Identity Collection', done: false, current: false },
   { id: 'EMAIL_CAPTURE', label: 'Consent & Context', done: false, current: false },
-  { id: 'BACKGROUND_RESEARCH', label: 'Research', done: false, current: false },
-  { id: 'PROBLEM_DISCOVERY', label: 'Requirements', done: false, current: false },
-  { id: 'SOLUTION_PRESENTATION', label: 'Solution', done: false, current: false },
-  { id: 'CALL_TO_ACTION', label: 'Next Step', done: false, current: false }
+  { id: 'BACKGROUND_RESEARCH', label: 'Research & Analysis', done: false, current: false },
+  { id: 'PROBLEM_DISCOVERY', label: 'Requirements Discovery', done: false, current: false },
+  { id: 'SOLUTION_PRESENTATION', label: 'Solution Presentation', done: false, current: false },
+  { id: 'CALL_TO_ACTION', label: 'Next Steps & Action', done: false, current: false }
 ]
 
 const StageContext = createContext<StageContextType | undefined>(undefined)

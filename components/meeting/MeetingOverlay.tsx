@@ -40,14 +40,14 @@ export function MeetingOverlay({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-3xl w-[96vw]">
+      <DialogContent className="w-[96vw] max-w-3xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="mt-2 rounded-xl border bg-background/60 p-2 md:p-4 min-h-[560px] relative overflow-hidden">
+        <div className="bg-background/60 relative mt-2 min-h-[560px] overflow-hidden rounded-xl border p-2 md:p-4">
           <div className="absolute right-3 top-3 z-10">
-            <a href={calUrl} target="_blank" rel="noreferrer" className="text-xs rounded-md border px-2 py-1 text-muted-foreground hover:text-foreground bg-card/70">
+            <a href={calUrl} target="_blank" rel="noreferrer" className="bg-card/70 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
               Open in new tab
             </a>
           </div>

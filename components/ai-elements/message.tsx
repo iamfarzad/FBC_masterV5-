@@ -42,7 +42,7 @@ export const MessageContent = ({
     )}
     {...props}
   >
-    <div className="is-user:dark leading-relaxed break-words">{children}</div>
+    <div className="is-user:dark break-words leading-relaxed">{children}</div>
   </div>
 );
 
@@ -61,8 +61,8 @@ export const MessageAvatar = ({
     className={cn('size-8 ring ring-1 ring-border shadow-sm', className)}
     {...props}
   >
-    <AvatarImage alt="" className="mt-0 mb-0" src={src} />
-    <AvatarFallback className="bg-muted text-muted-foreground font-medium">
+    <AvatarImage alt="" className="my-0" src={src} />
+    <AvatarFallback className="bg-muted font-medium text-muted-foreground">
       {name?.slice(0, 2) || 'ME'}
     </AvatarFallback>
   </Avatar>

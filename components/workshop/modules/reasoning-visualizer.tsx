@@ -21,19 +21,19 @@ export default function ReasoningVisualizer() {
   const handleSkip = () => setIndex((i) => Math.min(steps.length - 1, i + 1))
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">Reasoning Visualizer</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Reasoning Visualizer</h2>
           <p className="text-xl text-muted-foreground">Step through a simple reasoning chain</p>
         </motion.div>
-        <div className="w-full max-w-xl bg-card border rounded-xl p-6 shadow-sm">
+        <div className="w-full max-w-xl rounded-xl border bg-card p-6 shadow-sm">
           <ol className="space-y-3">
             {steps.map((s, i) => (
-              <li key={s} className={`p-3 rounded border ${i === index ? 'bg-primary/10 border-primary' : 'bg-muted/20'}`}>{i + 1}. {s}</li>
+              <li key={s} className={`rounded border p-3 ${i === index ? 'bg-primary/10 border-primary' : 'bg-muted/20'}`}>{i + 1}. {s}</li>
             ))}
           </ol>
-          <div className="flex gap-2 mt-6 justify-center">
+          <div className="mt-6 flex justify-center gap-2">
             <Button size="sm" onClick={handlePlay} disabled={isPlaying}>Play</Button>
             <Button size="sm" variant="outline" onClick={handlePause}>Pause</Button>
             <Button size="sm" variant="outline" onClick={handleSkip}>Skip</Button>

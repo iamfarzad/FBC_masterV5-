@@ -155,7 +155,7 @@ export class AdminChatContext {
         metrics: {
           healthScore: metrics.healthScore,
           activeStreams: metrics.streaming.activeStreams,
-          memoryUsage: (metrics.memory.used / (1024 * 1024)).toFixed(1) + 'MB'
+          memoryUsage: `${(metrics.memory.used / (1024 * 1024)).toFixed(1)  }MB`
         },
         recommendations: this.generateQuickRecommendations(metrics)
       }

@@ -53,12 +53,12 @@ export default function ConsultingPage() {
         <div className="mb-6 flex justify-center">
           <ProgressTracker />
         </div>
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid items-start gap-8 md:grid-cols-2">
           <FadeIn>
           <MotionCard className="neu-card transition-all">
             <CardHeader className="text-center">
-              <div className="mx-auto w-fit p-3 bg-primary/10 rounded-md mb-2">
-                <Zap className="h-8 w-8 text-primary" />
+              <div className="bg-primary/10 mx-auto mb-2 w-fit rounded-md p-3">
+                <Zap className="size-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">AI Consulting & Automation Services</CardTitle>
               <CardDescription>
@@ -69,7 +69,7 @@ export default function ConsultingPage() {
               <ul className="space-y-3">
                 {consultingServices.map((service, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                    <Check className="mt-1 size-5 flex-shrink-0 text-green-500" />
                     <span className="text-muted-foreground">{service}</span>
                   </li>
                 ))}
@@ -84,8 +84,8 @@ export default function ConsultingPage() {
           <FadeIn delay={0.08}>
           <MotionCard className="neu-card transition-all">
             <CardHeader className="text-center">
-              <div className="mx-auto w-fit p-3 bg-primary/10 rounded-md mb-2">
-                <Cpu className="h-8 w-8 text-primary" />
+              <div className="bg-primary/10 mx-auto mb-2 w-fit rounded-md p-3">
+                <Cpu className="size-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">AI Workshops & Team Training Programs</CardTitle>
               <CardDescription>Teach your team how to use AI tools properly and build real AI automation solutions.</CardDescription>

@@ -26,12 +26,12 @@ export default function AIHierarchyVisual() {
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="flex flex-col items-center justify-center">
-        <motion.div className="max-w-3xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">AI Hierarchy Visual</h2>
+        <motion.div className="mb-8 w-full max-w-3xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">AI Hierarchy Visual</h2>
           <p className="text-xl text-muted-foreground">Explore the relationship between AI, Machine Learning, Generative AI, and LLMs</p>
         </motion.div>
-        <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8 items-center">
-          <motion.div ref={containerRef} className="relative w-full max-w-xl aspect-square flex items-center justify-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
+        <div className="flex w-full max-w-5xl flex-col items-center gap-8 md:flex-row">
+          <motion.div ref={containerRef} className="relative flex aspect-square w-full max-w-xl items-center justify-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
             {hierarchyLevels.map((level, index) => {
               const size = 100 - index * 20
               const isActive = activeLevel === level.id
@@ -42,12 +42,12 @@ export default function AIHierarchyVisual() {
                 </motion.div>
               )
             })}
-            <div className="absolute w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-primary animate-pulse" /></div>
+            <div className="bg-primary/20 absolute flex size-4 items-center justify-center rounded-full"><div className="size-2 animate-pulse rounded-full bg-primary" /></div>
           </motion.div>
           <div className="w-full max-w-md">
             <AnimatePresence mode="wait">
               {activeLevel ? (
-                <motion.div key={activeLevel} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="bg-card border rounded-xl p-6 shadow-sm">
+                <motion.div key={activeLevel} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="rounded-xl border bg-card p-6 shadow-sm">
                   {(() => {
                     const level = hierarchyLevels.find((l) => l.id === activeLevel)
                     if (!level) return null
@@ -56,8 +56,8 @@ export default function AIHierarchyVisual() {
                         <h3 className={cn("text-2xl font-bold mb-4", level.textColor)}>{level.name}</h3>
                         <p className="mb-4 text-lg">{level.description}</p>
                         <motion.div id={`examples-${level.id}`} initial={{ height: 0, opacity: 0 }} animate={{ height: showExamples ? "auto" : 0, opacity: showExamples ? 1 : 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
-                          <div className="pt-4 border-t">
-                            <h4 className="font-medium mb-2">Examples:</h4>
+                          <div className="border-t pt-4">
+                            <h4 className="mb-2 font-medium">Examples:</h4>
                             <p className="text-muted-foreground">{level.examples}</p>
                           </div>
                         </motion.div>
@@ -72,7 +72,7 @@ export default function AIHierarchyVisual() {
                   })()}
                 </motion.div>
               ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card border rounded-xl p-6 shadow-sm text-center">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card p-6 text-center shadow-sm">
                   <p className="text-muted-foreground">Click on a layer to explore its details</p>
                 </motion.div>
               )}

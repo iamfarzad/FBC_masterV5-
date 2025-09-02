@@ -113,7 +113,7 @@ function ActivityRail({
           'flex items-center justify-center text-xs text-muted',
           orientation==='vertical' ? 'flex-col w-20 h-20' : 'flex-row px-4'
         )}>
-          <div className="w-8 h-8 rounded-full bg-surface/50" />
+          <div className="bg-surface/50 size-8 rounded-full" />
           <span className="text-xs">No activity</span>
         </div>
       ) : (
@@ -171,11 +171,11 @@ export function FixedRightVerticalProcessChain({
   return (
     <>
       {/* desktop right-center */}
-      <div className="hidden md:block fixed right-4 top-1/2 -translate-y-1/2 z-50">
+      <div className="fixed right-4 top-1/2 z-50 hidden -translate-y-1/2 md:block">
         <ActivityRail items={activities} onItemClick={handleItemClick} orientation="vertical" />
       </div>
       {/* mobile bottom-center */}
-      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 md:hidden">
         <ActivityRail items={activities} onItemClick={handleItemClick} orientation="horizontal" />
       </div>
     </>
@@ -190,13 +190,13 @@ type Stage = { id:string; label:string; done?:boolean; current?:boolean }
 
 export function ChatSidebar({
   context,
-  activityLog = [],
+  // Removed activityLog - using ai-elements instead
   stages = [],
   stageProgress,
   className
 }:{
   context?: Record<string,unknown>
-  activityLog?: ActivityItem[]
+  // Removed activityLog prop - using ai-elements instead
   stages?: Stage[]
   stageProgress?: number
   className?: string
@@ -206,16 +206,16 @@ export function ChatSidebar({
       {context && Object.keys(context).length>0 && (
         <Card className="glass">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-accent" />
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <BarChart3 className="size-4 text-accent" />
               Context
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5">
             {Object.entries(context).slice(0,4).map(([k,v])=>(
               <div key={k} className="flex items-center justify-between text-xs">
-                <span className="text-muted capitalize">{k.replace(/_/g,' ')}</span>
-                <span className="text-foreground font-medium truncate ml-2 max-w-24">
+                <span className="capitalize text-muted">{k.replace(/_/g,' ')}</span>
+                <span className="ml-2 max-w-24 truncate font-medium text-foreground">
                   {typeof v==='string' ? v : JSON.stringify(v).slice(0,24)}
                 </span>
               </div>
@@ -226,8 +226,8 @@ export function ChatSidebar({
 
       <Card className="glass">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Activity className="w-4 h-4 text-accent" />
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Activity className="size-4 text-accent" />
             AI Activity
           </CardTitle>
         </CardHeader>
@@ -241,11 +241,11 @@ export function ChatSidebar({
                 a.status==='in_progress' && 'bg-accent animate-pulse',
                 a.status==='pending' && 'bg-muted/40'
               )}/>
-              <span className="text-muted truncate">{a.title}</span>
+              <span className="truncate text-muted">{a.title}</span>
             </div>
           ))}
           {activityLog.length===0 && (
-            <div className="text-xs text-muted text-center py-2">No recent activity</div>
+            <div className="py-2 text-center text-xs text-muted">No recent activity</div>
           )}
         </CardContent>
       </Card>
@@ -253,8 +253,8 @@ export function ChatSidebar({
       {stages.length>0 && (
         <Card className="glass">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-accent" />
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <BarChart3 className="size-4 text-accent" />
               Stages
             </CardTitle>
           </CardHeader>
@@ -285,13 +285,13 @@ export function ChatSidebar({
             </div>
 
             {typeof stageProgress==='number' && (
-              <div className="mt-3 pt-2 border-t border-border/40">
-                <div className="flex justify-between text-xs text-muted mb-1">
+              <div className="border-border/40 mt-3 border-t pt-2">
+                <div className="mb-1 flex justify-between text-xs text-muted">
                   <span>Progress</span>
                   <span>{Math.round(stageProgress)}%</span>
                 </div>
-                <div className="w-full bg-surface/5 rounded-full h-1.5">
-                  <div className="bg-accent h-1.5 rounded-full transition-all duration-base ease-smooth"
+                <div className="bg-surface/5 h-1.5 w-full rounded-full">
+                  <div className="duration-base ease-smooth h-1.5 rounded-full bg-accent transition-all"
                        style={{ width: `${stageProgress}%` }}/>
                 </div>
               </div>

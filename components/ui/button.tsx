@@ -5,44 +5,44 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from '@/src/core/utils'
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
+  "relative inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         // Enhanced default with glass effect
-        default: "gradient-brand text-surface hover:shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
+        default: "gradient-brand text-surface hover:scale-[1.02] hover:shadow-glow hover:shadow-lg active:scale-[0.98]",
 
         // Glass morphism variants
-        glass: "glass text-text hover:bg-white/20 dark:hover:bg-white/10 shadow-lg hover:shadow-xl",
+        glass: "glass text-text shadow-lg hover:bg-white/20 hover:shadow-xl dark:hover:bg-white/10",
         "glass-dark": "glass-dark text-text hover:bg-white/10 dark:hover:bg-white/5",
 
         // Premium variants
-        luxe: "gradient-brand text-surface shadow-luxe hover:shadow-luxe-dark hover:scale-[1.02] active:scale-[0.98]",
-        glow: "bg-brand text-surface shadow-glow hover:shadow-lg border border-brand/30",
+        luxe: "gradient-brand shadow-luxe hover:shadow-luxe-dark text-surface hover:scale-[1.02] active:scale-[0.98]",
+        glow: "border-brand/30 border bg-brand text-surface shadow-glow hover:shadow-lg",
 
         // Enhanced destructive
-        destructive: "bg-error text-surface hover:bg-error/90 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
+        destructive: "hover:bg-error/90 bg-error text-surface shadow-md hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]",
 
         // Glass outline
-        outline: "border-2 border-brand/30 bg-transparent text-brand hover:bg-brand/10 hover:border-brand/50 backdrop-blur-sm",
+        outline: "border-brand/30 hover:bg-brand/10 hover:border-brand/50 border-2 bg-transparent text-brand backdrop-blur-sm",
 
         // Enhanced secondary
-        secondary: "bg-surface-elevated text-text shadow-sm hover:shadow-md hover:bg-surface border border-border/50",
+        secondary: "border-border/50 border bg-surface-elevated text-text shadow-sm hover:bg-surface hover:shadow-md",
 
         // Ghost with enhanced interactions
-        ghost: "text-text-muted hover:text-text hover:bg-surface-elevated hover:shadow-sm",
+        ghost: "text-text-muted hover:bg-surface-elevated hover:text-text hover:shadow-sm",
 
         // Link with better styling
-        link: "text-brand underline-offset-4 hover:underline hover:text-brand-hover",
+        link: "text-brand underline-offset-4 hover:text-brand-hover hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-8 px-3 py-1.5 text-xs",
         lg: "h-12 px-6 py-3 text-base",
         xl: "h-14 px-8 py-4 text-lg",
-        icon: "h-10 w-10",
-        "icon-sm": "h-8 w-8",
-        "icon-lg": "h-12 w-12",
+        icon: "size-10",
+        "icon-sm": "size-8",
+        "icon-lg": "size-12",
       },
       animation: {
         none: "",
@@ -81,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <>
             <svg
-              className="animate-spin -ml-1 mr-2 h-4 w-4"
+              className="-ml-1 mr-2 size-4 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

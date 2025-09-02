@@ -109,18 +109,22 @@ TRANSLATE the following text to ${this.getLanguageName(targetLang)}.
 
 CONTEXT: ${context}
 TONE: ${tone}
-PRESERVE THESE TERMS (do not translate): ${preserveTerms.join(', ')}
+PRESERVE THESE TERMS (do not translate): ${preserveTerms.join(', ')}, OAuth, JWT, SQL, NoSQL, MLOps, API endpoints, webhooks
 
 IMPORTANT RULES:
-- Maintain professional business language
-- Preserve technical terms and acronyms
-- Keep company names and product names unchanged
-- Maintain the original formatting and structure
-- Ensure natural, fluent ${this.getLanguageName(targetLang)} text
+- Maintain professional business language and appropriate terminology for the target market
+- Preserve technical terms, acronyms, and industry jargon
+- Keep company names and product names unchanged (especially F.B/c)
+- Maintain the original formatting, structure, and line breaks
+- Ensure natural, fluent ${this.getLanguageName(targetLang)} text that reads as if originally written in that language
+- Use appropriate business terminology and cultural context for the target language
+- Maintain consistent terminology throughout the translation
 - Return ONLY the translated text, no explanations or metadata
 
 TEXT TO TRANSLATE:
-"${text}"
+"""
+${text}
+"""
 
 TRANSLATED TEXT:`;
 

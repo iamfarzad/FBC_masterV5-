@@ -38,18 +38,18 @@ export const ChatHeader = memo<ChatHeaderProps>(({
           variant="outline"
           size="sm"
           onClick={onReset}
-          className="border-accent/30 hover:border-accent hover:bg-accent/10"
+          className="border-accent/30 hover:bg-accent/10 hover:border-accent"
         >
-          <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+          <RotateCcw className="mr-1.5 size-3.5" />
           Reset
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={onSettings}
-          className="border-accent/30 hover:border-accent hover:bg-accent/10"
+          className="border-accent/30 hover:bg-accent/10 hover:border-accent"
         >
-          <Settings className="w-3.5 h-3.5 mr-1.5" />
+          <Settings className="mr-1.5 size-3.5" />
           Settings
         </Button>
         <Button
@@ -57,7 +57,7 @@ export const ChatHeader = memo<ChatHeaderProps>(({
           size="sm"
           className="hover:bg-accent/10"
         >
-          <Maximize2 className="w-3.5 h-3.5 mr-1.5" />
+          <Maximize2 className="mr-1.5 size-3.5" />
           Fullscreen
         </Button>
       </div>

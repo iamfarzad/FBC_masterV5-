@@ -27,11 +27,11 @@ export function ProgressSidebar({
   const currentStepIndex = WIZARD_STEPS.indexOf(currentStep as any)
 
   return (
-    <div className="w-72 p-4 space-y-4 hidden lg:block">
+    <div className="hidden w-72 space-y-4 p-4 lg:block">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Calculator className="w-5 h-5" />
+            <Calculator className="size-5" />
             Progress
           </CardTitle>
         </CardHeader>
@@ -39,14 +39,14 @@ export function ProgressSidebar({
           <div className="space-y-2">
             {WIZARD_STEPS.map((step, index) => (
               <div key={step} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                <div className={`flex size-8 items-center justify-center rounded-full text-sm font-medium ${
                   currentStepIndex > index
                     ? 'bg-accent/10 text-accent'
                     : currentStepIndex === index
                       ? 'bg-accent/20 text-accent'
                       : 'bg-muted text-muted-foreground'
                 }`}>
-                  {currentStepIndex > index ? <Check className="w-4 h-4" /> : index + 1}
+                  {currentStepIndex > index ? <Check className="size-4" /> : index + 1}
                 </div>
                 <div>
                   <p className="text-sm font-medium">
@@ -69,15 +69,15 @@ export function ProgressSidebar({
           </CardHeader>
           <CardContent className="space-y-3" aria-live="polite">
             <div className="grid grid-cols-1 gap-3">
-              <div className="text-center p-3 rounded-lg bg-accent/10">
+              <div className="bg-accent/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-accent">{result.roi}%</div>
                 <div className="text-sm text-muted-foreground">Return on Investment</div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-accent/5">
+              <div className="bg-accent/5 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{result.paybackPeriod || 'N/A'}</div>
                 <div className="text-sm text-muted-foreground">Payback Period (months)</div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-accent/5">
+              <div className="bg-accent/5 rounded-lg p-3 text-center">
                 <div className="text-lg font-bold">${result.netProfit?.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Net Profit</div>
               </div>
@@ -97,12 +97,12 @@ export function ProgressSidebar({
               className="w-full"
               onClick={onStepBack}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="mr-2 size-4" />
               Back
             </Button>
           )}
           <Button
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+            className="hover:bg-accent/90 w-full bg-accent text-accent-foreground"
             disabled={isRunning}
             onClick={onRecalculate}
           >

@@ -235,7 +235,7 @@ export class GeminiConfigEnhanced {
     const topicList = Array.from(topics).join(', ');
     const summary = `Discussed topics: ${topicList || 'general conversation'}. ${keyPoints.length > 0 ? `Key questions: ${keyPoints.slice(0, 2).join('; ')}` : ''}`;
     
-    return summary.length > 200 ? summary.substring(0, 197) + '...' : summary;
+    return summary.length > 200 ? `${summary.substring(0, 197)  }...` : summary;
   }
 
   /**

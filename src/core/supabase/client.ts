@@ -62,7 +62,7 @@ function createSafeSupabaseClient() {
     } as any
   }
 
-  return createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -77,7 +77,7 @@ export const supabase = createSafeSupabaseClient()
 export const supabaseService = (() => {
   // Check if we're in server environment and have required variables
   if (typeof window === 'undefined' && hasRequiredVars && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return createClient<Database>(supabaseUrl!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    return createClient<Database>(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false

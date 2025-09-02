@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { ActivityDisplay } from '@/components/chat/activity/ActivityDisplay'
+// Removed ActivityDisplay - using ai-elements and StageRail instead
 import type { UnifiedMessage, StructuredChatMessage } from '@/src/core/types/chat'
 import { StatusBar } from './StatusBar'
 import { ChatHeader } from './ChatHeader'
@@ -28,32 +28,32 @@ export const TopSlotActions = memo<{
   onDownloadSummary: () => void
 }>(({ onSuggestedAction, onBookCall, onDownloadSummary }) => {
   return (
-    <div className="flex items-center justify-center gap-3 p-3 border-b border-border bg-muted/20">
+    <div className="bg-muted/20 flex items-center justify-center gap-3 border-b border-border p-3">
       <Button
         variant="outline"
         size="sm"
         onClick={onSuggestedAction}
-        className="border-accent/30 hover:border-accent hover:bg-accent/10"
+        className="border-accent/30 hover:bg-accent/10 hover:border-accent"
       >
-        <BookOpen className="h-4 w-4 mr-2" />
+        <BookOpen className="mr-2 size-4" />
         Suggested Action
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={onBookCall}
-        className="border-accent/30 hover:border-accent hover:bg-accent/10"
+        className="border-accent/30 hover:bg-accent/10 hover:border-accent"
       >
-        <Phone className="h-4 w-4 mr-2" />
+        <Phone className="mr-2 size-4" />
         Book Call
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={onDownloadSummary}
-        className="border-accent/30 hover:border-accent hover:bg-accent/10"
+        className="border-accent/30 hover:bg-accent/10 hover:border-accent"
       >
-        <Download className="h-4 w-4 mr-2" />
+        <Download className="mr-2 size-4" />
         Summary
       </Button>
     </div>
@@ -114,19 +114,19 @@ export const ToolCanvasOverlay = memo<{
   ]
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="absolute inset-4 bg-card border border-border rounded-lg shadow-2xl overflow-hidden">
+    <div className="bg-background/80 fixed inset-0 z-50 backdrop-blur-sm">
+      <div className="absolute inset-4 overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-lg font-semibold">Tool Menu</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </Button>
         </div>
 
         {/* Tool Grid */}
-        <div className="p-6 overflow-auto max-h-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="max-h-full overflow-auto p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => {
               const IconComponent = tool.icon
               return (
@@ -137,7 +137,7 @@ export const ToolCanvasOverlay = memo<{
                   className="group"
                 >
                   <Card
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-accent/50"
+                    className="hover:border-accent/50 cursor-pointer transition-all duration-200 hover:shadow-lg"
                     onClick={() => {
                       onToolSelect(tool.id)
                       onClose()
@@ -145,11 +145,11 @@ export const ToolCanvasOverlay = memo<{
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
-                          <IconComponent className="w-5 h-5 text-accent" />
+                        <div className="bg-accent/10 group-hover:bg-accent/20 rounded-lg p-2 transition-colors">
+                          <IconComponent className="size-5 text-accent" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium text-sm mb-1">{tool.name}</h3>
+                          <h3 className="mb-1 text-sm font-medium">{tool.name}</h3>
                           <p className="text-xs text-muted-foreground">{tool.description}</p>
                         </div>
                       </div>
@@ -206,10 +206,10 @@ export const EnhancedComposer = memo<{
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full border border-border/30 bg-muted/40 hover:bg-accent/10"
+            className="border-border/30 bg-muted/40 hover:bg-accent/10 size-8 rounded-full border"
             onClick={() => handleToolAction('menu')}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="size-3.5" />
           </Button>
 
           {contextBadge && (
@@ -218,14 +218,14 @@ export const EnhancedComposer = memo<{
             </Badge>
           )}
 
-          <div className="flex-1 relative">
+          <div className="relative flex-1">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder={placeholder}
               disabled={disabled}
-              className="w-full min-h-[40px] max-h-[120px] resize-none rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              className="max-h-[120px] min-h-[40px] w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
             />
           </div>
 
@@ -234,18 +234,18 @@ export const EnhancedComposer = memo<{
             variant="ghost"
             size="icon"
             onClick={() => handleToolAction('voice')}
-            className="h-8 w-8 hover:bg-accent/10"
+            className="hover:bg-accent/10 size-8"
           >
-            <Mic className="w-4 h-4" />
+            <Mic className="size-4" />
           </Button>
 
           <Button
             type="button"
             onClick={onSend}
             disabled={disabled || !input.trim()}
-            className="h-8 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+            className="hover:bg-accent/90 h-8 bg-accent px-4 text-accent-foreground"
           >
-            <Send className="w-4 h-4" />
+            <Send className="size-4" />
           </Button>
         </div>
       </div>
@@ -342,8 +342,8 @@ const MessageList: React.FC<{
       onKeyDown={handleKeyScroll}
     >
       {stickyHeader && (
-        <div className="sticky top-0 z-30 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-          <div className="mx-auto max-w-3xl px-4 pt-2 pb-3">
+        <div className="bg-background/90 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 border-b border-border backdrop-blur">
+          <div className="mx-auto max-w-3xl px-4 pb-3 pt-2">
             {stickyHeader}
           </div>
         </div>
@@ -370,13 +370,13 @@ const MessageList: React.FC<{
             animate={{ opacity: 1 }}
             className="flex items-center gap-2 text-muted-foreground"
           >
-            <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
+            <div className="size-2 animate-pulse rounded-full bg-current" />
             <div
-              className="h-2 w-2 rounded-full bg-current animate-pulse"
+              className="size-2 animate-pulse rounded-full bg-current"
               style={{ animationDelay: '75ms' }}
             />
             <div
-              className="h-2 w-2 rounded-full bg-current animate-pulse"
+              className="size-2 animate-pulse rounded-full bg-current"
               style={{ animationDelay: '150ms' }}
             />
           </motion.div>
@@ -454,20 +454,20 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         )}
         
         {/* Conversation Area - Simplified Fallback */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto" aria-live="polite" aria-busy={isLoading}>
             <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6" aria-label="Chat messages">
               {messages.length === 0 && !isLoading ? (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex-1 min-h-[40vh] grid place-items-center"
+                  className="grid min-h-[40vh] flex-1 place-items-center"
                 >
                   <div className="text-center">
                     <h3 className="text-2xl font-semibold">
                       Ready to assist you
                     </h3>
-                    <p className="text-muted-foreground mt-2">
+                    <p className="mt-2 text-muted-foreground">
                       Ask anything or share what you're working on
                     </p>
                     <div className="mt-6">
@@ -491,7 +491,7 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
                       className="flex gap-3"
                     >
                       <div className="flex-1">
-                        <div className="text-sm text-muted-foreground mb-1">
+                        <div className="mb-1 text-sm text-muted-foreground">
                           {message.role === 'user' ? 'You' : 'Assistant'}
                         </div>
                         <div className="text-sm">
@@ -553,28 +553,15 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
           />
         )}
 
-        {/* Fixed Stage Indicator Overlay */}
-        {!isDock && (
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50">
-            <ActivityDisplay
-              variant="monitor"
-              activities={[
-                { id: '1', type: 'user_action', title: 'User Input', description: 'Processing message', status: 'completed', timestamp: new Date().toISOString() },
-                { id: '2', type: 'ai_thinking', title: 'AI Analysis', description: 'Analyzing context', status: 'in_progress', timestamp: new Date().toISOString() },
-                { id: '3', type: 'ai_stream', title: 'Response Generation', description: 'Generating response', status: 'pending', timestamp: new Date().toISOString() }
-              ]}
-              stages={[
-                { id: '1', label: 'Input Processing', done: true },
-                { id: '2', label: 'Context Analysis', done: true },
-                { id: '3', label: 'AI Reasoning', current: true },
-                { id: '4', label: 'Response Generation', done: false },
-                { id: '5', label: 'Tool Integration', done: false },
-                { id: '6', label: 'Output Formatting', done: false },
-                { id: '7', label: 'Final Delivery', done: false }
-              ]}
-              currentStage="3"
-              stageProgress={3}
-            />
+        {/* Clean AI Process Status - Using ai-elements */}
+        {!isDock && isLoading && (
+          <div className="fixed bottom-20 right-4 z-50">
+            <div className="bg-card/90 border-border/20 rounded-xl border p-3 shadow-lg backdrop-blur-xl">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="size-2 animate-pulse rounded-full bg-accent" />
+                AI is thinking...
+              </div>
+            </div>
           </div>
         )}
         {/* ROI inline tool host (disabled for simplified fallback) */}

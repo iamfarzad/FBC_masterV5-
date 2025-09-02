@@ -67,12 +67,12 @@ export default function WorkshopModulePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="fixed top-0 left-0 w-full z-40 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="bg-background/80 fixed left-0 top-0 z-40 w-full border-b backdrop-blur-sm">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/workshop/modules">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="size-5" />
                 <span className="sr-only">Back to journey</span>
               </Link>
             </Button>
@@ -83,11 +83,11 @@ export default function WorkshopModulePage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant={isCompleted ? 'outline' : 'default'} size="sm" onClick={handleComplete} disabled={isCompleted}>
-              {isCompleted ? (<><CheckCircle className="h-4 w-4 mr-2" />Completed</>) : 'Mark as Complete'}
+              {isCompleted ? (<><CheckCircle className="mr-2 size-4" />Completed</>) : 'Mark as Complete'}
             </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="/">
-                <Home className="h-5 w-5" />
+                <Home className="size-5" />
                 <span className="sr-only">Home</span>
               </Link>
             </Button>
@@ -143,12 +143,12 @@ export default function WorkshopModulePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-6">
-            <div className="bg-primary/5 p-4 rounded-lg border mb-4">
-              <p className="font-medium text-center mb-2">Achievement Unlocked</p>
-              <p className="text-sm text-center text-muted-foreground">{module.title} Master</p>
+            <div className="bg-primary/5 mb-4 rounded-lg border p-4">
+              <p className="mb-2 text-center font-medium">Achievement Unlocked</p>
+              <p className="text-center text-sm text-muted-foreground">{module.title} Master</p>
             </div>
           </div>
-          <DialogFooter className="flex justify-center sm:justify-center gap-2">
+          <DialogFooter className="flex justify-center gap-2 sm:justify-center">
             {nextModule ? (
               <Button onClick={() => router.push(`/workshop/modules/${nextModule}`)} className="w-full sm:w-auto">Continue to Next Module</Button>
             ) : (

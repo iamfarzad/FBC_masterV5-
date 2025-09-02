@@ -50,30 +50,30 @@ export default function Header() {
   )
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-header">
-      <div className="mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-6 flex h-16 items-center">
+    <header className="border-border/40 glass-header sticky top-0 z-50 w-full border-b">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-2 sm:px-4 md:px-6">
         <Link href="/" className="flex items-center gap-3" aria-label="F.B/c Home">
           <FbcIcon variant="default" size={24} />
           <FbcLogo className="text-lg" />
         </Link>
-        <div className="hidden md:flex ml-10">
+        <div className="ml-10 hidden md:flex">
           <NavLinks />
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <LanguageSelector variant="minimal" className="min-h-11 min-w-11" />
-          <div className="min-h-11 min-w-11 inline-flex items-center justify-center">
+          <div className="inline-flex min-h-11 min-w-11 items-center justify-center">
             <ThemeToggle />
           </div>
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="min-h-11 min-w-11">
-                  <Menu className="h-6 w-6" />
+                  <Menu className="size-6" />
                   <span className="sr-only">Open navigation menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:max-w-md">
-                <div className="p-4 mt-6">
+                <div className="mt-6 p-4">
                   <NavLinks className="flex-col items-start gap-3" />
                 </div>
               </SheetContent>

@@ -104,7 +104,7 @@ export function summarizeTranscript(transcript: string, maxLength: number = 4000
   
   // If still too long, truncate
   if (summary.length > maxLength) {
-    summary = summary.substring(0, maxLength - 3) + '...'
+    summary = `${summary.substring(0, maxLength - 3)  }...`
   }
   
   return summary

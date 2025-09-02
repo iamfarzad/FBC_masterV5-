@@ -28,14 +28,14 @@ export default function CostSpeedChart() {
   }).filter(Boolean) as Array<{ name: string; parameters: number; tokensPerSecond: number; costPer1KTokens: number; color: string; time: number; cost: number }>
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <motion.div className="max-w-4xl w-full text-center mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-3xl font-bold mb-4">LLM Cost & Speed Comparison</h2>
+    <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center p-4">
+        <motion.div className="mb-8 w-full max-w-4xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">LLM Cost & Speed Comparison</h2>
           <p className="text-xl text-muted-foreground">Visualize tradeoffs between model size, speed, and cost</p>
         </motion.div>
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 bg-card border rounded-xl p-6 shadow-sm space-y-6">
+        <div className="grid w-full max-w-5xl grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="space-y-6 rounded-xl border bg-card p-6 shadow-sm lg:col-span-1">
             <div className="space-y-2">
               <label className="text-sm font-medium">Input Tokens: {inputTokens.toLocaleString()}</label>
               <Slider value={[inputTokens]} min={100} max={10000} step={100} onValueChange={(v) => setInputTokens(v[0])} />
@@ -50,27 +50,27 @@ export default function CostSpeedChart() {
                 {modelData.map((m) => (
                   <label key={m.name} className="flex items-center gap-2 text-sm">
                     <input type="checkbox" checked={selected.includes(m.name)} onChange={(e) => setSelected(e.target.checked ? [...selected, m.name] : selected.filter((s) => s !== m.name))} />
-                    <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: m.color }} />
+                    <span className="inline-block size-3 rounded-full" style={{ backgroundColor: m.color }} />
                     {m.name}
                   </label>
                 ))}
               </div>
             </div>
           </div>
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <Card>
               <CardHeader><CardTitle>Comparison (approximate)</CardTitle><CardDescription>Input {inputTokens} • Output {outputTokens}</CardDescription></CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead><tr className="border-b"><th className="text-left py-2">Model</th><th className="text-right py-2">Parameters</th><th className="text-right py-2">Time (s)</th><th className="text-right py-2">Cost ($)</th></tr></thead>
+                    <thead><tr className="border-b"><th className="py-2 text-left">Model</th><th className="py-2 text-right">Parameters</th><th className="py-2 text-right">Time (s)</th><th className="py-2 text-right">Cost ($)</th></tr></thead>
                     <tbody>
                       {metrics.map((m) => (
                         <tr key={m.name} className="border-b">
-                          <td className="py-3"><div className="flex items-center"><span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: m.color }} />{m.name}</div></td>
-                          <td className="text-right py-3">{m.parameters}B</td>
-                          <td className="text-right py-3">{m.time.toFixed(2)}</td>
-                          <td className="text-right py-3">{m.cost.toFixed(4)}</td>
+                          <td className="py-3"><div className="flex items-center"><span className="mr-2 inline-block size-3 rounded-full" style={{ backgroundColor: m.color }} />{m.name}</div></td>
+                          <td className="py-3 text-right">{m.parameters}B</td>
+                          <td className="py-3 text-right">{m.time.toFixed(2)}</td>
+                          <td className="py-3 text-right">{m.cost.toFixed(4)}</td>
                         </tr>
                       ))}
                     </tbody>

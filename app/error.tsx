@@ -18,13 +18,13 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <PageShell>
-        <div className="max-w-md mx-auto">
+        <div className="mx-auto max-w-md">
           <Card variant="elevated" className="text-center">
             <CardContent className="space-y-6">
-              <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-destructive" />
+              <div className="bg-destructive/10 mx-auto flex size-16 items-center justify-center rounded-full">
+                <AlertTriangle className="size-8 text-destructive" />
               </div>
               
               <div className="space-y-2">
@@ -36,7 +36,7 @@ export default function Error({
 
               <div className="space-y-3">
                 <Button onClick={reset} className="w-full">
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="mr-2 size-4" />
                   Try again
                 </Button>
                 
@@ -54,7 +54,7 @@ export default function Error({
                   <summary className="cursor-pointer text-sm text-muted-foreground">
                     Error details (development only)
                   </summary>
-                  <pre className="mt-2 text-xs bg-muted p-3 rounded overflow-auto">
+                  <pre className="mt-2 overflow-auto rounded bg-muted p-3 text-xs">
                     {error.message}
                     {error.stack && `\n\n${error.stack}`}
                   </pre>
