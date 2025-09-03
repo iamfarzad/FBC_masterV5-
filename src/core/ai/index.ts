@@ -38,7 +38,7 @@ export function createMockProvider(): TextProvider {
         await new Promise(resolve => setTimeout(resolve, 50)) // Simulate network delay
         const word = i === 0 ? words[i] : ` ${  words[i]}`
         // Action logged
-        yield word
+        if (word) yield word
       }
 
       // Action logged

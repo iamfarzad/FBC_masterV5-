@@ -1,5 +1,11 @@
 // Chat types for the unified chat system
 
+export interface ChatChunk {
+  id: string
+  type: 'text' | 'tool' | 'done' | 'error'
+  data: any
+}
+
 export interface ActivityItem {
   id: string
   type: string
