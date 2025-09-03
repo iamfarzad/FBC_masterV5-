@@ -21,10 +21,9 @@ import { useState } from "react"
 
 const navLinks = [
   { href: "/", label: "Home", key: "nav.home" },
-  { href: "/chat", label: "AI Chat", key: "nav.chat" },
+  { href: "/chat", label: "Platform", key: "nav.platform" },
   { href: "/workshop", label: "Workshop", key: "nav.workshop" },
   { href: "/consulting", label: "Consulting", key: "nav.consulting" },
-  { href: "/admin", label: "Admin", key: "nav.admin" },
   { href: "/contact", label: "Contact", key: "nav.contact" },
 ]
 
