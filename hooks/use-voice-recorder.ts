@@ -42,8 +42,8 @@ export function useVoiceRecorder({
   const isProcessingTurnCompleteRef = useRef<boolean>(false);
   const isRecordingRef = useRef<boolean>(false);
 
-  const initializeAudioContext = useCallback(async () => {
-    if (state.isInitializing) return; // Prevent multiple initializations
+  const initializeAudioContext = useCallback(async (): Promise<boolean> => {
+    if (state.isInitializing) return false; // Prevent multiple initializations
     try {
       setState(prev => ({ ...prev, isInitializing: true, error: null }));
       
