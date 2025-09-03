@@ -23,7 +23,14 @@ export function BookCallButton({
   const meeting = useMeeting()
 
   function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
-    try { meeting.open({ username, event, title, description }) } catch {}
+    try { 
+      meeting.open({ 
+        ...(username && { username }), 
+        ...(event && { event }), 
+        ...(title && { title }), 
+        ...(description && { description }) 
+      }) 
+    } catch {}
     onClick?.(e)
   }
 

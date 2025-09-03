@@ -33,10 +33,10 @@ export function MeetingProvider({ children }: { children: React.ReactNode }) {
       <MeetingOverlay
         open={isOpen}
         onClose={close}
-        username={opts.username}
-        event={opts.event}
-        title={opts.title}
-        description={opts.description}
+        {...(opts.username && { username: opts.username })}
+        {...(opts.event && { event: opts.event })}
+        {...(opts.title && { title: opts.title })}
+        {...(opts.description && { description: opts.description })}
       />
     </MeetingContext.Provider>
   )

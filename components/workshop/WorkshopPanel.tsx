@@ -52,7 +52,7 @@ export function WorkshopPanel() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(m => 
         m.title.toLowerCase().includes(query) ||
-        m.summary.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query) ||
         m.slug.toLowerCase().includes(query)
       )
     }
@@ -93,6 +93,13 @@ export function WorkshopPanel() {
     })
   }, [augmented])
 
+  const completedCount = augmented.filter(m => m.completed).length
+  const progressPct = modules.length ? Math.round((completedCount / modules.length) * 100) : 0
+  const nextModule = augmented.find(m => !m.completed)
+
+  const xpForModule = (phase: number) => (phase <= 1 ? 30 : phase === 2 ? 40 : phase === 3 ? 50 : 60)
+  const totalXp = augmented.reduce((sum, m) => sum + (m.completed ? xpForModule(m.phase) : 0), 0)
+  
   const achievements = useMemo(() => {
     const unlocked = []
     if (completedCount >= 3) unlocked.push({ id: 'first-steps', title: 'First Steps', description: 'Completed 3 modules', icon: '🚀' })
@@ -102,13 +109,6 @@ export function WorkshopPanel() {
     if (totalXp >= 200) unlocked.push({ id: 'xp-hunter', title: 'XP Hunter', description: '200+ XP earned', icon: '💎' })
     return unlocked
   }, [completedCount, totalXp, modules.length])
-
-  const completedCount = augmented.filter(m => m.completed).length
-  const progressPct = modules.length ? Math.round((completedCount / modules.length) * 100) : 0
-  const nextModule = augmented.find(m => !m.completed)
-
-  const xpForModule = (phase: number) => (phase <= 1 ? 30 : phase === 2 ? 40 : phase === 3 ? 50 : 60)
-  const totalXp = augmented.reduce((sum, m) => sum + (m.completed ? xpForModule(m.phase) : 0), 0)
 
   // URL -> in-panel module view (shallow)
   useEffect(() => {
