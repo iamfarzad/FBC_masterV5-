@@ -53,11 +53,16 @@ export function VoiceOverlay({
     hasPermission,
     requestPermission,
   } = useVoiceRecorder({
-    onAudioChunk: (audioData: string) => {
+    onAudioChunk: (chunk: ArrayBuffer) => {
+      // Convert ArrayBuffer to base64 string for transmission
+      const uint8Array = new Uint8Array(chunk)
+      const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('')
+      const base64String = btoa(binaryString)
+      
       // Collect audio chunks for real-time voice
-      setCollectedAudioData(prev => [...prev, audioData])
+      setCollectedAudioData(prev => [...prev, base64String])
       // Also send to WebSocket for live processing
-      onAudioChunk(audioData)
+      onAudioChunk(chunk)
     },
     onTurnComplete
   })
