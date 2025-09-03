@@ -1,147 +1,354 @@
-export interface TokenUsage {
-  timestamp: Date
+/**
+ * Token Usage Logger and Budget Enforcement
+ * Tracks AI model usage, costs, and enforces spending limits
+ */
+
+import { getSupabaseStorage } from '@/src/services/storage/supabase'
+
+export interface TokenUsageLog {
+  id?: string
+  user_id?: string
+  session_id?: string
+  feature: string
   model: string
-  operation: string
-  inputTokens: number
-  outputTokens: number
-  totalTokens: number
-  cost?: number
-  userId?: string
-  conversationId?: string
+  input_tokens: number
+  output_tokens: number
+  total_tokens?: number // Optional since it's calculated by the database as a generated column
+  estimated_cost: number
+  success: boolean
+  error_message?: string
+  usage_metadata?: unknown
+  created_at?: string
 }
+
+export interface UserPlanBudget {
+  daily_tokens: number
+  monthly_tokens: number
+  daily_requests: number
+  monthly_requests: number
+  current_daily_usage: number
+  current_monthly_usage: number
+  current_daily_requests: number
+  current_monthly_requests: number
+}
+
 
 export class TokenUsageLogger {
-  private usage: TokenUsage[] = []
-  private dailyLimits = new Map<string, number>()
-  private currentUsage = new Map<string, number>()
+  private static instance: TokenUsageLogger
 
-  // Approximate costs per 1K tokens (in cents)
-  private modelCosts = {
-    'gemini-1.5-pro': { input: 0.0035, output: 0.0105 },
-    'gemini-1.5-flash': { input: 0.00015, output: 0.0006 },
-    'gemini-pro': { input: 0.00125, output: 0.00375 },
-    'gpt-4': { input: 0.03, output: 0.06 },
-    'gpt-3.5-turbo': { input: 0.0015, output: 0.002 }
-  }
-
-  logUsage(usage: Omit<TokenUsage, 'timestamp'>): void {
-    const fullUsage: TokenUsage = {
-      ...usage,
-      timestamp: new Date(),
-      cost: this.calculateCost(usage.model, usage.inputTokens, usage.outputTokens)
+  static getInstance(): TokenUsageLogger {
+    if (!TokenUsageLogger.instance) {
+      TokenUsageLogger.instance = new TokenUsageLogger()
     }
-
-    this.usage.push(fullUsage)
-    
-    // Update current usage
-    const userId = usage.userId || 'anonymous'
-    const current = this.currentUsage.get(userId) || 0
-    this.currentUsage.set(userId, current + fullUsage.totalTokens)
-    
-    // Keep only last 30 days of data
-    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-    this.usage = this.usage.filter(u => u.timestamp.getTime() > thirtyDaysAgo)
+    return TokenUsageLogger.instance
   }
 
-  private calculateCost(model: string, inputTokens: number, outputTokens: number): number {
-    const costs = this.modelCosts[model as keyof typeof this.modelCosts]
-    if (!costs) return 0
+  async logTokenUsage(log: TokenUsageLog): Promise<void> {
+    try {
+      const supabase = getSupabaseStorage().getClient()
+      
+      const { error } = await supabase
+        .from('token_usage_logs')
+        .insert({
+          user_id: log.user_id,
+          session_id: log.session_id,
+          task_type: log.feature, // Map feature to task_type
+          endpoint: `/api/${log.feature}`, // Generate endpoint from feature
+          model: log.model,
+          input_tokens: log.input_tokens,
+          output_tokens: log.output_tokens,
+          // total_tokens is now a generated column - don't set it explicitly
+          estimated_cost: log.estimated_cost,
+          success: log.success,
+          error_message: log.error_message,
+          created_at: log.created_at || new Date().toISOString()
+        })
 
-    const inputCost = (inputTokens / 1000) * costs.input
-    const outputCost = (outputTokens / 1000) * costs.output
-    
-    return inputCost + outputCost
-  }
-
-  setDailyLimit(userId: string, limit: number): void {
-    this.dailyLimits.set(userId, limit)
-  }
-
-  checkLimit(userId: string): { allowed: boolean; remaining: number } {
-    const limit = this.dailyLimits.get(userId)
-    if (!limit) return { allowed: true, remaining: Infinity }
-
-    const todayUsage = this.getTodayUsage(userId)
-    const remaining = limit - todayUsage
-    
-    return {
-      allowed: remaining > 0,
-      remaining: Math.max(0, remaining)
+      if (error) {
+        // Error: Failed to log token usage
+      } else {
+        // Object logged`)
+      }
+    } catch (error) {
+    console.error('Token usage logging failed', error)
     }
   }
 
-  getTodayUsage(userId?: string): number {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    const todayUsage = this.usage.filter(u => {
-      const isToday = u.timestamp >= today
-      const isUser = !userId || u.userId === userId
-      return isToday && isUser
+  async getUserPlanBudget(userId: string): Promise<UserPlanBudget | null> {
+    try {
+      const supabase = getSupabaseStorage().getClient()
+      
+      // Get user's plan (default to demo plan if not found)
+      const { data: userPlan } = await supabase
+        .from('user_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      const plan = userPlan || {
+        daily_tokens: 50000, // Demo limits
+        monthly_tokens: 1000000,
+        daily_requests: 50,
+        monthly_requests: 1000
+      }
+
+      // Get current usage for today
+      const today = new Date()
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+
+      const { data: dailyUsage } = await supabase
+        .from('token_usage_logs')
+        .select('total_tokens')
+        .eq('user_id', userId)
+        .gte('created_at', startOfDay.toISOString())
+
+      const { data: monthlyUsage } = await supabase
+        .from('token_usage_logs')
+        .select('total_tokens')
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth.toISOString())
+
+      const currentDailyUsage = dailyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
+      const currentMonthlyUsage = monthlyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
+
+      // Count requests
+      const { count: dailyRequests } = await supabase
+        .from('token_usage_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', startOfDay.toISOString())
+
+      const { count: monthlyRequests } = await supabase
+        .from('token_usage_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', startOfMonth.toISOString())
+
+      return {
+        daily_tokens: plan.daily_tokens,
+        monthly_tokens: plan.monthly_tokens,
+        daily_requests: plan.daily_requests,
+        monthly_requests: plan.monthly_requests,
+        current_daily_usage: currentDailyUsage,
+        current_monthly_usage: currentMonthlyUsage,
+        current_daily_requests: dailyRequests || 0,
+        current_monthly_requests: monthlyRequests || 0
+      }
+    } catch (error) {
+    console.error('Failed to get user plan budget', error)
+      return null
+    }
+  }
+
+  async checkUserBudget(userId: string, estimatedTokens: number): Promise<{
+    allowed: boolean
+    reason?: string
+    suggestedModel?: string
+    budget: UserPlanBudget | null
+  }> {
+    const budget = await this.getUserPlanBudget(userId)
+    if (!budget) {
+      return { allowed: true, budget: null } // Allow if budget check fails
+    }
+
+    // Check daily limits
+    if (budget.current_daily_usage + estimatedTokens > budget.daily_tokens) {
+      return {
+        allowed: false,
+        reason: `Daily token limit exceeded. Used: ${budget.current_daily_usage}/${budget.daily_tokens}`,
+        suggestedModel: 'gemini-2.5-flash-lite', // Suggest cheaper model
+        budget
+      }
+    }
+
+    if (budget.current_daily_requests >= budget.daily_requests) {
+      return {
+        allowed: false,
+        reason: `Daily request limit exceeded. Used: ${budget.current_daily_requests}/${budget.daily_requests}`,
+        budget
+      }
+    }
+
+    // Check monthly limits
+    if (budget.current_monthly_usage + estimatedTokens > budget.monthly_tokens) {
+      return {
+        allowed: false,
+        reason: `Monthly token limit exceeded. Used: ${budget.current_monthly_usage}/${budget.monthly_tokens}`,
+        suggestedModel: 'gemini-2.5-flash-lite',
+        budget
+      }
+    }
+
+    if (budget.current_monthly_requests >= budget.monthly_requests) {
+      return {
+        allowed: false,
+        reason: `Monthly request limit exceeded. Used: ${budget.current_monthly_requests}/${budget.monthly_requests}`,
+        budget
+      }
+    }
+
+    return { allowed: true, budget }
+  }
+
+  async enforceBudgetAndLog(
+    userId: string | undefined,
+    sessionId: string | undefined,
+    feature: string,
+    model: string,
+    inputTokens: number,
+    outputTokens: number,
+    success: boolean = true,
+    errorMessage?: string,
+    usageMetadata?: unknown
+  ): Promise<{
+    allowed: boolean
+    reason?: string
+    suggestedModel?: string
+  }> {
+    const totalTokens = inputTokens + outputTokens
+    const estimatedCost = this.calculateCost(model, totalTokens)
+
+    // Log the successful request
+    await this.logTokenUsage({
+      user_id: userId,
+      session_id: sessionId,
+      feature,
+      model,
+      input_tokens: Math.round(inputTokens),
+      output_tokens: Math.round(outputTokens),
+      total_tokens: Math.round(totalTokens),
+      estimated_cost: estimatedCost,
+      success,
+      error_message: errorMessage,
+      usage_metadata: usageMetadata
     })
 
-    return todayUsage.reduce((sum, u) => sum + u.totalTokens, 0)
+    return { allowed: true }
   }
 
-  getUsageSummary(days: number = 7): {
+  private calculateCost(model: string, totalTokens: number): number {
+    // Cost per 1M tokens (approximate)
+    const costs: Record<string, number> = {
+      'gemini-2.5-flash': 0.075, // $0.075 per 1M tokens
+      'gemini-2.5-flash-lite': 0.025, // $0.025 per 1M tokens
+      'gemini-1.5-flash': 0.075,
+      'gemini-1.5-pro': 0.375,
+      'gemini-1.0-pro': 0.5
+    }
+
+    const costPerMillion = costs[model] || costs['gemini-2.5-flash-lite']
+    return (totalTokens / 1000000) * costPerMillion
+  }
+
+  async getUsageStats(userId?: string, sessionId?: string, timeframe: 'day' | 'week' | 'month' = 'day'): Promise<{
     totalTokens: number
     totalCost: number
-    byModel: Record<string, { tokens: number; cost: number }>
-    byDay: Array<{ date: string; tokens: number; cost: number }>
-  } {
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
-    
-    const recentUsage = this.usage.filter(u => u.timestamp >= cutoffDate)
-    
-    const totalTokens = recentUsage.reduce((sum, u) => sum + u.totalTokens, 0)
-    const totalCost = recentUsage.reduce((sum, u) => sum + (u.cost || 0), 0)
-    
-    // Group by model
-    const byModel: Record<string, { tokens: number; cost: number }> = {}
-    recentUsage.forEach(u => {
-      if (!byModel[u.model]) {
-        byModel[u.model] = { tokens: 0, cost: 0 }
+    totalRequests: number
+    featureBreakdown: Record<string, { tokens: number; cost: number; requests: number }>
+  }> {
+    try {
+      const supabase = getSupabaseStorage().getClient()
+      
+      const now = new Date()
+      let startDate: Date
+      
+      switch (timeframe) {
+        case 'day':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          break
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          break
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          break
       }
-      byModel[u.model].tokens += u.totalTokens
-      byModel[u.model].cost += u.cost || 0
-    })
-    
-    // Group by day
-    const byDay: Record<string, { tokens: number; cost: number }> = {}
-    recentUsage.forEach(u => {
-      const dateKey = u.timestamp.toISOString().split('T')[0]
-      if (!byDay[dateKey]) {
-        byDay[dateKey] = { tokens: 0, cost: 0 }
+
+      let query = supabase
+        .from('token_usage_logs')
+        .select('*')
+        .gte('created_at', startDate.toISOString())
+
+      if (userId) {
+        query = query.eq('user_id', userId)
+      } else if (sessionId) {
+        query = query.eq('session_id', sessionId)
       }
-      byDay[dateKey].tokens += u.totalTokens
-      byDay[dateKey].cost += u.cost || 0
-    })
-    
-    return {
-      totalTokens,
-      totalCost,
-      byModel,
-      byDay: Object.entries(byDay).map(([date, data]) => ({
-        date,
-        ...data
-      })).sort((a, b) => a.date.localeCompare(b.date))
+
+      const { data: logs } = await query
+
+      if (!logs) {
+        return {
+          totalTokens: 0,
+          totalCost: 0,
+          totalRequests: 0,
+          featureBreakdown: {}
+        }
+      }
+
+      const featureBreakdown: Record<string, { tokens: number; cost: number; requests: number }> = {}
+      let totalTokens = 0
+      let totalCost = 0
+
+      logs.forEach(log => {
+        totalTokens += log.total_tokens
+        totalCost += log.estimated_cost
+
+        const feature = log.task_type || 'unknown' // Use task_type instead of feature
+
+        if (!featureBreakdown[feature]) {
+          featureBreakdown[feature] = { tokens: 0, cost: 0, requests: 0 }
+        }
+
+        featureBreakdown[feature].tokens += log.total_tokens
+        featureBreakdown[feature].cost += log.estimated_cost
+        featureBreakdown[feature].requests += 1
+      })
+
+      return {
+        totalTokens,
+        totalCost,
+        totalRequests: logs.length,
+        featureBreakdown
+      }
+    } catch (error) {
+    console.error('Failed to get usage stats', error)
+      return {
+        totalTokens: 0,
+        totalCost: 0,
+        totalRequests: 0,
+        featureBreakdown: {}
+      }
     }
-  }
-
-  getUserUsage(userId: string, days: number = 30): TokenUsage[] {
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
-    
-    return this.usage.filter(u => 
-      u.userId === userId && u.timestamp >= cutoffDate
-    )
-  }
-
-  clear(): void {
-    this.usage = []
-    this.currentUsage.clear()
   }
 }
 
-export const tokenUsageLogger = new TokenUsageLogger()
+// Convenience functions
+export const logTokenUsage = (log: TokenUsageLog) => {
+  return TokenUsageLogger.getInstance().logTokenUsage(log)
+}
+
+export const checkBudget = (userId: string, estimatedTokens: number) => {
+  return TokenUsageLogger.getInstance().checkUserBudget(userId, estimatedTokens)
+}
+
+export const enforceBudgetAndLog = (
+  userId: string | undefined,
+  sessionId: string | undefined,
+  feature: string,
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+  success?: boolean,
+  errorMessage?: string,
+  usageMetadata?: unknown
+) => {
+  return TokenUsageLogger.getInstance().enforceBudgetAndLog(
+    userId, sessionId, feature, model, inputTokens, outputTokens, success, errorMessage, usageMetadata
+  )
+}
+
+export const getUsageStats = (userId?: string, sessionId?: string, timeframe?: 'day' | 'week' | 'month') => {
+  return TokenUsageLogger.getInstance().getUsageStats(userId, sessionId, timeframe)
+}

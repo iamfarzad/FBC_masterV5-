@@ -1,258 +1,258 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+/**
+ * Unified Chat Hook
+ * Single hook that handles all chat modes and streaming
+ * Replaces useChat and useRealtimeChat
+ */
 
-export type ChatMode = 'standard' | 'realtime' | 'admin' | 'multimodal'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import {
+  UnifiedMessage,
+  UnifiedChatOptions,
+  UnifiedChatReturn,
+  ChatMode,
+  UnifiedContext,
+  UnifiedChatRequest
+} from '@/src/core/chat/unified-types'
+import { unifiedStreamingService } from '@/src/core/streaming/unified-stream'
+import { unifiedErrorHandler } from '@/src/core/chat/unified-error-handler'
 
-export interface UnifiedChatOptions {
-  mode?: ChatMode
-  conversationId?: string
-  systemPrompt?: string
-  onError?: (error: Error) => void
-}
-
-export interface UnifiedMessage {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp: Date
-  metadata?: Record<string, any>
-}
-
-export function useUnifiedChat(options: UnifiedChatOptions = {}) {
-  const { mode = 'standard', conversationId, systemPrompt, onError } = options
-  
-  // Custom chat implementation
-  const [messages, setMessages] = useState<UnifiedMessage[]>(
-    systemPrompt ? [{
-      id: 'system',
-      role: 'system',
-      content: systemPrompt,
-      timestamp: new Date()
-    }] : []
-  )
-  const [input, setInput] = useState('')
+export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
+  const [messages, setMessages] = useState<UnifiedMessage[]>(options.initialMessages || [])
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<Error | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
 
-  // WebSocket connection for realtime mode
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const sessionRef = useRef(options.sessionId)
+
+  // Initialize session management based on mode
   useEffect(() => {
-    if (mode === 'realtime') {
-      const ws = new WebSocket(`ws://localhost:3001`)
-      
-      ws.onopen = () => {
-        setIsConnected(true)
-        if (conversationId) {
-          ws.send(JSON.stringify({ type: 'join', conversationId }))
-        }
-      }
+    if (options.mode === 'admin' && options.context?.adminId) {
+      unifiedChatProvider.initializeAdminSession(options.sessionId, options.context.adminId)
+    } else if (options.mode === 'realtime') {
+      unifiedChatProvider.initializeRealtimeSession(options.sessionId)
+    }
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === 'message') {
-            const message: UnifiedMessage = {
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: data.content,
-              timestamp: new Date(data.timestamp),
-              metadata: data.metadata
-            }
-            setMessages(prev => [...prev, message])
-          }
-        } catch (error) {
-          console.error('WebSocket message error:', error)
-        }
-      }
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
-        setIsConnected(false)
-        onError?.(new Error('WebSocket connection failed'))
-      }
-
-      ws.onclose = () => {
-        setIsConnected(false)
-      }
-
-      wsRef.current = ws
-
-      return () => {
-        ws.close()
+    return () => {
+      if (options.mode === 'admin') {
+        unifiedChatProvider.disconnectAdminSession(options.sessionId)
+      } else if (options.mode === 'realtime') {
+        unifiedChatProvider.disconnectRealtimeSession(options.sessionId)
       }
     }
-  }, [mode, conversationId, onError])
+  }, [options.sessionId, options.mode, options.context?.adminId])
 
-  // Handle input changes
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value)
+  // Enhanced real-time session state management
+  const realtimeStatus = options.mode === 'realtime'
+    ? unifiedChatProvider.getRealtimeSessionStatus(options.sessionId)
+    : null
+
+  const realtimeIsConnected = realtimeStatus?.isConnected || false
+  const realtimeIsConnecting = realtimeStatus?.isConnecting || false
+  const realtimeIsStreaming = realtimeStatus?.isStreaming || false
+  const realtimeLastActivity = realtimeStatus?.lastActivity || null
+  const realtimeCorrelationId = realtimeStatus?.correlationId
+
+  // Update session reference when options change
+  useEffect(() => {
+    sessionRef.current = options.sessionId
+  }, [options.sessionId])
+
+  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'>) => {
+    const newMessage: UnifiedMessage = {
+      ...message,
+      id: crypto.randomUUID(),
+      timestamp: message.timestamp || new Date(),
+      type: message.type || 'text',
+      metadata: message.metadata
+    }
+    setMessages(prev => [...prev, newMessage])
+    return newMessage
   }, [])
 
-  // Send message via standard API
-  const sendStandardMessage = useCallback(async (content: string) => {
-    const userMessage: UnifiedMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content,
-      timestamp: new Date()
-    }
-    
-    setMessages(prev => [...prev, userMessage])
-    setIsLoading(true)
-    setError(null)
+  const updateMessage = useCallback((id: string, updates: Partial<UnifiedMessage>) => {
+    setMessages(prev =>
+      prev.map(msg => msg.id === id ? { ...msg, ...updates } : msg)
+    )
+  }, [])
+
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
+    if (!content.trim() || isLoading || isStreaming) return
 
     try {
-      const response = await fetch('/api/chat', {
+      setIsLoading(true)
+      setError(null)
+
+      // Abort any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
+      // Add user message
+      const userMessage = addMessage({
+        role: 'user',
+        content: content.trim(),
+        timestamp: new Date(),
+        type: 'text'
+      })
+
+      // Prepare unified request
+      const request: UnifiedChatRequest = {
+        messages: [...messages, userMessage],
+        context: options.context,
+        mode: options.mode || 'standard',
+        stream: true
+      }
+
+      // Make request to unified API
+      const response = await fetch('/api/chat/unified', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-unified-chat': 'true',
+          'x-session-id': sessionRef.current || 'anonymous',
+          'x-chat-mode': request.mode
+        },
+        body: JSON.stringify(request),
+        signal: controller.signal
       })
 
       if (!response.ok) {
-        throw new Error(`Chat API error: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}`)
       }
 
-      const data = await response.json()
-      
-      const assistantMessage: UnifiedMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.message || data.content || 'No response',
-        timestamp: new Date()
+      if (!response.body) {
+        throw new Error('No response body')
       }
-      
-      setMessages(prev => [...prev, assistantMessage])
-    } catch (err) {
-      const errorObj = err as Error
-      setError(errorObj)
-      onError?.(errorObj)
-    } finally {
+
       setIsLoading(false)
-      setInput('')
-    }
-  }, [messages, onError])
+      setIsStreaming(true)
 
-  // Send message based on mode
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return
-
-    switch (mode) {
-      case 'realtime':
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          const userMessage: UnifiedMessage = {
-            id: Date.now().toString(),
-            role: 'user',
-            content,
-            timestamp: new Date()
-          }
-          setMessages(prev => [...prev, userMessage])
-          wsRef.current.send(JSON.stringify({
-            type: 'message',
-            content,
-            conversationId
-          }))
-          setInput('')
-        }
-        break
-
-      case 'admin':
-        // Admin mode
-        try {
-          setIsLoading(true)
-          const response = await fetch('/api/admin/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: content, conversationId })
-          })
-          
-          if (!response.ok) throw new Error('Admin chat failed')
-          
-          const data = await response.json()
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: data.message,
-            timestamp: new Date()
-          }])
-          setInput('')
-        } catch (err) {
-          setError(err as Error)
-          onError?.(err as Error)
-        } finally {
-          setIsLoading(false)
-        }
-        break
-
-      case 'multimodal':
-        // Multimodal mode
-        try {
-          setIsLoading(true)
-          const response = await fetch('/api/multimodal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              content, 
-              type: 'text',
-              conversationId 
+      // Parse streaming response
+      let assistantMessage: UnifiedMessage | null = null
+      for await (const message of unifiedStreamingService.parseSSEStream(response)) {
+        if (message.role === 'assistant') {
+          if (!assistantMessage) {
+            // Create new assistant message
+            assistantMessage = addMessage({
+              role: 'assistant',
+              content: message.content,
+              timestamp: new Date(),
+              type: message.type || 'text',
+              metadata: message.metadata
             })
-          })
-          
-          if (!response.ok) throw new Error('Multimodal chat failed')
-          
-          const data = await response.json()
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: data.message,
-            timestamp: new Date()
-          }])
-          setInput('')
-        } catch (err) {
-          setError(err as Error)
-          onError?.(err as Error)
-        } finally {
-          setIsLoading(false)
+          } else {
+            // Update existing assistant message
+            updateMessage(assistantMessage.id, {
+              content: message.content,
+              metadata: message.metadata
+            })
+          }
+
+          // Call message callback if provided
+          options.onMessage?.(message)
+
+          // Check if this is the final message
+          if (message.metadata?.isComplete) {
+            setIsStreaming(false)
+            options.onComplete?.()
+            break
+          }
         }
-        break
+      }
 
-      default:
-        // Standard mode
-        await sendStandardMessage(content)
+    } catch (err) {
+      setIsLoading(false)
+      setIsStreaming(false)
+
+      // Update real-time session state on error
+      if (options.mode === 'realtime') {
+        unifiedChatProvider.setRealtimeConnecting(options.sessionId, false)
+        unifiedChatProvider.setRealtimeStreaming(options.sessionId, false)
+      }
+
+      const chatError = unifiedErrorHandler.handleError(err, {
+        sessionId: options.sessionId,
+        mode: options.mode,
+        userId: options.context?.adminId
+      }, 'unified_chat_hook')
+
+      setError(chatError)
+
+      if (err instanceof Error && err.name !== 'AbortError') {
+        // Add standardized error message to chat
+        addMessage({
+          role: 'assistant',
+          content: chatError.message,
+          timestamp: new Date(),
+          type: 'text',
+          metadata: {
+            error: true,
+            errorCode: chatError.code,
+            recoverable: chatError.recoverable
+          }
+        })
+
+        options.onError?.(chatError)
+      }
+    } finally {
+      abortControllerRef.current = null
     }
-  }, [mode, conversationId, sendStandardMessage, onError])
+  }, [messages, isLoading, isStreaming, options, addMessage, updateMessage])
 
-  // Handle form submission
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    if (input.trim()) {
-      sendMessage(input)
-    }
-  }, [input, sendMessage])
-
-  // Clear messages
-  const clear = useCallback(() => {
+  const clearMessages = useCallback(() => {
     setMessages([])
-    setInput('')
     setError(null)
   }, [])
 
-  // Unified interface
+  const updateContext = useCallback((context: Partial<UnifiedContext>) => {
+    // Update context in options (this would typically trigger a re-render)
+    // In a real implementation, you might want to use a ref or state for this
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
   return {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
     isLoading,
+    isStreaming,
     error,
     sendMessage,
-    isConnected,
-    mode,
-    clear,
-    setInput
+    clearMessages,
+    updateContext,
+    addMessage,
+    // Real-time compatibility fields
+    isConnected: realtimeIsConnected,
+    isConnecting: realtimeIsConnecting,
+    isStreaming: realtimeIsStreaming,
+    lastActivity: realtimeLastActivity,
+    correlationId: realtimeCorrelationId
   }
+}
+
+/**
+ * Legacy compatibility hooks - DEPRECATED
+ * These will be removed in Phase 6 cleanup
+ * DO NOT USE in new code - use useUnifiedChat instead
+ */
+
+export function useChat(options: Omit<UnifiedChatOptions, 'mode'>) {
+  console.warn('⚠️ useChat is DEPRECATED. Use useUnifiedChat instead.')
+  return useUnifiedChat({ ...options, mode: 'standard' })
+}
+
+export function useRealtimeChat(options: Omit<UnifiedChatOptions, 'mode'>) {
+  console.warn('⚠️ useRealtimeChat is DEPRECATED. Use useUnifiedChat instead.')
+  return useUnifiedChat({ ...options, mode: 'realtime' })
 }

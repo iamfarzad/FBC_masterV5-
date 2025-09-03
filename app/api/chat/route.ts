@@ -1,48 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { UnifiedChatProvider } from '@/src/core/chat/unified-provider'
+import { handleChat } from '@/src/api/chat/handler'
+import { validateRequest, chatRequestSchema } from '@/src/core/validation'
+
+// Edge Function Configuration for Real-Time Performance
+export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, message } = await req.json()
-    
-    // Handle both message formats
-    const chatMessages = messages || [
-      { role: 'user', content: message || '' }
-    ]
-    
-    if (!chatMessages || chatMessages.length === 0) {
-      return NextResponse.json({ error: 'Messages required' }, { status: 400 })
+    const body = await req.json()
+
+    // Validate request using the same pattern as FB-c_labV3-main
+    const validation = validateRequest(chatRequestSchema, body)
+
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid request',
+          details: validation.errors
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
     }
 
-    const provider = new UnifiedChatProvider()
-    const response = await provider.chat(chatMessages, { stream: false })
-    
-    return NextResponse.json({ 
-      message: response,
-      content: response,
-      success: true
-    })
-    
+    // Pass validated data to handler - Edge Function will handle streaming
+    return await handleChat(validation.data)
   } catch (error) {
     console.error('Chat API error:', error)
-    
-    return NextResponse.json({
-      message: 'I understand your request. Let me help you with that.',
-      content: 'I understand your request. Let me help you with that.',
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    })
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Internal server error'
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
   }
-}
-
-export async function GET(req: NextRequest) {
-  return NextResponse.json({
-    status: 'Chat API is running',
-    endpoints: {
-      chat: '/api/chat',
-      tools: '/api/tools/*',
-      multimodal: '/api/multimodal',
-      admin: '/api/admin/chat'
-    }
-  })
 }

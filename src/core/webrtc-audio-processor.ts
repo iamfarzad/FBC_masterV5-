@@ -1,208 +1,413 @@
-export class WebRTCAudioProcessor {
-  private audioContext: AudioContext | null = null
-  private mediaStream: MediaStream | null = null
-  private mediaRecorder: MediaRecorder | null = null
-  private analyser: AnalyserNode | null = null
-  private chunks: Blob[] = []
-  private isRecording = false
+/**
+ * WebRTC Audio Processor for Real-time Low-latency Audio Streaming
+ * Provides ultra-low latency audio processing using WebRTC
+ */
 
-  async initializeAudio(): Promise<void> {
+export interface WebRTCAudioConfig {
+  sampleRate: number
+  channels: number
+  bitDepth: number
+  bufferSize: number
+  enableEchoCancellation: boolean
+  enableNoiseSuppression: boolean
+  enableAutoGainControl: boolean
+}
+
+export interface AudioStreamConfig {
+  streamId: string
+  userId: string
+  sessionId: string
+  voiceName: string
+  languageCode: string
+}
+
+export class WebRTCAudioProcessor {
+  private peerConnection: RTCPeerConnection | null = null
+  private localStream: MediaStream | null = null
+  private remoteStream: MediaStream | null = null
+  private audioContext: AudioContext | null = null
+  private audioProcessor: ScriptProcessorNode | null = null
+  private config: WebRTCAudioConfig
+  private isConnected = false
+  private onAudioData: ((data: ArrayBuffer) => void) | null = null
+  private onConnectionStateChange: ((state: string) => void) | null = null
+
+  constructor(config: Partial<WebRTCAudioConfig> = {}) {
+    this.config = {
+      sampleRate: 24000,
+      channels: 1,
+      bitDepth: 16,
+      bufferSize: 4096,
+      enableEchoCancellation: true,
+      enableNoiseSuppression: true,
+      enableAutoGainControl: true,
+      ...config,
+    }
+  }
+
+  /**
+   * Get the underlying RTCPeerConnection instance.
+   * Useful for attaching event listeners directly.
+   */
+  getPeerConnection(): RTCPeerConnection | null {
+    return this.peerConnection
+  }
+
+  /**
+   * Initialize WebRTC audio processing
+   */
+  async initialize(): Promise<void> {
     try {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-          channelCount: 1
-        } 
+      // Create audio context
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: this.config.sampleRate,
+        latencyHint: "interactive",
       })
-      
-      const source = this.audioContext.createMediaStreamSource(this.mediaStream)
-      this.analyser = this.audioContext.createAnalyser()
-      this.analyser.fftSize = 2048
-      source.connect(this.analyser)
-      
+
+      // Create peer connection with optimized settings for low latency
+      this.peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }],
+        iceCandidatePoolSize: 10,
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
+        iceTransportPolicy: "all",
+      })
+
+      // Set up connection state change handler
+      this.peerConnection.onconnectionstatechange = () => {
+        const state = this.peerConnection?.connectionState || "unknown"
+        this.isConnected = state === "connected"
+        this.onConnectionStateChange?.(state)
+        // Action logged
+      }
+
+      // Set up data channel for audio streaming
+      const dataChannel = this.peerConnection.createDataChannel("audio", {
+        ordered: false,
+        maxRetransmits: 0,
+      })
+
+      dataChannel.onopen = () => {
+        // Action logged
+      }
+
+      dataChannel.onmessage = (event) => {
+        if (this.onAudioData) {
+          this.onAudioData(event.data)
+        }
+      }
+
+      // Action logged
     } catch (error) {
-      console.error('Audio initialization failed:', error)
+    console.error('❌ Failed to initialize WebRTC audio processor', error)
       throw error
     }
   }
 
-  startRecording(options: MediaRecorderOptions = {}): void {
-    if (!this.mediaStream) {
-      throw new Error('Audio not initialized')
+  /**
+   * Start audio capture with enhanced quality
+   */
+  async startAudioCapture(): Promise<MediaStream> {
+    try {
+      if (!this.audioContext) {
+        throw new Error("Audio context not initialized")
+      }
+
+      // Request microphone access with optimized constraints
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: this.config.sampleRate,
+          channelCount: this.config.channels,
+          echoCancellation: this.config.enableEchoCancellation,
+          noiseSuppression: this.config.enableNoiseSuppression,
+          autoGainControl: this.config.enableAutoGainControl,
+          latency: 0.01, // 10ms latency target
+          googEchoCancellation: this.config.enableEchoCancellation,
+          googAutoGainControl: this.config.enableAutoGainControl,
+          googNoiseSuppression: this.config.enableNoiseSuppression,
+          googHighpassFilter: true,
+          googTypingNoiseDetection: true,
+          googAudioMirroring: false,
+        },
+        video: false,
+      })
+
+      // Add local stream to peer connection
+      this.localStream.getTracks().forEach((track) => {
+        this.peerConnection?.addTrack(track, this.localStream!)
+      })
+
+      // Set up audio processing
+      await this.setupAudioProcessing()
+
+      // Action logged
+      return this.localStream
+    } catch (error) {
+    console.error('❌ Failed to start audio capture', error)
+      throw error
+    }
+  }
+
+  /**
+   * Set up real-time audio processing
+   */
+  private async setupAudioProcessing(): Promise<void> {
+    if (!this.audioContext || !this.localStream) {
+      throw new Error("Audio context or local stream not available")
     }
 
-    this.chunks = []
-    this.mediaRecorder = new MediaRecorder(this.mediaStream, {
-      mimeType: 'audio/webm',
-      ...options
-    })
+    try {
+      // Create audio source from microphone
+      const source = this.audioContext.createMediaStreamSource(this.localStream)
 
-    this.mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        this.chunks.push(event.data)
+      // Create audio processor for real-time processing
+      this.audioProcessor = this.audioContext.createScriptProcessor(
+        this.config.bufferSize,
+        this.config.channels,
+        this.config.channels,
+      )
+
+      // Process audio in real-time
+      this.audioProcessor.onaudioprocess = (event) => {
+        const inputBuffer = event.inputBuffer
+        const outputBuffer = event.outputBuffer
+
+        // Apply real-time audio enhancements
+        for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++) {
+          const inputData = inputBuffer.getChannelData(channel)
+          const outputData = outputBuffer.getChannelData(channel)
+
+          // Apply real-time processing
+          for (let i = 0; i < inputData.length; i++) {
+            // Apply noise gate
+            const threshold = 0.01
+            if (Math.abs(inputData[i]) < threshold) {
+              outputData[i] = 0
+            } else {
+              // Apply compression
+              const compressionRatio = 4
+              const compressionThreshold = 0.5
+              let sample = inputData[i]
+
+              if (Math.abs(sample) > compressionThreshold) {
+                const excess = Math.abs(sample) - compressionThreshold
+                const compressedExcess = excess / compressionRatio
+                sample =
+                  sample > 0 ? compressionThreshold + compressedExcess : -(compressionThreshold + compressedExcess)
+              }
+
+              outputData[i] = sample
+            }
+          }
+        }
       }
+
+      // Connect the audio processing chain
+      source.connect(this.audioProcessor)
+      this.audioProcessor.connect(this.audioContext.destination)
+
+      // Action logged
+    } catch (error) {
+    console.error('❌ Failed to set up audio processing', error)
+      throw error
     }
-
-    this.mediaRecorder.start()
-    this.isRecording = true
   }
 
-  async stopRecording(): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      if (!this.mediaRecorder) {
-        reject(new Error('No recording in progress'))
-        return
+  /**
+   * Send audio data through WebRTC
+   */
+  async sendAudioData(audioData: ArrayBuffer): Promise<void> {
+    try {
+      if (!this.peerConnection || !this.isConnected) {
+        throw new Error("WebRTC not connected")
       }
 
-      this.mediaRecorder.onstop = () => {
-        const blob = new Blob(this.chunks, { type: 'audio/webm' })
-        this.chunks = []
-        resolve(blob)
+      const dataChannel = this.peerConnection.dataChannels?.[0]
+      if (dataChannel && dataChannel.readyState === "open") {
+        dataChannel.send(audioData)
+      }
+    } catch (error) {
+    console.error('❌ Failed to send audio data', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create offer for WebRTC connection
+   */
+  async createOffer(): Promise<RTCSessionDescriptionInit> {
+    try {
+      if (!this.peerConnection) {
+        throw new Error("Peer connection not initialized")
       }
 
-      this.mediaRecorder.stop()
-      this.isRecording = false
-    })
+      const offer = await this.peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      })
+
+      await this.peerConnection.setLocalDescription(offer)
+      return offer
+    } catch (error) {
+    console.error('❌ Failed to create offer', error)
+      throw error
+    }
   }
 
-  getAudioLevel(): number {
-    if (!this.analyser) return 0
+  /**
+   * Set remote description (answer from server)
+   */
+  async setRemoteDescription(description: RTCSessionDescriptionInit): Promise<void> {
+    try {
+      if (!this.peerConnection) {
+        throw new Error("Peer connection not initialized")
+      }
 
-    const bufferLength = this.analyser.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
-    this.analyser.getByteFrequencyData(dataArray)
-
-    const sum = dataArray.reduce((a, b) => a + b, 0)
-    return sum / bufferLength
+      await this.peerConnection.setRemoteDescription(description)
+      // Action logged
+    } catch (error) {
+    console.error('❌ Failed to set remote description', error)
+      throw error
+    }
   }
 
-  getFrequencyData(): Uint8Array | null {
-    if (!this.analyser) return null
+  /**
+   * Add ICE candidate
+   */
+  async addIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
+    try {
+      if (!this.peerConnection) {
+        throw new Error("Peer connection not initialized")
+      }
 
-    const bufferLength = this.analyser.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
-    this.analyser.getByteFrequencyData(dataArray)
-    
-    return dataArray
+      await this.peerConnection.addIceCandidate(candidate)
+    } catch (error) {
+    console.error('❌ Failed to add ICE candidate', error)
+      throw error
+    }
   }
 
-  async processAudioForTranscription(audioBlob: Blob): Promise<ArrayBuffer> {
-    // Convert audio blob to ArrayBuffer for processing
-    return await audioBlob.arrayBuffer()
+  /**
+   * Set up event handlers
+   */
+  onAudioDataReceived(callback: (data: ArrayBuffer) => void): void {
+    this.onAudioData = callback
   }
 
-  async applyNoiseReduction(audioData: ArrayBuffer): Promise<ArrayBuffer> {
-    // Apply noise reduction algorithm (simplified version)
-    const audioContext = new AudioContext()
-    const audioBuffer = await audioContext.decodeAudioData(audioData)
-    
-    // Create offline context for processing
-    const offlineContext = new OfflineAudioContext(
-      audioBuffer.numberOfChannels,
-      audioBuffer.length,
-      audioBuffer.sampleRate
+  onConnectionStateChanged(callback: (state: string) => void): void {
+    this.onConnectionStateChange = callback
+  }
+
+  /**
+   * Get connection statistics
+   */
+  async getConnectionStats(): Promise<RTCStatsReport | null> {
+    try {
+      if (!this.peerConnection) {
+        return null
+      }
+
+      return await this.peerConnection.getStats()
+    } catch (error) {
+    console.error('❌ Failed to get connection stats', error)
+      return null
+    }
+  }
+
+  /**
+   * Clean up resources
+   */
+  async cleanup(): Promise<void> {
+    try {
+      // Stop audio processing
+      if (this.audioProcessor) {
+        this.audioProcessor.disconnect()
+        this.audioProcessor = null
+      }
+
+      // Stop local stream
+      if (this.localStream) {
+        this.localStream.getTracks().forEach((track) => track.stop())
+        this.localStream = null
+      }
+
+      // Close peer connection
+      if (this.peerConnection) {
+        this.peerConnection.close()
+        this.peerConnection = null
+      }
+
+      // Close audio context
+      if (this.audioContext) {
+        await this.audioContext.close()
+        this.audioContext = null
+      }
+
+      this.isConnected = false
+      // Action logged
+    } catch (error) {
+    console.error('❌ Error during cleanup', error)
+    }
+  }
+
+  /**
+   * Check if WebRTC is supported
+   */
+  static isSupported(): boolean {
+    return !!(
+      typeof window !== "undefined" &&
+      window.RTCPeerConnection &&
+      window.AudioContext &&
+      navigator.mediaDevices &&
+      navigator.mediaDevices.getUserMedia
     )
-
-    const source = offlineContext.createBufferSource()
-    source.buffer = audioBuffer
-
-    // Create and configure filters
-    const highPassFilter = offlineContext.createBiquadFilter()
-    highPassFilter.type = 'highpass'
-    highPassFilter.frequency.value = 100
-
-    const lowPassFilter = offlineContext.createBiquadFilter()
-    lowPassFilter.type = 'lowpass'
-    lowPassFilter.frequency.value = 8000
-
-    // Connect nodes
-    source.connect(highPassFilter)
-    highPassFilter.connect(lowPassFilter)
-    lowPassFilter.connect(offlineContext.destination)
-
-    source.start()
-    const renderedBuffer = await offlineContext.startRendering()
-    
-    // Convert back to ArrayBuffer
-    const wav = this.audioBufferToWav(renderedBuffer)
-    return wav
   }
 
-  private audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
-    const length = buffer.length * buffer.numberOfChannels * 2 + 44
-    const arrayBuffer = new ArrayBuffer(length)
-    const view = new DataView(arrayBuffer)
-    const channels = []
-    let offset = 0
-    let pos = 0
-
-    // Write WAV header
-    const setUint16 = (data: number) => {
-      view.setUint16(pos, data, true)
-      pos += 2
+  /**
+   * Get optimal configuration for different use cases
+   */
+  static getOptimalConfig(useCase: "conversation" | "presentation" | "broadcast"): WebRTCAudioConfig {
+    switch (useCase) {
+      case "conversation":
+        return {
+          sampleRate: 24000,
+          channels: 1,
+          bitDepth: 16,
+          bufferSize: 2048, // Smaller buffer for lower latency
+          enableEchoCancellation: true,
+          enableNoiseSuppression: true,
+          enableAutoGainControl: true,
+        }
+      case "presentation":
+        return {
+          sampleRate: 24000,
+          channels: 1,
+          bitDepth: 16,
+          bufferSize: 4096,
+          enableEchoCancellation: true,
+          enableNoiseSuppression: false,
+          enableAutoGainControl: true,
+        }
+      case "broadcast":
+        return {
+          sampleRate: 24000,
+          channels: 2,
+          bitDepth: 16,
+          bufferSize: 8192,
+          enableEchoCancellation: false,
+          enableNoiseSuppression: true,
+          enableAutoGainControl: false,
+        }
+      default:
+        return {
+          sampleRate: 24000,
+          channels: 1,
+          bitDepth: 16,
+          bufferSize: 4096,
+          enableEchoCancellation: true,
+          enableNoiseSuppression: true,
+          enableAutoGainControl: true,
+        }
     }
-    const setUint32 = (data: number) => {
-      view.setUint32(pos, data, true)
-      pos += 4
-    }
-
-    // RIFF identifier
-    setUint32(0x46464952) // "RIFF"
-    setUint32(length - 8) // file length - 8
-    setUint32(0x45564157) // "WAVE"
-
-    // Format chunk
-    setUint32(0x20746d66) // "fmt " chunk
-    setUint32(16) // length = 16
-    setUint16(1) // PCM
-    setUint16(buffer.numberOfChannels)
-    setUint32(buffer.sampleRate)
-    setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels) // byte rate
-    setUint16(buffer.numberOfChannels * 2) // block align
-    setUint16(16) // bits per sample
-
-    // Data chunk
-    setUint32(0x61746164) // "data" chunk
-    setUint32(length - pos - 4) // chunk length
-
-    // Write audio data
-    for (let i = 0; i < buffer.numberOfChannels; i++) {
-      channels.push(buffer.getChannelData(i))
-    }
-
-    while (pos < length) {
-      for (let i = 0; i < buffer.numberOfChannels; i++) {
-        const sample = Math.max(-1, Math.min(1, channels[i][offset]))
-        view.setInt16(pos, sample * 0x7FFF, true)
-        pos += 2
-      }
-      offset++
-    }
-
-    return arrayBuffer
-  }
-
-  cleanup(): void {
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop())
-    }
-    if (this.audioContext) {
-      this.audioContext.close()
-    }
-    this.mediaStream = null
-    this.mediaRecorder = null
-    this.analyser = null
-    this.audioContext = null
-    this.chunks = []
-    this.isRecording = false
-  }
-
-  isActive(): boolean {
-    return this.isRecording
   }
 }
-
-export const webRTCAudioProcessor = new WebRTCAudioProcessor()
