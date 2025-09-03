@@ -1,61 +1,96 @@
-'use client'
+"use client"
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export function TokenizationVisualizer() {
-  const [text, setText] = useState('')
-  const [tokens, setTokens] = useState<string[]>([])
+function simulateTokenization(text: string): string[] {
+  return text
+    .trim()
+    .split(/(\s+|\b)/)
+    .filter(Boolean)
+}
 
-  const tokenize = () => {
-    // Simple tokenization for demonstration
-    const words = text.split(/\s+/).filter(Boolean)
-    const tokenized: string[] = []
-    
-    words.forEach(word => {
-      // Split by punctuation
-      const parts = word.match(/[\w]+|[^\w]/g) || []
-      tokenized.push(...parts)
-    })
-    
-    setTokens(tokenized)
-  }
+export default function TokenizationVisualizer() {
+  const [text, setText] = useState('Hello world! How does tokenization work?')
+  const [tokens, setTokens] = useState<string[]>(simulateTokenization('Hello world! How does tokenization work?'))
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [quizAnswer, setQuizAnswer] = useState<string | null>(null)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handleTokenize = () => { setTokens(simulateTokenization(text)) }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tokenization Visualizer</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          placeholder="Enter text to tokenize..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={4}
-        />
-        
-        <Button onClick={tokenize} disabled={!text}>
-          Tokenize Text
-        </Button>
-        
-        {tokens.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm text-muted-foreground">
-              Token count: {tokens.length}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {tokens.map((token, index) => (
-                <Badge key={index} variant="secondary">
-                  {token}
-                </Badge>
-              ))}
-            </div>
+    <div className="container mx-auto px-4 py-10">
+      <div className="flex flex-col items-center justify-center">
+        <motion.div className="mb-8 w-full max-w-3xl text-center" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h2 className="mb-4 text-3xl font-bold">Tokenization Visualizer</h2>
+          <p className="text-xl text-muted-foreground">See how text splits into tokens and fills a context window</p>
+        </motion.div>
+        <div className="w-full max-w-5xl">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+              <Textarea value={text} onChange={(e) => setText(e.target.value)} className="min-h-[200px]" />
+              <Button onClick={handleTokenize} className="w-full">Tokenize</Button>
+            </motion.div>
+            <motion.div className="space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+              <div className="rounded-xl border bg-card p-6 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                  {tokens.map((tok, i) => (
+                    <span key={`${tok}-${i}`} className="bg-info/20 border-info/30 rounded border px-2 py-1 text-sm text-info dark:text-info">{tok}</span>
+                  ))}
+                </div>
+                <div className="mt-4 text-sm text-muted-foreground">Tokens: {tokens.length} • Approx. chars: {text.length}</div>
+              </div>
+            </motion.div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+        <div className="mt-10 w-full max-w-3xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Quick check</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!isSubmitted ? (
+                <div className="space-y-4">
+                  <div className="text-sm">What is a token in this context?</div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      { key: 'a', label: 'A unit of currency' },
+                      { key: 'b', label: 'A piece of text (word, subword, character)' },
+                      { key: 'c', label: 'A GPU type' },
+                      { key: 'd', label: 'A JSON Web Token' },
+                    ].map(opt => (
+                      <Button key={opt.key} variant={quizAnswer === opt.key ? 'default' : 'outline'} onClick={() => setQuizAnswer(opt.key)} className="justify-start">
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button disabled={!quizAnswer} onClick={() => { setIsSubmitted(true) }}>
+                      Submit
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setQuizAnswer(null); setIsSubmitted(false) }}>Reset</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {quizAnswer === 'b' ? (
+                    <div className="text-green-600">Correct — tokens are units of text the model processes.</div>
+                  ) : (
+                    <div className="text-red-600">Not quite. A token here is a small piece of text (like a word or subword).</div>
+                  )}
+                  <Button className="mt-2" onClick={() => setShowQuiz(false)}>Close</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   )
 }
+
+

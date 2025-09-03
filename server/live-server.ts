@@ -1,109 +1,109 @@
 import { WebSocketServer } from 'ws'
-import { createServer } from 'http'
+import { GoogleGenAI } from '@google/genai'
 
-const PORT = process.env.WS_PORT || 3001
+const PORT = parseInt(process.env.LIVE_SERVER_PORT || '3001')
 
-interface Client {
-  id: string
-  ws: any
-  conversationId?: string
-}
+console.log(`🔌 Live WebSocket server starting on port ${PORT}...`)
 
-class LiveServer {
-  private wss: WebSocketServer | null = null
-  private clients: Map<string, Client> = new Map()
+const wss = new WebSocketServer({ port: PORT })
 
-  start() {
-    const server = createServer()
-    this.wss = new WebSocketServer({ server })
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || ''
+})
 
-    this.wss.on('connection', (ws, req) => {
-      const clientId = this.generateClientId()
-      const client: Client = { id: clientId, ws }
-      
-      this.clients.set(clientId, client)
-      console.log(`Client connected: ${clientId}`)
+wss.on('connection', (ws) => {
+  const connectionId = Math.random().toString(36).substring(7)
+  console.log(`✅ New WebSocket connection: ${connectionId}`)
 
-      ws.on('message', (data) => {
-        try {
-          const message = JSON.parse(data.toString())
-          this.handleMessage(client, message)
-        } catch (error) {
-          console.error('Invalid message format:', error)
-          ws.send(JSON.stringify({ error: 'Invalid message format' }))
-        }
-      })
+  ws.on('message', async (data) => {
+    try {
+      const message = JSON.parse(data.toString())
+      console.log(`📨 Received message type: ${message.type}`, { connectionId })
 
-      ws.on('close', () => {
-        this.clients.delete(clientId)
-        console.log(`Client disconnected: ${clientId}`)
-      })
-
-      ws.on('error', (error) => {
-        console.error(`WebSocket error for ${clientId}:`, error)
-      })
-
-      // Send welcome message
-      ws.send(JSON.stringify({
-        type: 'connected',
-        clientId,
-        timestamp: new Date().toISOString()
-      }))
-    })
-
-    server.listen(PORT, () => {
-      console.log(`WebSocket server running on port ${PORT}`)
-    })
-  }
-
-  private handleMessage(client: Client, message: any) {
-    switch (message.type) {
-      case 'join':
-        client.conversationId = message.conversationId
-        this.broadcast(message.conversationId, {
-          type: 'user_joined',
-          clientId: client.id,
-          timestamp: new Date().toISOString()
-        }, client.id)
-        break
-
-      case 'message':
-        this.broadcast(client.conversationId, {
-          type: 'message',
-          clientId: client.id,
-          content: message.content,
-          timestamp: new Date().toISOString()
-        })
-        break
-
-      case 'ping':
-        client.ws.send(JSON.stringify({ type: 'pong' }))
-        break
-
-      default:
-        console.log('Unknown message type:', message.type)
-    }
-  }
-
-  private broadcast(conversationId: string | undefined, message: any, excludeClientId?: string) {
-    if (!conversationId) return
-
-    this.clients.forEach((client) => {
-      if (client.conversationId === conversationId && client.id !== excludeClientId) {
-        client.ws.send(JSON.stringify(message))
+      switch (message.type) {
+        case 'start':
+          await handleStartSession(ws, message, connectionId)
+          break
+        case 'audio':
+          await handleAudioData(ws, message, connectionId)
+          break
+        case 'stop':
+          handleStopSession(ws, connectionId)
+          break
+        default:
+          console.warn(`❓ Unknown message type: ${message.type}`)
       }
-    })
-  }
+    } catch (error) {
+      console.error(`❌ Error processing message:`, error)
+      ws.send(JSON.stringify({ 
+        type: 'error', 
+        error: 'Failed to process message' 
+      }))
+    }
+  })
 
-  private generateClientId(): string {
-    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  ws.on('close', () => {
+    console.log(`🔌 WebSocket connection closed: ${connectionId}`)
+  })
+
+  ws.on('error', (error) => {
+    console.error(`❌ WebSocket error for ${connectionId}:`, error)
+  })
+})
+
+async function handleStartSession(ws: unknown, message: unknown, connectionId: string) {
+  try {
+    console.log(`🎯 Starting session:`, { languageCode: message.languageCode })
+    
+    // For now, just acknowledge the session start
+    // In a full implementation, you'd initialize Gemini Live API here
+    ws.send(JSON.stringify({
+      type: 'session_started',
+      sessionId: connectionId,
+      status: 'ready'
+    }))
+    
+    console.log(`✅ Session started for ${connectionId}`)
+  } catch (error) {
+    console.error(`❌ Error starting session:`, error)
+    ws.send(JSON.stringify({
+      type: 'error',
+      error: 'Failed to start session'
+    }))
   }
 }
 
-// Start server if running directly
-if (require.main === module) {
-  const server = new LiveServer()
-  server.start()
+async function handleAudioData(ws: unknown, message: unknown, connectionId: string) {
+  try {
+    // For now, just echo back that we received audio
+    // In a full implementation, you'd process the audio with Gemini Live API
+    ws.send(JSON.stringify({
+      type: 'audio_received',
+      timestamp: Date.now()
+    }))
+  } catch (error) {
+    console.error(`❌ Error processing audio:`, error)
+  }
 }
 
-export default LiveServer
+function handleStopSession(ws: unknown, connectionId: string) {
+  console.log(`🛑 Stopping session: ${connectionId}`)
+  ws.send(JSON.stringify({
+    type: 'session_stopped'
+  }))
+}
+
+console.log(`🚀 Live WebSocket server running on port ${PORT}`)
+
+// Keep the process alive
+process.on('SIGTERM', () => {
+  console.log('🛑 Received SIGTERM, closing WebSocket server...')
+  wss.close()
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  console.log('🛑 Received SIGINT, closing WebSocket server...')
+  wss.close()
+  process.exit(0)
+})
