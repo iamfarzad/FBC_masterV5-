@@ -1,6 +1,7 @@
 import type React from "react"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import "@/styles/polish.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DemoSessionProvider } from "@/components/demo-session-manager"
 import { GlobalChrome } from "@/components/GlobalChrome"
@@ -30,7 +31,7 @@ function RootLayoutClient({
           <CanvasProvider>
             <DemoSessionProvider>
               <GlobalChrome>
-                <main className="min-h-screen">
+                <main className="min-h-screen page-transition">
                   {children}
                 </main>
                 <Toaster />

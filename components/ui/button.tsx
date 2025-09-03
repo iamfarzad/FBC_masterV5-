@@ -5,15 +5,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative inline-flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover-lift-premium micro-interaction",
   {
     variants: {
       variant: {
         // Enhanced default with glass effect
-        default: "gradient-brand text-surface hover:scale-[1.02] hover:shadow-glow hover:shadow-lg active:scale-[0.98]",
+        default: "btn-premium text-white",
 
         // Glass morphism variants
-        glass: "glass text-text shadow-lg hover:bg-white/20 hover:shadow-xl dark:hover:bg-white/10",
+        glass: "glass-premium text-foreground shadow-lg hover:bg-accent/5 hover:shadow-xl hover:border-accent/30",
         "glass-dark": "glass-dark text-text hover:bg-white/10 dark:hover:bg-white/5",
 
         // Premium variants
@@ -24,10 +24,10 @@ const buttonVariants = cva(
         destructive: "hover:bg-error/90 bg-error text-surface shadow-md hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]",
 
         // Glass outline
-        outline: "border-brand/30 hover:bg-brand/10 hover:border-brand/50 border-2 bg-transparent text-brand backdrop-blur-sm",
+        outline: "border-2 border-accent/30 hover:bg-accent/5 hover:border-accent/50 bg-transparent text-accent backdrop-blur-sm transition-all duration-300",
 
         // Enhanced secondary
-        secondary: "border-border/50 border bg-surface-elevated text-text shadow-sm hover:bg-surface hover:shadow-md",
+        secondary: "border border-border/30 bg-card/50 text-foreground shadow-sm hover:bg-card hover:shadow-md hover:border-accent/20 backdrop-blur-sm",
 
         // Ghost with enhanced interactions
         ghost: "text-text-muted hover:bg-surface-elevated hover:text-text hover:shadow-sm",
