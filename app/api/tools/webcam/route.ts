@@ -11,6 +11,11 @@ import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
+  // Variables declared outside try block for catch block access
+  const operationId = `webcam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  let estimatedTokens = 0
+  let modelSelection: any = null
+  
   try {
     // 🚀 Rate Limiting: 30 requests per minute for webcam analysis
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
@@ -27,7 +32,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 📊 Performance Monitoring: Start tracking
-    const operationId = `webcam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const metrics = performanceMonitor.startOperation(operationId)
 
     const body = await req.json()
@@ -49,8 +53,8 @@ export async function POST(req: NextRequest) {
     const base64Data = isDataUrl ? image.split(',')[1] : image
 
     // Budget and access checks
-    const estimatedTokens = estimateTokens('image analysis') + 1500
-    const modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
+    estimatedTokens = estimateTokens('image analysis') + 1500
+    modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
 
 
 
