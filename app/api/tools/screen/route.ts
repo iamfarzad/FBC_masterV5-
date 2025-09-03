@@ -10,6 +10,11 @@ import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
+  // Variables declared outside try block for catch block access
+  const operationId = `screen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  let estimatedTokens = 0
+  let modelSelection: any = null
+  
   try {
     // 🚀 Rate Limiting: 20 requests per minute for screen analysis (more conservative than webcam)
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
@@ -26,7 +31,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 📊 Performance Monitoring: Start tracking
-    const operationId = `screen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const metrics = performanceMonitor.startOperation(operationId)
 
     const body = await req.json()
@@ -43,8 +47,8 @@ export async function POST(req: NextRequest) {
 
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
 
-    const estimatedTokens = estimateTokens('screen analysis') + 2000
-    const modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens)
+    estimatedTokens = estimateTokens('screen analysis') + 2000
+    modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens)
 
 
 
