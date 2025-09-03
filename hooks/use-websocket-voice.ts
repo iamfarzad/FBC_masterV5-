@@ -239,7 +239,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         wsUrl = process.env.NEXT_PUBLIC_LIVE_SERVER_URL
       } else {
         // Production default
-        wsUrl = 'wss://fb-consulting-websocket.fly.dev'
+        wsUrl = 'ws://localhost:3001'
         // Warning log removed - could add proper error handling here
       }
       // Force mock WS when voiceMock=1 is present (e2e/testing convenience)
