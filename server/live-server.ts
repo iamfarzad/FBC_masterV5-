@@ -77,8 +77,8 @@ async function handleStartSession(ws: any, message: any, connectionId: string) {
       modalities: message.modalities || ['AUDIO'] 
     })
     
-    // Use the current available Live API model  
-    const model = 'gemini-2.0-flash-live-preview-04-09'
+    // Use the latest Live API model for better streaming reliability
+    const model = 'gemini-live-2.5-flash-preview'
     
     const config = {
       responseModalities: [Modality.AUDIO],
