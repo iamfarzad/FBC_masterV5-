@@ -423,15 +423,11 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       reconnectingRef.current = false
       sessionActiveRef.current = false
       
-      // Show error message for premature closes
+      // Show error message for premature closes but DON'T auto-reconnect
       if (event.code !== 1000 && event.code !== 1001) {
-        setError('❌ [useWebSocketVoice] WebSocket closed before connection could be established.')
-        console.log('🔍 [DEBUG] Unexpected close, will retry in 1s')
-        setTimeout(() => {
-          if (!reconnectingRef.current) {
-            connectWebSocket()
-          }
-        }, 1000)
+        setError('❌ WebSocket connection failed. Please try again.')
+        console.log('🔍 [DEBUG] Connection failed - auto-reconnect disabled to prevent loops')
+        // No auto-reconnect - user must manually retry
       }
     }
   }, []) // Remove all dependencies to prevent infinite re-renders
