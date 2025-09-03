@@ -1,0 +1,383 @@
+/* Ultra Polished Design System - Maximum Refinement */
+
+/* Root color consistency fixes */
+:root {
+  --polish-gradient: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--primary)) 100%);
+  --polish-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --polish-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --polish-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+  --polish-shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.16);
+  --polish-border-radius: 16px;
+}
+
+/* Enhanced Navigation Bar */
+.nav-enhanced {
+  background: rgba(var(--background), 0.85);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-bottom: 1px solid rgba(var(--border), 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.nav-enhanced .nav-item {
+  position: relative;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: hsl(var(--foreground) / 0.7);
+}
+
+.nav-enhanced .nav-item:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--accent) / 0.08);
+}
+
+.nav-enhanced .nav-item.active {
+  color: hsl(var(--accent));
+  background: hsl(var(--accent) / 0.12);
+  font-weight: 600;
+}
+
+/* Fix Button Color Consistency */
+.btn-primary,
+.btn-premium,
+button[class*="gradient"],
+.button-gradient {
+  background: var(--polish-gradient) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  box-shadow: 
+    0 4px 14px rgba(hsl(var(--accent)), 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover,
+.btn-premium:hover,
+button[class*="gradient"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(hsl(var(--accent)), 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25);
+}
+
+/* Fix Tool Buttons in Chat */
+.tool-button,
+[data-tool-button],
+button[aria-label*="PDF"],
+button[aria-label*="Email"],
+button[aria-label*="Mail"] {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border) / 0.3) !important;
+  color: hsl(var(--foreground)) !important;
+  transition: all 0.2s ease;
+}
+
+.tool-button:hover,
+[data-tool-button]:hover {
+  background: hsl(var(--accent) / 0.1) !important;
+  border-color: hsl(var(--accent) / 0.3) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--polish-shadow-md);
+}
+
+/* Book Call Button Specific */
+button[aria-label*="Book"],
+.book-call-btn,
+a[href*="cal.com"] button {
+  background: var(--polish-gradient) !important;
+  color: white !important;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--polish-border-radius);
+  box-shadow: 
+    0 4px 14px rgba(hsl(var(--accent)), 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Sidebar Polish */
+.sidebar,
+aside[role="navigation"],
+.chat-sidebar {
+  background: hsl(var(--card) / 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid hsl(var(--border) / 0.2);
+}
+
+.sidebar-item,
+.sidebar button {
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  color: hsl(var(--foreground) / 0.7);
+}
+
+.sidebar-item:hover,
+.sidebar button:hover {
+  background: hsl(var(--accent) / 0.08);
+  color: hsl(var(--foreground));
+  transform: translateX(2px);
+}
+
+.sidebar-item.active,
+.sidebar button.active {
+  background: var(--polish-gradient);
+  color: white;
+  font-weight: 600;
+  box-shadow: var(--polish-shadow-md);
+}
+
+/* Clean Tool Menu */
+.tool-menu-clean {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: var(--polish-border-radius);
+  border: 1px solid hsl(var(--border) / 0.2);
+}
+
+.tool-menu-clean .upload-button {
+  flex: 1;
+  padding: 10px 16px;
+  background: hsl(var(--accent) / 0.1);
+  color: hsl(var(--accent));
+  border: 1px solid hsl(var(--accent) / 0.2);
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.tool-menu-clean .upload-button:hover {
+  background: var(--polish-gradient);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--polish-shadow-md);
+}
+
+/* Message Bubbles Polish */
+.message-user {
+  background: var(--polish-gradient);
+  color: white;
+  border-radius: 24px 24px 4px 24px;
+  padding: 16px 20px;
+  box-shadow: var(--polish-shadow-md);
+}
+
+.message-assistant {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 24px 24px 24px 4px;
+  padding: 16px 20px;
+  box-shadow: var(--polish-shadow-sm);
+}
+
+/* Input Field Polish */
+.input-modern,
+input[type="text"],
+input[type="email"],
+textarea {
+  background: hsl(var(--background) / 0.5);
+  border: 2px solid hsl(var(--border) / 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.input-modern:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: hsl(var(--accent) / 0.5);
+  background: hsl(var(--background));
+  box-shadow: 
+    0 0 0 4px hsl(var(--accent) / 0.1),
+    var(--polish-shadow-sm);
+}
+
+/* Card Components Ultra Polish */
+.card,
+[class*="card"] {
+  background: hsl(var(--card) / 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.15);
+  border-radius: var(--polish-border-radius);
+  box-shadow: var(--polish-shadow-md);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: hsl(var(--accent) / 0.2);
+  box-shadow: var(--polish-shadow-lg);
+}
+
+/* Badge Polish */
+.badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+}
+
+.badge-default {
+  background: hsl(var(--accent) / 0.1);
+  color: hsl(var(--accent));
+  border: 1px solid hsl(var(--accent) / 0.2);
+}
+
+/* Dialog/Modal Polish */
+.dialog-content,
+[role="dialog"] {
+  background: hsl(var(--card) / 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 20px;
+  box-shadow: var(--polish-shadow-xl);
+}
+
+/* Dropdown Menu Polish */
+.dropdown-content,
+[role="menu"] {
+  background: hsl(var(--card) / 0.98);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 12px;
+  box-shadow: var(--polish-shadow-lg);
+  padding: 6px;
+}
+
+.dropdown-item,
+[role="menuitem"] {
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: hsl(var(--accent) / 0.1);
+  color: hsl(var(--accent));
+}
+
+/* Tooltip Polish */
+.tooltip {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--polish-shadow-lg);
+}
+
+/* Scrollbar Ultra Polish */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border) / 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent) / 0.5);
+  background-clip: padding-box;
+}
+
+/* Loading States */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--border) / 0.1) 0%,
+    hsl(var(--border) / 0.2) 50%,
+    hsl(var(--border) / 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-wave {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid hsl(var(--accent) / 0.5);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Selection Color */
+::selection {
+  background: hsl(var(--accent) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Smooth Transitions for Everything */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Remove transition from rapid interactions */
+*:active {
+  transition-duration: 75ms;
+}
+
+/* Disabled State Polish */
+:disabled,
+[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: saturate(0.5);
+}
+
+/* Page Animations */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-content {
+  animation: page-enter 0.3s ease-out;
+}
+
+/* Premium Hover Scale */
+@media (hover: hover) {
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 
+      0 0 30px rgba(hsl(var(--accent)), 0.3),
+      var(--polish-shadow-lg);
+  }
+}
