@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenAI({ apiKey })
     
-    // Use the correct native audio model from documentation
-    const modelName = 'gemini-2.5-flash-preview-native-audio-dialog'
+    // Use available model (native audio models not available in your region)
+    const modelName = 'gemini-2.5-flash'
 
     switch (action) {
       case 'probe': {
