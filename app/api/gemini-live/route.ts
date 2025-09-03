@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, MediaResolution } from '@google/genai'
-import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { getSafetySettings, filterContent, sanitizeInput } from '@/src/core/config/safety'
+import { GoogleGenAI, Modality } from '@google/genai'
+import { getSafetySettings } from '@/src/core/config/safety'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 
 interface LiveSessionRequest {
@@ -21,7 +20,7 @@ interface LiveSessionRequest {
 
 // Session management for Live API
 interface LiveSession {
-  session: unknown // Google GenAI LiveSession type
+  session: any // Google GenAI LiveSession type
   leadContext?: LiveSessionRequest['leadContext']
 }
 const liveSessions = new Map<string, LiveSession>()
@@ -38,105 +37,90 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey })
-    const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview'
+    
+    // Use the correct native audio model from documentation
+    const modelName = 'gemini-2.5-flash-preview-native-audio-dialog'
 
     switch (action) {
       case 'probe': {
         // Check if Live API is available
         const apiKey = process.env.GEMINI_API_KEY
-        const liveEnabled = process.env.LIVE_ENABLED === 'true'
-
+        const liveEnabled = process.env.LIVE_ENABLED !== 'false' // Default to enabled
+        
         if (!apiKey) {
           return NextResponse.json({
             available: false,
             reason: 'GEMINI_API_KEY not configured'
           })
         }
-
-        if (!liveEnabled) {
-          return NextResponse.json({
-            available: false,
-            reason: 'Live API not enabled (set LIVE_ENABLED=true)'
-          })
-        }
-
+        
         return NextResponse.json({
           available: true,
-          reason: 'Live API is enabled and configured'
+          reason: 'Live API is enabled and configured',
+          model: modelName
         })
       }
 
       case 'start': {
-        // Check if Live API is enabled (like FB-c_labV2 approach)
-        const liveEnabled = process.env.LIVE_ENABLED === 'true'
-
-        if (!liveEnabled) {
-          return NextResponse.json({
-            error: 'Live API not enabled. Use regular chat endpoints.',
-            suggestion: 'Set LIVE_ENABLED=true to enable Live API features'
-          }, { status: 503 })
-        }
-
-        // Start new Live session with proper Live API
-        // Starting Gemini Live API session
-
         try {
           // Initialize multimodal context for this session
-          await multimodalContextManager.initializeSession(sessionId || 'anonymous', leadContext)
-
-          // 🚀 GOOGLE LIVE API BEST PRACTICES - Following official documentation
+          const sid = sessionId || `session_${Date.now()}`
+          await multimodalContextManager.initializeSession(sid, leadContext)
+          
+          // Variable to hold session reference for callbacks
+          let sessionRef: any = null
+          
+          // Create Live API session with native audio output
           const session = await genAI.live.connect({
             model: modelName,
             config: {
-              // ⚠️ IMPORTANT: Only ONE response modality per session (Google requirement)
-              responseModalities: [Modality.TEXT], // Start with text, can create separate audio session
+              // Use AUDIO response for native voice output
+              responseModalities: [Modality.AUDIO],
               
-              // 🎙️ OPTIMIZED VOICE ACTIVITY DETECTION
-              realtimeInputConfig: {
-                automaticActivityDetection: {
-                  disabled: false, // Enable automatic VAD
-                  startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW,
-                  endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW,
-                  prefixPaddingMs: 300,  // Capture 300ms before speech
-                  silenceDurationMs: 800 // Wait 800ms of silence before ending
-                }
-              },
+              // System instruction for F.B/c personality
+              systemInstruction: `You are F.B/c (Farzad Bayat consultant), an AI business consultant for farzadbayat.com.
               
-              // 📊 PERFORMANCE OPTIMIZATION
-              mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
+PERSONALITY: Professional yet approachable, curious about business challenges, solution-oriented.
+
+CORE CAPABILITIES:
+- Voice conversations with natural speech
+- Business strategy recommendations  
+- ROI calculations for AI investments
+- Lead qualification and capture
+
+LEAD CAPTURE: Always gather: name, company, role, specific business challenges, and interest in consulting.
+
+Keep responses conversational and focused on business value.`,
               
-              // 🛡️ ENHANCED SAFETY
-              safetySettings: getSafetySettings(),
-              
-              // 📝 SMART TRANSCRIPTION
-              inputAudioTranscription: {
-                enabled: true,
-                language: 'en-US' // Explicit language for better accuracy
-              }
+              // Enhanced safety settings
+              safetySettings: getSafetySettings()
             },
             callbacks: {
               onopen() {
-                console.log(`🔗 Live API session opened: ${sessionId}`)
-                // Send initial context if available
-                if (leadContext) {
+                console.log(`🔗 Live API session opened: ${sid}`)
+                // Send initial context after session is connected
+                if (sessionRef && leadContext) {
                   const contextMessage = `User context: ${leadContext.name ? `Name: ${leadContext.name}` : ''} ${leadContext.company ? `Company: ${leadContext.company}` : ''} ${leadContext.role ? `Role: ${leadContext.role}` : ''}`.trim()
                   if (contextMessage.length > 15) {
-                    session.sendClientContent({
-                      turns: [{ role: 'user', parts: [{ text: contextMessage }] }],
-                      turnComplete: false
-                    })
+                    try {
+                      sessionRef.sendClientContent({
+                        turns: [{ role: 'user', parts: [{ text: contextMessage }] }],
+                        turnComplete: true
+                      })
+                    } catch (e) {
+                      console.warn('Could not send initial context:', e)
+                    }
                   }
                 }
               },
               
               async onmessage(message: any) {
-                console.log(`📨 Live API message received:`, message.type || 'unknown')
+                console.log(`📨 Live API message:`, message.type || 'unknown')
                 
-                // Handle different message types per Google docs
-                if (message.text && sessionId) {
-                  // Text response from AI
+                // Handle text responses
+                if (message.text && sid) {
                   await multimodalContextManager.addTextMessage(
-                    sessionId,
+                    sid,
                     message.text,
                     { 
                       confidence: 0.95,
@@ -146,302 +130,149 @@ export async function POST(req: NextRequest) {
                   )
                 }
                 
-                if (message.audio && sessionId) {
-                  // Audio response from AI (for future audio sessions)
-                  await multimodalContextManager.addVoiceMessage(
-                    sessionId,
-                    '[AI Audio Response]',
-                    message.audio.data?.length || 0,
-                    { 
-                      format: 'audio/pcm',
-                      sampleRate: 16000,
-                      confidence: 0.95,
-                      source: 'live_api'
-                    }
-                  )
+                // Handle audio responses  
+                if (message.audio && sid) {
+                  console.log(`🎵 Audio response received: ${message.audio.data?.length || 0} bytes`)
                 }
                 
-                // Token usage tracking per Google guidelines
-                if (message.usageMetadata && sessionId) {
-                  console.log(`📊 Token usage: ${message.usageMetadata.totalTokenCount} total tokens`)
-                  // Could track token usage for analytics
+                // Track token usage
+                if (message.usageMetadata) {
+                  console.log(`📊 Tokens: ${message.usageMetadata.totalTokenCount}`)
                 }
               },
               
               onerror(error: any) {
-                console.error(`❌ Live API error for session ${sessionId}:`, error.message || error)
-                // Implement retry logic based on error type
-                if (error.message?.includes('rate limit')) {
-                  // Rate limit error - implement backoff
-                  console.log('⏱️ Rate limit hit, implementing backoff...')
-                } else if (error.message?.includes('auth')) {
-                  // Auth error - refresh token
-                  console.log('🔐 Auth error, token may need refresh')
-                }
+                console.error(`❌ Live API error:`, error.message || error)
               },
               
-              onclose(event: any) {
-                console.log(`🔌 Live API session closed: ${sessionId}, reason: ${event?.reason || 'unknown'}`)
-                
-                if (sessionId) {
-                  liveSessions.delete(sessionId)
-                  // Preserve context for reconnection
-                  console.log(`💾 Context preserved for session ${sessionId}`)
-                }
+              onclose(e: any) {
+                console.log(`🔌 Live API session closed:`, e.reason || 'unknown')
+                liveSessions.delete(sid)
               }
             }
           })
-
-          // Store session
-          if (sessionId) {
-            liveSessions.set(sessionId, session)
-          }
-
+          
+          // Store session reference for callbacks
+          sessionRef = session
+          
+          // Store the session for future use
+          liveSessions.set(sid, { session, leadContext })
+          console.log(`✅ Live session created: ${sid}`)
+          
           return NextResponse.json({
             success: true,
-            sessionId,
-            status: 'started',
-            message: 'Real Gemini Live API session started successfully',
-            model: modelName,
-            modalities: ['AUDIO', 'TEXT']
+            sessionId: sid,
+            message: 'Live session started successfully',
+            model: modelName
           })
-
-        } catch (error) {
-    console.error('Failed to start Live API session', error)
+          
+        } catch (error: any) {
+          console.error('❌ Failed to start Live session:', error)
           return NextResponse.json({
-            error: 'Failed to start Live API session',
-            details: error instanceof Error ? error.message : 'Unknown error',
-            note: 'This may be due to Google Cloud entitlement issues for Live API'
+            error: 'Failed to start Live session',
+            details: error.message || 'Unknown error',
+            model: modelName
           }, { status: 500 })
         }
       }
 
       case 'send': {
-        // Send data to existing Live session
-        if (!sessionId) {
-          return NextResponse.json({ error: 'Session ID required for send action' }, { status: 400 })
+        // Send audio/text to existing session
+        const sid = sessionId || 'default'
+        const liveSession = liveSessions.get(sid)
+        
+        if (!liveSession) {
+          return NextResponse.json({
+            error: 'Session not found. Please start a session first.'
+          }, { status: 404 })
         }
-
-        const session = liveSessions.get(sessionId)
-        if (!session) {
-          return NextResponse.json({ error: 'Live session not found' }, { status: 404 })
-        }
-
+        
         try {
-          // 💬 ENHANCED TEXT MESSAGE HANDLING - Following Google Live API patterns
+          if (audioData) {
+            // Send audio data to Live API
+            await liveSession.session.sendRealtimeInput({
+              audio: {
+                data: audioData,
+                mimeType: mimeType || 'audio/pcm;rate=16000'
+              }
+            })
+            console.log(`🎤 Sent audio: ${audioData.length} chars`)
+          }
+          
           if (message) {
-            const sanitizedMessage = sanitizeInput(message)
-            const filterResult = filterContent(sanitizedMessage)
-
-            if (!filterResult.isSafe) {
-              return NextResponse.json({
-                error: 'Content violates safety policy',
-                details: filterResult.reason,
-                severity: filterResult.severity
-              }, { status: 400 })
-            }
-
-            // Get conversation context for incremental updates
-            const existingContext = await multimodalContextManager.getSessionContext(sessionId)
-            
-            // 📋 INCREMENTAL CONTENT UPDATES - Per Google documentation
-            const turns = []
-            
-            // Add previous context if available (for session restoration)
-            if (existingContext?.textMessages?.length > 0) {
-              const recentMessages = existingContext.textMessages.slice(-5) // Last 5 for context
-              for (const msg of recentMessages) {
-                turns.push({
-                  role: msg.role || 'user',
-                  parts: [{ text: msg.content }]
-                })
+            // Send text message
+            await liveSession.session.sendClientContent({
+              turns: [{ role: 'user', parts: [{ text: message }] }],
+              turnComplete: true
+            })
+            console.log(`💬 Sent message: ${message}`)
+          }
+          
+          if (imageData) {
+            // Send image for analysis
+            await liveSession.session.sendRealtimeInput({
+              media: {
+                data: imageData,
+                mimeType: mimeType || 'image/jpeg'
               }
-            }
-            
-            // Add current message
-            turns.push({
-              role: 'user',
-              parts: [{ text: sanitizedMessage }]
             })
-
-            // Send with proper turn management
-            await session.sendClientContent({
-              turns,
-              turnComplete: true // Mark as complete turn per Google docs
-            })
-
-            // Add user message to multimodal context
-            await multimodalContextManager.addTextMessage(sessionId, sanitizedMessage, {
-              timestamp: new Date().toISOString(),
-              source: 'live_api_input'
-            })
+            console.log(`📷 Sent image: ${imageData.length} chars`)
           }
-
-          // 🎙️ ENHANCED AUDIO STREAMING - Following Google Live API patterns
-          if (audioData && sessionId) {
-            try {
-              // 🔄 REAL-TIME AUDIO PROCESSING with proper VAD
-              const audioMimeType = mimeType || 'audio/pcm;rate=16000'
-              
-              // Send audio with activity markers per Google docs
-              await session.sendRealtimeInput({
-                activityStart: {} // Mark start of speech activity
-              })
-              
-              // Send audio data in chunks for better streaming
-              const chunkSize = 8192 // 8KB chunks for optimal streaming
-              const audioBytes = atob(audioData) // Decode base64
-              
-              for (let i = 0; i < audioBytes.length; i += chunkSize) {
-                const chunk = audioBytes.slice(i, i + chunkSize)
-                const chunkBase64 = btoa(chunk)
-                
-                await session.sendRealtimeInput({
-                  audio: {
-                    data: chunkBase64,
-                    mimeType: audioMimeType
-                  }
-                })
-                
-                // Small delay to prevent overwhelming the API
-                await new Promise(resolve => setTimeout(resolve, 10))
-              }
-              
-              // Mark end of speech activity
-              await session.sendRealtimeInput({
-                activityEnd: {} // Mark end of speech activity
-              })
-
-              // Add voice message to multimodal context with enhanced metadata
-              await multimodalContextManager.addVoiceMessage(
-                sessionId,
-                `[Real-time audio stream - ${audioData.length} bytes]`,
-                Math.round(audioBytes.length / 16000), // Estimate duration from sample rate
-                { 
-                  sampleRate: 16000, 
-                  format: audioMimeType, 
-                  confidence: 0.9,
-                  source: 'live_api_audio',
-                  chunked: true,
-                  totalChunks: Math.ceil(audioBytes.length / chunkSize)
-                }
-              )
-              
-              console.log(`🎙️ Audio streamed successfully: ${audioBytes.length} bytes in ${Math.ceil(audioBytes.length / chunkSize)} chunks`)
-              
-            } catch (audioError) {
-              console.error('Audio streaming error:', audioError)
-              // Fallback to single audio send
-              await session.sendRealtimeInput({
-                audio: { data: audioData, mimeType: mimeType || 'audio/pcm;rate=16000' }
-              })
-            }
-          }
-
-          // 📸 ENHANCED IMAGE STREAMING - Live API with visual understanding
-          if (imageData && sessionId) {
-            try {
-              const base64 = imageData.startsWith('data:') ? imageData.split(',')[1] : imageData
-              const mime = imageData.startsWith('data:') ? imageData.substring(5, imageData.indexOf(';')) : 'image/jpeg'
-
-              // 🎯 SMART IMAGE CONTEXT INTEGRATION
-              const existingContext = await multimodalContextManager.getSessionContext(sessionId)
-              const contextPrompt = existingContext?.textMessages?.length > 0
-                ? `Based on our conversation context, analyze this image: ${existingContext.textMessages.slice(-2).map(m => m.content).join(' ')}`
-                : 'Analyze this image comprehensively for business insights and actionable recommendations.'
-
-              // Send image with context using proper Live API format
-              const turns = [
-                {
-                  role: 'user',
-                  parts: [
-                    { text: contextPrompt },
-                    { inlineData: { mimeType: mime, data: base64 } }
-                  ]
-                }
-              ]
-
-              await session.sendClientContent({
-                turns,
-                turnComplete: true
-              })
-
-              // Add visual analysis to multimodal context with enhanced metadata
-              await multimodalContextManager.addVisualAnalysis(
-                sessionId,
-                `[Live API image analysis - ${base64.length} bytes, ${mime}]`,
-                'live_upload',
-                base64.length,
-                imageData,
-                {
-                  source: 'live_api',
-                  contextAware: true,
-                  mimeType: mime,
-                  timestamp: new Date().toISOString()
-                }
-              )
-              
-              console.log(`📸 Image sent to Live API: ${mime}, ${base64.length} bytes`)
-              
-            } catch (imageError) {
-              console.error('Image streaming error:', imageError)
-              throw imageError
-            }
-          }
-
+          
           return NextResponse.json({
             success: true,
-            status: 'sent',
-            message: 'Data sent to Live API session successfully'
+            message: 'Data sent successfully'
           })
-
-        } catch (error) {
-    console.error('Failed to send to Live API session', error)
+          
+        } catch (error: any) {
+          console.error('❌ Failed to send data:', error)
           return NextResponse.json({
-            error: 'Failed to send data to Live API session',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            error: 'Failed to send data to Live session',
+            details: error.message || 'Unknown error'
           }, { status: 500 })
         }
       }
 
       case 'end': {
-        // End Live session
-        if (!sessionId) {
-          return NextResponse.json({ error: 'Session ID required for end action' }, { status: 400 })
-        }
-
-        const session = liveSessions.get(sessionId)
-        if (session) {
+        // End the session
+        const sid = sessionId || 'default'
+        const liveSession = liveSessions.get(sid)
+        
+        if (liveSession) {
           try {
-            session.close()
-            liveSessions.delete(sessionId)
-            // Action logged
-          } catch (error) {
-            // Warning log removed - could add proper error handling here
+            await liveSession.session.close()
+            liveSessions.delete(sid)
+            console.log(`🔚 Session ended: ${sid}`)
+            
+            return NextResponse.json({
+              success: true,
+              message: 'Session ended successfully'
+            })
+          } catch (error: any) {
+            console.error('❌ Failed to end session:', error)
+            return NextResponse.json({
+              error: 'Failed to end session',
+              details: error.message || 'Unknown error'
+            }, { status: 500 })
           }
         }
-
+        
         return NextResponse.json({
           success: true,
-          status: 'ended',
-          message: 'Live API session ended successfully'
+          message: 'Session already ended or not found'
         })
       }
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+        return NextResponse.json({
+          error: `Unknown action: ${action}`
+        }, { status: 400 })
     }
-
-  } catch (error) {
-    console.error('Gemini Live API error', error)
+  } catch (error: any) {
+    console.error('❌ API route error:', error)
     return NextResponse.json({
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error.message || 'Unknown error'
     }, { status: 500 })
   }
 }
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
