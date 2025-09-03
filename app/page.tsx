@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,58 +10,42 @@ export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null)
   const featuresRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
-  const [animationLoaded, setAnimationLoaded] = useState(false)
 
   useEffect(() => {
-    // Try to load anime.js dynamically with fallback
-    const initAnimations = async () => {
+    // Dynamic import anime.js v4 with correct syntax
+    const loadAnimations = async () => {
       try {
-        const animeModule = await import('animejs')
-        const anime = animeModule.default || animeModule
+        const { createTimeline, animate, stagger } = await import('animejs')
         
-        if (!anime || typeof anime.timeline !== 'function') {
-          console.warn('Anime.js not loaded properly, using fallback animations')
-          // Fallback to CSS animations
-          document.querySelectorAll('.hero-title, .hero-subtitle, .hero-buttons, .feature-card').forEach(el => {
-            el.classList.add('fade-in-animation')
-          })
-          return
-        }
-
-        setAnimationLoaded(true)
-        
-        // Initial animations on page load
-        const timeline = anime.timeline({
-          easing: 'easeOutExpo',
-          duration: 1000
+        // Initial animations on page load using v4 syntax
+        const timeline = createTimeline({
+          defaults: {
+            ease: 'outExpo',
+            duration: 1000
+          }
         })
 
         timeline
-          .add({
-            targets: '.hero-title',
+          .add('.hero-title', {
             translateY: [50, 0],
             opacity: [0, 1],
             duration: 800
           })
-          .add({
-            targets: '.hero-subtitle',
+          .add('.hero-subtitle', {
             translateY: [30, 0],
             opacity: [0, 1],
             duration: 600
-          }, '-=400')
-          .add({
-            targets: '.hero-buttons',
+          }, '<<+400')
+          .add('.hero-buttons', {
             translateY: [30, 0],
             opacity: [0, 1],
             duration: 600
-          }, '-=200')
-          .add({
-            targets: '.feature-card',
+          }, '<<+200')
+          .add('.feature-card', {
             translateY: [50, 0],
             opacity: [0, 1],
-            delay: anime.stagger(100),
             duration: 800
-          }, '-=400')
+          }, stagger(100), '<<+400')
 
         // Scroll-triggered animations
         const observerOptions = {
@@ -73,24 +57,21 @@ export default function HomePage() {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               if (entry.target.classList.contains('animate-features')) {
-                anime({
-                  targets: entry.target.querySelectorAll('.feature-card'),
+                animate(entry.target.querySelectorAll('.feature-card'), {
                   scale: [0.9, 1],
                   opacity: [0, 1],
                   translateY: [20, 0],
-                  delay: anime.stagger(100),
                   duration: 800,
-                  easing: 'easeOutExpo'
-                })
+                  ease: 'outExpo'
+                }, stagger(100))
               }
               
               if (entry.target.classList.contains('animate-cta')) {
-                anime({
-                  targets: entry.target,
+                animate(entry.target, {
                   scale: [0.95, 1],
                   opacity: [0, 1],
                   duration: 1000,
-                  easing: 'easeOutElastic(1, .5)'
+                  ease: 'outElastic(1, .5)'
                 })
               }
             }
@@ -109,11 +90,10 @@ export default function HomePage() {
           const scrollY = window.scrollY
           
           if (heroRef.current) {
-            anime({
-              targets: heroRef.current,
+            animate(heroRef.current, {
               translateY: scrollY * 0.5,
               duration: 0,
-              easing: 'linear'
+              ease: 'linear'
             })
           }
         }
@@ -126,7 +106,7 @@ export default function HomePage() {
           scrollObserver.disconnect()
         }
       } catch (error) {
-        console.error('Failed to load animations:', error)
+        console.error('Animation loading failed:', error)
         // Fallback to CSS animations
         document.querySelectorAll('.hero-title, .hero-subtitle, .hero-buttons, .feature-card').forEach(el => {
           el.classList.add('fade-in-animation')
@@ -136,7 +116,7 @@ export default function HomePage() {
     
     // Only run on client side
     if (typeof window !== 'undefined') {
-      initAnimations()
+      loadAnimations()
     }
   }, [])
 
