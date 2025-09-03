@@ -4,14 +4,18 @@ export function middleware(req: NextRequest) {
   // Create response
   let response = NextResponse.next()
 
-  // Add security headers
-  response.headers.set('X-Frame-Options', 'DENY')
+  // Add security headers - Modified for Replit environment
+  const isReplit = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG
+  
+  if (!isReplit) {
+    response.headers.set('X-Frame-Options', 'DENY')
+  }
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=()')
   
-  // Content Security Policy
+  // Content Security Policy - Modified for Replit environment
   const isDev = process.env.NODE_ENV === 'development'
   const csp = [
     "default-src 'self'",
@@ -27,7 +31,8 @@ export function middleware(req: NextRequest) {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'"
+    // Allow framing in Replit environment
+    isReplit ? "frame-ancestors https://*.replit.com https://*.repl.co" : "frame-ancestors 'none'"
   ].join('; ')
   
   response.headers.set('Content-Security-Policy', csp)

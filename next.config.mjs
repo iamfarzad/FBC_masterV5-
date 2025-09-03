@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Replit environment configuration - Remove output standalone for development
+  assetPrefix: process.env.NODE_ENV === 'production' ? undefined : '',
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
