@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useChat } from '@ai-sdk/react'
+import { useUnifiedChat } from '@/hooks/useUnifiedChat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import * as anime from 'animejs'
 import { 
   Send, 
   Loader2,
@@ -19,8 +18,8 @@ import {
 import { cn } from '@/lib/utils'
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: '/api/chat',
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useUnifiedChat({
+    mode: 'standard'
   })
   const [showAlert, setShowAlert] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -29,7 +28,7 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     
-    // Animate new messages with vanilla JS instead of anime.js
+    // Animate new messages
     if (messageRefs.current.length > 0) {
       const lastMessage = messageRefs.current[messageRefs.current.length - 1]
       if (lastMessage) {
@@ -54,11 +53,11 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col bg-background">
       {/* Header */}
-      <header className="border-b px-6 py-4">
+      <header className="border-b border-border bg-surface px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-medium">F.B/c</h1>
+          <h1 className="text-lg font-medium text-foreground">F.B/c Chat</h1>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Plus className="h-4 w-4" />
           </Button>
@@ -66,83 +65,80 @@ export default function ChatPage() {
       </header>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-6">
-        <div className="mx-auto max-w-2xl py-8">
+      <ScrollArea className="flex-1 px-6 bg-background">
+        <div className="mx-auto max-w-2xl py-8" data-testid="chat-container">
           {messages.length === 0 && (
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                Start a conversation
+                Start a conversation with F.B/c AI
               </p>
             </div>
           )}
-          
-          {messages.map((message, index) => (
+
+          {messages.map((message, i) => (
             <div
-              key={message.id}
-              ref={el => messageRefs.current[index] = el}
+              key={i}
+              ref={(el) => { messageRefs.current[i] = el }}
               className={cn(
-                'mb-6',
-                message.role === 'user' ? 'ml-12' : 'mr-12'
+                'mb-4 flex',
+                message.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
-              <div className={cn(
-                'rounded-lg px-4 py-3',
-                message.role === 'user' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted'
-              )}>
+              <div
+                className={cn(
+                  'max-w-[80%] rounded-lg px-4 py-3',
+                  message.role === 'user' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-foreground'
+                )}
+              >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {message.role === 'user' ? 'You' : 'F.B/c'}
-              </p>
             </div>
           ))}
-          
+
           {isLoading && (
-            <div className="mr-12 mb-6">
+            <div className="mb-4 flex justify-start">
               <div className="bg-muted rounded-lg px-4 py-3">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
-      {/* Alert */}
-      {error && (
-        <div className="px-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error.message}
-            </AlertDescription>
+      {/* Error Alert */}
+      {error && showAlert && (
+        <Alert variant="destructive" className="mx-6 mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error.message}</span>
             <Button
               variant="ghost"
               size="icon"
-              className="ml-auto h-6 w-6"
+              className="h-6 w-6"
               onClick={() => setShowAlert(false)}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
-          </Alert>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
-      {/* Input */}
-      <div className="border-t px-6 py-4">
+      {/* Input Form */}
+      <div className="border-t border-border bg-surface p-4">
         <form onSubmit={onSubmit} className="mx-auto max-w-2xl">
-          <div className="flex gap-2">
+          <div className="flex space-x-2">
             <Input
-              value={input || ''}
+              value={input}
               onChange={handleInputChange}
-              placeholder="Type a message..."
+              placeholder="Type your message..."
               disabled={isLoading}
               className="flex-1"
             />
-            <Button type="submit" disabled={isLoading || !input?.trim()} size="icon">
+            <Button type="submit" disabled={isLoading || !input?.trim()}>
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
