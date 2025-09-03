@@ -6,7 +6,7 @@ import {
   ScrollArea,
   ScrollBar,
 } from '@/components/ui/scroll-area';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 
 export type SuggestionsProps = ComponentProps<typeof ScrollArea>;
 

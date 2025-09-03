@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, TrendingUp } from "lucide-react"
-import { cn } from "@/src/core/utils"
+import { cn } from "@/lib/utils"
 import { useStage } from "@/contexts/stage-context"
 
 type Context = { stage?: number; exploredCount?: number; total?: number }

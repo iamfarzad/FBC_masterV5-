@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface ToolCardWrapperProps {
   children: React.ReactNode

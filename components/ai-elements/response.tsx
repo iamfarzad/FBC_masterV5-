@@ -8,7 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 import 'katex/dist/katex.min.css';
 import hardenReactMarkdown from 'harden-react-markdown';
 import { Button } from '@/components/ui/button';

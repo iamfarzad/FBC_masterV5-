@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { webAppI18n, Language } from '@/src/core/i18n';
 import { ChevronDown, Globe } from '@/src/core/icon-mapping';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 
 interface LanguageSelectorProps {
   variant?: 'dropdown' | 'minimal' | 'flags';

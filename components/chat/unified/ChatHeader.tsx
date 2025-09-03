@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react'
 import { RotateCcw, Settings, Maximize2 } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { FbcIcon } from '@/components/ui/fbc-icon'
 

@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 
 export type ActionsProps = ComponentProps<'div'>;
 

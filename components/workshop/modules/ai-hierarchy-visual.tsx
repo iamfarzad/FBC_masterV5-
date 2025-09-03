@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 const hierarchyLevels = [
   { id: "ai", name: "Artificial Intelligence", description: "Systems designed to mimic human intelligence and perform tasks that typically require human cognition.", examples: "Expert systems, game-playing AI, robotics, computer vision", color: "from-blue-500/20 to-blue-600/20", textColor: "text-blue-500", borderColor: "border-blue-500/30" },

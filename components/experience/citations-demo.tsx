@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface CitationsDemoProps {
   className?: string

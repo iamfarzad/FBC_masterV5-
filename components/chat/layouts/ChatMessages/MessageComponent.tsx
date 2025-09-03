@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Languages } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import {
   Message,
   MessageContent,

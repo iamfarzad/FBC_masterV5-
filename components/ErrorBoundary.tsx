@@ -7,7 +7,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface Props {
   children: ReactNode

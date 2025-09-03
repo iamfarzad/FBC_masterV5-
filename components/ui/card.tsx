@@ -1,6 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 const cardVariants = cva(
   "focus-within:ring-accent/20 rounded-2xl border text-card-foreground shadow-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-background",

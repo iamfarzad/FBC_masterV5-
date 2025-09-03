@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { WORKSHOP_MODULES } from '@/components/workshop/education-modules'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 type Stored = { completed: Array<{ moduleId: string; stepId: string }>; xp: number; badges: string[] }
 const STORAGE_KEY = 'fbc_education_progress_v1'

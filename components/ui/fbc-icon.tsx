@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
 

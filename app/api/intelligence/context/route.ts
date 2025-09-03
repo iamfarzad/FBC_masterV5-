@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { ToolRunResult } from '@/types/intelligence'
+import type { ToolRunResult } from '@/src/core/types/intelligence'
 import { ContextStorage } from '@/src/core/context/context-storage'
 import { validateRequest, sessionInitSchema } from '@/src/core/validation/index'
 import crypto from 'crypto'

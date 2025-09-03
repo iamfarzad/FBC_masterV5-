@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 const examples = [
   { id: "example1", sentence: "The cat sat on the mat because it was comfortable.", focusWord: "it", attentionScores: { The: 0.05, cat: 0.65, sat: 0.1, on: 0.05, the: 0.05, mat: 0.3, because: 0.1, it: 0.1, was: 0.2, comfortable: 0.4 }, explanation: "The model pays most attention to 'cat' (65%) when processing 'it', correctly identifying that 'it' refers to the cat, not the mat." },

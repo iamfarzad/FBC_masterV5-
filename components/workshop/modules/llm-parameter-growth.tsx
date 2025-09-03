@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 const modelData = [
   { year: 2018, name: "BERT", parameters: 0.345, description: "Bidirectional Encoder Representations from Transformers", achievements: "Bidirectional context", color: "bg-info/70", architecture: { layers: 24, hiddenSize: 1024, attentionHeads: 16, type: "Encoder-only" } },

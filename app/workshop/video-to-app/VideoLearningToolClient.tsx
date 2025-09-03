@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PageShell, PageHeader } from '@/components/page-shell'
 import { ArrowLeft, Maximize2, Minimize2, Play, Sparkles, Wand2, Video, Code, BookOpen, HelpCircle } from 'lucide-react'
 // VideoToApp components temporarily disabled during refactor
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface VideoLearningToolClientProps {
   initialVideoUrl: string

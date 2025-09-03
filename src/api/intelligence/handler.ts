@@ -1,4 +1,4 @@
-import { intelligenceService } from '@/src/core/intelligence'
+import { intelligenceService } from '@/src/core/intelligence/simple-service'
 import { sessionInitSchema } from '@/src/core/validation/index'
 import type { ContextSnapshot } from '@/src/core/types/intelligence'
 

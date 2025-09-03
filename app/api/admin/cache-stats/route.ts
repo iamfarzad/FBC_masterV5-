@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminAuthMiddleware } from '@/src/core/auth/index'
-import { geminiConfig } from '@/src/core/models/gemini'
+import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 
 export async function GET(request: NextRequest) {
   try {

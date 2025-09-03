@@ -9,7 +9,7 @@ import {
   Brain, Calculator, Search, FileText, Mic, Camera, Monitor, 
   Globe, MessageSquare, Download, Code, Video, Zap
 } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { useCapabilities } from '@/hooks/useCapabilities'
 
 interface CapabilityDisplayProps {

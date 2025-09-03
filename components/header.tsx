@@ -16,7 +16,7 @@ const FbcLogo = ({ className }: { className?: string }) => (
   </span>
 )
 import { ThemeToggle } from "@/components/theme-toggle"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { useState } from "react"
 
 const navLinks = [

@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Video, Code, Wand2, ExternalLink, Download, Play, ArrowRight, CheckCircle, Clock, Sparkles, Monitor, Tablet, Smartphone, Maximize2, FileText, FileCode, Share2, Bookmark, History, Copy, Brain, BookOpen, Presentation, HelpCircle } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface VideoToAppProps {
   mode?: 'workshop' | 'chat' | 'standalone'

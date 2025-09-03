@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Copy, Check, Edit, Languages, ExternalLink } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { FbcIcon } from '@/components/ui/fbc-icon'
 import { 
   Conversation, 

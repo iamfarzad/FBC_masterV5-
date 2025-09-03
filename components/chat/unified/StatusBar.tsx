@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react'
 import { Check } from 'lucide-react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 interface StatusBarProps {
   isLoading: boolean

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Button } from '@/components/ui/button'
 

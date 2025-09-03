@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Send, Mic, BookOpen, Download, Plus, X, Camera, Monitor, Calculator, FileText, Video, Code, Phone } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
