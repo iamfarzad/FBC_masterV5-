@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Menu, Languages, Check } from "@/src/core/icon-mapping"
 import { FbcIcon } from "@/components/ui/fbc-icon"
-import { LanguageSelector } from "@/components/ui/language-selector"
+import { EnhancedLanguageSelector } from "@/components/ui/language-selector-enhanced"
 import { useI18n } from "@/contexts/i18n-context"
 
 const FbcLogo = ({ className }: { className?: string }) => (
@@ -73,11 +73,9 @@ export default function Header() {
         <div className="ml-10 hidden md:flex">
           <NavLinks />
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <LanguageSelector variant="minimal" className="min-h-11 min-w-11" />
-          <div className="inline-flex min-h-11 min-w-11 items-center justify-center">
-            <ThemeToggle />
-          </div>
+        <div className="flex flex-1 items-center justify-end space-x-3">
+          <EnhancedLanguageSelector variant="icon" />
+          <ThemeToggle />
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
