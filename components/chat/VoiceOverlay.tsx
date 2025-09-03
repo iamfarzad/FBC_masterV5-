@@ -67,8 +67,19 @@ export function VoiceOverlay({
     onTurnComplete
   })
 
+  // Cleanup when overlay closes
   React.useEffect(() => {
-    if (!open) return
+    if (!open) {
+      // ACTUALLY STOP THE MICROPHONE when overlay closes
+      try {
+        stopRecording()
+        stopSession()
+      } catch (error) {
+        console.warn('Error during voice overlay cleanup:', error)
+      }
+      return
+    }
+    
     void (async () => {
       if (!hasPermission) {
         try { await requestPermission() } catch {}
