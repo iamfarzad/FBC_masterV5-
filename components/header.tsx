@@ -20,12 +20,12 @@ import { cn } from '@/lib/utils'
 import { useState } from "react"
 
 const navLinks = [
-  { href: "/", key: "nav.home" },
-  { href: "/chat", key: "nav.chat" },
-  { href: "/workshop", key: "nav.workshop" },
-  { href: "/consulting", key: "nav.consulting" },
-  { href: "/admin", key: "nav.admin" },
-  { href: "/contact", key: "nav.contact" },
+  { href: "/", label: "Home", key: "nav.home" },
+  { href: "/chat", label: "AI Chat", key: "nav.chat" },
+  { href: "/workshop", label: "Workshop", key: "nav.workshop" },
+  { href: "/consulting", label: "Consulting", key: "nav.consulting" },
+  { href: "/admin", label: "Admin", key: "nav.admin" },
+  { href: "/contact", label: "Contact", key: "nav.contact" },
 ]
 
 export default function Header() {
@@ -33,29 +33,43 @@ export default function Header() {
   const { t, currentLanguage } = useI18n()
 
   const NavLinks = ({ className }: { className?: string }) => (
-    <nav className={cn("flex items-center gap-3 md:gap-4 text-sm", className)}>
-      {navLinks.map(({ href, key }) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            "transition-colors hover:text-foreground focus:text-foreground rounded inline-flex items-center px-3 py-2 min-h-[44px]",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
-            pathname === href || (href !== '/' && pathname?.startsWith(href)) ? "text-foreground font-semibold" : "text-foreground/70 hover:text-foreground/90",
-          )}
-        >
-          {t(key)}
-        </Link>
-      ))}
+    <nav className={cn("flex items-center gap-2 md:gap-3 text-sm", className)}>
+      {navLinks.map(({ href, label, key }) => {
+        const isActive = pathname === href || (href !== '/' && pathname?.startsWith(href));
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "relative transition-all duration-300 hover:text-foreground focus:text-foreground rounded-lg inline-flex items-center px-3 py-2 min-h-[44px] group",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
+              isActive 
+                ? "text-foreground font-semibold" 
+                : "text-foreground/60 hover:text-foreground/90",
+            )}
+          >
+            <span className="relative z-10">
+              {label}
+            </span>
+            {isActive && (
+              <span className="absolute inset-0 bg-accent/10 rounded-lg animate-smooth-fade-in" />
+            )}
+            <span className={cn(
+              "absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r from-accent to-primary transition-all duration-300",
+              isActive ? "w-full" : "w-0 group-hover:w-full"
+            )} />
+          </Link>
+        );
+      })}
     </nav>
   )
 
   return (
-    <header className="border-border/40 glass-header sticky top-0 z-50 w-full border-b">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-2 sm:px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-3" aria-label="F.B/c Home">
-          <FbcIcon variant="default" size={24} />
-          <FbcLogo className="text-lg" />
+    <header className="nav-enhanced sticky top-0 z-50 w-full">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 md:px-8">
+        <Link href="/" className="flex items-center gap-3 group hover-lift-premium" aria-label="F.B/c Home">
+          <FbcIcon variant="default" size={24} className="transition-transform group-hover:rotate-12" />
+          <FbcLogo className="text-lg text-gradient-premium" />
         </Link>
         <div className="ml-10 hidden md:flex">
           <NavLinks />
