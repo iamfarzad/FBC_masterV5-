@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowRight, MessageSquare, Wrench, BookOpen, Zap, Globe, Brain } from 'lucide-react'
-const anime = require('animejs/lib/anime.js')
+const anime = require('animejs')
 
 export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null)
