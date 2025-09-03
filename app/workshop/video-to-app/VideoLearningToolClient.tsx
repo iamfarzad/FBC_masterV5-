@@ -211,13 +211,17 @@ export function VideoLearningToolClient({
           {/* Main Video to App Interface */}
           <Card variant="elevated" className="overflow-hidden">
             <CardContent className="p-8">
-              <VideoToApp
+              {/* VideoToApp temporarily disabled during refactor */}
+              <div className="text-center p-8 text-muted-foreground">
+                VideoToApp component temporarily disabled for maintenance
+              </div>
+              {/* <VideoToApp
                 mode="workshop"
                 videoUrl={currentVideoUrl}
                 onVideoUrlChange={setCurrentVideoUrl}
                 onAppGenerated={handleAppGenerated}
                 className="min-h-[600px]"
-              />
+              /> */}
             </CardContent>
           </Card>
 
