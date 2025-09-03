@@ -359,6 +359,31 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             // Action logged
             setTranscript(message.payload.text || '')
             break
+          case 'audio_response':
+            // Handle Puck's voice response - exactly like Google AI Studio Live
+            if (message.payload?.audioData) {
+              const audioData = message.payload.audioData
+              const mimeType = message.payload.mimeType || 'audio/wav'
+              
+              // Convert base64 audio to playable format
+              const audioUrl = `data:${mimeType};base64,${audioData}`
+              
+              // Create and play audio element
+              const audio = new Audio(audioUrl)
+              audio.play().catch(error => {
+                console.error('Failed to play Puck voice response:', error)
+              })
+              
+              // Add to audio queue for UI feedback
+              setAudioQueue(prev => [...prev, audioData])
+            }
+            break
+          case 'text_response':
+            // Handle text responses from Gemini Live
+            if (message.payload?.text) {
+              setTranscript(prev => prev + ' ' + message.payload.text)
+            }
+            break
           case 'session_closed':
             // Server notifies that the upstream Gemini session ended. Stop treating session as active.
             // Action logged
