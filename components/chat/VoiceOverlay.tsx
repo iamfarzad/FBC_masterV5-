@@ -32,17 +32,44 @@ export function VoiceOverlay({
   const [collectedAudioData, setCollectedAudioData] = React.useState<string[]>([])
   const [recordingStartTime, setRecordingStartTime] = React.useState<number | null>(null)
 
-  const {
-    session,
-    isConnected,
-    transcript,
-    usageMetadata,
-    error: websocketError,
-    startSession,
-    stopSession,
-    onAudioChunk,
-    onTurnComplete,
-  } = useWebSocketVoice()
+  // Simplified voice state - remove broken hook temporarily
+  const [session, setSession] = React.useState<any>(null)
+  const [isConnected, setIsConnected] = React.useState(false)
+  const [transcript, setTranscript] = React.useState('')
+  const [websocketError, setWebsocketError] = React.useState<string | null>(null)
+  
+  const startSession = React.useCallback(async () => {
+    try {
+      const response = await fetch('/api/gemini-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start',
+          sessionId: `voice_${Date.now()}`,
+          leadContext: { name: 'Voice User', company: 'Test' }
+        })
+      })
+      if (response.ok) {
+        setIsConnected(true)
+        setSession({ connectionId: 'direct', isActive: true })
+      }
+    } catch (error: any) {
+      setWebsocketError(error.message)
+    }
+  }, [])
+  
+  const stopSession = React.useCallback(() => {
+    setIsConnected(false)
+    setSession(null)
+  }, [])
+  
+  const onAudioChunk = React.useCallback((chunk: ArrayBuffer) => {
+    // Audio processing placeholder
+  }, [])
+  
+  const onTurnComplete = React.useCallback(() => {
+    // Turn completion placeholder  
+  }, [])
 
   const {
     isRecording,
