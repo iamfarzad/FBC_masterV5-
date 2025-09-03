@@ -115,7 +115,12 @@ Keep responses conversational and focused on business value.`
           console.log(`✅ Gemini Live session opened: ${connectionId}`)
           ws.send(JSON.stringify({
             type: 'session_started',
-            sessionId: connectionId,
+            payload: {
+              connectionId: connectionId,
+              sessionId: connectionId,
+              languageCode: message.languageCode || 'en-US',
+              voiceName: 'Puck'
+            },
             status: 'ready',
             modalities: ['AUDIO', 'VIDEO'] // Support for talk, webcam, screenshare
           }))
