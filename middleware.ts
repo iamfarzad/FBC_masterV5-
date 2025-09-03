@@ -24,7 +24,7 @@ export function middleware(req: NextRequest) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src 'self' https: https://generativelanguage.googleapis.com https://*.googleapis.com ` +
-    (isDev ? 'wss://localhost:3001 ws://localhost:3001 ' : '') +
+    (isDev ? 'wss://localhost:3001 ws://localhost:3001 ws://localhost:8787 ' : '') +
     "wss://fb-consulting-websocket.fly.dev wss: https://app.cal.com https://api.cal.com https://*.cal.com",
     "media-src 'self' blob: data: https:",
     "frame-src 'self' https://app.cal.com https://*.cal.com",

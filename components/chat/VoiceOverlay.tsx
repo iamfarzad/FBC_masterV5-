@@ -32,44 +32,17 @@ export function VoiceOverlay({
   const [collectedAudioData, setCollectedAudioData] = React.useState<string[]>([])
   const [recordingStartTime, setRecordingStartTime] = React.useState<number | null>(null)
 
-  // Simplified voice state - remove broken hook temporarily
-  const [session, setSession] = React.useState<any>(null)
-  const [isConnected, setIsConnected] = React.useState(false)
-  const [transcript, setTranscript] = React.useState('')
-  const [websocketError, setWebsocketError] = React.useState<string | null>(null)
-  
-  const startSession = React.useCallback(async () => {
-    try {
-      const response = await fetch('/api/gemini-live', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'start',
-          sessionId: `voice_${Date.now()}`,
-          leadContext: { name: 'Voice User', company: 'Test' }
-        })
-      })
-      if (response.ok) {
-        setIsConnected(true)
-        setSession({ connectionId: 'direct', isActive: true })
-      }
-    } catch (error: any) {
-      setWebsocketError(error.message)
-    }
-  }, [])
-  
-  const stopSession = React.useCallback(() => {
-    setIsConnected(false)
-    setSession(null)
-  }, [])
-  
-  const onAudioChunk = React.useCallback((chunk: ArrayBuffer) => {
-    // Audio processing placeholder
-  }, [])
-  
-  const onTurnComplete = React.useCallback(() => {
-    // Turn completion placeholder  
-  }, [])
+  const {
+    session,
+    isConnected,
+    transcript,
+    usageMetadata,
+    error: websocketError,
+    startSession,
+    stopSession,
+    onAudioChunk,
+    onTurnComplete,
+  } = useWebSocketVoice()
 
   const {
     isRecording,
@@ -80,71 +53,53 @@ export function VoiceOverlay({
     hasPermission,
     requestPermission,
   } = useVoiceRecorder({
-    onAudioChunk: (chunk: ArrayBuffer) => {
-      // Convert ArrayBuffer to base64 string for transmission
-      const uint8Array = new Uint8Array(chunk)
-      const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('')
-      const base64String = btoa(binaryString)
-      
+    onAudioChunk: (audioData: string) => {
       // Collect audio chunks for real-time voice
-      setCollectedAudioData(prev => [...prev, base64String])
+      setCollectedAudioData(prev => [...prev, audioData])
       // Also send to WebSocket for live processing
-      onAudioChunk(chunk)
+      onAudioChunk(audioData)
     },
     onTurnComplete
   })
 
-  // Cleanup when overlay closes
   React.useEffect(() => {
-    if (!open) {
-      // ACTUALLY STOP THE MICROPHONE when overlay closes
-      try {
-        stopRecording()
-        stopSession()
-      } catch (error) {
-        console.warn('Error during voice overlay cleanup:', error)
-      }
-      return
-    }
-    
+    if (!open) return
     void (async () => {
       if (!hasPermission) {
         try { await requestPermission() } catch {}
       }
     })()
     return () => {
-      try { 
-        stopRecording() 
-        stopSession() // Also stop WebSocket session
-      } catch {}
+      try { stopRecording() } catch {}
       // Reset collected data when overlay closes
       setCollectedAudioData([])
       setRecordingStartTime(null)
     }
-  }, [open, hasPermission])
+  }, [open, hasPermission, requestPermission, stopRecording])
 
-  // Auto-start voice session when overlay opens (ONLY on open change)
+  // Auto-start voice session when overlay opens
   React.useEffect(() => {
-    if (!open) return
-    
-    const startVoice = async () => {
-      const ok = await requestPermission()
-      if (!ok) return
+    if (open && !isRecording) {
+      const startVoice = async () => {
+        const ok = await requestPermission()
+        if (!ok) return
 
-      // Track recording start time
-      setRecordingStartTime(Date.now())
-      setCollectedAudioData([]) // Reset collected data
+        // Track recording start time
+        setRecordingStartTime(Date.now())
+        setCollectedAudioData([]) // Reset collected data
 
-      await startRecording()
-      // Only start session once - don't re-trigger on every state change
-      try {
-        await startSession()
-      } catch {
-        // Error starting session - continue
+        await startRecording()
+        if (!isConnected || !session?.isActive) {
+          try {
+            await startSession()
+          } catch {
+            // Error starting session - continue
+          }
+        }
       }
+      void startVoice()
     }
-    void startVoice()
-  }, [open]) // ONLY depend on open - prevent connection cascades
+  }, [open, isRecording, requestPermission, startRecording, isConnected, session?.isActive, startSession])
 
   const handleToggle = useCallback(async () => {
     if (isRecording) {

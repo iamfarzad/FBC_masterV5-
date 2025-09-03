@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { supabaseService } from '@/src/core/supabase/client'
+import { getSupabaseStorage } from '@/src/services/storage/supabase'
 
 const Body = z.object({
   email: z.string().email(),
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const { email, name, companyUrl } = parsed.data
 
     // Try to upsert into lead_summaries (lightweight lead storage used elsewhere)
-    const supabase = supabaseService
+    const supabase = getSupabaseStorage()
 
     // Check existing by email
     const { data: existing, error: selErr } = await supabase
