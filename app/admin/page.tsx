@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Activity, 
   Users, 
@@ -15,11 +16,13 @@ import {
   TrendingUp,
   AlertCircle,
   RefreshCw,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react'
 import { adminContextBuilder } from '@/src/core/admin/admin-context-builder'
 import { performanceMonitor } from '@/src/core/monitoring/performance-monitor'
 import { tokenUsageLogger } from '@/src/core/token-usage-logger'
+import { AdminChat } from '@/components/admin/AdminChat'
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -90,7 +93,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">F.B/c System Overview</p>
+            <p className="text-muted-foreground">F.B/c System Overview & Control</p>
           </div>
           <Button onClick={loadAdminData} disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -99,7 +102,20 @@ export default function AdminPage() {
         </div>
 
         {context && (
-          <>
+          <Tabs defaultValue="dashboard" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="dashboard">
+                <Activity className="mr-2 h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="chat">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Admin Chat
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dashboard" className="space-y-6">
+              <>
             {/* Metrics Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <Card>
@@ -277,7 +293,65 @@ export default function AdminPage() {
                 </AlertDescription>
               </Alert>
             )}
-          </>
+            </TabsContent>
+
+            <TabsContent value="chat">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Admin Chat */}
+                <AdminChat context={context} />
+                
+                {/* Quick Info Panel */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Admin Chat Context</CardTitle>
+                      <CardDescription>
+                        This chat has privileged access to system metrics and client interactions
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="text-sm">
+                        <strong>Available Commands:</strong>
+                        <ul className="mt-2 list-disc list-inside text-muted-foreground">
+                          <li>View user sessions and interactions</li>
+                          <li>Check system performance metrics</li>
+                          <li>Monitor API usage and costs</li>
+                          <li>Analyze error logs and patterns</li>
+                          <li>Configure system settings</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Live Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Active Sessions</span>
+                        <Badge>{context.usage.users.active}</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Success Rate</span>
+                        <Badge variant={context.system.performance.successRate > 95 ? "default" : "destructive"}>
+                          {context.system.performance.successRate.toFixed(1)}%
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Avg Response</span>
+                        <Badge>{context.system.performance.averageResponseTime}ms</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Cache Hit Rate</span>
+                        <Badge>{context.cache.hitRate}%</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>
