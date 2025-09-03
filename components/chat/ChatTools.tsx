@@ -31,7 +31,7 @@ interface Tool {
   action: () => Promise<void>
 }
 
-import { LiveStreamingTools } from './LiveStreamingTools'
+import { GeminiLiveStream } from './GeminiLiveStream'
 
 export function ChatTools({ onToolResult }: { onToolResult: (result: any) => void }) {
   const [activeTool, setActiveTool] = useState<string | null>(null)
@@ -376,12 +376,11 @@ export function ChatTools({ onToolResult }: { onToolResult: (result: any) => voi
           accept="*"
         />
 
-        {/* Live Streaming Section */}
+        {/* Gemini Live Streaming Section */}
         <div className="pt-2 border-t">
-          <div className="text-xs text-muted-foreground mb-2">Live Streaming</div>
-          <LiveStreamingTools 
-            conversationId={Date.now().toString()}
-            onStreamUpdate={onToolResult}
+          <div className="text-xs text-muted-foreground mb-2">Gemini Live API</div>
+          <GeminiLiveStream 
+            onUpdate={onToolResult}
           />
         </div>
 
