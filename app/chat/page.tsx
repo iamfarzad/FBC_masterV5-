@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUnifiedChat } from '@/hooks/useUnifiedChat'
+import { ChatTools } from '@/components/chat/ChatTools'
 
 interface Conversation {
   id: string
@@ -346,28 +347,20 @@ export default function ChatPage() {
 
           {/* Tools Panel */}
           {showToolPanel && (
-            <div className="w-80 border-l bg-surface/50 p-4">
-              <h3 className="font-semibold mb-4">Tools & Features</h3>
-              <div className="grid gap-3">
-                {tools.map((tool) => (
-                  <Card 
-                    key={tool.label}
-                    className="p-3 cursor-pointer hover:bg-accent transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={cn("mt-0.5", tool.color)}>
-                        <tool.icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{tool.label}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {tool.description}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+            <div className="w-80 border-l bg-surface/50 p-4 overflow-y-auto">
+              <ChatTools 
+                onToolResult={(result) => {
+                  // Add tool result as a message
+                  const toolMessage = {
+                    id: `tool-${Date.now()}`,
+                    role: 'assistant' as const,
+                    content: `Tool: ${result.tool}\n${result.message || JSON.stringify(result, null, 2)}`,
+                    timestamp: new Date()
+                  }
+                  // This would be added to messages in a real implementation
+                  console.log('Tool result:', result)
+                }}
+              />
             </div>
           )}
         </div>
