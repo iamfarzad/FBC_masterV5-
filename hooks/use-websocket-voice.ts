@@ -232,7 +232,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
       const isPrivateLan = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(hostname)
       const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')
-      if (isPrivateLan || isLoopback) {
+      const isReplit = hostname.includes('replit.dev')
+      
+      if (isReplit) {
+        // For Replit, always use localhost:3001 for WebSocket connection
+        wsUrl = 'ws://localhost:3001'
+      } else if (isPrivateLan || isLoopback) {
         // ALWAYS prefer local WS when page is local/LAN, regardless of env var
         wsUrl = `${scheme}://${hostname}:3001`
       } else if (process.env.NEXT_PUBLIC_LIVE_SERVER_URL) {
@@ -254,9 +259,9 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       // window not available (SSR safeguard)
       wsUrl = wsUrl || 'ws://localhost:3001'
     }
-    // Action logged
-    // Action logged
-    // Action logged
+    console.log('🔍 [DEBUG] WebSocket URL:', wsUrl)
+    console.log('🔍 [DEBUG] Window hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR')
+    console.log('🔍 [DEBUG] Protocol scheme:', typeof window !== 'undefined' ? window.location.protocol : 'SSR')
     
     // Set initial state to connecting
     setIsConnected(false)
