@@ -632,86 +632,58 @@ export default function ChatPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                           {chatMessages.map((message, index) => (
-                            <div
+                            <Message
                               key={message.id}
+                              from={message.role}
                               className="animate-smooth-fade-in"
                               style={{ animationDelay: `${index * 50}ms` }}
                             >
-                              {message.role === 'user' ? (
-                                // User message - Original design with modern styling
-                                <div className="flex justify-end">
-                                  <div className="flex max-w-2xl gap-4">
-                                    <div className="flex flex-1 flex-col items-end">
-                                      <div className="mb-2 text-right text-sm text-muted-foreground">
-                                        You
-                                      </div>
-                                      <div className="modern-button max-w-full rounded-2xl rounded-tr-md bg-gradient-to-r from-orange-accent to-orange-accent-hover px-6 py-4 text-white shadow-lg shadow-orange-accent/20">
-                                        <p className="text-sm font-medium leading-relaxed">
-                                          {message.content}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="modern-hover mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gunmetal to-gunmetal-lighter shadow-lg">
-                                      <User className="size-5 text-white" />
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                // AI message - Original design with modern styling
-                                <div className="flex justify-start">
-                                  <div className="flex max-w-3xl gap-4">
-                                    <div className="modern-hover mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-lg">
-                                      <Zap className="size-5 text-white" />
-                                    </div>
-                                    <div className="flex flex-1 flex-col">
-                                      <div className="mb-2 text-sm text-muted-foreground">
-                                        F.B/c AI {message.role === 'system' && <Badge variant="secondary" className="ml-2 text-xs">System</Badge>}
-                                      </div>
-                                      <div className="modern-card rounded-2xl rounded-tl-md bg-white px-6 py-4 shadow-lg dark:bg-gunmetal-lighter">
-                                        {message.content && message.content.trim() ? (
-                                          renderAIResponse(message.content)
-                                        ) : (
-                                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                                            <div className="flex items-center gap-2">
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent"></div>
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.2s]"></div>
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.4s]"></div>
-                                              <span className="ml-2 text-sm text-muted-foreground">Thinking...</span>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {isLoading && (
-                            <div className="animate-smooth-fade-in">
-                              <div className="flex justify-start">
-                                <div className="flex max-w-3xl gap-4">
-                                  <div className="mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-lg">
-                                    <Zap className="size-5 text-white" />
-                                  </div>
-                                  <div className="flex flex-1 flex-col">
-                                    <div className="mb-2 text-sm text-muted-foreground">
-                                      F.B/c AI
-                                    </div>
-                                    <div className="modern-card rounded-2xl rounded-tl-md bg-white px-6 py-4 shadow-lg dark:bg-gunmetal-lighter">
+                              <MessageAvatar
+                                src={message.role === 'user' ? '/icons/user-avatar.svg' : '/icons/ai-avatar.svg'}
+                                name={message.role === 'user' ? 'You' : 'F.B/c AI'}
+                                className="modern-hover size-10 ring-2 ring-offset-2 ring-offset-background"
+                              />
+                              <MessageContent className={message.role === 'user' ? 'bg-gradient-to-r from-orange-accent to-orange-accent-hover text-white' : 'bg-white dark:bg-gunmetal-lighter'}>
+                                {message.role === 'user' ? (
+                                  <div className="whitespace-pre-wrap">{message.content}</div>
+                                ) : (
+                                  <>
+                                    {message.role === 'system' && (
+                                      <Badge variant="secondary" className="mb-2 text-xs">System</Badge>
+                                    )}
+                                    {message.content && message.content.trim() ? (
+                                      renderAIResponse(message.content)
+                                    ) : (
                                       <div className="flex items-center gap-2">
                                         <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent"></div>
                                         <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.2s]"></div>
                                         <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.4s]"></div>
+                                        <span className="ml-2 text-sm text-muted-foreground">Thinking...</span>
                                       </div>
-                                    </div>
-                                  </div>
+                                    )}
+                                  </>
+                                )}
+                              </MessageContent>
+                            </Message>
+                          ))}
+
+                          {isLoading && (
+                            <Message from="assistant" className="animate-smooth-fade-in">
+                              <MessageAvatar
+                                src="/icons/ai-avatar.svg"
+                                name="F.B/c AI"
+                                className="modern-hover size-10 ring-2 ring-offset-2 ring-offset-background"
+                              />
+                              <MessageContent className="bg-white dark:bg-gunmetal-lighter">
+                                <div className="flex items-center gap-2">
+                                  <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent"></div>
+                                  <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.2s]"></div>
+                                  <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.4s]"></div>
                                 </div>
-                              </div>
-                            </div>
+                              </MessageContent>
+                            </Message>
                           )}
                         </div>
                 )}
