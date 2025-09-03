@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowRight, MessageSquare, Wrench, BookOpen, Zap, Globe, Brain } from 'lucide-react'
-const anime = require('animejs')
+const anime = require('animejs/lib/anime.js')
 
 export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null)
@@ -14,7 +14,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Initial animations on page load
-    const timeline = anime.timeline({
+    const timeline = (anime as any).timeline({
       easing: 'easeOutExpo',
       duration: 1000
     })
