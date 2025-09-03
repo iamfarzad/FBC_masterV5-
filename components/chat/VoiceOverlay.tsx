@@ -82,29 +82,28 @@ export function VoiceOverlay({
     }
   }, [open, hasPermission])
 
-  // Auto-start voice session when overlay opens
+  // Auto-start voice session when overlay opens (ONLY on open change)
   React.useEffect(() => {
-    if (open && !isRecording) {
-      const startVoice = async () => {
-        const ok = await requestPermission()
-        if (!ok) return
+    if (!open) return
+    
+    const startVoice = async () => {
+      const ok = await requestPermission()
+      if (!ok) return
 
-        // Track recording start time
-        setRecordingStartTime(Date.now())
-        setCollectedAudioData([]) // Reset collected data
+      // Track recording start time
+      setRecordingStartTime(Date.now())
+      setCollectedAudioData([]) // Reset collected data
 
-        await startRecording()
-        if (!isConnected || !session?.isActive) {
-          try {
-            await startSession()
-          } catch {
-            // Error starting session - continue
-          }
-        }
+      await startRecording()
+      // Only start session once - don't re-trigger on every state change
+      try {
+        await startSession()
+      } catch {
+        // Error starting session - continue
       }
-      void startVoice()
     }
-  }, [open, isRecording, isConnected, session?.isActive])
+    void startVoice()
+  }, [open]) // ONLY depend on open - prevent connection cascades
 
   const handleToggle = useCallback(async () => {
     if (isRecording) {
