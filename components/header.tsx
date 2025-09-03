@@ -21,9 +21,10 @@ import { useState } from "react"
 
 const navLinks = [
   { href: "/", key: "nav.home" },
+  { href: "/chat", key: "nav.chat" },
+  { href: "/workshop", key: "nav.workshop" },
   { href: "/consulting", key: "nav.consulting" },
-  { href: "/about", key: "nav.about" },
-  { href: "/workshop/video-to-app", key: "nav.workshop" },
+  { href: "/admin", key: "nav.admin" },
   { href: "/contact", key: "nav.contact" },
 ]
 
@@ -40,7 +41,7 @@ export default function Header() {
           className={cn(
             "transition-colors hover:text-foreground focus:text-foreground rounded inline-flex items-center px-3 py-2 min-h-[44px]",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
-            pathname === href ? "text-foreground" : "text-foreground/90",
+            pathname === href || (href !== '/' && pathname?.startsWith(href)) ? "text-foreground font-semibold" : "text-foreground/70 hover:text-foreground/90",
           )}
         >
           {t(key)}
