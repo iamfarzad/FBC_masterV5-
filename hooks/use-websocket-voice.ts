@@ -425,15 +425,16 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     }
 
     ws.onclose = (event) => {
-      // Action logged
+      console.log('🔍 [DEBUG] WebSocket closed:', { code: event.code, reason: event.reason })
       setIsConnected(false)
       setSession(null)
       reconnectingRef.current = false
       sessionActiveRef.current = false
       
-      // Auto-reconnect on unexpected close (not user-initiated)
+      // Show error message for premature closes
       if (event.code !== 1000 && event.code !== 1001) {
-        // Action logged
+        setError('❌ [useWebSocketVoice] WebSocket closed before connection could be established.')
+        console.log('🔍 [DEBUG] Unexpected close, will retry in 1s')
         setTimeout(() => {
           if (!reconnectingRef.current) {
             connectWebSocket()

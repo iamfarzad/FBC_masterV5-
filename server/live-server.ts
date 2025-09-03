@@ -54,13 +54,20 @@ wss.on('connection', (ws) => {
     }
   })
 
-  ws.on('close', () => {
-    console.log(`🔌 WebSocket connection closed: ${connectionId}`)
+  ws.on('close', (code, reason) => {
+    console.log(`🔌 WebSocket connection closed: ${connectionId}`, { code, reason: reason.toString() })
   })
 
   ws.on('error', (error) => {
     console.error(`❌ WebSocket error for ${connectionId}:`, error)
   })
+
+  // Send immediate connected message
+  ws.send(JSON.stringify({
+    type: 'connected',
+    connectionId: connectionId,
+    status: 'ready'
+  }))
 })
 
 async function handleStartSession(ws: any, message: any, connectionId: string) {
