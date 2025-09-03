@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenAI({ apiKey })
     
-    // Use available model (native audio models not available in your region)
-    const modelName = 'gemini-2.5-flash'
+    // Use the correct Live API model from Google AI Studio example
+    const modelName = 'gemini-2.5-flash-preview-native-audio-dialog'
 
     switch (action) {
       case 'probe': {
@@ -74,12 +74,21 @@ export async function POST(req: NextRequest) {
           const session = await genAI.live.connect({
             model: modelName,
             config: {
-              // Use AUDIO response for native voice output
+              // Use AUDIO response for native voice output (like Google AI Studio example)
               responseModalities: [Modality.AUDIO],
+              
+              // Voice configuration matching the working example
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: 'Puck'  // F.B/c voice personality
+                  }
+                }
+              },
               
               // System instruction for F.B/c personality
               systemInstruction: `You are F.B/c (Farzad Bayat consultant), an AI business consultant for farzadbayat.com.
-              
+
 PERSONALITY: Professional yet approachable, curious about business challenges, solution-oriented.
 
 CORE CAPABILITIES:
