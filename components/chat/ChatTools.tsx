@@ -31,6 +31,8 @@ interface Tool {
   action: () => Promise<void>
 }
 
+import { LiveStreamingTools } from './LiveStreamingTools'
+
 export function ChatTools({ onToolResult }: { onToolResult: (result: any) => void }) {
   const [activeTool, setActiveTool] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -373,6 +375,15 @@ export function ChatTools({ onToolResult }: { onToolResult: (result: any) => voi
           onChange={handleFileUpload}
           accept="*"
         />
+
+        {/* Live Streaming Section */}
+        <div className="pt-2 border-t">
+          <div className="text-xs text-muted-foreground mb-2">Live Streaming</div>
+          <LiveStreamingTools 
+            conversationId={Date.now().toString()}
+            onStreamUpdate={onToolResult}
+          />
+        </div>
 
         {/* Quick Actions */}
         <div className="pt-2 border-t">
