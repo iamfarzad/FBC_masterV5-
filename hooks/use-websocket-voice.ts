@@ -236,22 +236,22 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         const isReplit = hostname.includes('replit.dev')
         
         if (isReplit || hostname === 'localhost' || hostname === '127.0.0.1') {
-          // Development mode: always use localhost:3001
-          wsUrl = 'ws://localhost:3001'
+          // For Replit: Use the external WebSocket endpoint through the proxy
+          wsUrl = `wss://${hostname}/api/gemini-live`
         } else if (process.env.NEXT_PUBLIC_LIVE_SERVER_URL) {
           // Production mode: use environment variable
           wsUrl = process.env.NEXT_PUBLIC_LIVE_SERVER_URL
         } else {
           // Fallback
-          wsUrl = 'ws://localhost:3001'
+          wsUrl = `ws://${window.location.hostname}:5000`
         }
       } else {
-        // SSR fallback
-        wsUrl = 'ws://localhost:3001'
+        // SSR fallback - will be replaced client-side
+        wsUrl = 'ws://localhost:5000'
       }
     } catch (e) {
       // Error fallback
-      wsUrl = 'ws://localhost:3001'
+      wsUrl = 'ws://localhost:5000'
     }
     console.log('🔍 [DEBUG] WebSocket URL:', wsUrl)
     

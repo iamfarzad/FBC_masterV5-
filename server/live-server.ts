@@ -6,7 +6,10 @@ const PORT = parseInt(process.env.LIVE_SERVER_PORT || '3001')
 
 console.log(`🔌 Live WebSocket server starting on port ${PORT}...`)
 
-const wss = new WebSocketServer({ port: PORT })
+const wss = new WebSocketServer({ 
+  port: PORT,
+  host: '0.0.0.0'  // Allow connections from any host in Replit
+})
 
 const genAI = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || ''
