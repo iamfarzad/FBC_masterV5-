@@ -1,45 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { handleChat } from '@/src/api/chat/handler'
-import { validateRequest, chatRequestSchema } from '@/src/core/validation'
-
-// Edge Function Configuration for Real-Time Performance
-export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    const { message } = body
 
-    // Validate request using the same pattern as FB-c_labV3-main
-    const validation = validateRequest(chatRequestSchema, body)
-
-    if (!validation.success) {
-      return new Response(
-        JSON.stringify({
-          error: 'Invalid request',
-          details: validation.errors
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
+    if (!message) {
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
       )
     }
 
-    // Pass validated data to handler - Edge Function will handle streaming
-    return await handleChat(validation.data)
+    // Mock AI response for demo purposes
+    const responses = [
+      "That's an interesting question! I can help you with various AI automation tasks.",
+      "I'd be happy to assist you with that. Would you like to use any of the available tools?",
+      "Great question! Let me help you explore that topic further.",
+      "I can definitely help with that. Would you like to try the ROI calculator or screen sharing tools?",
+      "That's a fantastic use case for AI automation. Let me provide some insights."
+    ]
+
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    return NextResponse.json({
+      message: randomResponse,
+      timestamp: new Date().toISOString()
+    })
+
   } catch (error) {
     console.error('Chat API error:', error)
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error'
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     )
   }
 }

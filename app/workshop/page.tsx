@@ -1,77 +1,103 @@
-import { PageHeader } from "@/components/page-shell"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { CourseProgressChip } from "@/components/workshop/CourseProgressChip"
-import { WorkshopPanel } from "@/components/workshop/WorkshopPanel"
-import Script from "next/script"
-
-export const metadata = {
-  title: "AI Fundamentals Workshop | Farzad Bayat",
-  description: "Mini‑workshop on how AI works: foundations, prompting, grounding (RAG), safety, and a hands‑on lab.",
-  keywords: ["AI training", "AI workshops", "AI team training", "AI automation training", "AI implementation workshops"],
-  openGraph: {
-    title: "AI Fundamentals Workshop | Farzad Bayat",
-    description: "How AI works: foundations, prompting, grounding (RAG), safety, and a hands‑on lab.",
-  }
-}
-
-const workshopFeatures = [
-  "No prior coding or AI experience required for AI training",
-  "Clear explanations of AI prompts, tokens, and APIs",
-  "You'll leave knowing how to troubleshoot basic AI implementation issues",
-  "You learn AI automation by doing and build real AI tools",
-]
-
-export const dynamic = "force-dynamic"
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BookOpen, Video, Calculator, Brain, ArrowRight } from 'lucide-react'
 
 export default function WorkshopPage() {
-  return (
-    <>
-      <section className="grid min-h-dvh grid-rows-[auto,1fr]">
-        <div className="container py-6 md:py-8">
-          <PageHeader
-            title="AI Fundamentals Workshop"
-            subtitle="Learn how AI works: foundations, prompting, grounding, safety, then apply it in a hands‑on lab."
-          />
-          <div className="mt-6 flex items-center justify-center gap-x-3">
-            <CourseProgressChip />
-            <Button asChild>
-              <Link href="/workshop/modules">Start Workshop</Link>
-            </Button>
-          </div>
-        </div>
-        <div className="min-h-0">
-          <WorkshopPanel />
-        </div>
-      </section>
+  const modules = [
+    {
+      id: 1,
+      title: 'Introduction to AI',
+      description: 'Learn the fundamentals of artificial intelligence and machine learning',
+      icon: Brain,
+      duration: '15 min',
+      level: 'Beginner'
+    },
+    {
+      id: 2,
+      title: 'AI in Business',
+      description: 'Discover how AI can transform your business operations',
+      icon: Calculator,
+      duration: '20 min',
+      level: 'Intermediate'
+    },
+    {
+      id: 3,
+      title: 'Video AI Applications',
+      description: 'Explore AI applications in video processing and analysis',
+      icon: Video,
+      duration: '25 min',
+      level: 'Advanced'
+    }
+  ]
 
-      {/* SEO: JSON-LD Course schema */}
-      <Script id="workshop-jsonld" type="application/ld+json" strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Course",
-          "name": "Interactive AI Education",
-          "description": "Hands-on modules to learn AI concepts, ROI, and practical integration.",
-          "provider": {
-            "@type": "Organization",
-            "name": "F.B/c Lab",
-            "sameAs": "https://farzadbayat.com"
-          },
-          "hasCourseInstance": [
-            {
-              "@type": "CourseInstance",
-              "name": "Industrial Evolution",
-              "courseMode": "self-paced",
-              "description": "Explore eras 1.0 – 5.0 and the shift to human-centered AI."
-            },
-            {
-              "@type": "CourseInstance",
-              "name": "AI Integration",
-              "courseMode": "self-paced",
-              "description": "Apply AI to real workflows and estimate ROI."
-            }
-          ]
-        }) }} />
-    </>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-purple-900">
+      <div className="container mx-auto px-4 py-16">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            AI Learning Workshop
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Master artificial intelligence through interactive modules and hands-on exercises
+          </p>
+          <Button asChild size="lg">
+            <Link href="/chat">Back to Chat</Link>
+          </Button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h3 className="text-3xl font-bold text-blue-600 mb-2">3</h3>
+              <p className="text-gray-600 dark:text-gray-300">Learning Modules</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h3 className="text-3xl font-bold text-green-600 mb-2">60</h3>
+              <p className="text-gray-600 dark:text-gray-300">Minutes of Content</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h3 className="text-3xl font-bold text-purple-600 mb-2">100%</h3>
+              <p className="text-gray-600 dark:text-gray-300">Interactive</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Modules */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((module) => (
+            <Card key={module.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <module.icon className="h-6 w-6 text-primary" />
+                  {module.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  {module.description}
+                </p>
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {module.level}
+                  </span>
+                  <span className="text-sm text-gray-500">{module.duration}</span>
+                </div>
+                <Button className="w-full" variant="outline">
+                  Start Module
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
