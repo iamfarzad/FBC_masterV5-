@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey })
-    const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview-native-audio'
+    const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview'
 
     switch (action) {
       case 'probe': {
