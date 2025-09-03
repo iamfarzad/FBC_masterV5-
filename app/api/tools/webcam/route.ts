@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { config } from '@/src/core/config'
+
+const genAI = config.ai.gemini.apiKey 
+  ? new GoogleGenerativeAI(config.ai.gemini.apiKey)
+  : null
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,25 +18,50 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Mock AI analysis for demo
-    const analysis = {
-      objects: ['person', 'laptop', 'desk'],
-      confidence: 0.95,
-      description: 'I can see a person working at a desk with a laptop. The lighting appears good and the person seems focused on their work.',
-      suggestions: [
-        'Great lighting setup!',
-        'Professional workspace visible',
-        'Good camera angle for video calls'
-      ]
-    }
+    // Convert image to base64
+    const bytes = await image.arrayBuffer()
+    const base64 = Buffer.from(bytes).toString('base64')
 
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    let analysis
+
+    if (genAI) {
+      // Use Gemini Vision for analysis
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-vision' })
+      
+      const result = await model.generateContent([
+        'Analyze this webcam image. Describe what you see, including any people, objects, environment details, and notable features.',
+        {
+          inlineData: {
+            data: base64,
+            mimeType: image.type
+          }
+        }
+      ])
+
+      analysis = result.response.text()
+    } else {
+      // Mock analysis for development
+      analysis = {
+        description: 'Webcam image analysis would appear here',
+        detectedObjects: ['person', 'computer', 'desk'],
+        environmentType: 'indoor office',
+        lightingConditions: 'well-lit',
+        suggestions: [
+          'Good camera positioning',
+          'Adequate lighting for video calls',
+          'Professional background'
+        ]
+      }
+    }
 
     return NextResponse.json({
       success: true,
       analysis,
-      timestamp: new Date().toISOString()
+      metadata: {
+        size: image.size,
+        type: image.type,
+        timestamp: new Date().toISOString()
+      }
     })
 
   } catch (error) {
