@@ -190,17 +190,17 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   // Set NEXT_PUBLIC_GEMINI_DIRECT=1 to use direct Live API (bypasses proxy WS)
   // This enables full Gemini Live API compliance with proper VAD, token counting, and modalities
   const connectWebSocket = useCallback(() => {
+    // FIRST check if already connected/connecting BEFORE setting reconnecting flag
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      console.log('🔍 [DEBUG] WebSocket already connected/connecting, skipping')
+      return
+    }
+    
     if (reconnectingRef.current) {
-      // Action logged
+      console.log('🔍 [DEBUG] Already reconnecting, skipping')
       return
     }
     reconnectingRef.current = true
-
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      // Action logged
-      reconnectingRef.current = false
-      return
-    }
 
     // Cleanup old WebSocket before creating a new one
     if (wsRef.current) {
@@ -210,6 +210,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         wsRef.current.onerror = null
         wsRef.current.onclose = null
         if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+          console.log('🔍 [DEBUG] Closing existing WebSocket before creating new one')
           wsRef.current.close(1000, 'Recreating connection')
         }
       } catch (e) {
