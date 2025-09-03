@@ -64,8 +64,18 @@ export class MeetingScheduler {
 
   static async getAvailableSlots(date: string): Promise<TimeSlot[]> {
     try {
-      const response = await fetch(`/api/meetings/booked-slots?date=${date}`)
-      const bookedSlots = await response.json()
+      // Import Supabase directly instead of making HTTP calls
+      const { supabaseService } = await import('@/src/core/supabase/client')
+      const { data: bookedSlots, error } = await supabaseService
+        .from('meetings')
+        .select('meeting_time')
+        .eq('meeting_date', date)
+        .in('status', ['scheduled', 'confirmed'])
+      
+      if (error) {
+        console.error('Error fetching booked slots:', error)
+        return []
+      }
 
       const dateObj = new Date(date)
       const dayOfWeek = dateObj.getDay()

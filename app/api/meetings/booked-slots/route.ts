@@ -1,4 +1,4 @@
-import { getSupabaseStorage } from '@/src/services/storage/supabase'
+import { supabaseService } from '@/src/core/supabase/client'
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Date parameter is required" }, { status: 400 })
     }
 
-    const supabase = getSupabaseStorage()
+    const supabase = supabaseService
 
     const { data, error } = await supabase
       .from("meetings")
