@@ -77,8 +77,8 @@ async function handleStartSession(ws: any, message: any, connectionId: string) {
       modalities: message.modalities || ['AUDIO'] 
     })
     
-    // Create Gemini Live session with exact Google AI Studio Live configuration
-    const model = 'models/gemini-2.0-flash-exp'
+    // Use the current available Live API model  
+    const model = 'gemini-2.0-flash-live-preview-04-09'
     
     const config = {
       responseModalities: [Modality.AUDIO],
