@@ -226,43 +226,32 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       return
     }
 
-    // Resolve WebSocket URL based on env and runtime to avoid protocol mismatch locally
-    let wsUrl: string | undefined
+    // Simplified WebSocket URL resolution - always use localhost:3001 for development
+    let wsUrl: string
     try {
-      const hostname = window.location.hostname
-      const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const isPrivateLan = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(hostname)
-      const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')
-      const isReplit = hostname.includes('replit.dev')
-      
-      if (isReplit) {
-        // For Replit, always use localhost:3001 for WebSocket connection
-        wsUrl = 'ws://localhost:3001'
-      } else if (isPrivateLan || isLoopback) {
-        // ALWAYS prefer local WS when page is local/LAN, regardless of env var
-        wsUrl = `${scheme}://${hostname}:3001`
-      } else if (process.env.NEXT_PUBLIC_LIVE_SERVER_URL) {
-        wsUrl = process.env.NEXT_PUBLIC_LIVE_SERVER_URL
-      } else {
-        // Production default
-        wsUrl = 'ws://localhost:3001'
-        // Warning log removed - could add proper error handling here
-      }
-      // Force mock WS when voiceMock=1 is present (e2e/testing convenience)
       if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        if (params.get('voiceMock') === '1') {
-          wsUrl = 'ws://localhost:8787/v1/live'
-          // Action logged
+        const hostname = window.location.hostname
+        const isReplit = hostname.includes('replit.dev')
+        
+        if (isReplit || hostname === 'localhost' || hostname === '127.0.0.1') {
+          // Development mode: always use localhost:3001
+          wsUrl = 'ws://localhost:3001'
+        } else if (process.env.NEXT_PUBLIC_LIVE_SERVER_URL) {
+          // Production mode: use environment variable
+          wsUrl = process.env.NEXT_PUBLIC_LIVE_SERVER_URL
+        } else {
+          // Fallback
+          wsUrl = 'ws://localhost:3001'
         }
+      } else {
+        // SSR fallback
+        wsUrl = 'ws://localhost:3001'
       }
     } catch (e) {
-      // window not available (SSR safeguard)
-      wsUrl = wsUrl || 'ws://localhost:3001'
+      // Error fallback
+      wsUrl = 'ws://localhost:3001'
     }
     console.log('🔍 [DEBUG] WebSocket URL:', wsUrl)
-    console.log('🔍 [DEBUG] Window hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR')
-    console.log('🔍 [DEBUG] Protocol scheme:', typeof window !== 'undefined' ? window.location.protocol : 'SSR')
     
     // Set initial state to connecting
     setIsConnected(false)
