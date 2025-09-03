@@ -101,8 +101,10 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     if (detected !== current) {
       preferredLanguageRef.current = detected
       try { stopSession() } catch {}
-      // Reconnect will send a new start with updated preferredLanguageRef
-      connectWebSocket()
+      // Only reconnect if not already connected/connecting - prevent connection storm
+      if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+        setTimeout(() => connectWebSocket(), 100) // Small delay to prevent rapid reconnections
+      }
     }
   }
 
