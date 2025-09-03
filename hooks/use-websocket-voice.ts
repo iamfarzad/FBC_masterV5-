@@ -322,12 +322,22 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             break
           case 'session_started':
             // Action logged
-            setSession({
-              connectionId: message.payload.connectionId,
-              isActive: true,
-              languageCode: message.payload.languageCode,
-              voiceName: message.payload.voiceName,
-            })
+            if (message.payload && message.payload.connectionId) {
+              setSession({
+                connectionId: message.payload.connectionId,
+                isActive: true,
+                languageCode: message.payload.languageCode,
+                voiceName: message.payload.voiceName,
+              })
+            } else {
+              console.error('Session started message missing payload or connectionId:', message)
+              setSession({
+                connectionId: 'fallback-connection',
+                isActive: true,
+                languageCode: 'en-US',
+                voiceName: 'Puck',
+              })
+            }
             sessionActiveRef.current = true
             // Flush any queued audio frames now that session is active
             try {
@@ -357,7 +367,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             break
           case 'transcript':
             // Action logged
-            setTranscript(message.payload.text || '')
+            setTranscript(message.payload?.text || '')
             break
           case 'audio_response':
             // Handle Puck's voice response - exactly like Google AI Studio Live
