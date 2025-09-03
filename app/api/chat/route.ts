@@ -1,5 +1,4 @@
-import { NextRequest } from 'next/server'
-import { StreamingTextResponse } from 'ai'
+import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { config } from '@/src/core/config'
 
@@ -13,14 +12,16 @@ export async function POST(req: NextRequest) {
     const { messages } = await req.json()
     
     if (!messages || messages.length === 0) {
-      return new Response('Messages required', { status: 400 })
+      return NextResponse.json({ error: 'Messages required' }, { status: 400 })
     }
 
     // Mock mode for development
     if (config.features.mockMode || !genAI) {
       const mockResponse = generateMockResponse(messages[messages.length - 1].content)
-      const stream = createMockStream(mockResponse)
-      return new StreamingTextResponse(stream)
+      return NextResponse.json({ 
+        message: mockResponse,
+        content: mockResponse 
+      })
     }
 
     // Use Gemini API
@@ -33,28 +34,23 @@ export async function POST(req: NextRequest) {
     })
 
     const lastMessage = messages[messages.length - 1].content
-    const result = await model.generateContentStream(lastMessage)
-    
-    // Convert Gemini stream to ReadableStream
-    const stream = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of result.stream) {
-          const text = chunk.text()
-          controller.enqueue(text)
-        }
-        controller.close()
-      },
-    })
+    const result = await model.generateContent(lastMessage)
+    const response = result.response.text()
 
-    return new StreamingTextResponse(stream)
+    return NextResponse.json({
+      message: response,
+      content: response
+    })
     
   } catch (error) {
     console.error('Chat API error:', error)
     
     // Fallback to mock response on error
     const mockResponse = 'I understand your request. Let me help you with that.'
-    const stream = createMockStream(mockResponse)
-    return new StreamingTextResponse(stream)
+    return NextResponse.json({
+      message: mockResponse,
+      content: mockResponse
+    })
   }
 }
 
@@ -69,19 +65,4 @@ function generateMockResponse(input: string): string {
   
   const randomResponse = responses[Math.floor(Math.random() * responses.length)]
   return `${randomResponse}\n\nYou asked: "${input}"\n\nThis is a mock response while in development mode.`
-}
-
-function createMockStream(text: string): ReadableStream {
-  const encoder = new TextEncoder()
-  const words = text.split(' ')
-  
-  return new ReadableStream({
-    async start(controller) {
-      for (const word of words) {
-        controller.enqueue(encoder.encode(word + ' '))
-        await new Promise(resolve => setTimeout(resolve, 50))
-      }
-      controller.close()
-    },
-  })
 }
