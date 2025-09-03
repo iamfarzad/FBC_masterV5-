@@ -75,7 +75,7 @@ export function VoiceOverlay({
       setCollectedAudioData([])
       setRecordingStartTime(null)
     }
-  }, [open, hasPermission, requestPermission, stopRecording])
+  }, [open, hasPermission])
 
   // Auto-start voice session when overlay opens
   React.useEffect(() => {
@@ -99,7 +99,7 @@ export function VoiceOverlay({
       }
       void startVoice()
     }
-  }, [open, isRecording, requestPermission, startRecording, isConnected, session?.isActive, startSession])
+  }, [open, isRecording, isConnected, session?.isActive])
 
   const handleToggle = useCallback(async () => {
     if (isRecording) {
