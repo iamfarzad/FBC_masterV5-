@@ -236,15 +236,16 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         const isReplit = hostname.includes('replit.dev')
         
         if (isReplit || hostname === 'localhost' || hostname === '127.0.0.1') {
-          // WebSocket connections not supported via HTTP API routes
-          // Using direct API calls instead
-          wsUrl = null
+          // Use direct Live API instead of WebSocket for Replit/local
+          reconnectingRef.current = false
+          return
         } else if (process.env.NEXT_PUBLIC_LIVE_SERVER_URL) {
           // Production mode: use environment variable
           wsUrl = process.env.NEXT_PUBLIC_LIVE_SERVER_URL
         } else {
-          // Fallback - no WebSocket needed
-          wsUrl = null
+          // Fallback - use direct Live API
+          reconnectingRef.current = false
+          return
         }
       } else {
         // SSR fallback - no WebSocket needed
@@ -260,6 +261,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     setIsConnected(false)
     setError(null)
     setSession(null) // Clear previous session info
+
+    if (!wsUrl) {
+      console.log('🔍 [DEBUG] No WebSocket URL available, using direct Live API')
+      reconnectingRef.current = false
+      return
+    }
 
     let ws: WebSocket
     try {
@@ -433,10 +440,61 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     }
   }, []) // Remove all dependencies to prevent infinite re-renders
 
+  // Direct Live API session starter
+  const startDirectLiveSession = useCallback(async (leadContext?: unknown) => {
+    try {
+      setError(null)
+      setIsConnected(false)
+      
+      console.log('🔍 [DEBUG] Starting direct Live API session...')
+      
+      const sessionId = `voice_${Date.now()}`
+      const response = await fetch('/api/gemini-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start',
+          sessionId,
+          leadContext
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Live API failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('🔍 [DEBUG] Live session created:', result)
+      
+      setIsConnected(true)
+      setSession({
+        connectionId: sessionId,
+        isActive: true,
+        languageCode: 'en-US',
+        voiceName: 'Puck'
+      })
+      setIsProcessing(true)
+      
+    } catch (error) {
+      console.error('❌ Failed to start direct Live session:', error)
+      setError(`Failed to start voice session: ${error.message}`)
+      setIsConnected(false)
+      setIsProcessing(false)
+    }
+  }, [])
+
   // Initial session setup (not auto-connect)
   const startSession = useCallback(async (leadContext?: unknown) => {
     try {
       setError(null)
+      
+      // Always use direct Live API in Replit environment
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
+      const isReplit = hostname.includes('replit.dev')
+      
+      if (isReplit || hostname === 'localhost' || hostname === '127.0.0.1') {
+        return startDirectLiveSession(leadContext)
+      }
       
       const useDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
       if (useDirect) {
