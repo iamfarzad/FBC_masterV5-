@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useChat as useAIChat } from '@ai-sdk/react'
 
 export type ChatMode = 'standard' | 'realtime' | 'admin' | 'multimodal'
 
@@ -21,18 +20,20 @@ export interface UnifiedMessage {
 export function useUnifiedChat(options: UnifiedChatOptions = {}) {
   const { mode = 'standard', conversationId, systemPrompt, onError } = options
   
-  // Use AI SDK chat hook for standard mode
-  const aiChat = useAIChat({
-    api: '/api/chat',
-    onError,
-    initialMessages: systemPrompt ? [
-      { id: 'system', role: 'system', content: systemPrompt }
-    ] : undefined
-  })
-
-  const [realtimeMessages, setRealtimeMessages] = useState<UnifiedMessage[]>([])
-  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
+  // Custom chat implementation
+  const [messages, setMessages] = useState<UnifiedMessage[]>(
+    systemPrompt ? [{
+      id: 'system',
+      role: 'system',
+      content: systemPrompt,
+      timestamp: new Date()
+    }] : []
+  )
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   // WebSocket connection for realtime mode
   useEffect(() => {
@@ -40,7 +41,7 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
       const ws = new WebSocket(`ws://localhost:3001`)
       
       ws.onopen = () => {
-        setIsRealtimeConnected(true)
+        setIsConnected(true)
         if (conversationId) {
           ws.send(JSON.stringify({ type: 'join', conversationId }))
         }
@@ -57,7 +58,7 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
               timestamp: new Date(data.timestamp),
               metadata: data.metadata
             }
-            setRealtimeMessages(prev => [...prev, message])
+            setMessages(prev => [...prev, message])
           }
         } catch (error) {
           console.error('WebSocket message error:', error)
@@ -66,12 +67,12 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error)
-        setIsRealtimeConnected(false)
+        setIsConnected(false)
         onError?.(new Error('WebSocket connection failed'))
       }
 
       ws.onclose = () => {
-        setIsRealtimeConnected(false)
+        setIsConnected(false)
       }
 
       wsRef.current = ws
@@ -82,32 +83,87 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
     }
   }, [mode, conversationId, onError])
 
-  // Send message based on mode
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return
+  // Handle input changes
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value)
+  }, [])
 
+  // Send message via standard API
+  const sendStandardMessage = useCallback(async (content: string) => {
     const userMessage: UnifiedMessage = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`,
       role: 'user',
       content,
       timestamp: new Date()
     }
+    
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Chat API error: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      const assistantMessage: UnifiedMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.message || data.content || 'No response',
+        timestamp: new Date()
+      }
+      
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (err) {
+      const errorObj = err as Error
+      setError(errorObj)
+      onError?.(errorObj)
+    } finally {
+      setIsLoading(false)
+      setInput('')
+    }
+  }, [messages, onError])
+
+  // Send message based on mode
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return
 
     switch (mode) {
       case 'realtime':
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-          setRealtimeMessages(prev => [...prev, userMessage])
+          const userMessage: UnifiedMessage = {
+            id: Date.now().toString(),
+            role: 'user',
+            content,
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, userMessage])
           wsRef.current.send(JSON.stringify({
             type: 'message',
             content,
             conversationId
           }))
+          setInput('')
         }
         break
 
       case 'admin':
-        // Admin mode would have special handling
+        // Admin mode
         try {
+          setIsLoading(true)
           const response = await fetch('/api/admin/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -117,15 +173,25 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
           if (!response.ok) throw new Error('Admin chat failed')
           
           const data = await response.json()
-          // Handle admin response
-        } catch (error) {
-          onError?.(error as Error)
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: data.message,
+            timestamp: new Date()
+          }])
+          setInput('')
+        } catch (err) {
+          setError(err as Error)
+          onError?.(err as Error)
+        } finally {
+          setIsLoading(false)
         }
         break
 
       case 'multimodal':
-        // Multimodal would handle different input types
+        // Multimodal mode
         try {
+          setIsLoading(true)
           const response = await fetch('/api/multimodal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -139,43 +205,54 @@ export function useUnifiedChat(options: UnifiedChatOptions = {}) {
           if (!response.ok) throw new Error('Multimodal chat failed')
           
           const data = await response.json()
-          // Handle multimodal response
-        } catch (error) {
-          onError?.(error as Error)
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: data.message,
+            timestamp: new Date()
+          }])
+          setInput('')
+        } catch (err) {
+          setError(err as Error)
+          onError?.(err as Error)
+        } finally {
+          setIsLoading(false)
         }
         break
 
       default:
-        // Standard mode uses AI SDK
-        aiChat.handleSubmit(new Event('submit') as any)
+        // Standard mode
+        await sendStandardMessage(content)
     }
-  }, [mode, conversationId, aiChat, onError])
+  }, [mode, conversationId, sendStandardMessage, onError])
+
+  // Handle form submission
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    if (input.trim()) {
+      sendMessage(input)
+    }
+  }, [input, sendMessage])
+
+  // Clear messages
+  const clear = useCallback(() => {
+    setMessages([])
+    setInput('')
+    setError(null)
+  }, [])
 
   // Unified interface
   return {
-    messages: mode === 'standard' ? aiChat.messages : realtimeMessages,
-    input: mode === 'standard' ? aiChat.input : '',
-    handleInputChange: mode === 'standard' ? aiChat.handleInputChange : () => {},
-    handleSubmit: (e: React.FormEvent) => {
-      e.preventDefault()
-      if (mode === 'standard') {
-        aiChat.handleSubmit(e)
-      } else {
-        const input = (e.target as any).elements.message?.value
-        sendMessage(input)
-      }
-    },
-    isLoading: mode === 'standard' ? aiChat.isLoading : false,
-    error: mode === 'standard' ? aiChat.error : null,
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    error,
     sendMessage,
-    isConnected: mode === 'realtime' ? isRealtimeConnected : true,
+    isConnected,
     mode,
-    clear: () => {
-      if (mode === 'standard') {
-        aiChat.setMessages([])
-      } else {
-        setRealtimeMessages([])
-      }
-    }
+    clear,
+    setInput
   }
 }
