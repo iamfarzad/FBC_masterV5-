@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowRight, MessageSquare, Wrench, BookOpen, Zap, Globe, Brain } from 'lucide-react'
-const anime = require('animejs')
 
 export default function HomePage() {
   const heroRef = useRef<HTMLDivElement>(null)
@@ -13,100 +12,108 @@ export default function HomePage() {
   const ctaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Initial animations on page load
-    const timeline = (anime as any).timeline({
-      easing: 'easeOutExpo',
-      duration: 1000
-    })
-
-    timeline
-      .add({
-        targets: '.hero-title',
-        translateY: [50, 0],
-        opacity: [0, 1],
-        duration: 800
-      })
-      .add({
-        targets: '.hero-subtitle',
-        translateY: [30, 0],
-        opacity: [0, 1],
-        duration: 600
-      }, '-=400')
-      .add({
-        targets: '.hero-buttons',
-        translateY: [30, 0],
-        opacity: [0, 1],
-        duration: 600
-      }, '-=200')
-      .add({
-        targets: '.feature-card',
-        translateY: [50, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(100),
-        duration: 800
-      }, '-=400')
-
-    // Scroll-triggered animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px'
-    }
-
-    const scrollObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          if (entry.target.classList.contains('animate-features')) {
-            anime({
-              targets: entry.target.querySelectorAll('.feature-card'),
-              scale: [0.9, 1],
-              opacity: [0, 1],
-              translateY: [20, 0],
-              delay: anime.stagger(100),
-              duration: 800,
-              easing: 'easeOutExpo'
-            })
-          }
-          
-          if (entry.target.classList.contains('animate-cta')) {
-            anime({
-              targets: entry.target,
-              scale: [0.95, 1],
-              opacity: [0, 1],
-              duration: 1000,
-              easing: 'easeOutElastic(1, .5)'
-            })
-          }
-        }
-      })
-    }, observerOptions)
-
-    if (featuresRef.current) {
-      scrollObserver.observe(featuresRef.current)
-    }
-    if (ctaRef.current) {
-      scrollObserver.observe(ctaRef.current)
-    }
-
-    // Parallax scroll effect
-    const handleScroll = () => {
-      const scrollY = window.scrollY
+    // Dynamic import anime.js to avoid SSR issues
+    const loadAnimations = async () => {
+      const anime = (await import('animejs')).default
       
-      if (heroRef.current) {
-        anime({
-          targets: heroRef.current,
-          translateY: scrollY * 0.5,
-          duration: 0,
-          easing: 'linear'
+      // Initial animations on page load
+      const timeline = anime.timeline({
+        easing: 'easeOutExpo',
+        duration: 1000
+      })
+
+      timeline
+        .add({
+          targets: '.hero-title',
+          translateY: [50, 0],
+          opacity: [0, 1],
+          duration: 800
         })
+        .add({
+          targets: '.hero-subtitle',
+          translateY: [30, 0],
+          opacity: [0, 1],
+          duration: 600
+        }, '-=400')
+        .add({
+          targets: '.hero-buttons',
+          translateY: [30, 0],
+          opacity: [0, 1],
+          duration: 600
+        }, '-=200')
+        .add({
+          targets: '.feature-card',
+          translateY: [50, 0],
+          opacity: [0, 1],
+          delay: anime.stagger(100),
+          duration: 800
+        }, '-=400')
+
+      // Scroll-triggered animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px'
+      }
+
+      const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (entry.target.classList.contains('animate-features')) {
+              anime({
+                targets: entry.target.querySelectorAll('.feature-card'),
+                scale: [0.9, 1],
+                opacity: [0, 1],
+                translateY: [20, 0],
+                delay: anime.stagger(100),
+                duration: 800,
+                easing: 'easeOutExpo'
+              })
+            }
+            
+            if (entry.target.classList.contains('animate-cta')) {
+              anime({
+                targets: entry.target,
+                scale: [0.95, 1],
+                opacity: [0, 1],
+                duration: 1000,
+                easing: 'easeOutElastic(1, .5)'
+              })
+            }
+          }
+        })
+      }, observerOptions)
+
+      if (featuresRef.current) {
+        scrollObserver.observe(featuresRef.current)
+      }
+      if (ctaRef.current) {
+        scrollObserver.observe(ctaRef.current)
+      }
+
+      // Parallax scroll effect
+      const handleScroll = () => {
+        const scrollY = window.scrollY
+        
+        if (heroRef.current) {
+          anime({
+            targets: heroRef.current,
+            translateY: scrollY * 0.5,
+            duration: 0,
+            easing: 'linear'
+          })
+        }
+      }
+
+      window.addEventListener('scroll', handleScroll)
+
+      // Cleanup
+      return () => {
+        window.removeEventListener('scroll', handleScroll)
+        scrollObserver.disconnect()
       }
     }
-
-    window.addEventListener('scroll', handleScroll)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      scrollObserver.disconnect()
-    }
+    
+    loadAnimations()
   }, [])
 
   return (
@@ -149,12 +156,12 @@ export default function HomePage() {
                 <Brain className="mb-2 h-8 w-8" />
                 <CardTitle>AI Intelligence</CardTitle>
                 <CardDescription>
-                  Powered by advanced language models
+                  Powered by Google Gemini for advanced conversational AI
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Natural conversations with context awareness and multi-turn dialogue support.
+                  Real-time responses with context awareness and multimodal capabilities
                 </p>
               </CardContent>
             </Card>
@@ -162,14 +169,14 @@ export default function HomePage() {
             <Card className="feature-card opacity-0">
               <CardHeader>
                 <MessageSquare className="mb-2 h-8 w-8" />
-                <CardTitle>Real-time Chat</CardTitle>
+                <CardTitle>Smart Chat</CardTitle>
                 <CardDescription>
-                  Instant responses with streaming
+                  Interactive conversations with persistent memory
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Experience seamless conversations with real-time message streaming.
+                  Engage in natural dialogue with advanced language understanding
                 </p>
               </CardContent>
             </Card>
@@ -177,14 +184,14 @@ export default function HomePage() {
             <Card className="feature-card opacity-0">
               <CardHeader>
                 <Wrench className="mb-2 h-8 w-8" />
-                <CardTitle>Business Tools</CardTitle>
+                <CardTitle>Power Tools</CardTitle>
                 <CardDescription>
-                  ROI calculator and analytics
+                  Suite of productivity tools at your fingertips
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Professional tools for business analysis and decision making.
+                  From PDF generation to real-time translation and more
                 </p>
               </CardContent>
             </Card>
@@ -192,14 +199,14 @@ export default function HomePage() {
             <Card className="feature-card opacity-0">
               <CardHeader>
                 <BookOpen className="mb-2 h-8 w-8" />
-                <CardTitle>Workshop Modules</CardTitle>
+                <CardTitle>Workshop</CardTitle>
                 <CardDescription>
-                  Interactive learning experiences
+                  Interactive learning modules and tutorials
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Comprehensive educational modules for AI understanding.
+                  Master AI capabilities through hands-on exercises
                 </p>
               </CardContent>
             </Card>
@@ -207,14 +214,14 @@ export default function HomePage() {
             <Card className="feature-card opacity-0">
               <CardHeader>
                 <Globe className="mb-2 h-8 w-8" />
-                <CardTitle>Multimodal Input</CardTitle>
+                <CardTitle>Multi-language</CardTitle>
                 <CardDescription>
-                  Text, voice, and image support
+                  Communicate in any language seamlessly
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Process various input types for comprehensive analysis.
+                  Real-time translation and localization support
                 </p>
               </CardContent>
             </Card>
@@ -222,14 +229,14 @@ export default function HomePage() {
             <Card className="feature-card opacity-0">
               <CardHeader>
                 <Zap className="mb-2 h-8 w-8" />
-                <CardTitle>WebSocket Live</CardTitle>
+                <CardTitle>Lightning Fast</CardTitle>
                 <CardDescription>
-                  Real-time collaboration
+                  Optimized for speed and performance
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Live updates and synchronized experiences across sessions.
+                  Instant responses with efficient processing
                 </p>
               </CardContent>
             </Card>
@@ -238,24 +245,27 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section ref={ctaRef} className="animate-cta px-4 py-20 opacity-0">
+      <section ref={ctaRef} className="animate-cta bg-muted/30 px-4 py-20 opacity-0">
         <div className="mx-auto max-w-4xl text-center">
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-3xl">Ready to Get Started?</CardTitle>
-              <CardDescription className="text-lg">
-                Experience the power of advanced AI today
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/chat">
-                <Button size="lg" className="gap-2">
-                  Launch Platform
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <h2 className="mb-6 text-3xl font-bold">
+            Ready to Get Started?
+          </h2>
+          <p className="mb-8 text-xl text-muted-foreground">
+            Experience the power of AI-driven intelligence today
+          </p>
+          <div className="flex justify-center gap-4">
+            <Link href="/chat">
+              <Button size="lg" className="gap-2">
+                Launch Chat
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/admin">
+              <Button size="lg" variant="outline">
+                Admin Portal
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </div>
