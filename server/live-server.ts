@@ -30,6 +30,7 @@ wss.on('connection', (ws) => {
           await handleStartSession(ws, message, connectionId)
           break
         case 'audio':
+        case 'user_audio':
           await handleAudioData(ws, message, connectionId)
           break
         case 'video':
