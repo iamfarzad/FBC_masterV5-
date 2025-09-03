@@ -75,7 +75,10 @@ export function VoiceOverlay({
       }
     })()
     return () => {
-      try { stopRecording() } catch {}
+      try { 
+        stopRecording() 
+        stopSession() // Also stop WebSocket session
+      } catch {}
       // Reset collected data when overlay closes
       setCollectedAudioData([])
       setRecordingStartTime(null)
