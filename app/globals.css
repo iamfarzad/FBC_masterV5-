@@ -152,7 +152,7 @@ html, body {
     padding: 1rem;
     margin-left: auto;
     max-width: 70%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 
   .message-assistant {
@@ -162,7 +162,7 @@ html, body {
     padding: 1rem;
     margin-right: auto;
     max-width: 70%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 
   .activity-dot {
@@ -264,7 +264,7 @@ html, body {
 
   .modern-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 91, 4, 0.15);
+    box-shadow: var(--shadow-glow);
   }
 
   /* Modern button effects */
@@ -291,25 +291,25 @@ html, body {
 
   .modern-button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 91, 4, 0.3);
+    box-shadow: var(--shadow-glow);
   }
 
   .modern-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(255, 91, 4, 0.2);
+    box-shadow: var(--shadow-md);
   }
 
   /* Glass morphism effects */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gradient-glass);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--border-subtle);
   }
 
   .glass-effect-dark {
-    background: rgba(42, 42, 42, 0.8);
+    background: var(--gradient-glass-dark);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
   }
 
   /* Modern card effects */
@@ -320,8 +320,8 @@ html, body {
 
   .modern-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-    border-color: var(--color-orange-accent);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--brand);
   }
 
   /* Modern input focus effects */
@@ -347,7 +347,7 @@ html, body {
   }
 
   .modern-input-focus:focus-within {
-    box-shadow: 0 0 0 2px rgba(255, 91, 4, 0.1);
+    box-shadow: 0 0 0 2px var(--brand);
   }
 
   /* Unified glass helper - One source of truth */
