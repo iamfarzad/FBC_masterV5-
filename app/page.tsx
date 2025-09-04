@@ -75,7 +75,8 @@ export default function HomePage() {
       <div>
         <a href="/chat" style={{ marginRight: '10px' }}>Go to Chat</a>
         <a href="/workshop" style={{ marginRight: '10px' }}>Go to Workshop</a>
-        <a href="/admin">Go to Admin</a>
+        <a href="/admin" style={{ marginRight: '10px' }}>Go to Admin</a>
+        <a href="/voice-test">🎤 Voice Test (Gemini Live)</a>
       </div>
 
       <hr />
