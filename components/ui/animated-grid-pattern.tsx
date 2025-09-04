@@ -10,7 +10,7 @@ interface AnimatedGridPatternProps {
   height?: number
   x?: number
   y?: number
-  strokeDasharray?: unknown
+  strokeDasharray?: any
   numSquares?: number
   className?: string
   maxOpacity?: number
@@ -102,13 +102,9 @@ function AnimatedGridPattern({
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
       <svg x={x} y={y} className="overflow-visible">
-        {squares.map(({ pos: [sx, sy], id: sqId }, index) => (
+        {squares.map(({ pos: [sx, sy], id: sqId }) => (
           <motion.rect
-            initial={{ opacity: 0 }}
-            animate={{ opacity: maxOpacity }}
-            transition={{ duration, repeat: 1, delay: index * 0.1, repeatType: "reverse", repeatDelay }}
-            onAnimationComplete={() => updateSquarePosition(sqId)}
-            key={`${sx}-${sy}-${sqId}-${index}`}
+            key={`${sx}-${sy}-${sqId}`}
             width={width - 1}
             height={height - 1}
             x={sx * width + 1}

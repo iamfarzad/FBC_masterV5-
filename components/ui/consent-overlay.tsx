@@ -22,7 +22,7 @@ export function ConsentOverlay({ isVisible, onSubmit, isLoading = false }: Conse
       onSubmit({
         name: name.trim(),
         email: email.trim(),
-        companyUrl: companyUrl.trim() || undefined
+        companyUrl: companyUrl.trim() || ''
       })
     }
   }

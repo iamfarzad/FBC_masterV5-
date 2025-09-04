@@ -204,7 +204,7 @@ export function FbcVoiceOrb({
       whileHover={{ scale: disabled ? 1 : 1.02 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, ...getBreathingAnimation() }}
+      animate={{ opacity: 1, ...getBreathingAnimation() } as any}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       aria-label={`AI Voice Interface - ${state} ${isRecording ? '(Recording)' : ''}`}
     >
@@ -247,7 +247,7 @@ export function FbcVoiceOrb({
         {/* Dynamic Arc System */}
         <motion.div
           className="absolute inset-0 rounded-full"
-          animate={getArcAnimation()}
+          animate={getArcAnimation() as any}
         >
           <svg
             viewBox="0 0 100 100"
