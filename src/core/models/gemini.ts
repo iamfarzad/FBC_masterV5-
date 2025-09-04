@@ -351,3 +351,13 @@ export const createOptimizedConfig = (
 export const optimizeConversation = (messages: ConversationMessage[], systemPrompt: string, sessionId: string, maxHistoryTokens?: number) => {
   return geminiConfig.optimizeConversation(messages, systemPrompt, sessionId, maxHistoryTokens);
 };
+
+export function estimateTokensForMessages(_messages: Array<{ role: string; content: string }>): number {
+  // Heuristic: ~4 chars/token. Keep tiny and deterministic.
+  try {
+    const text = _messages.map(m => m.content).join(' ')
+    return Math.max(0, Math.ceil(text.length / 4))
+  } catch {
+    return 0
+  }
+}

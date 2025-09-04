@@ -64,8 +64,8 @@ export function getYoutubeEmbedUrl(url: string): string {
   return url
 }
 
-export async function getYouTubeVideoTitle(url: string) {
-  const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
+export async function getYouTubeVideoTitle(videoUrl: string) {
+  const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`
 
   const response = await fetch(oEmbedUrl)
 

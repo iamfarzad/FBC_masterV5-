@@ -48,7 +48,7 @@ export class PerformanceMonitor {
       return result
     } catch (error) {
       const duration = performance.now() - start
-      this.recordMetric(name, duration, { ...metadata, success: false, error: error.message })
+      this.recordMetric(name, duration, { ...(metadata ?? {}), success: false, error: (error as any)?.message ?? String(error) })
       throw error
     }
   }
@@ -57,12 +57,7 @@ export class PerformanceMonitor {
    * Record a custom metric
    */
   recordMetric(name: string, value: number, metadata?: Record<string, any>): void {
-    const metric: PerformanceMetric = {
-      name,
-      value,
-      timestamp: Date.now(),
-      metadata
-    }
+    const metric: PerformanceMetric = { name, value, timestamp: Date.now(), metadata: metadata ?? {} }
 
     this.metrics.push(metric)
 
@@ -273,7 +268,7 @@ export const measureSync = (name: string, fn: () => any, metadata?: any) => {
     return result
   } catch (error) {
     const duration = performance.now() - start
-    performanceMonitor.recordMetric(name, duration, { ...metadata, success: false, error: error.message })
+    performanceMonitor.recordMetric(name, duration, { ...(metadata ?? {}), success: false, error: (error as any)?.message ?? String(error) })
     throw error
   }
 }

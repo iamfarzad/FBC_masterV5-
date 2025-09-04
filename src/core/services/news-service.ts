@@ -58,7 +58,7 @@ function mapResponse(resp: GoogleSearchResponse, category: NewsItem['category'])
     title: it.title,
     url: it.link,
     source: it.displayLink || (new URL(it.link).hostname.replace('www.', '')),
-    publishedAt: undefined,
+    publishedAt: it.publishedAt ?? '',
     category,
     keyFindings: extractFindings(it.snippet)
   }))

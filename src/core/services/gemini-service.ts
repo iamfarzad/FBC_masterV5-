@@ -72,11 +72,11 @@ class GeminiService {
       // Check user budget if authenticated
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          userId,
           sessionId || 'default',
           'text_generation',
           modelSelection.model,
-          estimatedTokens
+          estimatedTokens,
+          0
         )
         
         if (!budgetCheck.allowed) {
@@ -155,11 +155,11 @@ class GeminiService {
       
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          userId,
           sessionId || 'default',
           'image_analysis',
           modelSelection.model,
-          estimatedTokens
+          estimatedTokens,
+          0
         )
         
         if (!budgetCheck.allowed) {
@@ -240,11 +240,11 @@ class GeminiService {
       
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          userId,
           sessionId || 'default',
           'document_analysis',
           modelSelection.model,
-          estimatedTokens
+          estimatedTokens,
+          0
         )
         
         if (!budgetCheck.allowed) {
@@ -363,7 +363,7 @@ class GeminiService {
     // Include screenshots if provided
     if (screenshots.length > 0) {
       // For now, just use the first screenshot
-      return this.analyzeImage(screenshots[0], prompt, options)
+      return this.analyzeImage(screenshots?.[0] ?? '', prompt, options)
     }
     
     return this.generateText(prompt, {
@@ -469,7 +469,7 @@ class GeminiService {
         5. Summary and recommendations`
     }
     
-    return prompts[fileExtension || ''] || prompts.default
+    return prompts[fileExtension ?? ''] || prompts.default
   }
 }
 

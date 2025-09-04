@@ -214,23 +214,23 @@ export class URLContextService {
     };
 
     // Open Graph metadata
-    metadata.ogTitle = getMetaContent(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i);
-    metadata.ogDescription = getMetaContent(/<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i);
-    metadata.ogImage = getMetaContent(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+    metadata.ogTitle = getMetaContent(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ?? '';
+    metadata.ogDescription = getMetaContent(/<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i) ?? '';
+    metadata.ogImage = getMetaContent(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i) ?? '';
 
     // Twitter Card metadata
-    metadata.twitterTitle = getMetaContent(/<meta[^>]*name="twitter:title"[^>]*content="([^"]+)"/i);
-    metadata.twitterDescription = getMetaContent(/<meta[^>]*name="twitter:description"[^>]*content="([^"]+)"/i);
+    metadata.twitterTitle = getMetaContent(/<meta[^>]*name="twitter:title"[^>]*content="([^"]+)"/i) ?? '';
+    metadata.twitterDescription = getMetaContent(/<meta[^>]*name="twitter:description"[^>]*content="([^"]+)"/i) ?? '';
 
     // Standard metadata
     metadata.author = getMetaContent(/<meta[^>]*name="author"[^>]*content="([^"]+)"/i) ||
-                     getMetaContent(/<meta[^>]*property="article:author"[^>]*content="([^"]+)"/i);
+                     getMetaContent(/<meta[^>]*property="article:author"[^>]*content="([^"]+)"/i) || '';
     metadata.publishDate = getMetaContent(/<meta[^>]*name="date"[^>]*content="([^"]+)"/i) ||
-                          getMetaContent(/<meta[^>]*property="article:published_time"[^>]*content="([^"]+)"/i);
+                          getMetaContent(/<meta[^>]*property="article:published_time"[^>]*content="([^"]+)"/i) || '';
 
     // Canonical URL
     const canonicalMatch = html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/i);
-    metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : undefined;
+    metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : '';
 
     // Keywords
     const keywordsMatch = html.match(/<meta[^>]*name="keywords"[^>]*content="([^"]+)"/i);
@@ -282,7 +282,7 @@ export class URLContextService {
     if (!bestContent) {
       const bodyMatch = cleanHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
       if (bodyMatch) {
-        bestContent = this.extractTextFromHtml(bodyMatch[1]);
+        bestContent = this.extractTextFromHtml(bodyMatch?.[1] ?? '');
       }
     }
 

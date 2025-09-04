@@ -43,8 +43,25 @@ export function estimateTokens(text: string): number {
  * Select model for specific feature/use case
  * Alias for ModelSelector.selectModel for backward compatibility
  */
-export function selectModelForFeature(useCase: UseCase, requirements: ModelRequirements = {}): string {
-  return ModelSelector.selectModel(useCase, requirements)
+export interface ModelSelection {
+  model: string
+  estimatedCost: number
+}
+
+export function selectModelForFeature(
+  feature: string,
+  estimatedTokens?: number,
+  _hasSession?: boolean
+): ModelSelection {
+  const config = (globalThis as any).getConfig?.() ?? config
+  const capabilities = (config as any)?.ai?.gemini?.modelCapabilities ?? {}
+  const models = config.ai.gemini.models
+  const scoredModels = scoreModelsForFeature(feature, capabilities, estimatedTokens)
+  const chosen = scoredModels[0] ? scoredModels[0].model : models.default
+  // Simple cost estimate fallback; replace with real pricing if available
+  const costPerMillion = (config as any)?.ai?.gemini?.pricing?.[chosen] ?? 0
+  const estCost = typeof estimatedTokens === 'number' ? (estimatedTokens / 1_000_000) * costPerMillion : 0
+  return { model: chosen, estimatedCost: estCost }
 }
 
 export class ModelSelector {

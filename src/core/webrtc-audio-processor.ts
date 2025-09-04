@@ -223,7 +223,7 @@ export class WebRTCAudioProcessor {
         throw new Error("WebRTC not connected")
       }
 
-      const dataChannel = this.peerConnection.dataChannels?.[0]
+      const dataChannel = (this.peerConnection as any).dataChannels?.[0] as RTCDataChannel | undefined
       if (dataChannel && dataChannel.readyState === "open") {
         dataChannel.send(audioData)
       }

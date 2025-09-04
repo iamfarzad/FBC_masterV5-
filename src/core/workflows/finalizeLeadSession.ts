@@ -18,13 +18,13 @@ export async function finalizeLeadSession(ctx: LeadContext) {
       emailStatus: "pending"
     })
 
-    logger.info('Conversation saved:', conversation.id)
+    logger.info('Conversation saved:', (conversation as any).id)
 
     // Step 2: Generate PDF
     let pdfUrl: string | null = null
     try {
       pdfUrl = await generateLeadPdf(ctx)
-      await updatePdfUrl(conversation.id, pdfUrl)
+      await updatePdfUrl((conversation as any).id, pdfUrl)
       logger.info('PDF generated and linked:', pdfUrl)
     } catch (err) {
       logger.error('PDF generation failed:', err)
@@ -33,12 +33,12 @@ export async function finalizeLeadSession(ctx: LeadContext) {
 
     // Step 3: Send email (with retry)
     try {
-      const emailSent = await trySendLeadEmail(ctx.email, pdfUrl, conversation.id, 2) // 2 retries max
-      await updateEmailStatus(conversation.id, emailSent ? 'sent' : 'failed')
+      const emailSent = await trySendLeadEmail(ctx.email, pdfUrl, (conversation as any).id, 2) // 2 retries max
+      await updateEmailStatus((conversation as any).id, emailSent ? 'sent' : 'failed')
       logger.info('Email status updated:', emailSent ? 'sent' : 'failed')
     } catch (err) {
       logger.error('Email sending failed permanently:', err)
-      await updateEmailStatus(conversation.id, 'failed')
+      await updateEmailStatus((conversation as any).id, 'failed')
     }
 
     return conversation
