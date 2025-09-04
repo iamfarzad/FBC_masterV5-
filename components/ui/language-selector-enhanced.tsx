@@ -11,19 +11,20 @@ interface EnhancedLanguageSelectorProps {
   className?: string;
 }
 
-const languageFlags = {
-  en: '🇺🇸',
-  es: '🇪🇸',
-  fr: '🇫🇷',
-  de: '🇩🇪',
-  it: '🇮🇹',
-  pt: '🇵🇹',
-  ru: '🇷🇺',
-  zh: '🇨🇳',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  ar: '🇸🇦',
-  hi: '🇮🇳',
+// Language codes for display (no emoji flags)
+const languageCodes = {
+  en: 'EN',
+  es: 'ES',
+  fr: 'FR',
+  de: 'DE',
+  it: 'IT',
+  pt: 'PT',
+  ru: 'RU',
+  zh: 'ZH',
+  ja: 'JA',
+  ko: 'KO',
+  ar: 'AR',
+  hi: 'HI',
 };
 
 export function EnhancedLanguageSelector({ 
@@ -59,7 +60,7 @@ export function EnhancedLanguageSelector({
   };
 
   const currentLangData = supportedLanguages.find(lang => lang.code === currentLanguage);
-  const currentFlag = languageFlags[currentLanguage as keyof typeof languageFlags] || '🌐';
+  const currentCode = languageCodes[currentLanguage as keyof typeof languageCodes] || currentLanguage.toUpperCase();
 
   // Icon-only variant - Clean and minimal
   if (variant === 'icon') {
@@ -70,18 +71,16 @@ export function EnhancedLanguageSelector({
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "group relative flex h-10 w-10 items-center justify-center",
-            "rounded-xl transition-all duration-200",
-            "bg-card/50 hover:bg-accent/10",
-            "border border-border/30 hover:border-accent/30",
-            "shadow-sm hover:shadow-md",
-            "backdrop-blur-sm"
+            "group relative flex h-9 w-9 items-center justify-center",
+            "rounded-lg transition-all duration-200",
+            "hover:bg-muted",
+            "border border-transparent hover:border-border"
           )}
           aria-label="Select language"
         >
-          <Globe className="h-4 w-4 text-foreground/70 transition-colors group-hover:text-accent" />
-          <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent/20 text-[10px]">
-            {currentLanguage.toUpperCase()}
+          <Globe className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+          <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded bg-background px-1 text-[9px] font-bold text-muted-foreground border border-border">
+            {currentCode}
           </div>
         </motion.button>
 
@@ -102,55 +101,57 @@ export function EnhancedLanguageSelector({
                 transition={{ type: "spring", duration: 0.3 }}
                 className={cn(
                   "absolute right-0 z-50 mt-2",
-                  "w-56 overflow-hidden rounded-2xl",
-                  "border border-border/50",
-                  "bg-card/95 backdrop-blur-xl",
-                  "shadow-2xl shadow-black/10"
+                  "w-64 overflow-hidden rounded-lg",
+                  "border border-border",
+                  "bg-popover",
+                  "shadow-md"
                 )}
               >
-                <div className="bg-gradient-to-r from-accent/10 to-primary/10 px-4 py-3">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Select Language
-                  </h3>
+                <div className="p-2">
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Choose Language
+                  </div>
                 </div>
                 
-                <div className="max-h-80 overflow-y-auto p-2">
+                <div className="max-h-72 overflow-y-auto px-2 pb-2">
                   {supportedLanguages.map((language, index) => {
                     const isSelected = currentLanguage === language.code;
-                    const flag = languageFlags[language.code as keyof typeof languageFlags] || '🌐';
+                    const langCode = languageCodes[language.code as keyof typeof languageCodes] || language.code.toUpperCase();
                     
                     return (
                       <motion.button
                         key={language.code}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ delay: index * 0.03 }}
                         onClick={() => handleLanguageSelect(language.code)}
                         className={cn(
-                          "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5",
-                          "transition-all duration-200",
+                          "group flex w-full items-center gap-3 rounded-lg px-3 py-2",
+                          "transition-all duration-150",
                           isSelected 
-                            ? "bg-accent/15 text-accent" 
-                            : "hover:bg-accent/5 text-foreground/80 hover:text-foreground"
+                            ? "bg-accent text-accent-foreground" 
+                            : "hover:bg-muted text-foreground"
                         )}
                       >
-                        <span className="text-xl">{flag}</span>
+                        <div className={cn(
+                          "flex h-8 w-10 items-center justify-center rounded",
+                          "text-xs font-bold",
+                          isSelected
+                            ? "bg-accent-foreground/10 text-accent-foreground"
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {langCode}
+                        </div>
                         <div className="flex-1 text-left">
                           <div className="text-sm font-medium">
                             {language.nativeName}
                           </div>
-                          <div className="text-xs opacity-70">
+                          <div className="text-xs text-muted-foreground">
                             {language.name}
                           </div>
                         </div>
                         {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-accent"
-                          >
-                            <Check className="h-3 w-3 text-white" />
-                          </motion.div>
+                          <Check className="h-4 w-4" />
                         )}
                       </motion.button>
                     );
@@ -181,11 +182,11 @@ export function EnhancedLanguageSelector({
             "backdrop-blur-sm"
           )}
         >
-          <span className="text-lg">{currentFlag}</span>
-          <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground">
-            {currentLangData?.code.toUpperCase()}
+          <Languages className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">
+            {currentLangData?.nativeName || currentCode}
           </span>
-          <ChevronDown className="h-3 w-3 text-foreground/50" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />
         </motion.button>
 
         <AnimatePresence>
@@ -205,47 +206,55 @@ export function EnhancedLanguageSelector({
                 transition={{ type: "spring", duration: 0.3 }}
                 className={cn(
                   "absolute right-0 z-50 mt-2",
-                  "w-64 overflow-hidden rounded-2xl",
-                  "border border-border/50",
-                  "bg-card/95 backdrop-blur-xl",
-                  "shadow-2xl shadow-black/10"
+                  "w-72 overflow-hidden rounded-lg",
+                  "border border-border",
+                  "bg-popover",
+                  "shadow-md"
                 )}
               >
-                <div className="grid grid-cols-2 gap-2 p-3">
+                <div className="p-2">
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Select Language
+                  </div>
+                </div>
+                <div className="max-h-72 overflow-y-auto px-2 pb-2">
                   {supportedLanguages.map((language) => {
                     const isSelected = currentLanguage === language.code;
-                    const flag = languageFlags[language.code as keyof typeof languageFlags] || '🌐';
+                    const langCode = languageCodes[language.code as keyof typeof languageCodes] || language.code.toUpperCase();
                     
                     return (
-                      <motion.button
+                      <button
                         key={language.code}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         onClick={() => handleLanguageSelect(language.code)}
                         className={cn(
-                          "flex flex-col items-center gap-1 rounded-xl p-3",
-                          "transition-all duration-200",
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2",
+                          "transition-all duration-150",
                           isSelected 
-                            ? "bg-gradient-to-br from-accent/20 to-primary/20 text-accent shadow-md" 
-                            : "hover:bg-accent/5 text-foreground/80 hover:text-foreground"
+                            ? "bg-accent text-accent-foreground" 
+                            : "hover:bg-muted text-foreground"
                         )}
                       >
-                        <span className="text-2xl">{flag}</span>
-                        <span className="text-xs font-medium">
-                          {language.code.toUpperCase()}
-                        </span>
+                        <div className={cn(
+                          "flex h-8 w-10 items-center justify-center rounded",
+                          "text-xs font-bold",
+                          isSelected
+                            ? "bg-accent-foreground/10 text-accent-foreground"
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {langCode}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-medium">
+                            {language.nativeName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {language.name}
+                          </div>
+                        </div>
                         {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0, y: -10 }}
-                            animate={{ scale: 1, y: 0 }}
-                            className="absolute -top-1 -right-1"
-                          >
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent shadow-lg">
-                              <Check className="h-3 w-3 text-white" />
-                            </div>
-                          </motion.div>
+                          <Check className="h-4 w-4" />
                         )}
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
