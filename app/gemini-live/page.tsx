@@ -18,49 +18,12 @@ export default function GeminiLivePage() {
   const wsRef = useRef<WebSocket | null>(null)
   const audioChunks = useRef<Blob[]>([])
 
-  // Connect to Gemini Live API
+  // Connect to Gemini Live API using Server-Sent Events
   const connectToGeminiLive = async () => {
     try {
       setStatus('Connecting to Gemini Live...')
-      
-      const response = await fetch('/api/gemini-live/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sessionId: `live-${Date.now()}`,
-          mode: 'audio'
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        // Establish WebSocket connection
-        const ws = new WebSocket(data.wsUrl)
-        
-        ws.onopen = () => {
-          setIsConnected(true)
-          setStatus('Connected to Gemini Live')
-          console.log('WebSocket connected')
-        }
-        
-        ws.onmessage = (event) => {
-          const message = JSON.parse(event.data)
-          handleServerMessage(message)
-        }
-        
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
-          setStatus('Connection error')
-        }
-        
-        ws.onclose = () => {
-          setIsConnected(false)
-          setStatus('Disconnected')
-        }
-        
-        wsRef.current = ws
-      }
+      setIsConnected(true)
+      setStatus('Connected - Ready for input')
     } catch (error) {
       console.error('Connection failed:', error)
       setStatus('Failed to connect')
@@ -114,26 +77,24 @@ export default function GeminiLivePage() {
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunks.current.push(event.data)
-          // Send audio chunks to server in real-time
-          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            const reader = new FileReader()
-            reader.onloadend = () => {
-              wsRef.current?.send(JSON.stringify({
-                clientContent: {
-                  turns: [{
-                    role: 'user',
-                    parts: [{
-                      inlineData: {
-                        mimeType: 'audio/webm',
-                        data: reader.result?.toString().split(',')[1]
-                      }
-                    }]
-                  }]
-                }
-              }))
-            }
-            reader.readAsDataURL(event.data)
-          }
+        }
+      }
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' })
+        // Send to transcription API
+        const formData = new FormData()
+        formData.append('audio', audioBlob)
+        
+        const transcribeRes = await fetch('/api/voice/transcribe', {
+          method: 'POST',
+          body: formData
+        })
+        
+        const { text } = await transcribeRes.json()
+        if (text) {
+          setTranscript(text)
+          sendMessageToAI(text)
         }
       }
       
@@ -263,15 +224,53 @@ export default function GeminiLivePage() {
     setStatus('Capture stopped')
   }
 
+  // Send message to AI using SSE
+  const sendMessageToAI = async (text: string) => {
+    try {
+      setAiResponse('')
+      const response = await fetch('/api/gemini-live/ws', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, mode })
+      })
+      
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\\n')
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') break
+              
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.text) {
+                  setAiResponse(prev => prev + parsed.text)
+                }
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setStatus('Error sending message')
+    }
+  }
+  
   // Disconnect from Gemini Live
   const disconnect = () => {
     stopCapture()
-    
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    
     setIsConnected(false)
     setStatus('Disconnected')
     setTranscript('')
