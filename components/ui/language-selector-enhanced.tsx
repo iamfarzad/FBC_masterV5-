@@ -73,15 +73,11 @@ export function EnhancedLanguageSelector({
           className={cn(
             "group relative flex h-9 w-9 items-center justify-center",
             "rounded-lg transition-all duration-200",
-            "hover:bg-muted",
-            "border border-transparent hover:border-border"
+            "hover:bg-accent/10"
           )}
           aria-label="Select language"
         >
           <Globe className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-          <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded bg-background px-1 text-[9px] font-bold text-muted-foreground border border-border">
-            {currentCode}
-          </div>
         </motion.button>
 
         <AnimatePresence>
@@ -107,9 +103,9 @@ export function EnhancedLanguageSelector({
                   "shadow-md"
                 )}
               >
-                <div className="p-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Choose Language
+                <div className="border-b border-border mb-1">
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+                    Select Language
                   </div>
                 </div>
                 
