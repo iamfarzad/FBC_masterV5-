@@ -1,94 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase';
 import { Database } from '../database.types'
 
-// Validate environment variables - only use client-safe variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// Check if we're in a browser environment and have the required variables
-const isClient = typeof window !== 'undefined'
-const hasRequiredVars = supabaseUrl && supabaseAnonKey
-
-if (!hasRequiredVars) {
-  // During build time or when env vars are missing, provide a clear error message
-  const errorMessage = 'Missing required Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
-
-  // Only throw in development/production runtime, not during build
-  if (typeof window !== 'undefined' || process.env.NODE_ENV === 'production') {
-    throw new Error(errorMessage)
-  }
-
-  console.warn(errorMessage)
-}
-
-// Create a safe Supabase client that handles missing environment variables
-function createSafeSupabaseClient() {
-  if (!hasRequiredVars) {
-    // Return a mock client for development/testing/build time
-    // Warning log removed - could add proper error handling here
-    return {
-      auth: {
-        getUser: async () => ({ data: { user: null }, error: null }),
-        signIn: async () => ({ data: { user: null }, error: null }),
-        signOut: async () => ({ error: null }),
-      },
-      channel: () => ({
-        on: () => ({ subscribe: () => {} }),
-        subscribe: () => {},
-      }),
-      removeChannel: () => {},
-      from: (table: string) => ({
-        select: (columns?: string) => ({
-          eq: (column: string, value: unknown) => ({
-            single: () => ({ data: null, error: null }),
-            order: (column: string, options?: unknown) => ({ data: [], error: null }),
-            gte: (column: string, value: unknown) => ({
-              order: (column: string, options?: unknown) => ({ data: [], error: null })
-            })
-          }),
-          gte: (column: string, value: unknown) => ({
-            order: (column: string, options?: unknown) => ({ data: [], error: null })
-          }),
-          order: (column: string, options?: unknown) => ({ data: [], error: null }),
-          data: [],
-          error: null
-        }),
-        insert: (data: unknown) => ({
-          select: (columns?: string) => ({
-            single: () => ({ data: null, error: null })
-          })
-        }),
-      }),
-    } as any
-  }
-
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    }
-  })
-}
-
 // Improved Supabase Client Setup with TypeScript types and error handling
-export const supabase = createSafeSupabaseClient()
+export const supabase = getSupabaseServer();
 
 // Service Role Client for API operations (bypasses RLS) - only available server-side
-export const supabaseService = (() => {
-  // Check if we're in server environment and have required variables
-  if (typeof window === 'undefined' && hasRequiredVars && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return createClient<Database>(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  }
-  
-  // Fallback to the mock client if service key is missing or on client-side
-  // Warning log removed - could add proper error handling here
-  return createSafeSupabaseClient()
-})()
+export const supabaseService = getSupabaseService();
 
 // Safe authentication utility for server-side API routes
 export async function getSafeUser() {
@@ -142,7 +59,7 @@ export async function createLeadSummary(
 }
 
 // Comprehensive Error Handling
-export function handleSupabaseError(error: unknown) {
+export function handleSupabaseError(error: any) {
   const errorMap: Record<string, string> = {
     'PGRST116': 'Permission denied. Check user authentication.',
     'PGRST000': 'Database operation failed',

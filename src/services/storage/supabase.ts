@@ -1,5 +1,13 @@
 import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'
 
+// Type guard for unknown values
+function asRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null && !Array.isArray(x)
+}
+
+// Type for Supabase query results
+type SupabaseResult = { data: unknown; error: unknown }
+
 export interface StorageConfig {
   url: string
   anonKey: string
@@ -41,35 +49,49 @@ export class SupabaseStorage {
       throw new Error('Missing required Supabase environment variables')
     }
 
-    return new SupabaseStorage({ url, anonKey, serviceRoleKey })
+    const config: StorageConfig = {
+      url,
+      anonKey,
+      ...(serviceRoleKey ? { serviceRoleKey } : {})
+    }
+
+    return new SupabaseStorage(config)
   }
 
   // Basic CRUD operations
-  async select(table: string, options?: { 
+  async select(table: string, options?: {
     columns?: string
     filter?: Record<string, unknown>
     limit?: number
     orderBy?: { column: string; ascending?: boolean }
   }): Promise<StorageResult> {
     try {
-      let query = this.client.from(table).select(options?.columns || '*')
-      
-      if (options?.filter) {
+      let query = this.from(table).select(options?.columns || '*')
+
+      if (options?.filter && asRecord(options.filter)) {
         for (const [key, value] of Object.entries(options.filter)) {
           query = query.eq(key, value)
         }
       }
-      
-      if (options?.orderBy) {
+
+      if (options?.orderBy && asRecord(options.orderBy)) {
         query = query.order(options.orderBy.column, { ascending: options.orderBy.ascending ?? true })
       }
-      
+
       if (options?.limit) {
         query = query.limit(options.limit)
       }
 
-      const result = await query
-      return { data: result.data, error: result.error }
+      const result: SupabaseResult = await query
+
+      // Guard against error before using data
+      if (result.error) {
+        return { data: null, error: asRecord(result.error) && typeof result.error.message === 'string'
+          ? new Error(result.error.message)
+          : new Error('Query failed') }
+      }
+
+      return { data: result.data, error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
@@ -77,8 +99,15 @@ export class SupabaseStorage {
 
   async insert(table: string, data: unknown): Promise<StorageResult> {
     try {
-      const result = await this.client.from(table).insert(data).select()
-      return { data: result.data, error: result.error }
+      const result: SupabaseResult = await this.from(table).insert(data).select()
+
+      if (result.error) {
+        return { data: null, error: asRecord(result.error) && typeof result.error.message === 'string'
+          ? new Error(result.error.message)
+          : new Error('Insert failed') }
+      }
+
+      return { data: result.data, error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
@@ -86,14 +115,23 @@ export class SupabaseStorage {
 
   async update(table: string, data: unknown, filter: Record<string, unknown>): Promise<StorageResult> {
     try {
-      let query = this.client.from(table).update(data)
-      
-      for (const [key, value] of Object.entries(filter)) {
-        query = query.eq(key, value)
+      let query = this.from(table).update(data)
+
+      if (asRecord(filter)) {
+        for (const [key, value] of Object.entries(filter)) {
+          query = query.eq(key, value)
+        }
       }
 
-      const result = await query.select()
-      return { data: result.data, error: result.error }
+      const result: SupabaseResult = await query.select()
+
+      if (result.error) {
+        return { data: null, error: asRecord(result.error) && typeof result.error.message === 'string'
+          ? new Error(result.error.message)
+          : new Error('Update failed') }
+      }
+
+      return { data: result.data, error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
@@ -101,14 +139,23 @@ export class SupabaseStorage {
 
   async delete(table: string, filter: Record<string, unknown>): Promise<StorageResult> {
     try {
-      let query = this.client.from(table).delete()
-      
-      for (const [key, value] of Object.entries(filter)) {
-        query = query.eq(key, value)
+      let query = this.from(table).delete()
+
+      if (asRecord(filter)) {
+        for (const [key, value] of Object.entries(filter)) {
+          query = query.eq(key, value)
+        }
       }
 
-      const result = await query
-      return { data: result.data, error: result.error }
+      const result: SupabaseResult = await query
+
+      if (result.error) {
+        return { data: null, error: asRecord(result.error) && typeof result.error.message === 'string'
+          ? new Error(result.error.message)
+          : new Error('Delete failed') }
+      }
+
+      return { data: result.data, error: null }
     } catch (error) {
       return { data: null, error: error as Error }
     }
@@ -125,6 +172,15 @@ export class SupabaseStorage {
       throw new Error('Service role client not available - missing SUPABASE_SERVICE_ROLE_KEY')
     }
     return this.serviceClient
+  }
+
+  // Public wrappers for external access (avoiding private field access)
+  public from(table: string) {
+    return this.client.from(table)
+  }
+
+  public get storage() {
+    return this.client.storage
   }
 }
 
@@ -179,10 +235,14 @@ function createMockSupabaseStorage(): SupabaseStorage {
 let supabaseStorage: SupabaseStorage | null = null
 
 if (SupabaseStorage.isConfigured()) {
-  const config = {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '',
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  const config: StorageConfig = {
+    url,
+    anonKey,
+    ...(serviceRoleKey ? { serviceRoleKey } : {})
   }
   supabaseStorage = new SupabaseStorage(config)
 }
@@ -190,6 +250,6 @@ if (SupabaseStorage.isConfigured()) {
 export { supabaseStorage }
 
 // Legacy exports for compatibility
-export const getSupabase = () => supabaseStorage?.client
+export const getSupabase = () => supabaseStorage
 export const supabaseService = supabaseStorage
-export const supabase = supabaseStorage?.client
+export const supabase = supabaseStorage

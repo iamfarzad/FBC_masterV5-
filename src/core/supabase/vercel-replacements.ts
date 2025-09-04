@@ -4,7 +4,7 @@
  * file storage, and cron jobs using Supabase instead of Vercel Pro services.
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/src/lib/supabase';
 
 // ============================================================================
 // TYPES
@@ -451,7 +451,7 @@ export class VercelReplacementManager {
   public cronJobs: CronJobManager
 
   constructor(supabaseUrl: string, supabaseAnonKey: string) {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = getSupabaseServer();
     
     this.featureFlags = new FeatureFlagsManager(supabase)
     this.cache = new CacheManager(supabase)

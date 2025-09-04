@@ -32,28 +32,79 @@ app/api-utils/security.ts(143,19): error TS2345: Argument of type 'string | unde
   Type 'undefined' is not assignable to type 'string'.
 app/api-utils/security.ts(143,38): error TS2538: Type 'undefined' cannot be used as an index type.
 app/api-utils/withApiGuard.ts(55,24): error TS2339: Property 'name' does not exist on type '{}'.
-app/api/admin/analytics/route.ts(32,35): error TS18046: 'supabaseClient' is of type 'unknown'.
+app/api/admin/analytics/route.ts(50,20): error TS2345: Argument of type '(lead: LeadSummary) => void' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' is not assignable to type 'LeadSummary'.
+      Types of property 'created_at' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
+app/api/admin/analytics/route.ts(72,20): error TS2345: Argument of type '(lead: LeadSummary) => void' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' is not assignable to type 'LeadSummary'.
+      Types of property 'created_at' are incompatible.
+        Type 'string | null' is not assignable to type 'string'.
+          Type 'null' is not assignable to type 'string'.
 app/api/admin/chat/route.ts(73,13): error TS2353: Object literal may only specify known properties, and 'intelligenceContext' does not exist in type '{ sessionId: string; adminId: string; conversationIds: any; leadContext: { conversationIds: any; } | undefined; }'.
 app/api/admin/chat/route.ts(88,7): error TS2375: Type '{ sessionId: string; adminId: string; conversationIds: any; leadContext: { conversationIds: any; } | undefined; }' is not assignable to type 'UnifiedContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'leadContext' are incompatible.
     Type '{ conversationIds: any; } | undefined' is not assignable to type 'LeadContext'.
       Type 'undefined' is not assignable to type 'LeadContext'.
-app/api/admin/email-campaigns/route.ts(25,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/email-campaigns/route.ts(59,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/export/route.ts(42,37): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/leads/[id]/route.ts(40,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/leads/[id]/route.ts(89,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/leads/route.ts(34,17): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/real-time-activity/route.ts(37,41): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/stats/route.ts(30,54): error TS18046: 'supabaseClient' is of type 'unknown'.
+app/api/admin/email-campaigns/route.ts(26,55): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"email_campaigns"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"email_campaigns"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+app/api/admin/email-campaigns/route.ts(61,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"email_campaigns"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"email_campaigns"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+app/api/admin/export/route.ts(54,13): error TS2345: Argument of type '(lead: LeadSummary) => string' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Property 'name' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+app/api/admin/leads/[id]/route.ts(43,17): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type '{ company_name?: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }'.
+app/api/admin/leads/route.ts(72,18): error TS2345: Argument of type '(lead: LeadSummary) => { status: string | undefined; engagement_type: string; id: string; name: string; email: string; company_name: string | null; lead_score: number; ... 4 more ...; created_at: string; }' is not assignable to parameter of type '(value: SelectQueryError<"column 'name' does not exist on 'lead_summaries'.">, index: number, array: SelectQueryError<"column 'name' does not exist on 'lead_summaries'.">[]) => { ...; }'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Type '{ error: true; } & String' is missing the following properties from type 'LeadSummary': id, name, email, company_name, and 6 more.
+app/api/admin/real-time-activity/route.ts(47,24): error TS2345: Argument of type '(lead: LeadActivity) => { id: string; type: string; title: string; description: string; user: { name: string; email: string; location: string | undefined; }; timestamp: string; metadata: { leadScore: number | undefined; capabilities: string[] | undefined; consultantBrief: string | undefined; }; }' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Property 'name' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadActivity'.
+app/api/admin/stats/route.ts(48,42): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array: { ...; }[]) => value is { ...; }, thisArg?: any): { ...; }[] | undefined', gave the following error.
+    Argument of type '(lead: LeadSummary) => boolean' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+      Types of parameters 'lead' and 'value' are incompatible.
+        Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+  Overload 2 of 2, '(predicate: (value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array: { ...; }[]) => unknown, thisArg?: any): { ...; }[] | undefined', gave the following error.
+    Argument of type '(lead: LeadSummary) => boolean' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+      Types of parameters 'lead' and 'value' are incompatible.
+        Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+app/api/admin/stats/route.ts(52,39): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array: { ...; }[]) => value is { ...; }, thisArg?: any): { ...; }[] | undefined', gave the following error.
+    Argument of type '(lead: LeadSummary) => boolean | null' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+      Types of parameters 'lead' and 'value' are incompatible.
+        Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+  Overload 2 of 2, '(predicate: (value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array: { ...; }[]) => unknown, thisArg?: any): { ...; }[] | undefined', gave the following error.
+    Argument of type '(lead: LeadSummary) => boolean | null' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+      Types of parameters 'lead' and 'value' are incompatible.
+        Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+app/api/admin/stats/route.ts(57,18): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+app/api/admin/stats/route.ts(57,31): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(callbackfn: (previousValue: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, currentValue: { ...; }, currentIndex: number, array: { ...; }[]) => { ...; }, initialValue: { ...; }): { ...; }', gave the following error.
+    Argument of type '(sum: number, lead: LeadSummary) => number' is not assignable to parameter of type '(previousValue: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, currentValue:...'.
+      Types of parameters 'sum' and 'previousValue' are incompatible.
+        Type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' is not assignable to type 'number'.
+  Overload 2 of 3, '(callbackfn: (previousValue: number, currentValue: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; ... 4 more ...; user_id: string | null; }, currentIndex: number, array: { ...; }[]) => number, initialValue: number): number', gave the following error.
+    Argument of type '(sum: number, lead: LeadSummary) => number' is not assignable to parameter of type '(previousValue: number, currentValue: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; ... 4 more ...; user_id: string | null; }, currentIndex: number, array: { ...; }[]) => number'.
+      Types of parameters 'lead' and 'currentValue' are incompatible.
+        Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
+app/api/admin/stats/route.ts(61,20): error TS2345: Argument of type '(lead: LeadSummary) => void' is not assignable to parameter of type '(value: { company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }, index: number, array:...'.
+  Types of parameters 'lead' and 'value' are incompatible.
+    Property 'ai_capabilities_shown' is missing in type '{ company_name: string; consultant_brief: string | null; conversation_summary: string | null; created_at: string | null; email: string | null; id: string; intent_type: string | null; lead_score: number | null; summary: string | null; updated_at: string | null; user_id: string | null; }' but required in type 'LeadSummary'.
 app/api/admin/stats/route.ts(89,39): error TS18046: 'error' is of type 'unknown'.
-app/api/admin/token-usage/route.ts(66,52): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/admin/token-usage/route.ts(182,39): error TS18046: 'error' is of type 'unknown'.
-app/api/ai-stream/route.ts(77,11): error TS2322: Type 'unknown' is not assignable to type 'SupabaseClient<any, "public", "public", any, any>'.
+app/api/admin/token-usage/route.ts(183,39): error TS18046: 'error' is of type 'unknown'.
 app/api/ai-stream/route.ts(247,16): error TS18046: 'error' is of type 'unknown'.
 app/api/ai-stream/route.ts(248,59): error TS18046: 'error' is of type 'unknown'.
-app/api/artifacts/[id]/link-lead/route.ts(17,29): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/chat/route.ts(32,29): error TS2345: Argument of type '{ messages: { role: "user" | "assistant" | "system"; content: string; }[]; model?: string | undefined; temperature?: number | undefined; max_tokens?: number | undefined; data?: { leadContext?: any; ... 6 more ...; enableGoogleSearch?: boolean | undefined; } | undefined; }' is not assignable to parameter of type 'ChatRequest'.
+app/api/chat/route.ts(35,29): error TS2345: Argument of type '{ messages: { role: "user" | "assistant" | "system"; content: string; }[]; model?: string | undefined; temperature?: number | undefined; max_tokens?: number | undefined; data?: { leadContext?: any; ... 6 more ...; enableGoogleSearch?: boolean | undefined; } | undefined; }' is not assignable to parameter of type 'ChatRequest'.
   Property 'version' is missing in type '{ messages: { role: "user" | "assistant" | "system"; content: string; }[]; model?: string | undefined; temperature?: number | undefined; max_tokens?: number | undefined; data?: { leadContext?: any; ... 6 more ...; enableGoogleSearch?: boolean | undefined; } | undefined; }' but required in type 'ChatRequest'.
 app/api/chat/unified/route.ts(48,43): error TS2345: Argument of type 'ChatMode | undefined' is not assignable to parameter of type 'ChatMode'.
   Type 'undefined' is not assignable to type 'ChatMode'.
@@ -68,37 +119,24 @@ app/api/chat/unified/route.ts(247,11): error TS2375: Type '{ sessionId: any; lea
   Types of property 'leadContext' are incompatible.
     Type '{ name: any; email: any; company: any; role: any; } | undefined' is not assignable to type 'LeadContext'.
       Type 'undefined' is not assignable to type 'LeadContext'.
-app/api/cleanup-activities/route.ts(9,42): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/cleanup-activities/route.ts(25,42): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/cleanup-activities/route.ts(36,59): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/cleanup-activities/route.ts(45,46): error TS7006: Parameter 'acc' implicitly has an 'any' type.
-app/api/cleanup-activities/route.ts(45,51): error TS7006: Parameter 'activity' implicitly has an 'any' type.
-app/api/cleanup-activities/route.ts(63,16): error TS18046: 'error' is of type 'unknown'.
-app/api/export-summary/route.ts(124,40): error TS18046: 'supabase' is of type 'unknown'.
-app/api/export-summary/route.ts(135,44): error TS18046: 'supabase' is of type 'unknown'.
-app/api/export-summary/route.ts(147,40): error TS18046: 'supabase' is of type 'unknown'.
-app/api/export-summary/route.ts(153,49): error TS7006: Parameter 'activity' implicitly has an 'any' type.
-app/api/gemini-live/route.ts(109,15): error TS2353: Object literal may only specify known properties, and 'safetySettings' does not exist in type 'LiveConnectConfig'.
-app/api/gemini-live/route.ts(143,23): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type '{ duration?: number; imageSize?: number; confidence?: number; transcription?: string; }'.
-app/api/gemini-live/route.ts(159,23): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type 'Partial<{ sampleRate: number; format: string; confidence: number; }>'.
-app/api/gemini-live/route.ts(197,41): error TS2345: Argument of type 'Session' is not assignable to parameter of type 'LiveSession'.
-  Property 'session' is missing in type 'Session' but required in type 'LiveSession'.
-app/api/gemini-live/route.ts(245,68): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
-app/api/gemini-live/route.ts(268,27): error TS2339: Property 'sendClientContent' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(275,15): error TS2353: Object literal may only specify known properties, and 'timestamp' does not exist in type '{ duration?: number; imageSize?: number; confidence?: number; transcription?: string; }'.
-app/api/gemini-live/route.ts(287,29): error TS2339: Property 'sendRealtimeInput' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(299,31): error TS2339: Property 'sendRealtimeInput' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(311,29): error TS2339: Property 'sendRealtimeInput' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(324,19): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type 'Partial<{ sampleRate: number; format: string; confidence: number; }>'.
-app/api/gemini-live/route.ts(335,29): error TS2339: Property 'sendRealtimeInput' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(348,70): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
-app/api/gemini-live/route.ts(350,120): error TS7006: Parameter 'm' implicitly has an 'any' type.
-app/api/gemini-live/route.ts(364,29): error TS2339: Property 'sendClientContent' does not exist on type 'LiveSession'.
-app/api/gemini-live/route.ts(372,47): error TS18048: 'base64' is possibly 'undefined'.
-app/api/gemini-live/route.ts(374,17): error TS18048: 'base64' is possibly 'undefined'.
-app/api/gemini-live/route.ts(376,17): error TS2554: Expected 3-5 arguments, but got 6.
-app/api/gemini-live/route.ts(384,66): error TS18048: 'base64' is possibly 'undefined'.
-app/api/gemini-live/route.ts(416,21): error TS2339: Property 'close' does not exist on type 'LiveSession'.
+app/api/cleanup-activities/route.ts(64,16): error TS18046: 'error' is of type 'unknown'.
+app/api/export-summary/route.ts(162,7): error TS2322: Type '{ role: string; content: string; timestamp: string; }[]' is not assignable to type '{ role: "user" | "assistant"; content: string; timestamp: string; }[]'.
+  Type '{ role: string; content: string; timestamp: string; }' is not assignable to type '{ role: "user" | "assistant"; content: string; timestamp: string; }'.
+    Types of property 'role' are incompatible.
+      Type 'string' is not assignable to type '"user" | "assistant"'.
+app/api/export-summary/route.ts(163,7): error TS2412: Type 'SelectQueryError<"column 'ai_capabilities_shown' does not exist on 'lead_summaries'."> | undefined' is not assignable to type '{ conversation_summary?: string; consultant_brief?: string; lead_score?: number; ai_capabilities_shown?: string; } | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+app/api/gemini-live/route.ts(110,15): error TS2353: Object literal may only specify known properties, and 'safetySettings' does not exist in type 'LiveConnectConfig'.
+app/api/gemini-live/route.ts(144,23): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type '{ duration?: number; imageSize?: number; confidence?: number; transcription?: string; }'.
+app/api/gemini-live/route.ts(160,23): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type 'Partial<{ sampleRate: number; format: string; confidence: number; }>'.
+app/api/gemini-live/route.ts(246,68): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
+app/api/gemini-live/route.ts(276,15): error TS2353: Object literal may only specify known properties, and 'timestamp' does not exist in type '{ duration?: number; imageSize?: number; confidence?: number; transcription?: string; }'.
+app/api/gemini-live/route.ts(325,19): error TS2353: Object literal may only specify known properties, and 'source' does not exist in type 'Partial<{ sampleRate: number; format: string; confidence: number; }>'.
+app/api/gemini-live/route.ts(349,70): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
+app/api/gemini-live/route.ts(351,120): error TS7006: Parameter 'm' implicitly has an 'any' type.
+app/api/gemini-live/route.ts(373,47): error TS18048: 'base64' is possibly 'undefined'.
+app/api/gemini-live/route.ts(374,17): error TS2345: Argument of type '"live_upload"' is not assignable to parameter of type '"webcam" | "screen" | "upload"'.
+app/api/gemini-live/route.ts(375,17): error TS18048: 'base64' is possibly 'undefined'.
+app/api/gemini-live/route.ts(379,66): error TS18048: 'base64' is possibly 'undefined'.
 app/api/intelligence/analyze-image/route.ts(36,42): error TS2339: Property 'preferences' does not exist on type 'ConversationContext'.
 app/api/intelligence/analyze-image/route.ts(45,9): error TS2353: Object literal may only specify known properties, and 'lastWebcamAnalysis' does not exist in type 'Partial<ConversationContext>'.
 app/api/intelligence/analyze-image/route.ts(46,46): error TS2339: Property 'webcamAnalysisCount' does not exist on type 'ConversationContext'.
@@ -134,39 +172,44 @@ app/api/intelligence/suggestions/route.ts(16,31): error TS2322: Type 'string | u
 app/api/intelligence/suggestions/route.ts(17,5): error TS2412: Type '{} | undefined' is not assignable to type 'CompanyContext | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
 app/api/intelligence/suggestions/route.ts(18,5): error TS2412: Type '{} | undefined' is not assignable to type 'PersonContext | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
 app/api/intelligence/suggestions/route.ts(21,5): error TS2412: Type '{} | undefined' is not assignable to type 'IntentResult | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
-app/api/lead-search-results/[leadId]/route.ts(18,50): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/lead-search-results/[leadId]/route.ts(42,14): error TS18046: 'error' is of type 'unknown'.
-app/api/lead-search-results/[leadId]/route.ts(61,52): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/lead-search-results/[leadId]/route.ts(96,14): error TS18046: 'error' is of type 'unknown'.
-app/api/lead-upsert/route.ts(23,53): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/lead-upsert/route.ts(43,52): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/leads/[id]/engagement/route.ts(16,29): error TS18046: 'supabaseClient' is of type 'unknown'.
+app/api/lead-search-results/[leadId]/route.ts(43,14): error TS18046: 'error' is of type 'unknown'.
+app/api/lead-search-results/[leadId]/route.ts(80,18): error TS2339: Property 'name' does not exist on type 'SelectQueryError<"column 'name' does not exist on 'lead_summaries'.">'.
+app/api/lead-search-results/[leadId]/route.ts(81,19): error TS2339: Property 'email' does not exist on type 'SelectQueryError<"column 'name' does not exist on 'lead_summaries'.">'.
+app/api/lead-search-results/[leadId]/route.ts(82,21): error TS2339: Property 'company_name' does not exist on type 'SelectQueryError<"column 'name' does not exist on 'lead_summaries'.">'.
+app/api/lead-search-results/[leadId]/route.ts(97,14): error TS18046: 'error' is of type 'unknown'.
+app/api/lead-upsert/route.ts(46,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { company_name: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type 'unknown[]' is not assignable to parameter of type '{ company_name: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }'.
+      Property 'company_name' is missing in type 'unknown[]' but required in type '{ company_name: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }'.
+  Overload 2 of 2, '(values: { company_name: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Type 'unknown' is not assignable to type '{ company_name: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }'.
+app/api/leads/[id]/engagement/route.ts(20,9): error TS2353: Object literal may only specify known properties, and 'last_interaction' does not exist in type '{ company_name?: string; consultant_brief?: string | null; conversation_summary?: string | null; created_at?: string | null; email?: string | null; id?: string; intent_type?: string | null; lead_score?: number | null; summary?: string | null; updated_at?: string | null; user_id?: string | null; }'.
 app/api/live/token/route.ts(72,42): error TS2339: Property 'message' does not exist on type '{}'.
-app/api/meetings/[id]/status/route.ts(12,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/meetings/[id]/status/route.ts(31,39): error TS18046: 'error' is of type 'unknown'.
-app/api/meetings/book/route.ts(23,45): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/meetings/book/route.ts(40,44): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/meetings/book/route.ts(90,39): error TS18046: 'error' is of type 'unknown'.
-app/api/meetings/booked-slots/route.ts(16,35): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/meetings/booked-slots/route.ts(30,39): error TS18046: 'error' is of type 'unknown'.
-app/api/meetings/route.ts(14,17): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/meetings/route.ts(42,39): error TS18046: 'error' is of type 'unknown'.
-app/api/multimodal/route.ts(73,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/meetings/[id]/status/route.ts(32,39): error TS18046: 'error' is of type 'unknown'.
+app/api/meetings/book/route.ts(43,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { attendees?: Json; created_at?: string | null; description?: string | null; duration_minutes?: number | null; id?: string; lead_id?: string | null; location?: string | null; meeting_date: string; ... 8 more ...; user_id?: string | null; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'name' does not exist in type '{ attendees?: Json; created_at?: string | null; description?: string | null; duration_minutes?: number | null; id?: string; lead_id?: string | null; location?: string | null; meeting_date: string; ... 8 more ...; user_id?: string | null; }'.
+  Overload 2 of 2, '(values: { attendees?: Json; created_at?: string | null; description?: string | null; duration_minutes?: number | null; id?: string; lead_id?: string | null; location?: string | null; meeting_date: string; ... 8 more ...; user_id?: string | null; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'id' does not exist in type '{ attendees?: Json; created_at?: string | null; description?: string | null; duration_minutes?: number | null; id?: string; lead_id?: string | null; location?: string | null; meeting_date: string; ... 8 more ...; user_id?: string | null; }[]'.
+app/api/meetings/book/route.ts(91,39): error TS18046: 'error' is of type 'unknown'.
+app/api/meetings/booked-slots/route.ts(31,39): error TS18046: 'error' is of type 'unknown'.
+app/api/meetings/route.ts(43,39): error TS18046: 'error' is of type 'unknown'.
+app/api/multimodal/route.ts(73,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
 app/api/multimodal/route.ts(111,11): error TS2322: Type '{ sessionId: string; multimodalData: { audioData: string; mimeType: string; }; intelligenceContext: any; }' is not assignable to type 'UnifiedContext'.
   Types of property 'multimodalData' are incompatible.
     Type '{ audioData: string; mimeType: string; }' has no properties in common with type 'MultimodalData'.
-app/api/multimodal/route.ts(121,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
-app/api/multimodal/route.ts(122,18): error TS2339: Property 'aiResponse' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/multimodal/route.ts(121,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/multimodal/route.ts(122,18): error TS2339: Property 'aiResponse' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
 app/api/multimodal/route.ts(143,15): error TS2353: Object literal may only specify known properties, and 'isRealtime' does not exist in type 'Partial<{ sampleRate: number; format: string; confidence: number; }>'.
-app/api/multimodal/route.ts(167,20): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
-app/api/multimodal/route.ts(168,20): error TS2339: Property 'liveApiSent' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
-app/api/multimodal/route.ts(173,20): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
-app/api/multimodal/route.ts(174,20): error TS2339: Property 'liveApiError' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/multimodal/route.ts(167,20): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/multimodal/route.ts(168,20): error TS2339: Property 'liveApiSent' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/multimodal/route.ts(173,20): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/multimodal/route.ts(174,20): error TS2339: Property 'liveApiError' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
 app/api/multimodal/route.ts(217,11): error TS2322: Type '{ sessionId: string; multimodalData: { imageData: string | undefined; mimeType: string; }; intelligenceContext: any; }' is not assignable to type 'UnifiedContext'.
   Types of property 'multimodalData' are incompatible.
     Type '{ imageData: string | undefined; mimeType: string; }' has no properties in common with type 'MultimodalData'.
-app/api/multimodal/route.ts(227,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
-app/api/multimodal/route.ts(228,18): error TS2339: Property 'aiResponse' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/multimodal/route.ts(227,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/multimodal/route.ts(228,18): error TS2339: Property 'aiResponse' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
 app/api/multimodal/route.ts(240,40): error TS2769: No overload matches this call.
   Overload 1 of 4, '(arrayBuffer: WithImplicitCoercion<ArrayBufferLike>, byteOffset?: number | undefined, length?: number | undefined): Buffer<ArrayBufferLike>', gave the following error.
     Argument of type 'string | undefined' is not assignable to parameter of type 'WithImplicitCoercion<ArrayBufferLike>'.
@@ -179,50 +222,44 @@ app/api/multimodal/route.ts(241,32): error TS2322: Type 'Buffer<ArrayBufferLike>
     Types of property 'buffer' are incompatible.
       Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
         Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
-app/api/multimodal/route.ts(259,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
-app/api/multimodal/route.ts(260,18): error TS2339: Property 'upload' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
-app/api/multimodal/route.ts(269,14): error TS2339: Property 'context' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "upload" | "vision" | "realtime-voice"; sessionId: string; processedAt: string; }'.
-app/api/send-artifact-link/route.ts(23,45): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/send-lead-email/route.ts(25,17): error TS2554: Expected 2-3 arguments, but got 1.
-app/api/send-lead-email/route.ts(33,21): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(37,57): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(39,12): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(42,51): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(44,53): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(54,75): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(64,16): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(66,84): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(86,75): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(88,53): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(98,53): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(100,37): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(105,42): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(106,29): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(107,32): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(112,12): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(144,75): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(156,15): error TS18046: 'lead' is of type 'unknown'.
-app/api/send-lead-email/route.ts(161,18): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(162,18): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(163,28): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(164,28): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(184,21): error TS18046: 'data' is of type 'unknown'.
-app/api/send-lead-email/route.ts(227,52): error TS18046: 'supabase' is of type 'unknown'.
-app/api/send-lead-email/route.ts(241,22): error TS7053: Element implicitly has an 'any' type because expression of type '"report" | "meeting_confirmation" | "welcome" | "follow_up" | "proposal" | "check_in"' can't be used to index type '{ welcome: { subject: string; template: (lead: unknown, data: unknown) => string; }; follow_up: { subject: string; template: (lead: unknown, data: unknown) => string; }; report: { subject: string; template: (lead: unknown, data: unknown) => string; }; meeting_confirmation: { ...; }; }'.
+app/api/multimodal/route.ts(259,18): error TS2551: Property 'processed' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'. Did you mean 'processedAt'?
+app/api/multimodal/route.ts(260,18): error TS2339: Property 'upload' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/multimodal/route.ts(269,14): error TS2339: Property 'context' does not exist on type '{ ok: boolean; modality: "text" | "voice" | "vision" | "upload" | "realtime-voice"; sessionId: string; processedAt: string; }'.
+app/api/send-lead-email/route.ts(19,17): error TS2554: Expected 2-3 arguments, but got 1.
+app/api/send-lead-email/route.ts(27,21): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(31,57): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(33,12): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(36,51): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(38,53): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(48,75): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(58,16): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(60,84): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(80,75): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(82,53): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(92,53): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(94,37): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(99,42): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(100,29): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(101,32): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(106,12): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(138,75): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(150,15): error TS18046: 'lead' is of type 'unknown'.
+app/api/send-lead-email/route.ts(155,18): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(156,18): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(157,28): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(158,28): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(178,21): error TS18046: 'data' is of type 'unknown'.
+app/api/send-lead-email/route.ts(235,22): error TS7053: Element implicitly has an 'any' type because expression of type '"meeting_confirmation" | "welcome" | "follow_up" | "report" | "proposal" | "check_in"' can't be used to index type '{ welcome: { subject: string; template: (lead: unknown, data: unknown) => string; }; follow_up: { subject: string; template: (lead: unknown, data: unknown) => string; }; report: { subject: string; template: (lead: unknown, data: unknown) => string; }; meeting_confirmation: { ...; }; }'.
   Property 'proposal' does not exist on type '{ welcome: { subject: string; template: (lead: unknown, data: unknown) => string; }; follow_up: { subject: string; template: (lead: unknown, data: unknown) => string; }; report: { subject: string; template: (lead: unknown, data: unknown) => string; }; meeting_confirmation: { ...; }; }'.
-app/api/send-lead-email/route.ts(273,11): error TS18046: 'supabase' is of type 'unknown'.
-app/api/send-lead-email/route.ts(291,13): error TS18046: 'supabase' is of type 'unknown'.
-app/api/send-lead-email/route.ts(316,57): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-app/api/send-pdf-summary/route.ts(23,40): error TS18046: 'supabase' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(33,40): error TS18046: 'supabase' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(40,14): error TS18046: 'a' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(41,23): error TS18046: 'a' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(41,40): error TS18046: 'a' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(42,25): error TS18046: 'a' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(52,48): error TS18046: 'leadInfo' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(61,72): error TS18046: 'leadInfo' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(73,22): error TS18046: 'leadInfo' is of type 'unknown'.
-app/api/send-pdf-summary/route.ts(76,37): error TS18046: 'leadInfo' is of type 'unknown'.
+app/api/send-lead-email/route.ts(310,57): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+app/api/send-pdf-summary/route.ts(41,14): error TS18046: 'a' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(42,23): error TS18046: 'a' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(42,40): error TS18046: 'a' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(43,25): error TS18046: 'a' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(53,48): error TS18046: 'leadInfo' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(62,72): error TS18046: 'leadInfo' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(74,22): error TS18046: 'leadInfo' is of type 'unknown'.
+app/api/send-pdf-summary/route.ts(77,37): error TS18046: 'leadInfo' is of type 'unknown'.
 app/api/tools/calc/route.ts(56,57): error TS2339: Property 'message' does not exist on type '{}'.
 app/api/tools/code/route.ts(47,57): error TS2339: Property 'message' does not exist on type '{}'.
 app/api/tools/doc/route.ts(41,7): error TS2322: Type 'string | undefined' is not assignable to type 'SupportedDocType | undefined'.
@@ -244,19 +281,15 @@ app/api/tools/task-generator/route.ts(12,35): error TS2559: Type 'string' has no
 app/api/tools/task-generator/route.ts(13,25): error TS2339: Property 'getGenerativeModel' does not exist on type 'GoogleGenAI'.
 app/api/tools/translate/route.ts(16,83): error TS2353: Object literal may only specify known properties, and 'details' does not exist in type 'ToolRunResult'.
 app/api/tools/translate/route.ts(107,20): error TS18046: 'error' is of type 'unknown'.
-app/api/tools/url/route.ts(42,9): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(input: string | URL | Request, init?: RequestInit | undefined): Promise<Response>', gave the following error.
-    Object literal may only specify known properties, and 'timeout' does not exist in type 'RequestInit'.
-  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
-    Object literal may only specify known properties, and 'timeout' does not exist in type 'RequestInit'.
-app/api/tools/url/route.ts(74,83): error TS2554: Expected 1-2 arguments, but got 3.
-app/api/tools/url/route.ts(77,103): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/url/route.ts(95,74): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
-app/api/tools/url/route.ts(112,74): error TS7006: Parameter 'm' implicitly has an 'any' type.
-app/api/tools/url/route.ts(120,31): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/url/route.ts(154,36): error TS2304: Cannot find name 'existingContext'.
-app/api/tools/url/route.ts(169,40): error TS2339: Property 'addDocumentAnalysis' does not exist on type 'MultimodalContextManager'.
+app/api/tools/url/route.ts(73,83): error TS2554: Expected 1-2 arguments, but got 3.
+app/api/tools/url/route.ts(76,103): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/tools/url/route.ts(94,74): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
+app/api/tools/url/route.ts(111,74): error TS7006: Parameter 'm' implicitly has an 'any' type.
+app/api/tools/url/route.ts(119,31): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/tools/url/route.ts(153,36): error TS2304: Cannot find name 'existingContext'.
+app/api/tools/url/route.ts(168,40): error TS2339: Property 'addDocumentAnalysis' does not exist on type 'MultimodalContextManager'.
 app/api/tools/webcam/route.ts(53,85): error TS2554: Expected 1-2 arguments, but got 3.
+app/api/tools/webcam/route.ts(58,33): error TS2554: Expected 6-9 arguments, but got 5.
 app/api/tools/webcam/route.ts(58,105): error TS2339: Property 'model' does not exist on type 'string'.
 app/api/tools/webcam/route.ts(78,31): error TS2339: Property 'model' does not exist on type 'string'.
 app/api/tools/webcam/route.ts(112,50): error TS2379: Argument of type '{ success: true; tokensUsed: number; model: any; errorCode: undefined; }' is not assignable to parameter of type '{ success: boolean; tokensUsed?: number; model?: string; errorCode?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
@@ -264,31 +297,43 @@ app/api/tools/webcam/route.ts(112,50): error TS2379: Argument of type '{ success
     Type 'undefined' is not assignable to type 'string'.
 app/api/tools/webcam/route.ts(115,29): error TS2339: Property 'model' does not exist on type 'string'.
 app/api/tools/webcam/route.ts(122,37): error TS2304: Cannot find name 'operationId'.
-app/api/tools/webcam/route.ts(124,19): error TS2304: Cannot find name 'estimatedTokens'.
+app/api/tools/webcam/route.ts(124,19): error TS2552: Cannot find name 'estimatedTokens'. Did you mean 'estimateTokens'?
 app/api/tools/webcam/route.ts(125,14): error TS2304: Cannot find name 'modelSelection'.
-app/api/upload/route.ts(57,41): error TS18046: 'supabase' is of type 'unknown'.
-app/api/upload/route.ts(110,26): error TS2339: Property 'analysis' does not exist on type '{ fileUrl: string; filename: string; originalName: string; size: number; type: string; uploadedAt: string; modalityType: string; sessionId: string | null; userId: string | null; }'.
-app/api/upload/route.ts(135,19): error TS2304: Cannot find name 'ALLOWED_TYPES'.
-app/api/video-to-app/route.ts(89,28): error TS2304: Cannot find name 'req'.
-app/api/video-to-app/route.ts(183,40): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/video-to-app/route.ts(202,85): error TS2554: Expected 1-2 arguments, but got 3.
-app/api/video-to-app/route.ts(213,24): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(237,35): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(252,48): error TS2552: Cannot find name 'error'. Did you mean 'Error'?
-app/api/video-to-app/route.ts(262,15): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/video-to-app/route.ts(271,31): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(272,39): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
-app/api/video-to-app/route.ts(294,40): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/video-to-app/route.ts(314,85): error TS2554: Expected 1-2 arguments, but got 3.
-app/api/video-to-app/route.ts(325,24): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(345,35): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(357,48): error TS2552: Cannot find name 'error'. Did you mean 'Error'?
-app/api/video-to-app/route.ts(366,39): error TS18046: 'supabaseClient' is of type 'unknown'.
-app/api/video-to-app/route.ts(368,95): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(383,31): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/video-to-app/route.ts(384,39): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
-app/api/webhooks/resend/route.ts(72,11): error TS2739: Type 'SupabaseStorage' is missing the following properties from type 'SupabaseClient': from, raw
-app/artifact/[id]/page.tsx(5,33): error TS18046: 'supabase' is of type 'unknown'.
+app/api/upload/route.ts(58,55): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"upload_logs"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"upload_logs"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+app/api/upload/route.ts(111,26): error TS2339: Property 'analysis' does not exist on type '{ fileUrl: string; filename: string; originalName: string; size: number; type: string; uploadedAt: string; modalityType: string; sessionId: string | null; userId: string | null; }'.
+app/api/upload/route.ts(136,19): error TS2304: Cannot find name 'ALLOWED_TYPES'.
+app/api/video-to-app/route.ts(90,28): error TS2304: Cannot find name 'req'.
+app/api/video-to-app/route.ts(203,85): error TS2554: Expected 1-2 arguments, but got 3.
+app/api/video-to-app/route.ts(210,34): error TS2554: Expected 6-9 arguments, but got 5.
+app/api/video-to-app/route.ts(214,24): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(234,35): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(249,48): error TS2304: Cannot find name 'error'.
+app/api/video-to-app/route.ts(268,31): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(269,39): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
+app/api/video-to-app/route.ts(311,85): error TS2554: Expected 1-2 arguments, but got 3.
+app/api/video-to-app/route.ts(318,34): error TS2554: Expected 6-9 arguments, but got 5.
+app/api/video-to-app/route.ts(322,24): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(338,35): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(350,48): error TS2304: Cannot find name 'error'.
+app/api/video-to-app/route.ts(361,95): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(376,31): error TS2339: Property 'model' does not exist on type 'string'.
+app/api/video-to-app/route.ts(377,39): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
+app/api/webhooks/resend/route.ts(78,31): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
+app/api/webhooks/resend/route.ts(81,36): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
+app/api/webhooks/resend/route.ts(84,34): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
+app/api/webhooks/resend/route.ts(87,37): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
+app/api/webhooks/resend/route.ts(90,33): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
+app/api/webhooks/resend/route.ts(93,34): error TS2345: Argument of type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' is not assignable to parameter of type 'SupabaseClient'.
+  Property 'raw' is missing in type 'SupabaseClient<Database, "public", "public", { Tables: { activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; View...' but required in type 'SupabaseClient'.
 app/consulting/page.tsx(78,18): error TS2741: Property 'onComplete' is missing in type '{ mode: "card"; }' but required in type 'ROICalculatorProps'.
 app/contact-form/page.tsx(122,33): error TS2339: Property 'compunknown' does not exist on type '{ name: string; email: string; company: string; subject: string; message: string; }'.
 app/workshop-waitlist/page.tsx(146,35): error TS2339: Property 'compunknown' does not exist on type '{ name: string; email: string; company: string; teamSize: string; location: string; interests: string[]; message: string; }'.
@@ -577,8 +622,9 @@ hooks/useConversationalIntelligence.ts(222,34): error TS2339: Property 'company'
 hooks/useConversationalIntelligence.ts(223,31): error TS2339: Property 'role' does not exist on type '{ name: string; size: string; domain: string; summary: string; website: string; industry: string; linkedin: string; }'.
 hooks/useMediaCapture.ts(27,20): error TS2554: Expected 1 arguments, but got 0.
 hooks/useMediaCapture.ts(28,24): error TS2554: Expected 1 arguments, but got 0.
-hooks/useMediaCapture.ts(88,7): error TS2322: Type 'undefined' is not assignable to type 'number'.
-hooks/useMediaCapture.ts(90,5): error TS2322: Type 'undefined' is not assignable to type 'number'.
+hooks/useMediaCapture.ts(36,46): error TS2554: Expected 0 arguments, but got 1.
+hooks/useMediaCapture.ts(92,7): error TS2322: Type 'undefined' is not assignable to type 'number'.
+hooks/useMediaCapture.ts(94,5): error TS2322: Type 'undefined' is not assignable to type 'number'.
 hooks/useMediaPlayer.ts(172,22): error TS2339: Property 'stopMedia' does not exist on type 'RefObject<MediaService | null>'.
 hooks/useMediaUploader.ts(241,3): error TS2304: Cannot find name 'useEffect'.
 hooks/useScreenShare.ts(50,11): error TS2353: Object literal may only specify known properties, and 'cursor' does not exist in type 'MediaTrackConstraints'.
@@ -770,7 +816,7 @@ src/core/chat/unified-provider.ts(95,54): error TS2339: Property 'videoData' doe
 src/core/chat/unified-provider.ts(97,38): error TS2339: Property 'videoData' does not exist on type 'MultimodalData'.
 src/core/chat/unified-provider.ts(98,38): error TS2339: Property 'videoData' does not exist on type 'MultimodalData'.
 src/core/chat/unified-provider.ts(100,84): error TS2339: Property 'videoData' does not exist on type 'MultimodalData'.
-src/core/chat/unified-provider.ts(103,74): error TS2379: Argument of type '{ sessionId: string; mode: "multimodal" | "standard" | "realtime"; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/core/chat/unified-provider.ts(103,74): error TS2379: Argument of type '{ sessionId: string; mode: "standard" | "realtime" | "multimodal"; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'userId' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
@@ -856,7 +902,7 @@ src/core/context/capabilities.ts(43,13): error TS18046: 'supabaseClient' is of t
 src/core/context/capabilities.ts(57,37): error TS18046: 'supabaseClient' is of type 'unknown'.
 src/core/context/context-manager.ts(9,15): error TS2339: Property 'lead' does not exist on type 'ConversationContext'.
 src/core/context/context-schema.ts(44,73): error TS2554: Expected 2-3 arguments, but got 1.
-src/core/context/context-storage.ts(36,9): error TS2322: Type 'string' is not assignable to type 'MultimodalContext'.
+src/core/context/context-storage.ts(35,9): error TS2322: Type 'string' is not assignable to type 'MultimodalContext'.
 src/core/context/multimodal-context.ts(13,11): error TS2375: Type '{ sessionId: string; conversationHistory: never[]; visualContext: never[]; audioContext: never[]; leadContext: LeadContext | undefined; metadata: { createdAt: string; lastUpdated: string; modalitiesUsed: never[]; totalTokens: number; }; }' is not assignable to type 'MultimodalContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'leadContext' are incompatible.
     Type 'LeadContext | undefined' is not assignable to type 'LeadContext'.
@@ -869,7 +915,7 @@ src/core/context/multimodal-context.ts(105,7): error TS2375: Type '{ imageSize: 
   Types of property 'imageSize' are incompatible.
     Type 'number | undefined' is not assignable to type 'number'.
       Type 'undefined' is not assignable to type 'number'.
-src/core/context/multimodal-context.ts(111,11): error TS2375: Type '{ id: string; timestamp: string; type: "webcam" | "upload" | "screen"; analysis: string; imageData: string | undefined; metadata: { size: number; format: "webcam" | "upload" | "screen"; confidence: number; }; }' is not assignable to type 'VisualEntry' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/core/context/multimodal-context.ts(111,11): error TS2375: Type '{ id: string; timestamp: string; type: "webcam" | "screen" | "upload"; analysis: string; imageData: string | undefined; metadata: { size: number; format: "webcam" | "screen" | "upload"; confidence: number; }; }' is not assignable to type 'VisualEntry' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'imageData' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
@@ -905,7 +951,6 @@ src/core/grounded-search-service.ts(95,24): error TS7006: Parameter 'item' impli
 src/core/intelligence/admin-integration.ts(45,60): error TS2339: Property 'researchLead' does not exist on type 'SimpleIntelligenceService'.
 src/core/intelligence/admin-integration.ts(79,32): error TS2339: Property 'researchLead' does not exist on type 'SimpleIntelligenceService'.
 src/core/intelligence/admin-integration.ts(90,7): error TS2353: Object literal may only specify known properties, and 'companyUrl' does not exist in type '{ sessionId: string; email?: string; name?: string; }'.
-src/core/intelligence/admin-integration.ts(98,56): error TS2554: Expected 1 arguments, but got 2.
 src/core/intelligence/capability-registry.ts(326,5): error TS2532: Object is possibly 'undefined'.
 src/core/intelligence/conversational-intelligence.ts(17,7): error TS2375: Type '{ summary: string | undefined; industry: string | undefined; }' is not assignable to type '{ summary?: string; industry?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'summary' are incompatible.
@@ -986,31 +1031,78 @@ src/core/model-selector.ts(56,43): error TS2339: Property 'modelCapabilities' do
 src/core/model-selector.ts(178,12): error TS2532: Object is possibly 'undefined'.
 src/core/models/gemini.ts(174,21): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ role: string; parts: { text: string; }[]; }'.
 src/core/models/gemini.ts(199,19): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ role: string; parts: { text: string; }[]; }'.
-src/core/monitoring/budget.ts(80,47): error TS18046: 'supabase' is of type 'unknown'.
+src/core/monitoring/budget.ts(81,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/core/monitoring/budget.ts(86,55): error TS2339: Property 'expires_at' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'expires_at' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(88,38): error TS2339: Property 'session_id' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'session_id' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(89,38): error TS2339: Property 'ip_address' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'ip_address' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(90,38): error TS2339: Property 'user_agent' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'user_agent' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(91,38): error TS2339: Property 'created_at' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'created_at' does not exist on type '{ capability: string; context: Json; first_used_at: string | null; id: number; session_id: string; }'.
+src/core/monitoring/budget.ts(92,38): error TS2339: Property 'expires_at' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'expires_at' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(93,44): error TS2339: Property 'total_tokens_used' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'total_tokens_used' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(94,46): error TS2339: Property 'total_requests_made' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'total_requests_made' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(95,41): error TS2339: Property 'feature_usage' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'feature_usage' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(99,39): error TS2339: Property 'is_complete' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'is_complete' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/budget.ts(100,46): error TS2339: Property 'completed_features' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 17 more ... | { ...; }'.
+  Property 'completed_features' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
 src/core/monitoring/budget.ts(114,11): error TS2375: Type '{ sessionId: string; ipAddress: string | undefined; userAgent: string | undefined; createdAt: string; expiresAt: string; totalTokensUsed: number; totalRequestsMade: number; featureUsage: Record<...>; isComplete: false; completedFeatures: never[]; }' is not assignable to type 'DemoBudget' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'ipAddress' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
-src/core/monitoring/budget.ts(133,13): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/budget.ts(256,13): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(51,31): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(83,40): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(101,42): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(107,44): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(113,53): error TS7006: Parameter 'sum' implicitly has an 'any' type.
-src/core/monitoring/index.ts(113,58): error TS7006: Parameter 'log' implicitly has an 'any' type.
-src/core/monitoring/index.ts(114,57): error TS7006: Parameter 'sum' implicitly has an 'any' type.
-src/core/monitoring/index.ts(114,62): error TS7006: Parameter 'log' implicitly has an 'any' type.
-src/core/monitoring/index.ts(117,46): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(123,48): error TS18046: 'supabase' is of type 'unknown'.
+src/core/monitoring/budget.ts(133,27): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/core/monitoring/budget.ts(257,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"demo_sessions"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/core/monitoring/index.ts(53,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ user_id: string | undefined; session_id: string | undefined; task_type: string; endpoint: string; model: string; input_tokens: number; output_tokens: number; estimated_cost: number; success: boolean; error_message: string | undefined; created_at: string; }' is not assignable to parameter of type '{ created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'error_message' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string | null'.
+          Type 'undefined' is not assignable to type 'string | null'.
+  Overload 2 of 2, '(values: { created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type '{ created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }[]'.
+src/core/monitoring/index.ts(84,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"user_plans"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"user_plans"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/core/monitoring/index.ts(113,72): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/monitoring/index.ts(114,76): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/monitoring/index.ts(130,28): error TS2339: Property 'daily_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'daily_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/index.ts(131,30): error TS2339: Property 'monthly_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'monthly_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/index.ts(132,30): error TS2339: Property 'daily_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'daily_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/monitoring/index.ts(133,32): error TS2339: Property 'monthly_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'monthly_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
 src/core/monitoring/index.ts(214,30): error TS2379: Argument of type '{ user_id: string | undefined; session_id: string | undefined; feature: string; model: string; input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost: number; success: boolean; error_message: string | undefined; usage_metadata: unknown; }' is not assignable to parameter of type 'TokenUsageLog' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'user_id' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
 src/core/monitoring/index.ts(236,7): error TS1117: An object literal cannot have multiple properties with the same name.
 src/core/monitoring/index.ts(242,38): error TS18048: 'costPerMillion' is possibly 'undefined'.
-src/core/monitoring/index.ts(269,19): error TS18046: 'supabase' is of type 'unknown'.
-src/core/monitoring/index.ts(295,20): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/monitoring/index.ts(296,24): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/monitoring/index.ts(305,45): error TS18047: 'log.total_tokens' is possibly 'null'.
 src/core/monitoring/performance-monitor.ts(51,79): error TS18046: 'error' is of type 'unknown'.
 src/core/monitoring/performance-monitor.ts(60,11): error TS2375: Type '{ name: string; value: number; timestamp: number; metadata: Record<string, any> | undefined; }' is not assignable to type 'PerformanceMetric' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'metadata' are incompatible.
@@ -1027,18 +1119,23 @@ src/core/providers/perplexity.ts(94,9): error TS2375: Type '{ done: true; citati
     Type 'string[] | undefined' is not assignable to type 'string[]'.
       Type 'undefined' is not assignable to type 'string[]'.
 src/core/security/url-guards.ts(38,14): error TS2532: Object is possibly 'undefined'.
-src/core/server-activity-logger.ts(20,35): error TS18046: 'serverSupabase' is of type 'unknown'.
-src/core/services/gemini-service.ts(59,88): error TS2554: Expected 1-2 arguments, but got 3.
-src/core/services/gemini-service.ts(73,35): error TS2554: Expected 6-9 arguments, but got 1.
-src/core/services/gemini-service.ts(76,33): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(97,76): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(118,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
-src/core/services/gemini-service.ts(142,11): error TS2532: Object is possibly 'undefined'.
-src/core/services/gemini-service.ts(147,87): error TS2554: Expected 1-2 arguments, but got 3.
-src/core/services/gemini-service.ts(158,35): error TS2554: Expected 6-9 arguments, but got 1.
-src/core/services/gemini-service.ts(161,33): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(180,76): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(181,50): error TS2345: Argument of type '{ contents: { role: string; parts: ({ text: string; } | { inlineData: { mimeType: string | undefined; data: string | undefined; }; })[]; }[]; generationConfig: EnhancedGenerationConfig; }' is not assignable to parameter of type 'string | (string | Part)[] | GenerateContentRequest'.
+src/core/server-activity-logger.ts(22,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; }, options?: { count?: "exact" | "planned" | "estimated"; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Type 'Record<string, unknown>' is not assignable to type 'Json'.
+      Type 'Record<string, unknown>' is missing the following properties from type 'Json[]': length, pop, push, concat, and 35 more.
+  Overload 2 of 2, '(values: { created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; }[], options?: { count?: "exact" | "planned" | "estimated"; defaultToNull?: boolean; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'type' does not exist in type '{ created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; }[]'.
+src/core/services/gemini-service.ts(60,88): error TS2554: Expected 1-2 arguments, but got 3.
+src/core/services/gemini-service.ts(74,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(78,26): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(96,76): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(117,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
+src/core/services/gemini-service.ts(141,11): error TS2532: Object is possibly 'undefined'.
+src/core/services/gemini-service.ts(146,87): error TS2554: Expected 1-2 arguments, but got 3.
+src/core/services/gemini-service.ts(157,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(161,26): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(177,76): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(178,50): error TS2345: Argument of type '{ contents: { role: string; parts: ({ text: string; } | { inlineData: { mimeType: string | undefined; data: string | undefined; }; })[]; }[]; generationConfig: EnhancedGenerationConfig; }' is not assignable to parameter of type 'string | GenerateContentRequest | (string | Part)[]'.
   Types of property 'contents' are incompatible.
     Type '{ role: string; parts: ({ text: string; } | { inlineData: { mimeType: string | undefined; data: string | undefined; }; })[]; }[]' is not assignable to type 'Content[]'.
       Type '{ role: string; parts: ({ text: string; } | { inlineData: { mimeType: string | undefined; data: string | undefined; }; })[]; }' is not assignable to type 'Content'.
@@ -1048,18 +1145,18 @@ src/core/services/gemini-service.ts(181,50): error TS2345: Argument of type '{ c
               The types of 'inlineData.mimeType' are incompatible between these types.
                 Type 'string | undefined' is not assignable to type 'string'.
                   Type 'undefined' is not assignable to type 'string'.
-src/core/services/gemini-service.ts(207,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
-src/core/services/gemini-service.ts(234,90): error TS2554: Expected 1-2 arguments, but got 3.
-src/core/services/gemini-service.ts(245,35): error TS2554: Expected 6-9 arguments, but got 1.
-src/core/services/gemini-service.ts(248,33): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(267,76): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(294,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
-src/core/services/gemini-service.ts(371,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+src/core/services/gemini-service.ts(204,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
+src/core/services/gemini-service.ts(231,90): error TS2554: Expected 1-2 arguments, but got 3.
+src/core/services/gemini-service.ts(242,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(246,26): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(262,76): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(289,30): error TS2339: Property 'estimatedCost' does not exist on type 'string'.
+src/core/services/gemini-service.ts(366,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-src/core/services/gemini-service.ts(399,31): error TS2304: Cannot find name 'estimateTokensForMessages'.
-src/core/services/gemini-service.ts(400,77): error TS2554: Expected 1-2 arguments, but got 3.
-src/core/services/gemini-service.ts(418,76): error TS2339: Property 'model' does not exist on type 'string'.
-src/core/services/gemini-service.ts(477,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+src/core/services/gemini-service.ts(394,31): error TS2304: Cannot find name 'estimateTokensForMessages'.
+src/core/services/gemini-service.ts(395,77): error TS2554: Expected 1-2 arguments, but got 3.
+src/core/services/gemini-service.ts(413,76): error TS2339: Property 'model' does not exist on type 'string'.
+src/core/services/gemini-service.ts(472,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 src/core/services/news-service.ts(57,3): error TS2322: Type '{ title: string; url: string; source: string; publishedAt: undefined; category: "research" | "prompting" | "providers" | "nocode" | "product"; keyFindings: string[]; }[]' is not assignable to type 'NewsItem[]'.
   Type '{ title: string; url: string; source: string; publishedAt: undefined; category: "research" | "prompting" | "providers" | "nocode" | "product"; keyFindings: string[]; }' is not assignable to type 'NewsItem' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
@@ -1092,10 +1189,10 @@ src/core/state/chat-reducer.ts(149,5): error TS2353: Object literal may only spe
 src/core/state/tab-sync.ts(253,5): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
   No index signature with a parameter of type 'string' was found on type '{}'.
 src/core/storage/safe-storage.ts(244,9): error TS2322: Type '{ cleanedCount: number; }' is not assignable to type 'string'.
-src/core/streaming/streaming-optimizer.ts(244,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type '"low" | "high" | "normal"'.
-  Type 'undefined' is not assignable to type '"low" | "high" | "normal"'.
-src/core/streaming/streaming-optimizer.ts(245,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type '"low" | "high" | "normal"'.
-  Type 'undefined' is not assignable to type '"low" | "high" | "normal"'.
+src/core/streaming/streaming-optimizer.ts(244,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type '"low" | "normal" | "high"'.
+  Type 'undefined' is not assignable to type '"low" | "normal" | "high"'.
+src/core/streaming/streaming-optimizer.ts(245,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type '"low" | "normal" | "high"'.
+  Type 'undefined' is not assignable to type '"low" | "normal" | "high"'.
 src/core/streaming/streaming-optimizer.ts(250,31): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
   Type 'undefined' is not assignable to type 'number'.
 src/core/streaming/streaming-optimizer.ts(254,33): error TS2538: Type 'undefined' cannot be used as an index type.
@@ -1114,33 +1211,41 @@ src/core/token-cost-calculator.ts(180,52): error TS18046: 'log' is of type 'unkn
 src/core/token-cost-calculator.ts(190,24): error TS18046: 'log' is of type 'unknown'.
 src/core/token-cost-calculator.ts(194,35): error TS18046: 'log' is of type 'unknown'.
 src/core/token-cost-calculator.ts(195,36): error TS18046: 'log' is of type 'unknown'.
-src/core/token-usage-logger.ts(50,31): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(82,40): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(100,42): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(106,44): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(112,53): error TS7006: Parameter 'sum' implicitly has an 'any' type.
-src/core/token-usage-logger.ts(112,58): error TS7006: Parameter 'log' implicitly has an 'any' type.
-src/core/token-usage-logger.ts(113,57): error TS7006: Parameter 'sum' implicitly has an 'any' type.
-src/core/token-usage-logger.ts(113,62): error TS7006: Parameter 'log' implicitly has an 'any' type.
-src/core/token-usage-logger.ts(116,46): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(122,48): error TS18046: 'supabase' is of type 'unknown'.
+src/core/token-usage-logger.ts(52,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ user_id: string | undefined; session_id: string | undefined; task_type: string; endpoint: string; model: string; input_tokens: number; output_tokens: number; estimated_cost: number; success: boolean; error_message: string | undefined; created_at: string; }' is not assignable to parameter of type '{ created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'error_message' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string | null'.
+          Type 'undefined' is not assignable to type 'string | null'.
+  Overload 2 of 2, '(values: { created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'user_id' does not exist in type '{ created_at?: string | null; endpoint?: string; error_message?: string | null; estimated_cost?: number; id?: string; input_tokens?: number; model: string; output_tokens?: number; session_id?: string | null; success?: boolean; task_type?: string; total_tokens?: number | null; user_id?: string | null; }[]'.
+src/core/token-usage-logger.ts(83,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"user_plans"' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type '"user_plans"' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/core/token-usage-logger.ts(112,72): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/token-usage-logger.ts(113,76): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/token-usage-logger.ts(129,28): error TS2339: Property 'daily_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'daily_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/token-usage-logger.ts(130,30): error TS2339: Property 'monthly_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'monthly_tokens' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/token-usage-logger.ts(131,30): error TS2339: Property 'daily_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'daily_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
+src/core/token-usage-logger.ts(132,32): error TS2339: Property 'monthly_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; } | { activity_id: string | null; audio_data: string | null; ... 8 more ...; user_id: string | null; } | ... 18 more ... | { ...; }'.
+  Property 'monthly_requests' does not exist on type '{ created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }'.
 src/core/token-usage-logger.ts(213,30): error TS2379: Argument of type '{ user_id: string | undefined; session_id: string | undefined; feature: string; model: string; input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost: number; success: boolean; error_message: string | undefined; usage_metadata: unknown; }' is not assignable to parameter of type 'TokenUsageLog' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'user_id' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
 src/core/token-usage-logger.ts(241,38): error TS18048: 'costPerMillion' is possibly 'undefined'.
-src/core/token-usage-logger.ts(268,19): error TS18046: 'supabase' is of type 'unknown'.
-src/core/token-usage-logger.ts(294,20): error TS7006: Parameter 'log' implicitly has an 'any' type.
-src/core/utils/spacing.ts(75,3): error TS2322: Type '"p-4" | "p-6" | "p-8" | "p-1" | "p-2" | "gap-1" | "gap-2" | "gap-3" | "gap-4" | "gap-6" | "m-1" | "m-2" | "m-4" | "m-6" | "m-8" | "px-1 py-1" | "px-2 py-2" | "px-4 py-4" | "px-6 py-6" | "px-8 py-8" | { ...; } | { ...; }' is not assignable to type 'string'.
-  Type '{ readonly base: "p-2 md:p-4"; readonly md: "p-3 md:p-4 lg:p-6"; readonly lg: "p-4 md:p-6 lg:p-8"; }' is not assignable to type 'string'.
+src/core/token-usage-logger.ts(295,24): error TS18047: 'log.total_tokens' is possibly 'null'.
+src/core/token-usage-logger.ts(304,45): error TS18047: 'log.total_tokens' is possibly 'null'.
 src/core/validation.ts(162,15): error TS2554: Expected 2-3 arguments, but got 1.
-src/core/validation.ts(173,28): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-src/core/validation.ts(173,39): error TS7006: Parameter 'err' implicitly has an 'any' type.
 src/core/validation/admin.ts(48,14): error TS2554: Expected 2-3 arguments, but got 1.
 src/core/validation/index.ts(11,11): error TS2554: Expected 2-3 arguments, but got 1.
-src/core/validation/index.ts(77,14): error TS2554: Expected 2-3 arguments, but got 1.
-src/core/validation/index.ts(122,23): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
-src/core/validation/index.ts(122,34): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/core/validation/index.ts(20,11): error TS2554: Expected 2-3 arguments, but got 1.
+src/core/validation/index.ts(81,14): error TS2554: Expected 2-3 arguments, but got 1.
 src/core/webrtc-audio-processor.ts(124,11): error TS2353: Object literal may only specify known properties, and 'latency' does not exist in type 'MediaTrackConstraints'.
 src/core/webrtc-audio-processor.ts(184,26): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
   Type 'undefined' is not assignable to type 'number'.
@@ -1152,44 +1257,58 @@ src/core/webrtc-audio-processor.ts(196,19): error TS18048: 'sample' is possibly 
 src/core/webrtc-audio-processor.ts(199,15): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
   Type 'undefined' is not assignable to type 'number'.
 src/core/webrtc-audio-processor.ts(225,47): error TS2551: Property 'dataChannels' does not exist on type 'RTCPeerConnection'. Did you mean 'ondatachannel'?
-src/core/workflows/finalizeLeadSession.ts(139,36): error TS2379: Argument of type '{ to: string; subject: string; html: string; attachments: { filename: string; content: string; contentType: string; }[] | undefined; }' is not assignable to parameter of type 'EmailTemplate' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'attachments' are incompatible.
-    Type '{ filename: string; content: string; contentType: string; }[] | undefined' is not assignable to type '{ filename: string; content: string | Uint8Array<ArrayBufferLike>; contentType?: string; }[]'.
-      Type 'undefined' is not assignable to type '{ filename: string; content: string | Uint8Array<ArrayBufferLike>; contentType?: string; }[]'.
-src/core/youtube-transcript.ts(36,7): error TS2353: Object literal may only specify known properties, and 'country' does not exist in type 'TranscriptConfig'.
-src/core/youtube-transcript.ts(41,31): error TS18046: 'item' is of type 'unknown'.
-src/core/youtube-transcript.ts(55,5): error TS2375: Type '{ transcript: string; items: { text: any; duration: any; offset: any; }[]; videoId: string; title: string | undefined; }' is not assignable to type 'VideoTranscript' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/core/workflows/finalizeLeadSession.ts(21,40): error TS18046: 'conversation' is of type 'unknown'.
+src/core/workflows/finalizeLeadSession.ts(27,26): error TS18046: 'conversation' is of type 'unknown'.
+src/core/workflows/finalizeLeadSession.ts(36,67): error TS18046: 'conversation' is of type 'unknown'.
+src/core/workflows/finalizeLeadSession.ts(37,31): error TS18046: 'conversation' is of type 'unknown'.
+src/core/workflows/finalizeLeadSession.ts(41,31): error TS18046: 'conversation' is of type 'unknown'.
+src/core/youtube-transcript.ts(50,42): error TS2554: Expected 0 arguments, but got 1.
+src/core/youtube-transcript.ts(55,5): error TS2375: Type '{ transcript: string; items: { text: string; duration: number; offset: number; }[]; videoId: string; title: string | undefined; }' is not assignable to type 'VideoTranscript' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'title' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
-src/core/youtube-transcript.ts(58,15): error TS18046: 'item' is of type 'unknown'.
-src/core/youtube-transcript.ts(59,19): error TS18046: 'item' is of type 'unknown'.
-src/core/youtube-transcript.ts(60,17): error TS18046: 'item' is of type 'unknown'.
 src/core/youtube.ts(37,16): error TS2532: Object is possibly 'undefined'.
 src/core/youtube.ts(38,5): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
   Type 'undefined' is not assignable to type 'string | null'.
 src/core/youtube.ts(56,28): error TS2532: Object is possibly 'undefined'.
-src/design/index.ts(12,1): error TS2308: Module './components' has already exported a member named 'animationPresets'. Consider explicitly re-exporting to resolve the ambiguity.
-src/services/email/resend.ts(40,9): error TS2412: Type '{ filename: string; content: string | Buffer<ArrayBufferLike>; contentType: string | undefined; }[] | undefined' is not assignable to type 'Attachment[] | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
-src/services/media/index.ts(92,66): error TS2379: Argument of type '{ audio: boolean | MediaTrackConstraints | undefined; video: boolean | MediaTrackConstraints | undefined; }' is not assignable to parameter of type 'MediaStreamConstraints' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'audio' are incompatible.
-    Type 'boolean | MediaTrackConstraints | undefined' is not assignable to type 'boolean | MediaTrackConstraints'.
-      Type 'undefined' is not assignable to type 'boolean | MediaTrackConstraints'.
-src/services/media/index.ts(117,60): error TS2379: Argument of type '{ audio: boolean | MediaTrackConstraints | undefined; video: boolean | MediaTrackConstraints | undefined; }' is not assignable to parameter of type 'MediaStreamConstraints' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'audio' are incompatible.
-    Type 'boolean | MediaTrackConstraints | undefined' is not assignable to type 'boolean | MediaTrackConstraints'.
-      Type 'undefined' is not assignable to type 'boolean | MediaTrackConstraints'.
-src/services/storage/supabase.ts(55,32): error TS2379: Argument of type '{ url: string; anonKey: string; serviceRoleKey: string | undefined; }' is not assignable to parameter of type 'StorageConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/core/youtube.ts(68,78): error TS2552: Cannot find name 'url'. Did you mean 'URL'?
+src/services/email/resend.ts(40,9): error TS2412: Type '{ filename: string; content: string; contentType: string | undefined; }[] | undefined' is not assignable to type 'Attachment[] | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+src/services/storage/supabase.ts(44,32): error TS2379: Argument of type '{ url: string; anonKey: string; serviceRoleKey: string | undefined; }' is not assignable to parameter of type 'StorageConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'serviceRoleKey' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
-src/services/storage/supabase.ts(66,19): error TS2571: Object is of type 'unknown'.
-src/services/storage/supabase.ts(91,28): error TS2571: Object is of type 'unknown'.
-src/services/storage/supabase.ts(100,19): error TS2571: Object is of type 'unknown'.
-src/services/storage/supabase.ts(115,19): error TS2571: Object is of type 'unknown'.
-src/services/storage/supabase.ts(198,41): error TS2379: Argument of type '{ url: string; anonKey: string; serviceRoleKey: string | undefined; }' is not assignable to parameter of type 'StorageConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/services/storage/supabase.ts(55,36): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/services/storage/supabase.ts(59,33): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/services/storage/supabase.ts(80,45): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/services/storage/supabase.ts(80,59): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; } | { activity_id?: string | null; audio_data?: string | null; ... 8 more ...; user_id?: string | null; } | ... 17 more ... | { ...; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{ created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; } | { activity_id?: string | null; audio_data?: string | null; ... 8 more ...; user_id?: string | null; } | ... 17 more ... | { ...; }'.
+  Overload 2 of 2, '(values: ({ created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; } | { activity_id?: string | null; audio_data?: string | null; ... 8 more ...; user_id?: string | null; } | ... 17 more ... | { ...; })[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '({ created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title: string; type: string; } | { activity_id?: string | null; audio_data?: string | null; ... 8 more ...; user_id?: string | null; } | ... 17 more ... | { ...; })[]'.
+src/services/storage/supabase.ts(89,36): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/services/storage/supabase.ts(89,50): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ created_at?: string | null; description?: string | null; id?: string; metadata?: Json; status?: string; title?: string; type?: string; } | { activity_id?: string | null; audio_data?: string | null; ... 8 more ...; user_id?: string | null; } | ... 17 more ... | { ...; }'.
+src/services/storage/supabase.ts(92,31): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/services/storage/supabase.ts(104,36): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"activities" | "ai_responses" | "artifacts" | "lead_summaries" | "capability_usage" | "capability_usage_log" | "conversation_contexts" | "conversation_insights" | "conversations" | ... 10 more ... | "voice_sessions"'.
+  Overload 2 of 2, '(relation: "admin_conversations" | "admin_sessions" | "daily_token_usage"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { activities: { Row: { created_at: string | null; ... 5 more ...; type: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: { ...; }; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "admin_conversations" | ... 1 more ... | "daily_token_usage", [] | [...]>', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '"admin_conversations" | "admin_sessions" | "daily_token_usage"'.
+src/services/storage/supabase.ts(107,31): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/services/storage/supabase.ts(187,41): error TS2379: Argument of type '{ url: string; anonKey: string; serviceRoleKey: string | undefined; }' is not assignable to parameter of type 'StorageConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'serviceRoleKey' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
-src/services/storage/supabase.ts(204,51): error TS2341: Property 'client' is private and only accessible within class 'SupabaseStorage'.
-src/services/storage/supabase.ts(206,42): error TS2341: Property 'client' is private and only accessible within class 'SupabaseStorage'.
+src/services/storage/supabase.ts(193,51): error TS2341: Property 'client' is private and only accessible within class 'SupabaseStorage'.
+src/services/storage/supabase.ts(195,42): error TS2341: Property 'client' is private and only accessible within class 'SupabaseStorage'.

@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseService, getSupabaseServer } from '@/src/lib/supabase';
 
-// Create Supabase client with service role key for security audit
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing required Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = getSupabaseService();
 
 export async function GET(request: NextRequest) {
   try {
@@ -118,7 +110,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // This simulates what a public user would see
-    const publicSupabase = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    const publicSupabase = getSupabaseServer();
 
     // Try to access sensitive data with anon key (should fail)
     const { data: publicData, error: publicError } = await publicSupabase

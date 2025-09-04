@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/src/lib/supabase';
 import type { FeatureFlag } from '@/src/core/supabase/vercel-replacements'
 
 interface UseFeatureFlagsOptions {
@@ -46,7 +46,7 @@ export function useFeatureFlags(options: UseFeatureFlagsOptions = {}): FeatureFl
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase credentials not provided')
     }
-    return createClient(supabaseUrl, supabaseAnonKey)
+    return getSupabaseServer();
   }, [supabaseUrl, supabaseAnonKey])
 
   // Check if a specific feature flag is enabled
@@ -239,7 +239,7 @@ export function useFeatureFlagsAdmin(options: UseFeatureFlagsOptions = {}) {
     }
 
     try {
-      const client = createClient(supabaseUrl, supabaseAnonKey)
+      const client = getSupabaseServer()
       
       const { error } = await client
         .from('feature_flags')
@@ -269,7 +269,7 @@ export function useFeatureFlagsAdmin(options: UseFeatureFlagsOptions = {}) {
     }
 
     try {
-      const client = createClient(supabaseUrl, supabaseAnonKey)
+      const client = getSupabaseServer()
       
       const { error } = await client
         .from('feature_flags')
@@ -291,7 +291,7 @@ export function useFeatureFlagsAdmin(options: UseFeatureFlagsOptions = {}) {
     }
 
     try {
-      const client = createClient(supabaseUrl, supabaseAnonKey)
+      const client = getSupabaseServer()
       
       const { error } = await client
         .from('feature_flags')
