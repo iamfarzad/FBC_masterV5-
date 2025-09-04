@@ -1,77 +1,80 @@
-import { PageHeader } from "@/components/page-shell"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { CourseProgressChip } from "@/components/workshop/CourseProgressChip"
-import { WorkshopPanel } from "@/components/workshop/WorkshopPanel"
-import Script from "next/script"
+"use client"
 
-export const metadata = {
-  title: "AI Fundamentals Workshop | Farzad Bayat",
-  description: "Mini‑workshop on how AI works: foundations, prompting, grounding (RAG), safety, and a hands‑on lab.",
-  keywords: ["AI training", "AI workshops", "AI team training", "AI automation training", "AI implementation workshops"],
-  openGraph: {
-    title: "AI Fundamentals Workshop | Farzad Bayat",
-    description: "How AI works: foundations, prompting, grounding (RAG), safety, and a hands‑on lab.",
-  }
-}
-
-const workshopFeatures = [
-  "No prior coding or AI experience required for AI training",
-  "Clear explanations of AI prompts, tokens, and APIs",
-  "You'll leave knowing how to troubleshoot basic AI implementation issues",
-  "You learn AI automation by doing and build real AI tools",
-]
-
-export const dynamic = "force-dynamic"
+import { useState, useEffect } from 'react'
 
 export default function WorkshopPage() {
-  return (
-    <>
-      <section className="grid min-h-dvh grid-rows-[auto,1fr]">
-        <div className="container py-6 md:py-8">
-          <PageHeader
-            title="AI Fundamentals Workshop"
-            subtitle="Learn how AI works: foundations, prompting, grounding, safety, then apply it in a hands‑on lab."
-          />
-          <div className="mt-6 flex items-center justify-center gap-x-3">
-            <CourseProgressChip />
-            <Button asChild>
-              <Link href="/workshop/modules">Start Workshop</Link>
-            </Button>
-          </div>
-        </div>
-        <div className="min-h-0">
-          <WorkshopPanel />
-        </div>
-      </section>
+  const [modules, setModules] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedModule, setSelectedModule] = useState<string | null>(null)
+  const [testResult, setTestResult] = useState<any>(null)
 
-      {/* SEO: JSON-LD Course schema */}
-      <Script id="workshop-jsonld" type="application/ld+json" strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Course",
-          "name": "Interactive AI Education",
-          "description": "Hands-on modules to learn AI concepts, ROI, and practical integration.",
-          "provider": {
-            "@type": "Organization",
-            "name": "F.B/c Lab",
-            "sameAs": "https://farzadbayat.com"
-          },
-          "hasCourseInstance": [
-            {
-              "@type": "CourseInstance",
-              "name": "Industrial Evolution",
-              "courseMode": "self-paced",
-              "description": "Explore eras 1.0 – 5.0 and the shift to human-centered AI."
-            },
-            {
-              "@type": "CourseInstance",
-              "name": "AI Integration",
-              "courseMode": "self-paced",
-              "description": "Apply AI to real workflows and estimate ROI."
-            }
-          ]
-        }) }} />
-    </>
+  useEffect(() => {
+    fetch('/api/workshop/modules')
+      .then(res => res.json())
+      .then(data => {
+        setModules(data.modules || [])
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to load modules:', err)
+        setLoading(false)
+      })
+  }, [])
+
+  const testModule = async (moduleId: string) => {
+    setSelectedModule(moduleId)
+    setTestResult(null)
+    
+    try {
+      const response = await fetch(`/api/workshop/module/${moduleId}`)
+      const data = await response.json()
+      setTestResult(data)
+    } catch (error) {
+      setTestResult({ error: 'Failed to load module' })
+    }
+  }
+
+  return (
+    <div>
+      <h2>Workshop Module Testing</h2>
+      <a href="/">← Back to Home</a>
+      
+      <h3>Available Modules</h3>
+      {loading && <p>Loading modules...</p>}
+      
+      <div style={{ display: 'grid', gap: '10px', margin: '20px 0' }}>
+        {modules.map((module) => (
+          <button
+            key={module.id}
+            onClick={() => testModule(module.id)}
+            style={{ textAlign: 'left', background: selectedModule === module.id ? '#f0f0f0' : 'white' }}
+          >
+            {module.title || module.id} - {module.description || 'No description'}
+          </button>
+        ))}
+      </div>
+
+      {testResult && (
+        <div>
+          <h3>Module Test Result: {selectedModule}</h3>
+          <pre>{JSON.stringify(testResult, null, 2)}</pre>
+        </div>
+      )}
+
+      <hr />
+      
+      <h3>Test Waitlist API</h3>
+      <button onClick={() => {
+        fetch('/api/workshop-waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'test@example.com', module: 'test-module' })
+        })
+        .then(res => res.json())
+        .then(data => setTestResult(data))
+      }}>
+        Test Waitlist Submission
+      </button>
+    </div>
   )
 }
