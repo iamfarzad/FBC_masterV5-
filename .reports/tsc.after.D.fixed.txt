@@ -72,9 +72,9 @@ app/api/gemini-live/route.ts(325,19): error TS2353: Object literal may only spec
 app/api/gemini-live/route.ts(349,70): error TS2339: Property 'getSessionContext' does not exist on type 'MultimodalContextManager'.
 app/api/gemini-live/route.ts(351,120): error TS7006: Parameter 'm' implicitly has an 'any' type.
 app/api/gemini-live/route.ts(373,47): error TS18048: 'base64' is possibly 'undefined'.
+app/api/gemini-live/route.ts(374,17): error TS2345: Argument of type '"live_upload"' is not assignable to parameter of type '"webcam" | "screen" | "upload"'.
 app/api/gemini-live/route.ts(375,17): error TS18048: 'base64' is possibly 'undefined'.
-app/api/gemini-live/route.ts(377,17): error TS2554: Expected 3-5 arguments, but got 6.
-app/api/gemini-live/route.ts(385,66): error TS18048: 'base64' is possibly 'undefined'.
+app/api/gemini-live/route.ts(379,66): error TS18048: 'base64' is possibly 'undefined'.
 app/api/intelligence/analyze-image/route.ts(36,42): error TS2339: Property 'preferences' does not exist on type 'ConversationContext'.
 app/api/intelligence/analyze-image/route.ts(45,9): error TS2353: Object literal may only specify known properties, and 'lastWebcamAnalysis' does not exist in type 'Partial<ConversationContext>'.
 app/api/intelligence/analyze-image/route.ts(46,46): error TS2339: Property 'webcamAnalysisCount' does not exist on type 'ConversationContext'.

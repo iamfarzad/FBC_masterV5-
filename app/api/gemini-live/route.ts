@@ -373,13 +373,7 @@ export async function POST(req: NextRequest) {
                 `[Live API image analysis - ${base64.length} bytes, ${mime}]`,
                 'live_upload',
                 base64.length,
-                imageData,
-                {
-                  source: 'live_api',
-                  contextAware: true,
-                  mimeType: mime,
-                  timestamp: new Date().toISOString()
-                }
+                imageData
               )
               
               console.log(`📸 Image sent to Live API: ${mime}, ${base64.length} bytes`)
