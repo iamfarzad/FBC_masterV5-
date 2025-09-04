@@ -76,9 +76,10 @@ export default function HomePage() {
         <a href="/chat" style={{ marginRight: '10px' }}>Go to Chat</a>
         <a href="/workshop" style={{ marginRight: '10px' }}>Go to Workshop</a>
         <a href="/admin" style={{ marginRight: '10px' }}>Go to Admin</a>
-        <a href="/multimodal-test" style={{ marginRight: '10px' }}>🧪 Multimodal Test (Real Backend)</a>
-        <a href="/voice-test" style={{ marginRight: '10px' }}>🎤 Voice Test (Simple)</a>
-        <a href="/gemini-live">🚀 Gemini Live (Full)</a>
+        <a href="/live" style={{ marginRight: '10px' }}>🔴 LIVE Real-Time Streaming</a>
+        <a href="/multimodal-test" style={{ marginRight: '10px' }}>🧪 Multimodal Test</a>
+        <a href="/voice-test" style={{ marginRight: '10px' }}>🎤 Voice Test</a>
+        <a href="/gemini-live">🚀 Gemini Live</a>
       </div>
 
       <hr />
