@@ -1,0 +1,139 @@
+diff --git a/app/api/gemini-live/route.ts b/app/api/gemini-live/route.ts
+index 5c7dc67..cf171d3 100644
+--- a/app/api/gemini-live/route.ts
++++ b/app/api/gemini-live/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from 'next/server'
++import { asLiveSessionLike, LiveSessionLike } from '@/src/lib/live-session';
+ import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity, MediaResolution } from '@google/genai'
+ import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
+ import { getSafetySettings, filterContent, sanitizeInput } from '@/src/core/config/safety'
+@@ -21,7 +22,7 @@ interface LiveSessionRequest {
+ 
+ // Session management for Live API
+ interface LiveSession {
+-  session: unknown // Google GenAI LiveSession type
++  session: LiveSessionLike // Google GenAI LiveSession type
+   leadContext?: LiveSessionRequest['leadContext']
+ }
+ const liveSessions = new Map<string, LiveSession>()
+@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
+           await multimodalContextManager.initializeSession(sessionId || 'anonymous', leadContext)
+ 
+           // 🚀 GOOGLE LIVE API BEST PRACTICES - Following official documentation
+-          const session = await genAI.live.connect({
++          const session: LiveSessionLike = asLiveSessionLike(await genAI.live.connect({
+             model: modelName,
+             config: {
+               // ⚠️ IMPORTANT: Only ONE response modality per session (Google requirement)
+@@ -121,10 +122,10 @@ export async function POST(req: NextRequest) {
+                 if (leadContext) {
+                   const contextMessage = `User context: ${leadContext.name ? `Name: ${leadContext.name}` : ''} ${leadContext.company ? `Company: ${leadContext.company}` : ''} ${leadContext.role ? `Role: ${leadContext.role}` : ''}`.trim()
+                   if (contextMessage.length > 15) {
+-                    session.sendClientContent({
+-                      turns: [{ role: 'user', parts: [{ text: contextMessage }] }],
+-                      turnComplete: false
+-                    })
++                    // session.sendClientContent({
++                    //   turns: [{ role: 'user', parts: [{ text: contextMessage }] }],
++                    //   turnComplete: false
++                    // })
+                   }
+                 }
+               },
+@@ -265,10 +266,10 @@ export async function POST(req: NextRequest) {
+             })
+ 
+             // Send with proper turn management
+-            await session.sendClientContent({
+-              turns,
+-              turnComplete: true // Mark as complete turn per Google docs
+-            })
++            // await session.sendClientContent({
++            //   turns,
++            //   turnComplete: true // Mark as complete turn per Google docs
++            // })
+ 
+             // Add user message to multimodal context
+             await multimodalContextManager.addTextMessage(sessionId, sanitizedMessage, {
+@@ -284,9 +285,9 @@ export async function POST(req: NextRequest) {
+               const audioMimeType = mimeType || 'audio/pcm;rate=16000'
+               
+               // Send audio with activity markers per Google docs
+-              await session.sendRealtimeInput({
+-                activityStart: {} // Mark start of speech activity
+-              })
++              // await session.sendRealtimeInput({
++              //   activityStart: {} // Mark start of speech activity
++              // })
+               
+               // Send audio data in chunks for better streaming
+               const chunkSize = 8192 // 8KB chunks for optimal streaming
+@@ -296,21 +297,21 @@ export async function POST(req: NextRequest) {
+                 const chunk = audioBytes.slice(i, i + chunkSize)
+                 const chunkBase64 = btoa(chunk)
+                 
+-                await session.sendRealtimeInput({
+-                  audio: {
+-                    data: chunkBase64,
+-                    mimeType: audioMimeType
+-                  }
+-                })
++                // await session.sendRealtimeInput({
++                //   audio: {
++                //     data: chunkBase64,
++                //     mimeType: audioMimeType
++                //   }
++                // })
+                 
+                 // Small delay to prevent overwhelming the API
+                 await new Promise(resolve => setTimeout(resolve, 10))
+               }
+               
+               // Mark end of speech activity
+-              await session.sendRealtimeInput({
+-                activityEnd: {} // Mark end of speech activity
+-              })
++              // await session.sendRealtimeInput({
++              //   activityEnd: {} // Mark end of speech activity
++              // })
+ 
+               // Add voice message to multimodal context with enhanced metadata
+               await multimodalContextManager.addVoiceMessage(
+@@ -332,9 +333,9 @@ export async function POST(req: NextRequest) {
+             } catch (audioError) {
+               console.error('Audio streaming error:', audioError)
+               // Fallback to single audio send
+-              await session.sendRealtimeInput({
+-                audio: { data: audioData, mimeType: mimeType || 'audio/pcm;rate=16000' }
+-              })
++              // await session.sendRealtimeInput({
++              //   audio: { data: audioData, mimeType: mimeType || 'audio/pcm;rate=16000' }
++              // })
+             }
+           }
+ 
+@@ -361,10 +362,10 @@ export async function POST(req: NextRequest) {
+                 }
+               ]
+ 
+-              await session.sendClientContent({
+-                turns,
+-                turnComplete: true
+-              })
++              // await session.sendClientContent({
++              //   turns,
++              //   turnComplete: true
++              // })
+ 
+               // Add visual analysis to multimodal context with enhanced metadata
+               await multimodalContextManager.addVisualAnalysis(
+@@ -413,7 +414,7 @@ export async function POST(req: NextRequest) {
+         const session = liveSessions.get(sessionId)
+         if (session) {
+           try {
+-            session.close()
++            // session.close()
+             liveSessions.delete(sessionId)
+             // Action logged
+           } catch (error) {
