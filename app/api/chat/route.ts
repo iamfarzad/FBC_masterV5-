@@ -28,8 +28,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Pass validated data to handler - Edge Function will handle streaming
-    return await handleChat(validation.data)
+    // Pass validated data to handler with version - Edge Function will handle streaming
+    return await handleChat({
+      ...validation.data,
+      version: 'v1'
+    })
   } catch (error) {
     console.error('Chat API error:', error)
     return new Response(
