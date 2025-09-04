@@ -19,3 +19,12 @@ export type {
   UploadOptions,
   UploadResult,
 } from './useMediaUploader';
+
+export { useToast } from './use-toast'
+export { useTokenTracking } from './use-token-tracking'
+export { useFeatureFlags } from './use-feature-flags'
+
+// Unified patterns
+export { useUnifiedMedia } from './useUnifiedMedia'
+export { useUnifiedIntelligence } from './useUnifiedIntelligence'
+export * as useCommonPatterns from './useCommonPatterns'
