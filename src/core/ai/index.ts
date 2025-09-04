@@ -5,16 +5,14 @@ export interface TextProvider {
 }
 
 export function getProvider(): TextProvider {
-  // Action logged
-
-  // Development mock when no API key
-  if (!process.env.GEMINI_API_KEY) {
-    // Action logged
-    return createMockProvider()
+  // Always use real Gemini provider when API key exists
+  if (process.env.GEMINI_API_KEY) {
+    console.log('✅ Using real Gemini API')
+    return createGeminiProvider()
   }
-
-  // Action logged
-  return createGeminiProvider()
+  
+  console.log('⚠️ No API key, using mock provider')
+  return createMockProvider()
 }
 
 export function createMockProvider(): TextProvider {
