@@ -235,19 +235,12 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
           {contentParts.map((part, idx) => {
             if (part.type === 'activity' && part.dir) {
               return (
-                <ActivityDisplay
+                <span
                   key={`${message.id}-act-${idx}`}
-                  variant="chip"
-                  activities={[{
-                    id: `${message.id}-act-${idx}`,
-                    type: part.dir === 'in' ? 'user_action' : 'ai_response',
-                    title: part.value,
-                    description: part.value,
-                    status: 'completed',
-                    timestamp: new Date().toISOString()
-                  }]}
-                  className="mx-1 align-middle"
-                />
+                  className="mx-1 inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20"
+                >
+                  {part.dir === 'in' ? '→' : '←'} {part.value}
+                </span>
               )
             }
             return (

@@ -41,12 +41,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare base context for admin mode
-    let context = {
+    const context: UnifiedContext = {
       sessionId,
       adminId,
       conversationIds,
-      leadContext: conversationIds ? { conversationIds } : undefined
-    }
+    };
 
     // INTEGRATE INTELLIGENCE: If conversationIds provided, get intelligence context
     let intelligenceContext = null

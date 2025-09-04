@@ -108,8 +108,7 @@ export async function POST(req: NextRequest) {
     performanceMonitor.endOperation(operationId, {
       success: true,
       tokensUsed: estimatedTokens,
-      model: modelSelection.model,
-      errorCode: undefined
+      model: modelSelection.model
     })
 
     return NextResponse.json(response, { status: 200 })

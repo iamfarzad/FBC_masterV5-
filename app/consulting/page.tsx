@@ -75,7 +75,7 @@ export default function ConsultingPage() {
                 ))}
               </ul>
               <div className="mt-6">
-                <ROICalculator mode="card" />
+                <ROICalculator mode="card" onComplete={() => {}} />
               </div>
               <BookCallButton className="mt-6 w-full" title="Request a Consulting Call">Request Your Custom AI Consulting Quote</BookCallButton>
             </CardContent>

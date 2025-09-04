@@ -14,7 +14,7 @@ export interface AdminLogEntry {
   userAgent: string
   requestBody?: unknown
   responseBody?: unknown
-  error?: string
+  error?: string | undefined
   metadata?: Record<string, unknown>
 }
 
@@ -57,7 +57,7 @@ class AdminMonitoringService {
       userAgent: request.headers.get('user-agent') || 'unknown',
       requestBody: this.sanitizeRequestBody(requestBody),
       responseBody: this.sanitizeResponseBody(responseBody),
-      error,
+      ...(error && { error }),
       metadata: {
         referer: request.headers.get('referer'),
         origin: request.headers.get('origin'),
@@ -135,7 +135,7 @@ class AdminMonitoringService {
       requestsByEndpoint,
       requestsByUser,
       errorsByType,
-      lastActivity: filteredLogs.length > 0 ? filteredLogs[filteredLogs.length - 1].timestamp : ''
+      lastActivity: filteredLogs.length > 0 ? filteredLogs[filteredLogs.length - 1]?.timestamp ?? '' : ''
     }
   }
 
@@ -193,18 +193,16 @@ class AdminMonitoringService {
   }
 
   private getClientIP(request: NextRequest): string {
-    return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-           request.headers.get('x-real-ip') ||
-           (request.ip as string) ||
-           'unknown'
+    const xff = request.headers.get("x-forwarded-for") ?? "";
+    return xff.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "0.0.0.0";
   }
 
   private sanitizeRequestBody(body: unknown): unknown {
-    if (!body) return undefined
+    if (!body || typeof body !== 'object') return undefined
     
     // Remove sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key']
-    const sanitized = { ...body }
+    const sanitized = { ...body as Record<string, unknown> }
     
     sensitiveFields.forEach(field => {
       if (sanitized[field]) {
@@ -219,7 +217,7 @@ class AdminMonitoringService {
     if (!body) return undefined
     
     // For responses, we might want to log only metadata, not full content
-    if (typeof body === 'object') {
+    if (typeof body === 'object' && body !== null) {
       return {
         type: 'object',
         keys: Object.keys(body),
@@ -246,7 +244,10 @@ class AdminMonitoringService {
       '7d': 7 * 24 * 60 * 60 * 1000,
       '30d': 30 * 24 * 60 * 60 * 1000
     }
-    return timeRanges[timeRange] || timeRanges['24h']
+    if (Object.keys(timeRanges).includes(timeRange)) {
+      return timeRanges[timeRange] as number
+    }
+    return timeRanges['24h']
   }
 
   private async sendToMonitoringService(_logEntry: AdminLogEntry) {

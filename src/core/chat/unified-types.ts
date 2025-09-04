@@ -38,7 +38,7 @@ export type ChatMode = 'standard' | 'realtime' | 'admin' | 'multimodal'
 
 // Provider interface
 export interface UnifiedChatProvider {
-  generate(input: { messages: UnifiedMessage[]; context?: UnifiedContext }): AsyncIterable<UnifiedMessage>
+  generate(input: { messages: UnifiedMessage[]; context?: UnifiedContext; mode?: ChatMode }): AsyncIterable<UnifiedMessage>
   supportsMode(mode: ChatMode): boolean
   getCapabilities(): ChatCapabilities
 

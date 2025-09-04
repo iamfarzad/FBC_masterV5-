@@ -351,14 +351,6 @@ export const Response = memo(
             // AI tool buttons - CRITICAL for functionality
             'button'
           ]}
-          allowedAttributes={{
-            // Standard attributes
-            '*': ['className', 'style', 'id'],
-            'a': ['href', 'title', 'rel', 'target'],
-            'img': ['src', 'alt', 'title', 'width', 'height'],
-            // AI tool button attributes - REQUIRED
-            'button': ['data-coach-cta', 'data-tool', 'data-query', 'className', 'style']
-          }}
           {...options}
         >
           {parsedChildren}

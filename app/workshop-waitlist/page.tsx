@@ -132,21 +132,21 @@ export default function WorkshopWaitlistPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  placeholder="your@compunknown.com"
+                  placeholder="your@company.com"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="compunknown">Company *</Label>
+                <Label htmlFor="company">Company *</Label>
                 <Input
-                  id="compunknown"
-                  name="compunknown"
-                  value={formData.compunknown}
+                  id="company"
+                  name="company"
+                  value={formData.company}
                   onChange={handleChange}
                   required
-                  placeholder="Your compunknown name"
+                  placeholder="Your company name"
                 />
               </div>
               <div className="space-y-2">

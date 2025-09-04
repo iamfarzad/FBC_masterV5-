@@ -41,9 +41,9 @@ export function ChatLayout({
       <div className="flex min-h-0 flex-1">
         {/* Chat Messages */}
         <div className="flex min-h-0 flex-1 flex-col">
-          <ErrorBoundary 
+          <ErrorBoundary
             variant="inline"
-            fallback={({ error, resetError }) => (
+            fallback={({ error, resetError }: { error: unknown; resetError: () => void }) => (
               <div className="mx-auto max-w-2xl p-6">
                 <div className="border-destructive/20 bg-destructive/5 rounded-xl border p-6 text-center">
                   <p className="mb-2 font-medium text-destructive">Chat Error</p>

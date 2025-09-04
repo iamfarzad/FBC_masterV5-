@@ -56,13 +56,29 @@ export const InlineCitationCardTrigger = ({
       {...props}
     >
       <Badge variant="secondary" className="cursor-pointer">
-        {sources.length ? (
+        {sources.length && sources[0] ? (
           <>
-            {new URL(sources[0]).hostname}{' '}
+            {(() => {
+              try {
+                return new URL(sources[0]).hostname;
+              } catch {
+                return 'unknown';
+              }
+            })()}{' '}
             {sources.length > 1 && `+${sources.length - 1}`}
           </>
         ) : (
           'unknown'
+        )}
+        {sources.length > 0 && sources[0] && (
+          <a
+            href={sources[0]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-2 text-xs text-muted-foreground hover:text-accent"
+          >
+            ↗
+          </a>
         )}
       </Badge>
     </div>

@@ -43,7 +43,7 @@ export function CanvasWorkspace({ open, title = 'Canvas', onClose, left, console
           {isMobile && left ? (
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size={compact ? "xs" : "sm"}>Details</Button>
+                <Button variant="ghost" size={compact ? "sm" : "sm"}>Details</Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[88vw] max-w-[420px]">
                 <div className="h-full overflow-auto p-2 text-sm">{left}</div>

@@ -1,23 +1,9 @@
 app/(edge)/api/intelligence/events/route.ts(9,16): error TS2554: Expected 2-3 arguments, but got 1.
-app/api-utils/admin-monitoring.ts(138,47): error TS2532: Object is possibly 'undefined'.
-app/api-utils/admin-monitoring.ts(198,21): error TS2339: Property 'ip' does not exist on type 'NextRequest'.
-app/api-utils/admin-monitoring.ts(210,11): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
-  No index signature with a parameter of type 'string' was found on type '{}'.
-app/api-utils/admin-monitoring.ts(211,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
-  No index signature with a parameter of type 'string' was found on type '{}'.
-app/api-utils/admin-monitoring.ts(249,5): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+app/api-utils/admin-monitoring.ts(247,5): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
   Type 'undefined' is not assignable to type 'number'.
 app/api-utils/api-security.ts(144,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 app/api-utils/api-security.ts(144,38): error TS2538: Type 'undefined' cannot be used as an index type.
-app/api-utils/monitoring-admin.ts(138,47): error TS2532: Object is possibly 'undefined'.
-app/api-utils/monitoring-admin.ts(198,21): error TS2339: Property 'ip' does not exist on type 'NextRequest'.
-app/api-utils/monitoring-admin.ts(210,11): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
-  No index signature with a parameter of type 'string' was found on type '{}'.
-app/api-utils/monitoring-admin.ts(211,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
-  No index signature with a parameter of type 'string' was found on type '{}'.
-app/api-utils/monitoring-admin.ts(249,5): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
 app/api-utils/security.ts(62,11): error TS18046: 'err' is of type 'unknown'.
 app/api-utils/security.ts(62,70): error TS18046: 'err' is of type 'unknown'.
 app/api-utils/security.ts(143,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
@@ -180,13 +166,10 @@ app/api/tools/doc/route.ts(84,31): error TS2339: Property 'model' does not exist
 app/api/tools/screen/route.ts(47,50): error TS2345: Argument of type '"screenshot_analysis"' is not assignable to parameter of type 'UseCase'.
 app/api/tools/screen/route.ts(52,110): error TS2339: Property 'model' does not exist on type 'string'.
 app/api/tools/screen/route.ts(73,31): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/screen/route.ts(108,50): error TS2379: Argument of type '{ success: true; tokensUsed: number; model: any; errorCode: undefined; }' is not assignable to parameter of type '{ success: boolean; tokensUsed?: number; model?: string; errorCode?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'errorCode' are incompatible.
-    Type 'undefined' is not assignable to type 'string'.
 app/api/tools/screen/route.ts(111,29): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/screen/route.ts(118,37): error TS2304: Cannot find name 'operationId'.
-app/api/tools/screen/route.ts(120,19): error TS2552: Cannot find name 'estimatedTokens'. Did you mean 'estimateTokens'?
-app/api/tools/screen/route.ts(121,14): error TS2304: Cannot find name 'modelSelection'.
+app/api/tools/screen/route.ts(117,37): error TS2304: Cannot find name 'operationId'.
+app/api/tools/screen/route.ts(119,19): error TS2552: Cannot find name 'estimatedTokens'. Did you mean 'estimateTokens'?
+app/api/tools/screen/route.ts(120,14): error TS2304: Cannot find name 'modelSelection'.
 app/api/tools/task-generator/route.ts(12,35): error TS2559: Type 'string' has no properties in common with type 'GoogleGenAIOptions'.
 app/api/tools/task-generator/route.ts(13,25): error TS2339: Property 'getGenerativeModel' does not exist on type 'GoogleGenAI'.
 app/api/tools/translate/route.ts(16,83): error TS2353: Object literal may only specify known properties, and 'details' does not exist in type 'ToolRunResult'.
@@ -202,13 +185,10 @@ app/api/tools/webcam/route.ts(53,85): error TS2554: Expected 1-2 arguments, but 
 app/api/tools/webcam/route.ts(58,33): error TS2554: Expected 6-9 arguments, but got 5.
 app/api/tools/webcam/route.ts(58,105): error TS2339: Property 'model' does not exist on type 'string'.
 app/api/tools/webcam/route.ts(78,31): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/webcam/route.ts(112,50): error TS2379: Argument of type '{ success: true; tokensUsed: number; model: any; errorCode: undefined; }' is not assignable to parameter of type '{ success: boolean; tokensUsed?: number; model?: string; errorCode?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'errorCode' are incompatible.
-    Type 'undefined' is not assignable to type 'string'.
 app/api/tools/webcam/route.ts(115,29): error TS2339: Property 'model' does not exist on type 'string'.
-app/api/tools/webcam/route.ts(122,37): error TS2304: Cannot find name 'operationId'.
-app/api/tools/webcam/route.ts(124,19): error TS2552: Cannot find name 'estimatedTokens'. Did you mean 'estimateTokens'?
-app/api/tools/webcam/route.ts(125,14): error TS2304: Cannot find name 'modelSelection'.
+app/api/tools/webcam/route.ts(121,37): error TS2304: Cannot find name 'operationId'.
+app/api/tools/webcam/route.ts(123,19): error TS2552: Cannot find name 'estimatedTokens'. Did you mean 'estimateTokens'?
+app/api/tools/webcam/route.ts(124,14): error TS2304: Cannot find name 'modelSelection'.
 app/api/upload/route.ts(111,26): error TS2339: Property 'analysis' does not exist on type '{ fileUrl: string; filename: string; originalName: string; size: number; type: string; uploadedAt: string; modalityType: string; sessionId: string | null; userId: string | null; }'.
 app/api/upload/route.ts(136,19): error TS2304: Cannot find name 'ALLOWED_TYPES'.
 app/api/video-to-app/route.ts(90,28): error TS2304: Cannot find name 'req'.
@@ -239,18 +219,14 @@ app/api/webhooks/resend/route.ts(90,33): error TS2345: Argument of type 'Supabas
   Property 'raw' is missing in type 'SupabaseClient<any, "public", "public", any, any>' but required in type 'SupabaseClient'.
 app/api/webhooks/resend/route.ts(93,34): error TS2345: Argument of type 'SupabaseClient<any, "public", "public", any, any>' is not assignable to parameter of type 'SupabaseClient'.
   Property 'raw' is missing in type 'SupabaseClient<any, "public", "public", any, any>' but required in type 'SupabaseClient'.
-app/consulting/page.tsx(78,18): error TS2741: Property 'onComplete' is missing in type '{ mode: "card"; }' but required in type 'ROICalculatorProps'.
-app/contact-form/page.tsx(122,33): error TS2339: Property 'compunknown' does not exist on type '{ name: string; email: string; company: string; subject: string; message: string; }'.
-app/workshop-waitlist/page.tsx(146,35): error TS2339: Property 'compunknown' does not exist on type '{ name: string; email: string; company: string; teamSize: string; location: string; interests: string[]; message: string; }'.
 app/workshop/modules/[slug]/page.tsx(36,61): error TS2532: Object is possibly 'undefined'.
 app/workshop/modules/page.tsx(55,20): error TS18048: 'phaseModules' is possibly 'undefined'.
 app/workshop/modules/page.tsx(57,97): error TS18048: 'phaseModules' is possibly 'undefined'.
 app/workshop/modules/page.tsx(57,97): error TS2532: Object is possibly 'undefined'.
-app/workshop/video-to-app/VideoLearningToolClient.tsx(214,16): error TS2304: Cannot find name 'VideoToApp'.
+app/workshop/video-to-app/VideoLearningToolClient.tsx(219,17): error TS2322: Type '(appUrl: string, videoUrl: string) => void' is not assignable to type '(result: any) => void'.
+  Target signature provides too few arguments. Expected 2 or more, but got 1.
 components/ai-elements/image.tsx(32,18): error TS2339: Property 'alt' does not exist on type 'GeneratedFile & { className?: string; }'.
-components/ai-elements/inline-citation.tsx(61,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | URL'.
-  Type 'undefined' is not assignable to type 'string | URL'.
-components/ai-elements/inline-citation.tsx(149,14): error TS2375: Type '{ key: number; title: string | undefined; url: string; description: string | undefined; }' is not assignable to type '{ title?: string; url?: string; description?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+components/ai-elements/inline-citation.tsx(165,14): error TS2375: Type '{ key: number; title: string | undefined; url: string; description: string | undefined; }' is not assignable to type '{ title?: string; url?: string; description?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
   Types of property 'title' are incompatible.
     Type 'string | undefined' is not assignable to type 'string'.
       Type 'undefined' is not assignable to type 'string'.
@@ -260,23 +236,10 @@ components/ai-elements/reasoning.tsx(51,54): error TS2379: Argument of type '{ p
       Type 'undefined' is not assignable to type 'ChangeHandler$1<boolean>'.
 components/ai-elements/response.tsx(33,43): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-components/ai-elements/response.tsx(354,11): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(props: Readonly<Options> & HardenReactMarkdownOptions, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<...>> | ... 4 more ... | undefined', gave the following error.
-    Type '{ children: string | null | undefined; allowElement?: AllowElement | null | undefined; allowedElements: readonly string[] | null | undefined; components: Components | null | undefined; ... 10 more ...; allowedAttributes: { ...; }; }' is not assignable to type 'IntrinsicAttributes & Readonly<Options> & HardenReactMarkdownOptions'.
-      Property 'allowedAttributes' does not exist on type 'IntrinsicAttributes & Readonly<Options> & HardenReactMarkdownOptions'.
-  Overload 2 of 2, '(props: Readonly<Options> & HardenReactMarkdownOptions): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
-    Type '{ children: string | null | undefined; allowElement?: AllowElement | null | undefined; allowedElements: readonly string[] | null | undefined; components: Components | null | undefined; ... 10 more ...; allowedAttributes: { ...; }; }' is not assignable to type 'IntrinsicAttributes & Readonly<Options> & HardenReactMarkdownOptions'.
-      Property 'allowedAttributes' does not exist on type 'IntrinsicAttributes & Readonly<Options> & HardenReactMarkdownOptions'.
 components/chat/activity/AiActivityMonitor.tsx(306,64): error TS2345: Argument of type '{ "bg-accent/10 text-accent": boolean; "bg-destructive/10 text-destructive": boolean; "bg-muted/20 text-muted-foreground": boolean; }' is not assignable to parameter of type 'string | false | null | undefined'.
 components/chat/activity/AiActivityMonitor.tsx(357,64): error TS2345: Argument of type '{ "bg-accent/10 text-accent": boolean | undefined; "bg-muted/20 text-muted-foreground": boolean; }' is not assignable to parameter of type 'string | false | null | undefined'.
-components/chat/CanvasOrchestrator.tsx(37,14): error TS2741: Property 'onCapture' is missing in type '{ mode: "canvas"; onClose: () => void; onAIAnalysis: () => void; }' but required in type 'WebcamCaptureProps'.
-components/chat/CanvasOrchestrator.tsx(43,26): error TS2322: Type '{ mode: string; onClose: () => void; }' is not assignable to type 'IntrinsicAttributes & ScreenShareProps'.
-  Property 'mode' does not exist on type 'IntrinsicAttributes & ScreenShareProps'.
-components/chat/CanvasWorkspace.tsx(46,41): error TS2322: Type '"sm" | "xs"' is not assignable to type '"sm" | "lg" | "xl" | "default" | "icon" | "icon-sm" | "icon-lg" | null | undefined'.
-  Type '"xs"' is not assignable to type '"sm" | "lg" | "xl" | "default" | "icon" | "icon-sm" | "icon-lg" | null | undefined'.
-components/chat/layouts/ChatLayout.tsx(46,22): error TS2322: Type '({ error, resetError }: { error: any; resetError: any; }) => Element' is not assignable to type 'ReactNode'.
-components/chat/layouts/ChatLayout.tsx(46,26): error TS7031: Binding element 'error' implicitly has an 'any' type.
-components/chat/layouts/ChatLayout.tsx(46,33): error TS7031: Binding element 'resetError' implicitly has an 'any' type.
+components/chat/layouts/ChatLayout.tsx(46,22): error TS2322: Type '({ error, resetError }: { error: unknown; resetError: () => void; }) => React.JSX.Element' is not assignable to type 'ReactNode'.
+components/chat/layouts/ChatLayout.tsx(50,70): error TS18046: 'error' is of type 'unknown'.
 components/chat/layouts/ChatMessages.tsx(105,20): error TS2322: Type '(type: string, input: ToolInput, sessionId?: string) => Promise<ToolResult>' is not assignable to type '(type: string, input: unknown, sessionId?: string | undefined) => Promise<unknown>'.
   Types of parameters 'input' and 'input' are incompatible.
     Type 'unknown' is not assignable to type 'ToolInput'.
@@ -289,9 +252,8 @@ components/chat/layouts/ChatMessages.tsx(200,12): error TS2375: Type '{ children
     Type 'boolean | undefined' is not assignable to type 'boolean'.
       Type 'undefined' is not assignable to type 'boolean'.
 components/chat/layouts/ChatMessages.tsx(207,14): error TS2745: This JSX tag's 'children' prop expects type '(ReactI18NextChildren | Iterable<ReactI18NextChildren>) & string' which requires multiple children, but only a single child was provided.
-components/chat/layouts/ChatMessages.tsx(238,18): error TS2304: Cannot find name 'ActivityDisplay'.
-components/chat/layouts/ChatMessages.tsx(266,17): error TS2322: Type '"roi_calculator"' is not assignable to type '`tool-${string}`'.
-components/chat/layouts/ChatMessages.tsx(278,18): error TS2741: Property 'errorText' is missing in type '{ output: Element; }' but required in type '{ output: ReactNode; errorText: string | undefined; }'.
+components/chat/layouts/ChatMessages.tsx(259,17): error TS2322: Type '"roi_calculator"' is not assignable to type '`tool-${string}`'.
+components/chat/layouts/ChatMessages.tsx(271,18): error TS2741: Property 'errorText' is missing in type '{ output: Element; }' but required in type '{ output: ReactNode; errorText: string | undefined; }'.
 components/chat/layouts/ChatMessages/MessageComponent.tsx(54,11): error TS18046: 'result' is of type 'unknown'.
 components/chat/layouts/ChatMessages/MessageComponent.tsx(54,24): error TS18046: 'result' is of type 'unknown'.
 components/chat/layouts/ChatMessages/MessageComponent.tsx(55,24): error TS18046: 'result' is of type 'unknown'.
@@ -301,13 +263,12 @@ components/chat/layouts/ChatMessages/MessageComponent.tsx(97,12): error TS2375: 
     Type 'boolean | undefined' is not assignable to type 'boolean'.
       Type 'undefined' is not assignable to type 'boolean'.
 components/chat/layouts/ChatMessages/MessageComponent.tsx(104,14): error TS2745: This JSX tag's 'children' prop expects type '(ReactI18NextChildren | Iterable<ReactI18NextChildren>) & string' which requires multiple children, but only a single child was provided.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(135,18): error TS2304: Cannot find name 'ActivityDisplay'.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(163,17): error TS2322: Type '"roi_calculator"' is not assignable to type '`tool-${string}`'.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(175,18): error TS2741: Property 'errorText' is missing in type '{ output: Element; }' but required in type '{ output: ReactNode; errorText: string | undefined; }'.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(384,12): error TS2304: Cannot find name 'Suggestions'.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(385,14): error TS2304: Cannot find name 'Suggestion'.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(387,31): error TS7006: Parameter 'suggestion' implicitly has an 'any' type.
-components/chat/layouts/ChatMessages/MessageComponent.tsx(398,13): error TS2304: Cannot find name 'Suggestions'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(156,17): error TS2322: Type '"roi_calculator"' is not assignable to type '`tool-${string}`'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(168,18): error TS2741: Property 'errorText' is missing in type '{ output: Element; }' but required in type '{ output: ReactNode; errorText: string | undefined; }'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(377,12): error TS2304: Cannot find name 'Suggestions'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(378,14): error TS2304: Cannot find name 'Suggestion'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(380,31): error TS7006: Parameter 'suggestion' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(391,13): error TS2304: Cannot find name 'Suggestions'.
 components/chat/layouts/ChatSidebar.tsx(235,13): error TS2304: Cannot find name 'activityLog'.
 components/chat/layouts/ChatSidebar.tsx(235,40): error TS7006: Parameter 'a' implicitly has an 'any' type.
 components/chat/layouts/ChatSidebar.tsx(247,12): error TS2304: Cannot find name 'activityLog'.

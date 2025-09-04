@@ -34,13 +34,13 @@ export function CanvasOrchestrator({ onClose }: CanvasOrchestratorProps = {}) {
       case 'webcam':
         return (
           <div className="size-full">
-            <WebcamCapture mode="canvas" onClose={handleClose} onAIAnalysis={() => {}} />
+            <WebcamCapture mode="canvas" onClose={handleClose} onCapture={() => {}} onAIAnalysis={() => {}} />
           </div>
         )
       case 'screen':
         return (
           <div className="size-full">
-            <ScreenShare mode="canvas" onClose={handleClose} />
+            <ScreenShare onClose={handleClose} />
           </div>
         )
       case 'video':

@@ -61,9 +61,9 @@ export async function POST(req: NextRequest) {
     // Create the message stream using the unified provider
     const messageStream = unifiedChatProvider.generate({
       messages,
-      context,
+      ...(context && { context }),
       mode
-    })
+    });
 
     // Handle streaming vs non-streaming responses
     if (stream !== false) {

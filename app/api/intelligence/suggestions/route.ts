@@ -14,8 +14,8 @@ export const POST = withApiGuard({ schema: Body, requireSession: false, rateLimi
   if (!raw) return NextResponse.json({ ok: false, error: 'Context not found' } satisfies ToolRunResult, { status: 404 })
   const snapshot: ContextSnapshot = {
     lead: { email: raw.email, name: raw.name },
-    company: raw.company_context ?? undefined,
-    person: raw.person_context ?? undefined,
+    company: (raw.company_context && Object.keys(raw.company_context).length > 0) ? raw.company_context : undefined,
+    person: (raw.person_context && Object.keys(raw.person_context).length > 0) ? raw.person_context : undefined,
     role: raw.role ?? undefined,
     roleConfidence: raw.role_confidence ?? undefined,
     intent: raw.intent_data ?? undefined,
