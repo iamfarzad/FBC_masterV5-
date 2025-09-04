@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseService } from "@/src/lib/supabase";
-import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { logServerActivity } from "@/src/core/server-activity-logger"
+import { SupabaseClient } from "@supabase/supabase-js";
 
 // Type definitions for Resend webhook payload
 interface ResendWebhookData {
@@ -24,15 +24,6 @@ interface ResendWebhookData {
 interface ResendWebhookEvent {
   type: string
   data: ResendWebhookData
-}
-
-interface SupabaseClient {
-  from: (table: string) => {
-    insert: (data: any) => Promise<{ error: any }>
-    update: (data: any) => any
-    eq: (column: string, value: any) => any
-  }
-  raw: (sql: string) => any
 }
 
 // Webhook signature verification

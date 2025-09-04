@@ -129,7 +129,7 @@ export class URLContextService {
         extractedText: '',
         wordCount: 0,
         readingTime: 0,
-        error: error.message || 'Failed to analyze URL',
+        error: (error as any)?.message ?? 'Failed to analyze URL',
       };
     }
   }

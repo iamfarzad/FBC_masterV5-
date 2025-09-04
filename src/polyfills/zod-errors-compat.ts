@@ -8,8 +8,7 @@ if (proto && !Object.prototype.hasOwnProperty.call(proto, "errors")) {
   Object.defineProperty(proto, "errors", {
     get() {
       // `this` is the ZodError instance; it always has `.issues`
-      // @ts-expect-error runtime access
-      return this.issues;
+      return (this as any).issues;
     },
     configurable: true,
   });

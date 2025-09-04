@@ -40,7 +40,7 @@ export class EmailService {
         attachments: template.attachments?.map(a => ({
           filename: a.filename,
           content: a.content.toString('base64'),
-          contentType: a.contentType
+          contentType: a.contentType ?? 'application/octet-stream'
         }))
       })
 

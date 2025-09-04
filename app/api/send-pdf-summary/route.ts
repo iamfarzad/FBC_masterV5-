@@ -5,6 +5,20 @@ import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import fs from 'fs'
 
+import { z } from 'zod'
+
+const leadInfoSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+});
+
+const activitySchema = z.object({
+  type: z.string(),
+  description: z.string().nullable(),
+  title: z.string().nullable(),
+  created_at: z.string(),
+});
+
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
@@ -17,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     // Prepare minimal data for summary – reuse export-summary query path (lightweight inline)
     const supabase = getSupabaseService()
-    const leadInfo: unknown = { name: leadName, email: toEmail }
+    const safeLeadInfo = leadInfoSchema.parse({ name: leadName, email: toEmail });
     let leadResearch: unknown = null
 
     try {
@@ -37,20 +51,22 @@ export async function POST(req: NextRequest) {
       .eq('metadata->sessionId', sessionId)
       .order('created_at', { ascending: true })
 
-    const conversationHistory = (activities || []).map((a: unknown) => ({
+    const safeActivities = z.array(activitySchema).parse(activities || []);
+
+    const conversationHistory = safeActivities.map((a) => ({
       role: (a.type === 'ai_request' ? 'assistant' : 'user'),
       content: String(a.description || a.title || ''),
       timestamp: String(a.created_at)
     }))
 
     const summaryData = {
-      leadInfo,
+      leadInfo: safeLeadInfo,
       conversationHistory,
       leadResearch: leadResearch || undefined,
       sessionId
     }
 
-    const pdfPath = generatePdfPath(sessionId, leadInfo.name)
+    const pdfPath = generatePdfPath(sessionId, safeLeadInfo.name)
     await generatePdfWithPuppeteer(summaryData as any, pdfPath, 'client', language)
     const pdfBuffer = fs.readFileSync(pdfPath)
     fs.unlinkSync(pdfPath)
@@ -59,7 +75,7 @@ export async function POST(req: NextRequest) {
       return new Response(pdfBuffer, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="FB-c_Summary_${leadInfo.name.replace(/\s+/g, '_')}.pdf"`
+          'Content-Disposition': `attachment; filename="FB-c_Summary_${safeLeadInfo.name.replace(/\s+/g, '_')}.pdf"`
         }
       })
     }
@@ -71,10 +87,10 @@ export async function POST(req: NextRequest) {
       from,
       to: [toEmail],
       subject: 'Your F.B/c AI Summary',
-      html: `<p>Hi ${leadInfo.name || ''},</p><p>Your session summary is attached. If you’d like, book a workshop or a consulting call and we’ll turn this into a concrete plan.</p>`,
+      html: `<p>Hi ${safeLeadInfo.name || ''},</p><p>Your session summary is attached. If you’d like, book a workshop or a consulting call and we’ll turn this into a concrete plan.</p>`,
       attachments: [
         {
-          filename: `FB-c_Summary_${leadInfo.name.replace(/\s+/g, '_')}.pdf`,
+          filename: `FB-c_Summary_${safeLeadInfo.name.replace(/\s+/g, '_')}.pdf`,
           content: pdfBuffer.toString('base64'),
           contentType: 'application/pdf'
         }

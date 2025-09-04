@@ -43,10 +43,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         messages: [...state.messages, {
-          id: crypto.randomUUID(),
           role: 'user',
           content: action.payload.content,
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         }],
         isLoading: true,
         error: null,
@@ -146,7 +145,7 @@ export function createInitialChatState(): ChatState {
     error: null,
     sessionId: null,
     feature: 'chat',
-    showProgressRail: false,
+    // showProgressRail removed: not in ChatState
     activities: [],
     currentStage: 1,
     input: '',

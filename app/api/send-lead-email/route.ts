@@ -10,7 +10,7 @@ import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { z } from 'zod'
 
 // Initialize Resend with fallback for build time
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Email request schema
 const emailRequestSchema = z.object({
@@ -39,6 +39,17 @@ const customDataSchema = z.object({
   location: z.string().optional(),
   meetingLink: z.string().optional(),
 });
+
+const leadSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+  company: z.string().optional().nullable(),
+  painPoints: z.array(z.string()).optional().nullable(),
+  ai_readiness: z.number().optional().nullable(),
+});
+
+const customDataSchema = z.record(z.any());
 
 // Email templates
 const emailTemplates = {
@@ -75,7 +86,7 @@ const emailTemplates = {
   
   follow_up: {
     subject: 'Following Up - Your AI Transformation Opportunity',
-    template: (lead: unknown, data: unknown) => `
+    template: (lead: z.infer<typeof leadSchema>, data: z.infer<typeof customDataSchema>) => `
       <h2>Hi ${lead.name},</h2>
       
       <p>I wanted to follow up on our recent conversation about AI solutions for ${lead.company || 'your company'}.</p>
@@ -109,7 +120,7 @@ const emailTemplates = {
   
   report: {
     subject: 'Your Personalized AI Implementation Report',
-    template: (lead: unknown, data: unknown) => `
+    template: (lead: z.infer<typeof leadSchema>, data: z.infer<typeof customDataSchema>) => `
       <h2>Your AI Implementation Report is Ready, ${lead.name}!</h2>
       
       <p>Based on our analysis of ${lead.company || 'your company'}, we've prepared a comprehensive report outlining your AI transformation opportunity.</p>
@@ -165,7 +176,7 @@ const emailTemplates = {
   
   meeting_confirmation: {
     subject: 'Meeting Confirmed - AI Discovery Call',
-    template: (lead: unknown, data: unknown) => `
+    template: (lead: z.infer<typeof leadSchema>, data: z.infer<typeof customDataSchema>) => `
       <h2>Meeting Confirmed!</h2>
       
       <p>Hi ${lead.name},</p>
@@ -253,7 +264,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Get email template
-    const template = emailTemplates[validatedData.emailType]
+    const template = emailTemplates[validatedData.emailType as keyof typeof emailTemplates];
     if (!template) {
       return NextResponse.json(
         { error: 'Invalid email type' },
@@ -262,16 +273,18 @@ export async function POST(req: NextRequest) {
     }
     
     // Generate email content
-    const emailHtml = template.template(lead, validatedData.customData || {})
+    const safeLead = leadSchema.parse(lead);
+    const safeCustomData = customDataSchema.parse(validatedData.customData || {});
+    const emailHtml = template.template(safeLead, safeCustomData)
     
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'F.B Consulting <noreply@fbconsulting.ai>',
-      to: [lead.email],
+      to: [safeLead.email],
       subject: template.subject,
       html: emailHtml,
       tags: [
-        { name: 'lead_id', value: lead.id },
+        { name: 'lead_id', value: safeLead.id },
         { name: 'email_type', value: validatedData.emailType }
       ]
     })
@@ -289,10 +302,10 @@ export async function POST(req: NextRequest) {
       .from('activities')
       .insert({
         type: 'email_sent',
-        title: `Email sent to ${lead.name}`,
-        description: `${validatedData.emailType} email sent to ${lead.email}`,
+        title: `Email sent to ${safeLead.name}`,
+        description: `${validatedData.emailType} email sent to ${safeLead.email}`,
         metadata: {
-          lead_id: lead.id,
+          lead_id: safeLead.id,
           email_type: validatedData.emailType,
           resend_id: data?.id
         }
@@ -306,7 +319,7 @@ export async function POST(req: NextRequest) {
       await supabase
         .from('follow_up_tasks')
         .insert({
-          lead_id: lead.id,
+          lead_id: safeLead.id,
           task_type: 'email',
           scheduled_for: followUpDate.toISOString(),
           status: 'scheduled',

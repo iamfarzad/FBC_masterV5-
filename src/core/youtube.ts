@@ -34,7 +34,7 @@ export const getYouTubeVideoId = (url: string): string | null => {
   // Fallback using simplified Regex for other potential edge cases not caught by URL parsing
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
   const match = url.match(regExp)
-  if (match && match[2].length === 11) {
+  if (match && match[2] && match[2].length === 11) {
     return match[2]
   }
 
@@ -53,7 +53,7 @@ export function validateYoutubeUrl(url: string): { isValid: boolean; error?: str
 export function getYoutubeEmbedUrl(url: string): string {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
   const match = url.match(regExp)
-  const videoId = match && match[2].length === 11 ? match[2] : null
+  const videoId = match && match[2] && match[2].length === 11 ? match[2] : null
 
   if (videoId) {
     return `https://www.youtube.com/embed/${videoId}`

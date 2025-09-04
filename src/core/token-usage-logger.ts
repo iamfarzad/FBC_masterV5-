@@ -221,24 +221,18 @@ export class TokenUsageLogger {
       estimated_cost: estimatedCost,
       success,
       error_message: errorMessage ?? '',
-      usage_metadata: usageMetadata ?? {}
+      usage_metadata: (usageMetadata as Record<string, unknown>) ?? {}
     })
 
     return { allowed: true }
   }
 
   private calculateCost(model: string, totalTokens: number): number {
-    // Cost per 1M tokens (approximate)
-    const costs: Record<string, number> = {
-      'gemini-2.5-flash': 0.075, // $0.075 per 1M tokens
-      'gemini-2.5-flash-lite': 0.025, // $0.025 per 1M tokens
-      'gemini-1.5-flash': 0.075,
-      'gemini-1.5-pro': 0.375,
-      'gemini-1.0-pro': 0.5
-    }
-
-    const costPerMillion = costs[model] || costs['gemini-2.5-flash-lite']
-    return (totalTokens / 1000000) * costPerMillion
+    // Use global MODEL_PRICING from monitoring module
+    const { MODEL_PRICING } = require('./monitoring/index')
+    const costPerMillion = MODEL_PRICING[model]
+    if (typeof costPerMillion !== 'number') return 0
+    return (totalTokens / 1_000_000) * costPerMillion
   }
 
   async getUsageStats(userId?: string, sessionId?: string, timeframe: 'day' | 'week' | 'month' = 'day'): Promise<{

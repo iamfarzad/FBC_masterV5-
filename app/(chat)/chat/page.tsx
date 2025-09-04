@@ -634,7 +634,7 @@ export default function ChatPage() {
                         <div className="space-y-8">
                           {chatMessages.map((message, index) => (
                             <div
-                              key={message.id}
+                              key={index}
                               className="animate-smooth-fade-in"
                               style={{ animationDelay: `${index * 50}ms` }}
                             >
