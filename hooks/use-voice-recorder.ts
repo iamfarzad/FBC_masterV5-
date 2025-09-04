@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
@@ -46,7 +45,7 @@ export function useVoiceRecorder(): VoiceRecorderState & VoiceRecorderActions {
   const startRecording = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, error: null, isProcessing: true }))
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -54,14 +53,14 @@ export function useVoiceRecorder(): VoiceRecorderState & VoiceRecorderActions {
           autoGainControl: true
         }
       })
-      
+
       streamRef.current = stream
       chunksRef.current = []
-      
+
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       })
-      
+
       mediaRecorderRef.current = mediaRecorder
       startTimeRef.current = Date.now()
 
@@ -79,7 +78,7 @@ export function useVoiceRecorder(): VoiceRecorderState & VoiceRecorderActions {
           isRecording: false,
           isProcessing: false
         }))
-        
+
         // Cleanup
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop())
@@ -88,7 +87,7 @@ export function useVoiceRecorder(): VoiceRecorderState & VoiceRecorderActions {
       }
 
       mediaRecorder.start(100) // Collect data every 100ms
-      
+
       // Start duration tracking
       durationIntervalRef.current = setInterval(() => {
         setState(prev => ({
@@ -115,12 +114,12 @@ export function useVoiceRecorder(): VoiceRecorderState & VoiceRecorderActions {
   const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current && state.isRecording) {
       setState(prev => ({ ...prev, isProcessing: true }))
-      
+
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current)
         durationIntervalRef.current = null
       }
-      
+
       mediaRecorderRef.current.stop()
     }
   }, [state.isRecording])

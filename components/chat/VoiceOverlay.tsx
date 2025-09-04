@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useCallback } from "react"
+import { useCallback, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { X } from "@/src/core/icon-mapping"
@@ -62,7 +62,7 @@ export function VoiceOverlay({
     onTurnComplete
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) return
     void (async () => {
       if (!hasPermission) {
@@ -78,7 +78,7 @@ export function VoiceOverlay({
   }, [open, hasPermission, requestPermission, stopRecording])
 
   // Auto-start voice session when overlay opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (open && !isRecording) {
       const startVoice = async () => {
         const ok = await requestPermission()
