@@ -141,11 +141,13 @@ async function trySendLeadEmail(email: string, pdfUrl: string | null, conversati
         to: email,
         subject,
         html,
-        attachments: pdfUrl ? [{
-          filename: 'AI_Strategy_Summary.pdf',
-          content: pdfUrl, // In production, this would be the actual PDF content
-          contentType: 'application/pdf'
-        }] : undefined
+        ...(pdfUrl ? {
+          attachments: [{
+            filename: 'AI_Strategy_Summary.pdf',
+            content: pdfUrl, // In production, this would be the actual PDF content
+            contentType: 'application/pdf'
+          }]
+        } : {})
       })
 
       return true
@@ -162,10 +164,10 @@ async function trySendLeadEmail(email: string, pdfUrl: string | null, conversati
           emailContent
         )
       } catch (logErr) {
-        console.error('Failed to log email failure:', logErr)
+        logger.error('Failed to log email failure:', logErr)
       }
 
-      console.warn(`Email attempt ${i + 1} failed:`, err)
+      logger.warn(`Email attempt ${i + 1} failed:`, err)
       if (i === retries) return false
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))

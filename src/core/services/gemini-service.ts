@@ -9,7 +9,8 @@ import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/monitoring/budget'
-import { getSupabase } from '@/src/core/supabase/server'
+import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'
+import { logger } from '@/src/lib/logger'
 
 export interface GeminiServiceOptions {
   sessionId?: string
@@ -34,14 +35,14 @@ export interface GeminiResponse {
 
 class GeminiService {
   private client: GoogleGenerativeAI
-  private supabase: unknown
+  private supabase: ReturnType<typeof getSupabaseServer> | null
 
   constructor() {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY environment variable is not set')
     }
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    this.supabase = getSupabase()
+    this.supabase = getSupabaseServer()
   }
 
   /**
@@ -116,7 +117,7 @@ class GeminiService {
         cost: modelSelection.estimatedCost
       }
     } catch (error) {
-    console.error('[GeminiService] generateText error', error)
+    logger.error('[GeminiService] generateText error', error)
       return {
         error: error instanceof Error ? error.message : 'Failed to generate text'
       }
@@ -203,7 +204,7 @@ class GeminiService {
         cost: modelSelection.estimatedCost
       }
     } catch (error) {
-    console.error('[GeminiService] analyzeImage error', error)
+    logger.error('[GeminiService] analyzeImage error', error)
       return {
         error: error instanceof Error ? error.message : 'Failed to analyze image'
       }
@@ -288,7 +289,7 @@ class GeminiService {
         cost: modelSelection.estimatedCost
       }
     } catch (error) {
-    console.error('[GeminiService] analyzeDocument error', error)
+    logger.error('[GeminiService] analyzeDocument error', error)
       return {
         error: error instanceof Error ? error.message : 'Failed to analyze document'
       }
@@ -427,7 +428,7 @@ class GeminiService {
         await recordDemoUsage(sessionId, 'chat' as DemoFeature, estimatedTokens)
       }
     } catch (error) {
-    console.error('[GeminiService] generateTextStream error', error)
+    logger.error('[GeminiService] generateTextStream error', error)
       yield `Error: ${error instanceof Error ? error.message : 'Stream generation failed'}`
     }
   }

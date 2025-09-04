@@ -89,10 +89,10 @@ export class MediaService extends EventEmitter {
   public async requestPermissions(constraints: MediaStreamConstraints): Promise<boolean> {
     try {
       if (constraints.audio || constraints.video) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: constraints.audio,
-          video: constraints.video
-        });
+        const mc: MediaStreamConstraints = {}
+        if (typeof constraints.audio !== "undefined") mc.audio = constraints.audio
+        if (typeof constraints.video !== "undefined") mc.video = constraints.video
+        const stream = await navigator.mediaDevices.getUserMedia(mc);
         this.cleanupStream(stream);
         return true;
       }
@@ -114,10 +114,10 @@ export class MediaService extends EventEmitter {
           options.constraints.screen as DisplayMediaStreamOptions
         );
       } else {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: options.constraints.audio,
-          video: options.constraints.video
-        });
+        const mc: MediaStreamConstraints = {}
+        if (typeof options.constraints.audio !== "undefined") mc.audio = options.constraints.audio
+        if (typeof options.constraints.video !== "undefined") mc.video = options.constraints.video
+        stream = await navigator.mediaDevices.getUserMedia(mc);
       }
 
       const mediaItem: MediaItem = {

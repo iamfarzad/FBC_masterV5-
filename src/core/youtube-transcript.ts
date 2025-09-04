@@ -35,7 +35,10 @@ export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTrans
 
     // Combine all transcript items into a single text
     const fullTranscript = transcriptItems
-      .map((item: unknown) => item.text)
+      .map((item: unknown) => {
+        const itemObj = item as { text?: string; duration?: number; offset?: number };
+        return itemObj.text || '';
+      })
       .join(' ')
       .replace(/\s+/g, ' ')
       .trim()
@@ -51,11 +54,14 @@ export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTrans
 
     return {
       transcript: fullTranscript,
-      items: transcriptItems.map((item: unknown) => ({
-        text: item.text,
-        duration: item.duration,
-        offset: item.offset
-      })),
+      items: transcriptItems.map((item: unknown) => {
+        const itemObj = item as { text?: string; duration?: number; offset?: number };
+        return {
+          text: itemObj.text || '',
+          duration: itemObj.duration || 0,
+          offset: itemObj.offset || 0
+        };
+      }),
       videoId,
       title
     }
