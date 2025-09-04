@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { X } from "@/src/core/icon-mapping"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { FbcVoiceOrb } from "@/components/ui/fbc-voice-orb"
-import { useWebSocketVoice } from '@/hooks/use-websocket-voice'
-import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
+import { useUnifiedMedia } from '@/hooks'
 
 export interface VoiceOverlayProps {
   open: boolean
@@ -42,53 +41,46 @@ export function VoiceOverlay({
     stopSession,
     onAudioChunk,
     onTurnComplete,
-  } = useWebSocketVoice()
+  } = useUnifiedMedia({ type: 'voice' })
 
-  const {
-    isRecording,
-    startRecording,
-    stopRecording,
-    error: recorderError,
-    volume,
-    hasPermission,
-    requestPermission,
-  } = useVoiceRecorder({
-    onAudioChunk: (audioData: string) => {
-      // Collect audio chunks for real-time voice
-      setCollectedAudioData(prev => [...prev, audioData])
-      // Also send to WebSocket for live processing
-      onAudioChunk(audioData)
+  const voiceMedia = useUnifiedMedia({
+    type: 'voice',
+    onCapture: (blob) => {
+      // Handle voice capture
+      console.log('Voice captured:', blob)
     },
-    onTurnComplete
+    onError: (error) => {
+      console.error('Voice error:', error)
+    }
   })
 
   useEffect(() => {
     if (!open) return
     void (async () => {
-      if (!hasPermission) {
-        try { await requestPermission() } catch {}
+      if (!voiceMedia.hasPermission) {
+        try { await voiceMedia.requestPermission() } catch {}
       }
     })()
     return () => {
-      try { stopRecording() } catch {}
+      try { voiceMedia.stopRecording() } catch {}
       // Reset collected data when overlay closes
       setCollectedAudioData([])
       setRecordingStartTime(null)
     }
-  }, [open, hasPermission, requestPermission, stopRecording])
+  }, [open, voiceMedia.hasPermission, voiceMedia.requestPermission, voiceMedia.stopRecording])
 
   // Auto-start voice session when overlay opens
   useEffect(() => {
-    if (open && !isRecording) {
+    if (open && !voiceMedia.isRecording) {
       const startVoice = async () => {
-        const ok = await requestPermission()
+        const ok = await voiceMedia.requestPermission()
         if (!ok) return
 
         // Track recording start time
         setRecordingStartTime(Date.now())
         setCollectedAudioData([]) // Reset collected data
 
-        await startRecording()
+        await voiceMedia.startRecording()
         if (!isConnected || !session?.isActive) {
           try {
             await startSession()
@@ -99,18 +91,18 @@ export function VoiceOverlay({
       }
       void startVoice()
     }
-  }, [open, isRecording, requestPermission, startRecording, isConnected, session?.isActive, startSession])
+  }, [open, voiceMedia.isRecording, voiceMedia.requestPermission, voiceMedia.startRecording, isConnected, session?.isActive, startSession])
 
   const handleToggle = useCallback(async () => {
-    if (isRecording) {
+    if (voiceMedia.isRecording) {
       // Pause/Resume functionality for Gemini Live API
-      stopRecording()
+      voiceMedia.stopRecording()
       onTurnComplete()
     } else {
       // Resume recording
-      await startRecording()
+      await voiceMedia.startRecording()
     }
-  }, [isRecording, stopRecording, onTurnComplete, startRecording])
+  }, [voiceMedia.isRecording, voiceMedia.stopRecording, onTurnComplete, voiceMedia.startRecording])
 
   const handleAccept = useCallback(() => {
     if (!transcript) return
@@ -165,7 +157,7 @@ export function VoiceOverlay({
             />
             <span className="font-medium text-text">
               {isConnected
-                ? (isRecording ? 'Listening...' : 'Ready')
+                ? (voiceMedia.isRecording ? 'Listening...' : 'Ready')
                 : 'Connecting...'
               }
             </span>
@@ -177,13 +169,13 @@ export function VoiceOverlay({
               <TooltipTrigger asChild>
                 <FbcVoiceOrb
                   size="lg"
-                  isRecording={isRecording}
+                  isRecording={voiceMedia.isRecording}
                   onClick={() => void handleToggle()}
                   className="cursor-pointer"
                 />
               </TooltipTrigger>
               <TooltipContent>
-                {isRecording ? 'Pause conversation' : 'Resume conversation'}
+                {voiceMedia.isRecording ? 'Pause conversation' : 'Resume conversation'}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -207,7 +199,7 @@ export function VoiceOverlay({
               variant="destructive"
               size="icon"
               className="rounded-full"
-              onClick={() => { try { stopRecording() } catch {} stopSession(); onCancel() }}
+              onClick={() => { try { voiceMedia.stopRecording() } catch {} stopSession(); onCancel() }}
             >
               <X className="size-5" />
             </Button>
@@ -218,7 +210,7 @@ export function VoiceOverlay({
             <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
               <motion.div
                 className="h-full bg-orange-400"
-                animate={{ width: `${Math.min(100, Math.round((volume || 0) * 100))}%` }}
+                animate={{ width: `${Math.min(100, Math.round((voiceMedia.volume || 0) * 100))}%` }}
                 transition={{ duration: 0.1, ease: 'linear' }}
               />
             </div>
@@ -227,25 +219,25 @@ export function VoiceOverlay({
             <div className="h-32 overflow-auto rounded-lg border border-white/20 bg-black/30 p-4 text-sm text-white">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className={`size-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                  <div className={`size-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
                   <span className="text-xs">
                     {isConnected
-                      ? `Gemini Live ${isRecording ? 'Active' : 'Ready'}`
+                      ? `Gemini Live ${voiceMedia.isRecording ? 'Active' : 'Ready'}`
                       : 'Connecting to Gemini Live API...'
                     }
                   </span>
                 </div>
 
                 {/* Multimodal Status Indicators */}
-                {(activeModalities.webcam || activeModalities.screen) && (
+                {(activeModalities.webcam || activeModality.screen) && (
                   <div className="mt-1 flex items-center gap-2">
-                    {activeModalities.webcam && (
+                    {activeModality.webcam && (
                       <div className="flex items-center gap-1 text-xs text-blue-400">
                         <div className="size-1.5 rounded-full bg-blue-400" />
                         <span>Camera</span>
                       </div>
                     )}
-                    {activeModalities.screen && (
+                    {activeModality.screen && (
                       <div className="flex items-center gap-1 text-xs text-green-400">
                         <div className="size-1.5 rounded-full bg-green-400" />
                         <span>Screen</span>
@@ -262,7 +254,7 @@ export function VoiceOverlay({
                 )}
 
                 <div className="text-center">
-                  {isRecording ? (
+                  {voiceMedia.isRecording ? (
                     <div className="space-y-1">
                       <div className="font-medium text-orange-400">Listening...</div>
                       <div className="text-xs text-white/70">AI can see, hear, and respond</div>
@@ -303,9 +295,9 @@ export function VoiceOverlay({
               </div>
             </div>
 
-            {(websocketError || recorderError) && (
+            {(websocketError || voiceMedia.error) && (
               <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/20 px-3 py-2 text-xs text-red-300 backdrop-blur-sm">
-                {websocketError || recorderError}
+                {websocketError || voiceMedia.error}
               </div>
             )}
           </div>
