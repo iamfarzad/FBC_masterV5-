@@ -45,11 +45,11 @@ export function useVoiceRecorder({
   const initializeAudioContext = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, isInitializing: true, error: null }));
-      
+
       // Create audio context at native sample rate
       const context = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = context;
-      
+
       if (context.state === 'suspended') {
         await context.resume();
       }
@@ -67,9 +67,9 @@ export function useVoiceRecorder({
         });
         mediaStreamRef.current = stream;
       } catch (mediaError) {
-    console.error('Failed to get user media', error)
+    console.error('Failed to get user media', mediaError)
         let errorMessage = 'Microphone access failed';
-        
+
         if (mediaError instanceof Error) {
           if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
             errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
@@ -83,7 +83,7 @@ export function useVoiceRecorder({
             errorMessage = `Microphone error: ${mediaError.message}`;
           }
         }
-        
+
         setState(prev => ({ ...prev, isInitializing: false, error: errorMessage, hasPermission: false }));
         return false;
       }
@@ -92,7 +92,7 @@ export function useVoiceRecorder({
       const source = context.createMediaStreamSource(mediaStreamRef.current!);
       const analyser = context.createAnalyser();
       const processor = context.createScriptProcessor(chunkSize, 1, 1);
-      
+
       analyser.fftSize = 512;
       source.connect(analyser);
       analyser.connect(processor);
@@ -113,39 +113,39 @@ export function useVoiceRecorder({
 
   const resampleAudio = useCallback((input: Float32Array, inputRate: number, outputRate: number): Float32Array => {
     if (inputRate === outputRate) return input;
-    
+
     const ratio = inputRate / outputRate;
     const outputLength = Math.round(input.length / ratio);
     const output = new Float32Array(outputLength);
-    
+
     for (let i = 0; i < outputLength; i++) {
       const srcIdx = i * ratio;
       const idx = Math.floor(srcIdx);
       const frac = srcIdx - idx;
       output[i] = input[idx] * (1 - frac) + (input[idx + 1] || 0) * frac;
     }
-    
+
     return output;
   }, []);
 
   const convertToPCM16 = useCallback((input: Float32Array): ArrayBuffer => {
     const buffer = new ArrayBuffer(input.length * 2);
     const view = new DataView(buffer);
-    
+
     for (let i = 0; i < input.length; i++) {
       const s = Math.max(-1, Math.min(1, input[i]));
       view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
     }
-    
+
     return buffer;
   }, []);
 
   const processAudioChunk = useCallback((event: AudioProcessingEvent) => {
     if (!isRecordingRef.current) return;
-    
+
     const inputBuffer = event.inputBuffer.getChannelData(0);
     const currentTime = Date.now();
-    
+
     // Calculate volume for VAD
     const dataArray = new Uint8Array(analyserNodeRef.current!.frequencyBinCount);
     analyserNodeRef.current!.getByteFrequencyData(dataArray);
@@ -158,16 +158,16 @@ export function useVoiceRecorder({
       audioContextRef.current!.sampleRate,
       sampleRate
     );
-    
+
     // Convert to PCM16 format
     const pcmBuffer = convertToPCM16(resampled);
-    
+
     // Always send audio chunks to server
     onAudioChunk(pcmBuffer);
 
     // Simple VAD: detect silence for turn completion
     const hasVoice = volume > voiceThreshold;
-    
+
     if (hasVoice) {
       lastSpeechTimeRef.current = currentTime;
       silenceStartRef.current = null;
@@ -190,10 +190,10 @@ export function useVoiceRecorder({
       // Action logged
       isProcessingTurnCompleteRef.current = true;
       silenceStartRef.current = null;
-      
+
       // Send TURN_COMPLETE signal
       onTurnComplete();
-      
+
       // Reset the flag after a delay to allow for new speech
       setTimeout(() => {
         isProcessingTurnCompleteRef.current = false;
@@ -203,24 +203,24 @@ export function useVoiceRecorder({
 
   const startRecording = useCallback(async () => {
     if (isRecordingRef.current) return false;
-    
+
     try {
       // Initialize audio context if needed
       if (!audioContextRef.current || !state.hasPermission) {
         const success = await initializeAudioContext();
         if (!success) return false;
       }
-      
+
       // Set up audio processing
       if (processorNodeRef.current) {
         processorNodeRef.current.onaudioprocess = processAudioChunk;
       }
-      
+
       isRecordingRef.current = true;
       lastSpeechTimeRef.current = 0;
       silenceStartRef.current = null;
       isProcessingTurnCompleteRef.current = false;
-      
+
       setState(prev => ({ ...prev, isRecording: true, error: null }));
       // Action logged
       return true;
@@ -234,13 +234,13 @@ export function useVoiceRecorder({
 
   const stopRecording = useCallback(() => {
     if (!isRecordingRef.current) return;
-    
+
     try {
       // Stop audio processing
       if (processorNodeRef.current) {
         processorNodeRef.current.onaudioprocess = null;
       }
-      
+
       isRecordingRef.current = false;
       setState(prev => ({ ...prev, isRecording: false, volume: 0 }));
       // Action logged

@@ -63,7 +63,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   const [audioQueue, setAudioQueue] = useState<QueuedAudioItem[]>([])
   const [usageMetadata, setUsageMetadata] = useState<UsageMetadata | null>(null)
   const [currentTurn, setCurrentTurn] = useState<{ inputPartials: string[]; inputFinal?: string; outputText?: string; completed: boolean }>({ inputPartials: [], completed: false })
-  
+
   const wsRef = useRef<WebSocket | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const audioStreamRef = useRef<MediaStream | null>(null)
@@ -117,7 +117,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         sampleRate: 24000,
       })
     }
-    
+
     // Resume context if suspended (needed for autoplay)
     if (audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume()
@@ -135,7 +135,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     if (!isPlayingRef.current && audioQueue.length > 0) {
       const nextAudio = audioQueue[0]
       setAudioQueue(prev => prev.slice(1))
-      
+
       // Handle both string (base64) and object formats
       if (typeof nextAudio === 'string') {
         // Legacy format - assume PCM at 24kHz
@@ -257,7 +257,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     // Action logged
     // Action logged
     // Action logged
-    
+
     // Set initial state to connecting
     setIsConnected(false)
     setError(null)
@@ -390,7 +390,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       setSession(null)
       reconnectingRef.current = false
       sessionActiveRef.current = false
-      
+
       // Auto-reconnect on unexpected close (not user-initiated)
       if (event.code !== 1000 && event.code !== 1001) {
         // Action logged
@@ -407,7 +407,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   const startSession = useCallback(async (leadContext?: unknown) => {
     try {
       setError(null)
-      
+
       const useDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
       if (useDirect) {
         // Direct Live API session using ephemeral token
@@ -510,7 +510,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       return new Promise<void>((resolve, reject) => {
         const checkConnection = () => {
           const currentState = wsRef.current?.readyState;
-          
+
           // Log state changes for debugging
           if (currentState !== lastState) {
             const stateText = currentState !== undefined
@@ -563,7 +563,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     console.error('❌ [useWebSocketVoice] Error in startSession', error)
       setIsConnected(false)
       setIsProcessing(false)
-      
+
       if (error instanceof Error) {
         toast({
           title: "Session Start Failed",
@@ -613,7 +613,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         binary += String.fromCharCode(bytes[i]);
     }
     const base64Audio = btoa(binary);
-    
+
     // If using direct Gemini Live session, send via session API instead of WS
     const isDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
     const sessionLike: unknown = wsRef.current as unknown
@@ -627,7 +627,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       }
       return
     }
-    
+
     const payload = JSON.stringify({
       type: 'user_audio',
       payload: { 
@@ -635,7 +635,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         mimeType: 'audio/pcm;rate=16000'
       }
     })
-    
+
     const isOpen = wsRef.current?.readyState === WebSocket.OPEN
     const isReady = sessionActiveRef.current === true
     if (isOpen && isReady) {
@@ -662,12 +662,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       }
       return
     }
-    
+
     const payload = JSON.stringify({
       type: 'TURN_COMPLETE',
       payload: {}
     })
-    
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       // Action logged
       wsRef.current.send(payload)

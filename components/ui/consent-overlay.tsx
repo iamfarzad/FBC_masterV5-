@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DialogContent, DialogTitle } from '@/components/ui/dialog'
 interface ConsentOverlayProps {
   isVisible: boolean
   onSubmit: (data: { name: string; email: string; companyUrl: string }) => void

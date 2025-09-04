@@ -27,6 +27,21 @@ const languageCodes = {
   hi: 'HI',
 };
 
+// Flags for display (emoji flags)
+const languageFlags: Record<string, string> = {
+  en: '🇺🇸',
+  no: '🇳🇴',
+  es: '🇪🇸',
+  fr: '🇫🇷',
+  de: '🇩🇪',
+  it: '🇮🇹',
+  pt: '🇵🇹',
+  ru: '🇷🇺',
+  zh: '🇨🇳',
+  ja: '🇯🇵',
+  ko: '🇰🇷'
+}
+
 export function EnhancedLanguageSelector({ 
   variant = 'icon',
   className 
@@ -108,12 +123,12 @@ export function EnhancedLanguageSelector({
                     Select Language
                   </div>
                 </div>
-                
+
                 <div className="max-h-72 overflow-y-auto px-2 pb-2">
                   {supportedLanguages.map((language, index) => {
                     const isSelected = currentLanguage === language.code;
                     const langCode = languageCodes[language.code as keyof typeof languageCodes] || language.code.toUpperCase();
-                    
+
                     return (
                       <motion.button
                         key={language.code}
@@ -217,7 +232,7 @@ export function EnhancedLanguageSelector({
                   {supportedLanguages.map((language) => {
                     const isSelected = currentLanguage === language.code;
                     const langCode = languageCodes[language.code as keyof typeof languageCodes] || language.code.toUpperCase();
-                    
+
                     return (
                       <button
                         key={language.code}
