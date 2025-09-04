@@ -70,25 +70,25 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0">
           {/* <DotScreenShader /> */}
         </div>
-        <h1 className="pointer-events-none relative z-20 px-4 text-center text-4xl font-light tracking-tight text-foreground drop-shadow-lg dark:text-white sm:text-5xl md:text-6xl lg:text-7xl">
+        <h1 className="pointer-events-none relative z-20 px-4 text-center text-4xl font-light tracking-tight text-foreground drop-shadow-lg sm:text-5xl md:text-6xl lg:text-7xl">
           Build AI That Actually <span className="text-accent drop-shadow-sm">Works</span>
         </h1>
-        <p className="pointer-events-none relative z-20 max-w-2xl px-4 text-center text-base font-light leading-relaxed text-foreground drop-shadow-md dark:text-white sm:text-lg md:text-xl">
+        <p className="pointer-events-none relative z-20 max-w-2xl px-4 text-center text-base font-light leading-relaxed text-muted-foreground drop-shadow-md sm:text-lg md:text-xl">
           I'm Farzad Bayat, an AI consultant with 10,000+ hours of hands-on experience.
           I build practical AI automation solutions that deliver real business results—not just hype.
         </p>
         <div className="relative z-20 flex flex-col flex-wrap items-center justify-center gap-4 px-4 sm:flex-row">
-          <BookCallButton size="lg" className="hover:bg-accent/90 bg-accent text-white shadow-lg" title="Book Your Free AI Consultation">
+          <BookCallButton size="lg" className="hover:bg-accent/90 bg-accent text-accent-foreground shadow-lg" title="Book Your Free AI Consultation">
             Start Your AI Project
             <ArrowRight className="ml-2 size-4" />
           </BookCallButton>
-          <Button asChild variant="outline" size="lg" className="hover:bg-foreground/10 dark:hover:bg-surface/10 border-foreground text-foreground backdrop-blur-sm dark:border-surface dark:text-surface">
+          <Button asChild variant="outline" size="lg" className="hover:bg-muted border-border backdrop-blur-sm">
             <Link href="/chat" className="flex items-center">
               <FbcIcon variant="default" size={16} className="mr-2" />
               Talk with F.B/c AI
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="hover:text-foreground/80 dark:hover:text-surface/80 text-foreground dark:text-surface">
+          <Button asChild variant="ghost" size="lg" className="hover:text-foreground">
             <Link href="/about">Learn My Story</Link>
           </Button>
         </div>
