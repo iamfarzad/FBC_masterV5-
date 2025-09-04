@@ -19,7 +19,7 @@ const customJestConfig = {
     '^@/utils/(.*)$': '<rootDir>/src/core/utils/$1',
   },
   testEnvironment: 'jsdom',
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/out/'],
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/', '<rootDir>/out/', '<rootDir>/tests/e2e/'],
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
