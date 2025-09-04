@@ -33,7 +33,11 @@ export function useMediaCapture({
   // Initialize media service on mount
   useEffect(() => {
     try {
-      mediaService.current = getMediaService();
+      mediaService.current = getMediaService({
+        onDataAvailable: (data: Blob) => {
+          onStop?.(data);
+        },
+      });
       setIsInitialized(true);
     } catch (error) {
       console.warn('MediaService not available:', error);

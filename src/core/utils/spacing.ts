@@ -69,10 +69,19 @@ export function getSpacing(type: SpacingType = 'component', size?: string): stri
   }
   
   if (type === 'responsive') {
-    return spacing.responsive[size as keyof typeof spacing.responsive] || spacing.responsive.base
+    const responsiveSize = size as keyof typeof spacing.responsive;
+    if (spacing.responsive[responsiveSize]) {
+      return spacing.responsive[responsiveSize];
+    }
+    return spacing.responsive.base;
   }
   
-  return spacing[size as keyof typeof spacing] || spacing.md
+  const componentSize = size as keyof typeof spacing;
+  if (typeof spacing[componentSize] === 'string') {
+    return spacing[componentSize] as string;
+  }
+  
+  return spacing.md
 }
 
 export const getResponsiveSpacing = (size: ResponsiveSpacingSize = 'base') => getSpacing('responsive', size)

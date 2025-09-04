@@ -212,11 +212,7 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
         sessionId,
         'video_to_app',
         modelSelection.model,
-        estimatedTokens,
-        estimatedTokens * 0.8, // Estimate output tokens
-        true,
-        undefined,
-        { action: 'generateSpec', videoUrl }
+        estimatedTokens
       )
       
       if (!budgetResult.allowed) {
@@ -324,11 +320,7 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
         sessionId,
         'video_to_app',
         modelSelection.model,
-        estimatedTokens,
-        estimatedTokens * 0.8, // Estimate output tokens
-        true,
-        undefined,
-        { action: 'generateCode' }
+        estimatedTokens
       )
       
       if (!budgetResult.allowed) {

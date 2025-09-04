@@ -348,7 +348,7 @@ export class StreamingOptimizer {
     }
   }
 
-  private async compressChunk(chunk: any): Promise<any> {
+  private async compressChunk(chunk: unknown): Promise<unknown> {
     // Simple compression - in production, use a proper compression library
     if (typeof chunk === 'string') {
       // Basic string compression (remove whitespace, etc.)
@@ -357,7 +357,7 @@ export class StreamingOptimizer {
     return chunk
   }
 
-  private hashChunk(chunk: any): string {
+  private hashChunk(chunk: unknown): string {
     // Simple hash for deduplication
     const str = JSON.stringify(chunk)
     let hash = 0
@@ -369,7 +369,7 @@ export class StreamingOptimizer {
     return hash.toString()
   }
 
-  private chunkToUint8Array(chunk: any): Uint8Array {
+  private chunkToUint8Array(chunk: unknown): Uint8Array {
     const jsonString = JSON.stringify(chunk)
     return new TextEncoder().encode(jsonString)
   }

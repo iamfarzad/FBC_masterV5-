@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'
 
 export interface StorageConfig {
   url: string
@@ -12,27 +12,16 @@ export interface StorageResult<T = unknown> {
 }
 
 export class SupabaseStorage {
-  private client: unknown
-  private serviceClient: unknown
+  private client: ReturnType<typeof getSupabaseServer>
+  private serviceClient: ReturnType<typeof getSupabaseService> | null = null
 
   constructor(config: StorageConfig) {
-    // Create regular client
-    this.client = createClient(config.url, config.anonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false
-      }
-    })
+    // Use typed clients
+    this.client = getSupabaseServer()
 
     // Create service role client if available
     if (config.serviceRoleKey) {
-      this.serviceClient = createClient(config.url, config.serviceRoleKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      })
+      this.serviceClient = getSupabaseService()
     }
   }
 

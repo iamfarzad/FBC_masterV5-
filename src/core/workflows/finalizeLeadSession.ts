@@ -2,9 +2,10 @@ import { saveConversation, updatePdfUrl, updateEmailStatus, logFailedEmail } fro
 import { generatePdfWithPuppeteer, generatePdfPath } from "../pdf-generator-puppeteer"
 import { EmailService } from "../email-service"
 import type { LeadContext } from "../types/conversations"
+import { logger } from "../../lib/logger"
 
 export async function finalizeLeadSession(ctx: LeadContext) {
-  let conversation: any
+  let conversation: unknown
 
   try {
     // Step 1: Save base conversation
@@ -17,16 +18,16 @@ export async function finalizeLeadSession(ctx: LeadContext) {
       emailStatus: "pending"
     })
 
-    console.log('Conversation saved:', conversation.id)
+    logger.info('Conversation saved:', conversation.id)
 
     // Step 2: Generate PDF
     let pdfUrl: string | null = null
     try {
       pdfUrl = await generateLeadPdf(ctx)
       await updatePdfUrl(conversation.id, pdfUrl)
-      console.log('PDF generated and linked:', pdfUrl)
+      logger.info('PDF generated and linked:', pdfUrl)
     } catch (err) {
-      console.error('PDF generation failed:', err)
+      logger.error('PDF generation failed:', err)
       throw new Error('Stopped pipeline: PDF generation failed')
     }
 
@@ -34,16 +35,16 @@ export async function finalizeLeadSession(ctx: LeadContext) {
     try {
       const emailSent = await trySendLeadEmail(ctx.email, pdfUrl, conversation.id, 2) // 2 retries max
       await updateEmailStatus(conversation.id, emailSent ? 'sent' : 'failed')
-      console.log('Email status updated:', emailSent ? 'sent' : 'failed')
+      logger.info('Email status updated:', emailSent ? 'sent' : 'failed')
     } catch (err) {
-      console.error('Email sending failed permanently:', err)
+      logger.error('Email sending failed permanently:', err)
       await updateEmailStatus(conversation.id, 'failed')
     }
 
     return conversation
 
   } catch (err) {
-    console.error('finalizeLeadSession failed:', err)
+    logger.error('finalizeLeadSession failed:', err)
     throw err
   }
 }
@@ -75,7 +76,7 @@ async function generateLeadPdf(ctx: LeadContext): Promise<string> {
     sessionId: ctx.researchJson.session?.id || 'unknown'
   }
 
-  await generatePdfWithPuppeteer(summaryData, pdfPath, 'internal')
+  await generatePdfWithPuppeteer(summaryData, pdfPath, 'internal', 'en')
 
   // In production, you would upload this to Supabase Storage or S3
   // For now, return the local path

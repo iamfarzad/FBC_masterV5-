@@ -31,10 +31,7 @@ export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTrans
     // Try to get transcript using youtube-transcript
     const { YoutubeTranscript } = await import('youtube-transcript')
     
-    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, {
-      lang: 'en',
-      country: 'US'
-    })
+    const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId)
 
     // Combine all transcript items into a single text
     const fullTranscript = transcriptItems

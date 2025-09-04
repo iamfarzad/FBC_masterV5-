@@ -1,7 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-// TODO: replace 'any' with generated Database type when available:
-// type Database = import("@/types/database").Database;
-type Database = any;
+import type { Database } from "../core/database.types";
 
 function requireEnv(name: string): string {
   const v = process.env[name];

@@ -70,15 +70,13 @@ class GeminiService {
       
       // Check user budget if authenticated
       if (userId) {
-        const budgetCheck = await enforceBudgetAndLog({
+        const budgetCheck = await enforceBudgetAndLog(
           userId,
-          sessionId: sessionId || 'default',
-          model: modelSelection.model,
-          inputTokens: estimatedTokens,
-          outputTokens: options.maxOutputTokens || 1000,
-          taskType: 'text_generation',
-          endpoint: 'generateText'
-        })
+          sessionId || 'default',
+          'text_generation',
+          modelSelection.model,
+          estimatedTokens
+        )
         
         if (!budgetCheck.allowed) {
           return {
@@ -155,15 +153,13 @@ class GeminiService {
       }
       
       if (userId) {
-        const budgetCheck = await enforceBudgetAndLog({
+        const budgetCheck = await enforceBudgetAndLog(
           userId,
-          sessionId: sessionId || 'default',
-          model: modelSelection.model,
-          inputTokens: estimatedTokens,
-          outputTokens: 500,
-          taskType: 'image_analysis',
-          endpoint: 'analyzeImage'
-        })
+          sessionId || 'default',
+          'image_analysis',
+          modelSelection.model,
+          estimatedTokens
+        )
         
         if (!budgetCheck.allowed) {
           return { error: budgetCheck.reason || 'Budget limit exceeded' }
@@ -242,15 +238,13 @@ class GeminiService {
       }
       
       if (userId) {
-        const budgetCheck = await enforceBudgetAndLog({
+        const budgetCheck = await enforceBudgetAndLog(
           userId,
-          sessionId: sessionId || 'default',
-          model: modelSelection.model,
-          inputTokens: estimatedTokens,
-          outputTokens: 2000,
-          taskType: 'document_analysis',
-          endpoint: 'analyzeDocument'
-        })
+          sessionId || 'default',
+          'document_analysis',
+          modelSelection.model,
+          estimatedTokens
+        )
         
         if (!budgetCheck.allowed) {
           return { error: budgetCheck.reason || 'Budget limit exceeded' }

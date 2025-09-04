@@ -39,7 +39,7 @@ export class EmailService {
         replyTo: template.replyTo,
         attachments: template.attachments?.map(a => ({
           filename: a.filename,
-          content: a.content,
+          content: a.content.toString('base64'),
           contentType: a.contentType
         }))
       })

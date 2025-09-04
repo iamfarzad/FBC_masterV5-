@@ -164,7 +164,7 @@ export class WebRTCAudioProcessor {
       this.audioProcessor = this.audioContext.createScriptProcessor(
         this.config.bufferSize,
         this.config.channels,
-        this.config.channels,
+        this.config.channels
       )
 
       // Process audio in real-time

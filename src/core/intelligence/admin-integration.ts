@@ -94,8 +94,8 @@ export class AdminIntelligenceHandler {
   /**
    * Analyze message intent for admin context
    */
-  async analyzeAdminIntent(message: string, context?: any) {
-    return intelligenceService.analyzeMessage(message, context)
+  async analyzeAdminIntent(message: string) {
+    return intelligenceService.analyzeMessage(message)
   }
 }
 

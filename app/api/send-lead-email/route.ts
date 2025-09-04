@@ -15,14 +15,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // Email request schema
 const emailRequestSchema = z.object({
   leadId: z.union([z.string().uuid(), z.literal('TEST_MODE')]),
-  emailType: z.enum([
-    'welcome',
-    'follow_up',
-    'report',
-    'meeting_confirmation',
-    'proposal',
-    'check_in'
-  ]),
+  emailType: z.enum(['welcome', 'follow_up', 'report', 'meeting_confirmation', 'proposal', 'check_in']),
   customData: z.record(z.any()).optional()
 })
 

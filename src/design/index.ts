@@ -12,10 +12,6 @@ export * from './layouts'
 
 // Avoid top-level name collisions with components (e.g., animationPresets)
 export { animationSystem } from './animations'
-export * as animations from './animations'
 
-// Type exports
-export type { ComponentClasses } from './components'
-export type { LayoutClasses } from './layouts'
-export type { AnimationSystem } from './animations'
+// Note: ComponentClasses, LayoutClasses, and AnimationSystem types are already exported via wildcard
 

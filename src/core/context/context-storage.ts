@@ -1,4 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { getSupabaseService } from '@/src/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/src/lib/logger'
 import { ConversationContext, MultimodalContext } from './context-types'
 
 export class ContextStorage {
@@ -9,16 +11,13 @@ export class ContextStorage {
     // Try to create Supabase client, fallback to in-memory if unavailable
     try {
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        this.supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY
-        )
+        this.supabase = getSupabaseService()
       } else {
-        console.warn('⚠️ Supabase credentials not found, falling back to in-memory storage')
+        logger.warn('Supabase credentials not found, falling back to in-memory storage')
         this.supabase = null
       }
     } catch (error) {
-      console.warn('⚠️ Supabase initialization failed, falling back to in-memory storage:', error)
+      logger.warn('Supabase initialization failed, falling back to in-memory storage:', error)
       this.supabase = null
     }
   }
@@ -59,7 +58,7 @@ export class ContextStorage {
             }
           }
         } catch (supabaseError) {
-          console.warn('⚠️ Supabase storage failed, falling back to in-memory:', supabaseError)
+          logger.warn('Supabase storage failed, falling back to in-memory:', supabaseError)
           this.inMemoryStorage.set(sessionId, dataToStore)
         }
       } else {
@@ -67,7 +66,7 @@ export class ContextStorage {
         this.inMemoryStorage.set(sessionId, dataToStore)
       }
     } catch (error) {
-      console.error('Context storage failed completely:', error)
+      logger.error('Context storage failed completely:', error)
       throw error
     }
   }
@@ -103,7 +102,7 @@ export class ContextStorage {
 
           return data || null
         } catch (supabaseError) {
-          console.warn('⚠️ Supabase retrieval failed, trying in-memory fallback:', supabaseError)
+          logger.warn('Supabase retrieval failed, trying in-memory fallback:', supabaseError)
           return this.inMemoryStorage.get(sessionId) || null
         }
       } else {
@@ -111,7 +110,7 @@ export class ContextStorage {
         return this.inMemoryStorage.get(sessionId) || null
       }
     } catch (error) {
-      console.error('Context retrieval failed completely:', error)
+      logger.error('Context retrieval failed completely:', error)
       return this.inMemoryStorage.get(sessionId) || null
     }
   }
@@ -139,7 +138,7 @@ export class ContextStorage {
             this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() })
           }
         } catch (supabaseError) {
-          console.warn('⚠️ Supabase update failed, falling back to in-memory:', supabaseError)
+          logger.warn('Supabase update failed, falling back to in-memory:', supabaseError)
           // Update in-memory storage
           const existing = this.inMemoryStorage.get(sessionId)
           if (existing) {
@@ -168,7 +167,7 @@ export class ContextStorage {
         }
       }
     } catch (error) {
-      console.error('Context update failed completely:', error)
+      logger.error('Context update failed completely:', error)
       throw error
     }
   }
@@ -187,14 +186,14 @@ export class ContextStorage {
             throw error
           }
         } catch (supabaseError) {
-          console.warn('⚠️ Supabase delete failed:', supabaseError)
+          logger.warn('Supabase delete failed:', supabaseError)
         }
       }
 
       // Always delete from in-memory storage
       this.inMemoryStorage.delete(sessionId)
     } catch (error) {
-      console.error('Context deletion failed:', error)
+      logger.error('Context deletion failed:', error)
       throw error
     }
   }

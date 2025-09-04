@@ -38,8 +38,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'User-Agent': 'F.B/c AI Assistant (https://farzadbayat.com)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        },
-        timeout: 10000 // 10 second timeout
+        }
       })
       
       if (!response.ok) {
