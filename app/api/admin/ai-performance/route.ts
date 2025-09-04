@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 import { withAdminAuth } from "@/app/api-utils/security"
 
@@ -11,10 +11,10 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
-  }
+  // const authResult = await adminAuthMiddleware(request);
+  // if (authResult) {
+  //   return authResult;
+  // }
   try {
     const { searchParams } = new URL(request.url)
     const period = searchParams.get("period") || "7d"
@@ -73,7 +73,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
 
     return NextResponse.json(performanceData)
   } catch (error) {
-    console.error("AI performance metrics error:", error)
+    // console.error("AI performance metrics error:", error)
     return NextResponse.json({ error: "Failed to fetch AI performance metrics" }, { status: 500 })
   }
 })

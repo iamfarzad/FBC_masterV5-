@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { generatePdfWithPuppeteer, generatePdfPath } from '@/src/core/pdf-generator-puppeteer'
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import fs from 'fs'
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare minimal data for summary – reuse export-summary query path (lightweight inline)
-    const supabase = getSupabaseStorage().getClient()
+    const supabase = getSupabaseService()
     const leadInfo: unknown = { name: leadName, email: toEmail }
     let leadResearch: unknown = null
 

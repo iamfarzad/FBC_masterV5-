@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
     const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
 
     // Fetch leads
-    const supabase = getSupabaseStorage()
-    const { data: leads, error: leadsError } = await supabase
+    const supabaseClient = getSupabaseStorage().getClient()
+    const { data: leads, error: leadsError } = await supabaseClient
       .from("lead_summaries")
       .select("*")
       .gte("created_at", startDate.toISOString())
@@ -39,23 +39,28 @@ export async function GET(req: NextRequest) {
     // Calculate stats from real data
     const totalLeads = leads?.length || 0
     
+    interface LeadSummary {
+      lead_score: number | null;
+      ai_capabilities_shown: string[] | null;
+    }
+
     // Calculate conversion rate based on lead scores
-    const qualifiedLeads = leads?.filter(lead => (lead.lead_score || 0) >= 7).length || 0
+    const qualifiedLeads = leads?.filter((lead: LeadSummary) => (lead.lead_score || 0) >= 7).length || 0
     const conversionRate = totalLeads > 0 ? Math.round((qualifiedLeads / totalLeads) * 100) : 0
 
     // Calculate engagement metrics from lead data
-    const leadsWithAI = leads?.filter(lead => lead.ai_capabilities_shown && lead.ai_capabilities_shown.length > 0).length || 0
+    const leadsWithAI = leads?.filter((lead: LeadSummary) => lead.ai_capabilities_shown && lead.ai_capabilities_shown.length > 0).length || 0
     const engagementRate = totalLeads > 0 ? Math.round((leadsWithAI / totalLeads) * 100) : 0
 
     // Calculate average lead score
     const avgLeadScore = leads?.length ? 
-      Math.round(leads.reduce((sum, lead) => sum + (lead.lead_score || 0), 0) / leads.length * 10) / 10 : 0
+      Math.round(leads.reduce((sum: number, lead: LeadSummary) => sum + (lead.lead_score || 0), 0) / leads.length * 10) / 10 : 0
 
     // Get top AI capabilities from actual data
     const capabilityCounts = new Map<string, number>()
-    leads?.forEach(lead => {
+    leads?.forEach((lead: LeadSummary) => {
       if (lead.ai_capabilities_shown && Array.isArray(lead.ai_capabilities_shown)) {
-        lead.ai_capabilities_shown.forEach(capability => {
+        lead.ai_capabilities_shown.forEach((capability: string) => {
           capabilityCounts.set(capability, (capabilityCounts.get(capability) || 0) + 1)
         })
       }

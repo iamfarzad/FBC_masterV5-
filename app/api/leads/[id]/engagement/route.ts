@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 
 const Body = z.object({ interactionType: z.string().min(1) })
@@ -12,8 +13,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     
     // Simple engagement tracking via Supabase
-    const supabase = getSupabaseStorage()
-    const { error } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { error } = await supabaseClient
       .from('lead_summaries')
       .update({ 
         last_interaction: new Date().toISOString(),

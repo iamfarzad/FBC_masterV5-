@@ -1,6 +1,7 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { type NextRequest, NextResponse } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 import { withAdminAuth } from "@/app/api-utils/security"
 
@@ -12,9 +13,12 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: request.headers.get('authorization'),
+    'x-admin-password': request.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
   try {
     const { searchParams } = new URL(request.url)
@@ -27,8 +31,8 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
     const daysBack = period === "1d" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 90
     const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
 
-    const supabase = getSupabaseStorage()
-    let query = supabase
+    const supabaseClient = getSupabaseService()
+    let query = supabaseClient
       .from("lead_summaries")
       .select("id, name, email, company_name, lead_score, conversation_summary, consultant_brief, ai_capabilities_shown, intent_type, created_at")
       .gte("created_at", startDate.toISOString())
@@ -46,13 +50,26 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
     const { data: leads, error } = await query
 
     if (error) {
-      console.error("Supabase error:", error)
+      // console.error("Supabase error:", error) // Commented out console.error
       return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 })
+    }
+
+    interface LeadSummary {
+      id: string;
+      name: string;
+      email: string;
+      company_name: string | null;
+      lead_score: number;
+      conversation_summary: string | null;
+      consultant_brief: string | null;
+      ai_capabilities_shown: string[] | null;
+      intent_type: string | null;
+      created_at: string;
     }
 
     // Add mock status and engagement_type for demo
     const enrichedLeads =
-      leads?.map((lead: unknown) => ({
+      leads?.map((lead: LeadSummary) => ({
         ...lead,
         status: ["new", "contacted", "qualified", "converted"][Math.floor(Math.random() * 4)],
         engagement_type: lead.ai_capabilities_shown?.[0] || "chat",
@@ -62,8 +79,8 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
       leads: enrichedLeads,
       total: leads?.length || 0,
     })
-  } catch (error) {
-    console.error("Admin leads error:", error)
-    return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 })
+  } catch (error: unknown) {
+    // console.error("Admin leads error:", error) // Commented out console.error
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 })

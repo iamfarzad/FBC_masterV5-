@@ -12,13 +12,11 @@ export * from './layouts'
 export * from './animations'
 
 // Re-export commonly used items for convenience
-export { tokens } from '../core/theme/tokens'
 export { componentClasses } from './components'
 export { layoutClasses } from './layouts'
 export { animationSystem } from './animations'
 
 // Type exports
-export type { DesignTokens } from './tokens'
 export type { ComponentClasses } from './components'
 export type { LayoutClasses } from './layouts'
 export type { AnimationSystem } from './animations'

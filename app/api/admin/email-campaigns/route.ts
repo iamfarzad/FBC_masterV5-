@@ -1,6 +1,7 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import type { NextRequest } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 import { NextResponse } from "next/server"
 
@@ -12,24 +13,27 @@ export async function GET(req: NextRequest) {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(req);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: req.headers.get('authorization'),
+    'x-admin-password': req.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
   try {
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
 
-    const { data, error } = await supabase.from("email_campaigns").select("*").order("created_at", { ascending: false })
+    const { data, error } = await supabaseClient.from("email_campaigns").select("*").order("created_at", { ascending: false })
 
     if (error) {
-      console.error("Supabase error:", error)
+      // console.error("Supabase error:", error) // Commented out console.error
       return NextResponse.json({ error: "Failed to fetch email campaigns" }, { status: 500 })
     }
 
     return NextResponse.json(data || [])
   } catch (error: unknown) {
-    console.error("Email campaigns fetch error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // console.error("Email campaigns fetch error:", error) // Commented out console.error
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 }
 
@@ -41,16 +45,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(req);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: req.headers.get('authorization'),
+    'x-admin-password': req.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
   try {
     const campaignData = await req.json()
 
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("email_campaigns")
       .insert({
         name: campaignData.name,
@@ -66,13 +73,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      console.error("Supabase error:", error)
+      // console.error("Supabase error:", error) // Commented out console.error
       return NextResponse.json({ error: "Failed to create email campaign" }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, campaign: data })
   } catch (error: unknown) {
-    console.error("Email campaign creation error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // console.error("Email campaign creation error:", error) // Commented out console.error
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 }

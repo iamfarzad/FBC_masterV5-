@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+const EventTypes = ['session_start', 'tool_used', 'intent_detected', 'suggestion_clicked', 'conversation_end'] as const;
+
 const EventSchema = z.object({
   sessionId: z.string().optional(),
-  eventType: z.enum(['session_start', 'tool_used', 'intent_detected', 'suggestion_clicked', 'conversation_end']),
+  eventType: z.enum([...EventTypes]),
   eventData: z.record(z.any()).optional(),
   timestamp: z.number().optional(),
   userId: z.string().optional()
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
     const validatedEvent = EventSchema.parse(body)
     
     // Add timestamp if not provided
-    const _event = {
+    const _event: z.infer<typeof EventSchema> & { timestamp: number } = {
       ...validatedEvent,
       timestamp: validatedEvent.timestamp || Date.now()
     }
@@ -33,8 +35,7 @@ export async function POST(request: NextRequest) {
       eventId: `evt_${Date.now()}`
     })
   } catch (_error) {
-    // eslint-disable-next-line no-console
-    console.error('❌ Event tracking failed', _error)
+    // console.error('❌ Event tracking failed', _error) // Temporarily disabled console.error
     return NextResponse.json(
       { ok: false, error: 'Invalid event data' },
       { status: 400 }

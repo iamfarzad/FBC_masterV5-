@@ -1,6 +1,4 @@
 import { intelligenceService } from '@/src/core/intelligence'
-import { sessionInitSchema } from '@/src/core/validation/index'
-import type { ContextSnapshot } from '@/src/core/types/intelligence'
 
 export interface IntelligenceRequest {
   action: 'init-session' | 'analyze-message' | 'research-lead'

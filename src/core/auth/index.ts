@@ -70,8 +70,17 @@ export class AuthService {
 export const authService = new AuthService()
 
 // Admin authentication middleware
-export async function adminAuthMiddleware(headers: Record<string, string | null>): Promise<AuthResult> {
-  return authService.authenticateRequest(headers)
+import { NextResponse } from 'next/server'
+
+export async function adminAuthMiddleware(headers: Record<string, string | null>): Promise<NextResponse | null> {
+  const authResult = await authService.authenticateRequest(headers)
+
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error || 'Authentication failed' }, { status: 401 })
+  }
+
+  // If successful, return null to indicate that the request can proceed
+  return null
 }
 
 // Token creation (for login)

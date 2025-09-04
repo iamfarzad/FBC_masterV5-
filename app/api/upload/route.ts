@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 // Import supabase
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 // 🔒 Import secure file validation
 import { validateFileSecurity, sanitizeFilename, MAX_FILE_SIZE, ALLOWED_FILE_TYPES } from '@/src/core/security/file-validation'
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     // Log upload to Supabase if configured
     try {
-      const supabase = getSupabaseStorage().getClient()
+      const supabase = getSupabaseService()
       const { error: logError } = await supabase.from('upload_logs').insert({
         filename,
         original_name: file.name,

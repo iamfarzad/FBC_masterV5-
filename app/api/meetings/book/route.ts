@@ -1,3 +1,4 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { EmailService } from '@/src/core/email-service'
 import { MeetingScheduler } from "@/src/core/meeting-scheduler"
@@ -17,10 +18,10 @@ export async function POST(req: NextRequest) {
   try {
     const bookingData = await req.json()
 
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
 
     // Check if slot is still available
-    const { data: existingMeeting } = await supabase
+    const { data: existingMeeting } = await supabaseClient
       .from("meetings")
       .select("id")
       .eq("meeting_date", bookingData.preferredDate)
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const meetingLink = MeetingScheduler.generateMeetingLink(meetingId)
 
     // Create meeting
-    const { data: meeting, error } = await supabase
+    const { data: meeting, error } = await supabaseClient
       .from("meetings")
       .insert({
         id: meetingId,

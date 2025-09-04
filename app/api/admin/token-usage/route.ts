@@ -1,3 +1,4 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import type { NextRequest } from "next/server"
 import { adminAuthMiddleware } from '@/app/api-utils/auth'
@@ -62,8 +63,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Get real token usage data from token_usage_logs table
-    const supabase = getSupabaseStorage()
-    const { data: logs, error: logsError } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data: logs, error: logsError } = await supabaseClient
       .from("token_usage_logs")
       .select("*")
       .gte("created_at", new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())

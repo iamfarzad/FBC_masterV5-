@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { getSupabase } from '@/src/core/supabase/server'
 
+interface TokenLog {
+  success: boolean;
+  total_tokens: number;
+  estimated_cost: number;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Check admin authentication
@@ -37,9 +43,9 @@ export async function GET(request: NextRequest) {
 
     // Calculate metrics from actual data
     const totalApiCalls = tokenLogs?.length || 0
-    const successfulCalls = tokenLogs?.filter(log => log.success)?.length || 0
-    const totalTokens = tokenLogs?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0
-    const totalCost = tokenLogs?.reduce((sum, log) => sum + (log.estimated_cost || 0), 0) || 0
+    const successfulCalls = tokenLogs?.filter((log: TokenLog) => log.success)?.length || 0
+    const totalTokens = tokenLogs?.reduce((sum: number, log: TokenLog) => sum + (log.total_tokens || 0), 0) || 0
+    const totalCost = tokenLogs?.reduce((sum: number, log: TokenLog) => sum + (log.estimated_cost || 0), 0) || 0
     
     // Estimate cache benefits (mock calculation for now)
     const estimatedCachedResponses = Math.floor(totalApiCalls * 0.3) // Assume 30% cache hit rate

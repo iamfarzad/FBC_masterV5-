@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 
 const Body = z.object({
@@ -17,10 +18,10 @@ export async function POST(req: NextRequest) {
     const { email, name, companyUrl } = parsed.data
 
     // Try to upsert into lead_summaries (lightweight lead storage used elsewhere)
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
 
     // Check existing by email
-    const { data: existing, error: selErr } = await supabase
+    const { data: existing, error: selErr } = await supabaseClient
       .from('lead_summaries')
       .select('*')
       .eq('email', email)
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       ai_capabilities_shown: ['video2app']
     }
 
-    const { data: created, error: insErr } = await supabase
+    const { data: created, error: insErr } = await supabaseClient
       .from('lead_summaries')
       .insert([insertPayload])
       .select()

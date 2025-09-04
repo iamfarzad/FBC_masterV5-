@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase';
 import { logServerActivity } from '@/src/core/server-activity-logger';
 import { generatePdfWithPuppeteer, generatePdfPath } from '@/src/core/pdf-generator-puppeteer';
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const supabase = getSupabaseStorage().getClient();
+    const supabase = getSupabaseService();
 
     // Get lead information
     let leadInfo = { name: 'Unknown', email: leadEmail || 'unknown@example.com' };

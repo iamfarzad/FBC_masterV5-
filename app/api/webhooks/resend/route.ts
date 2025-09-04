@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { logServerActivity } from "@/src/core/server-activity-logger"
 
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     const event: ResendWebhookEvent = JSON.parse(payload)
     // Action logged
 
-    const supabase: SupabaseClient = getSupabaseStorage()
+    const supabase = getSupabaseService()
 
     // Process different event types
     switch (event.type) {

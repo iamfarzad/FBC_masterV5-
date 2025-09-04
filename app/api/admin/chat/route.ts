@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
           // Add intelligence context to unified context
           context = {
             ...context,
-            intelligenceContext: intelligenceData.context.adminContext,
-            leadResearch: intelligenceData.context.leadResearch
+            intelligenceContext: intelligenceData.context.intelligenceContext,
+            leadContext: intelligenceData.context.leadResearch
           }
         } else {
           console.warn('Intelligence integration failed:', await intelligenceResponse.text())

@@ -3,6 +3,7 @@ import { createOptimizedConfig } from "@/src/core/gemini-config-enhanced"
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { SupabaseClient } from '@supabase/supabase-js'
 
 interface StreamRequestBody {
   prompt?: string
@@ -40,13 +41,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Initialize Gemini AI
+    const geminiApiKey = process.env.GEMINI_API_KEY
+    if (!geminiApiKey) {
+      throw new Error("GEMINI_API_KEY is not set.")
+    }
     const genAI = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: geminiApiKey,
     })
 
     // Convert conversation history to the correct format
     const history = Array.isArray(conversationHistory)
-      ? conversationHistory.map((msg: unknown) => ({
+      ? conversationHistory.map((msg: any) => ({
           role: msg.role === "assistant" ? "model" : "user",
           parts: [{ text: String(msg.content || msg.parts?.[0]?.text || "") }],
         }))
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
         },
       ],
     });
-    const supabase = getSupabaseStorage().getClient()
+    const supabase: SupabaseClient = getSupabaseStorage().getClient()
 
     if (enableStreaming) {
       // Streaming response

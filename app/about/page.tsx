@@ -7,11 +7,11 @@ import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Award, BookOpen, Heart, MessageSquare, Target } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MotionCard } from "@/components/ui/motion-card"
 import { FadeIn } from "@/components/ui/fade-in"
 import { ProgressTracker } from "@/components/experience/progress-tracker"
 import { CitationsDemo } from "@/components/experience/citations-demo"
+import { CardContent } from "@/components/ui/card"
 
 const coreValues = [
   { icon: Target, text: "Deliver real business value through AI automation, not hype" },
@@ -67,7 +67,7 @@ export default function AboutPage() {
           <div className="flex justify-center">
             <div className="relative">
               <div className="absolute inset-0 -z-10">
-                <div className="bg-gradient-conic absolute left-1/2 top-1/2 size-56 -translate-x-1/2 -translate-y-1/2 animate-[spin_18s_linear_infinite] 
+                <div className="bg-gradient-to-br absolute left-1/2 top-1/2 size-56 -translate-x-1/2 -translate-y-1/2 
                                 rounded-full from-brand to-transparent 
                                 opacity-25 blur-xl" />
                 <div className="border-accent/20 absolute left-1/2 top-1/2 size-60 -translate-x-1/2 -translate-y-1/2 rounded-full border" />

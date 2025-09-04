@@ -1,3 +1,4 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
@@ -14,8 +15,8 @@ export async function GET(
     }
 
     // Get search results for the lead
-    const supabase = getSupabaseStorage()
-    const { data: searchResults, error } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data: searchResults, error } = await supabaseClient
       .from('lead_search_results')
       .select('*')
       .eq('lead_id', leadId)
@@ -57,7 +58,8 @@ export async function POST(
     }
 
     // Get lead information first
-    const { data: lead, error: leadError } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data: lead, error: leadError } = await supabaseClient
       .from('lead_summaries')
       .select('name, email, company_name')
       .eq('id', leadId)

@@ -11,7 +11,7 @@ const ContactSchema = z.object({
   message: z.string().min(1, "Message is required")
 })
 
-export const POST = withApiHandler(async (req: NextRequest) => {
+export const POST = withApiHandler(async (req: NextRequest, context?: { params?: Record<string, string> }) => {
   const body = await parseJson(req)
   const { name, email, company, subject, message } = ContactSchema.parse(body)
 

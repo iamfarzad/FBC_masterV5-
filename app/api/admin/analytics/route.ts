@@ -1,6 +1,7 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { type NextRequest, NextResponse } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 
 export async function GET(request: NextRequest) {
@@ -11,9 +12,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: request.headers.get('authorization'),
+    'x-admin-password': request.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
   try {
     const { searchParams } = new URL(request.url)
@@ -25,8 +29,8 @@ export async function GET(request: NextRequest) {
     const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
 
     // Get leads data
-    const supabase = getSupabaseStorage()
-    const { data: leads } = await supabase.from("lead_summaries").select("*").gte("created_at", startDate.toISOString())
+    const supabaseClient = getSupabaseService()
+    const { data: leads } = await supabaseClient.from("lead_summaries").select("*").gte("created_at", startDate.toISOString())
 
     // Process engagement types
     const engagementTypes = [
@@ -37,7 +41,13 @@ export async function GET(request: NextRequest) {
       { name: "image", value: 0, color: "hsl(210 100% 50%)" },
     ]
 
-    leads?.forEach((lead: unknown) => {
+    interface LeadSummary {
+      ai_capabilities_shown?: string[];
+      created_at: string;
+      // Add other properties if they are used and known
+    }
+
+    leads?.forEach((lead: LeadSummary) => {
       if (lead.ai_capabilities_shown && Array.isArray(lead.ai_capabilities_shown)) {
         lead.ai_capabilities_shown.forEach((capability: string) => {
           const type = engagementTypes.find((t) => capability.toLowerCase().includes(t.name))
@@ -59,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // Process AI capabilities
     const capabilitiesMap = new Map()
-    leads?.forEach((lead: unknown) => {
+    leads?.forEach((lead: LeadSummary) => {
       if (lead.ai_capabilities_shown && Array.isArray(lead.ai_capabilities_shown)) {
         lead.ai_capabilities_shown.forEach((cap: string) => {
           capabilitiesMap.set(cap, (capabilitiesMap.get(cap) || 0) + 1)
@@ -88,7 +98,7 @@ export async function GET(request: NextRequest) {
       peakHours,
     })
   } catch (error) {
-    console.error("Admin analytics error:", error)
+    // console.error("Admin analytics error:", error)
     return NextResponse.json({ error: "Failed to fetch analytics" }, { status: 500 })
   }
 }

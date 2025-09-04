@@ -3,10 +3,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react"
 import { DemoSessionProvider } from "@/components/demo-session-manager"
 import { StageProvider } from "@/contexts/stage-context"
-import { FbcIcon } from "@/components/ui/fbc-icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sun, Moon, Sparkles, Plus, Paperclip, Image, Upload } from "lucide-react"
+import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sun, Moon, Sparkles, Plus, Paperclip } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChat } from "@/hooks/useChat-ui"
@@ -22,7 +21,6 @@ import { ConsentOverlay } from "@/components/ui/consent-overlay"
 
 import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 import { Response } from "@/components/ai-elements/response"
-import { Message, MessageContent, MessageAvatar } from "@/components/ai-elements/message"
 import { InlineROICalculator } from "@/components/chat/tools/InlineROICalculator"
 import { useMeeting } from "@/components/providers/meeting-provider"
 
@@ -104,6 +102,7 @@ export default function ChatPage() {
   const [showConsentOverlay, setShowConsentOverlay] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
   const [showInlineROI, setShowInlineROI] = useState(false)
+  const [showProgressRail, setShowProgressRail] = useState(false)
 
   const { theme, setTheme } = useTheme()
 
@@ -223,11 +222,11 @@ export default function ChatPage() {
   // Conversational Intelligence Context
   const {
     context,
-    isLoading: contextLoading,
-    fetchContextFromLocalSession,
+    // isLoading: contextLoading, // Removed as unused
+    // fetchContextFromLocalSession, // Removed as unused
     clearContextCache,
-    generatePersonalizedGreeting,
-    sendRealtimeVoice
+    // generatePersonalizedGreeting, // Removed as unused
+    // sendRealtimeVoice // Removed as unused
   } = useConversationalIntelligence()
 
   // Lead Context Data
@@ -246,7 +245,7 @@ export default function ChatPage() {
   const {
     messages: chatMessages,
     isLoading,
-    error,
+    // error, // Removed as unused
     send: sendMessage,
     clear: clearMessages,
     addMessage
@@ -335,7 +334,7 @@ export default function ChatPage() {
       default:
         console.log('Unknown tool action:', tool)
     }
-  }, [openCanvas])
+  }, [openCanvas, meeting]) // Added 'meeting' to dependency array
 
   // 🎯 AI TOOL BUTTON HANDLER - Connect AI responses to actual tool launching
   // MUST be placed AFTER handleToolAction is defined
@@ -368,7 +367,7 @@ export default function ChatPage() {
           case 'search':
             if (query) {
               setInput(query)
-              handleSendMessage(query) // Triggers web search
+              void handleSendMessage(query) // Triggers web search
             }
             break
           case 'book-call':
@@ -394,20 +393,20 @@ export default function ChatPage() {
     // Global click listener for AI-embedded tool buttons
     document.addEventListener('click', handleCoachCTA)
     return () => document.removeEventListener('click', handleCoachCTA)
-  }, [handleToolAction, handleSendMessage])
+  }, [handleToolAction, handleSendMessage, meeting]) // Added 'meeting' to dependency array
 
-  const handleClearMessages = useCallback(() => {
-    clearMessages()
-    clearContextCache()
-    setInput('')
-    const newSessionId = generateSecureSessionId()
-    setSessionId(newSessionId)
-  }, [clearMessages, clearContextCache])
+  // const handleClearMessages = useCallback(() => {
+  //   clearMessages()
+  //   clearContextCache()
+  //   setInput('')
+  //   const newSessionId = generateSecureSessionId()
+  //   setSessionId(newSessionId)
+  // }, [clearMessages, clearContextCache])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSendMessage(input)
+      void handleSendMessage(input)
     }
   }, [handleSendMessage, input])
 

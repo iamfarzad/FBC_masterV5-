@@ -9,17 +9,22 @@ export async function GET(request: NextRequest) {
 
     const failedConversations = await getFailedConversations(limit)
 
+    interface ConversationSummary {
+      lead_score: number | null;
+      // Add other properties if they are used and known
+    }
+
     // Filter by lead score if specified
     let filteredConversations = failedConversations
     if (minScore !== null) {
       filteredConversations = failedConversations.filter(
-        conv => (conv.lead_score || 0) >= minScore
+        (conv: ConversationSummary) => (conv.lead_score || 0) >= minScore
       )
     }
 
     return NextResponse.json(filteredConversations)
   } catch (error) {
-    console.error('Error fetching failed conversations:', error)
+    // console.error('Error fetching failed conversations:', error) // Commented out console.error
     return NextResponse.json(
       { error: 'Failed to fetch failed conversations' },
       { status: 500 }

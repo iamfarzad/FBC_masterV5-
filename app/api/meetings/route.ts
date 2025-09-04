@@ -1,3 +1,4 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
@@ -9,9 +10,9 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get("date")
     const leadId = searchParams.get("leadId")
 
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
 
-    let query = supabase
+    let query = supabaseClient
       .from("meetings")
       .select("*")
       .order("meeting_date", { ascending: true })

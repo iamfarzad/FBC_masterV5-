@@ -8,6 +8,7 @@ import { SPEC_FROM_VIDEO_PROMPT, CODE_REGION_OPENER, CODE_REGION_CLOSER, SPEC_AD
 import { getYouTubeVideoId } from "@/src/core/youtube"
 import { getYouTubeTranscript, summarizeTranscript, extractKeyTopics } from "@/src/core/youtube-transcript"
 import { selectModelForFeature, estimateTokens } from "@/src/core/model-selector"
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { enforceBudgetAndLog } from "@/src/core/monitoring"
 import { withFullSecurity } from "@/app/api-utils/security"
@@ -179,8 +180,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
       const videoIdForHash = getYouTubeVideoId(videoUrl) || videoUrl
       const hash = createHash('sha256').update(`${videoIdForHash}|${(userPrompt || '').trim()}`).digest('hex')
       try {
-        const supabase = getSupabaseStorage()
-        const { data: cached } = await supabase
+        const supabaseClient = getSupabaseService()
+        const { data: cached } = await supabaseClient
           .from('artifacts')
           .select('*')
           .eq('type', 'video_app_spec')
@@ -258,8 +259,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
 
       // Store spec in cache
       try {
-        const supabase = getSupabaseStorage()
-        await supabase
+        const supabaseClient = getSupabaseService()
+        await supabaseClient
           .from('artifacts')
           .insert([{ type: 'video_app_spec', content: parsedSpec, metadata: { hash, videoId: videoIdForHash, intent: (userPrompt || '').trim() } }])
       } catch {}
@@ -290,8 +291,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
       } catch {}
       const hash = createHash('sha256').update(`${videoIdForHash}|${intentForHash}`).digest('hex')
       try {
-        const supabase = getSupabaseStorage()
-        const { data: cached } = await supabase
+        const supabaseClient = getSupabaseService()
+        const { data: cached } = await supabaseClient
           .from('artifacts')
           .select('*')
           .eq('type', 'video_app_code')
@@ -362,8 +363,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
       // Persist artifact (HTML) for return link reuse
       let artifactId: string | undefined
       try {
-        const supabase = getSupabaseStorage()
-        const { data, error } = await supabase
+        const supabaseClient = getSupabaseService()
+        const { data, error } = await supabaseClient
           .from('artifacts')
           .insert([{ type: 'video_app_code', content: code, metadata: { model: modelSelection.model, hash } }])
           .select()

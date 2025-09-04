@@ -208,7 +208,7 @@ export function useFeatureFlag(
 }
 
 // Hook for checking multiple feature flags
-export function useFeatureFlags(
+export function useFeatureFlagsMultiple(
   flagKeys: string[],
   options: UseFeatureFlagsOptions = {}
 ): { flags: Record<string, boolean>; isLoading: boolean; error: string | null } {

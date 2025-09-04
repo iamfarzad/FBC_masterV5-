@@ -1,7 +1,19 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { type NextRequest, NextResponse } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
+
+interface LeadActivity {
+  id: string;
+  name: string;
+  email: string;
+  company_name?: string;
+  ai_capabilities_shown?: string[];
+  created_at: string;
+  lead_score?: number;
+  consultant_brief?: string;
+}
 
 export async function GET(request: NextRequest) {
   // Check rate limiting
@@ -11,16 +23,19 @@ export async function GET(request: NextRequest) {
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: request.headers.get('authorization'),
+    'x-admin-password': request.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
   try {
     // Get recent activities from the last 24 hours
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-    const supabase = getSupabaseStorage()
-    const { data: recentLeads } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data: recentLeads } = await supabaseClient
       .from("lead_summaries")
       .select("*")
       .gte("created_at", twentyFourHoursAgo.toISOString())
@@ -29,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // Transform leads into activity items
     const activities =
-      recentLeads?.map((lead: unknown) => ({
+      recentLeads?.map((lead: LeadActivity) => ({
         id: lead.id,
         type: "lead_captured",
         title: "New Lead Captured",
@@ -87,8 +102,8 @@ export async function GET(request: NextRequest) {
       activeUsers,
       systemStatus: "healthy",
     })
-  } catch (error) {
-    console.error("Real-time activity error:", error)
-    return NextResponse.json({ error: "Failed to fetch real-time activity" }, { status: 500 })
+  } catch (error: unknown) {
+    // console.error("Real-time activity error:", error) // Commented out console.error
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 }

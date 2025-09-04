@@ -1,25 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
-import { MultimodalContext } from './multimodal-context'
-
-export interface ConversationContext {
-  session_id: string
-  email: string
-  name?: string
-  company_url?: string
-  company_context?: unknown
-  person_context?: unknown
-  role?: string
-  role_confidence?: number
-  intent_data?: unknown
-  last_user_message?: string
-  ai_capabilities_shown?: string[]
-  tool_outputs?: Record<string, unknown>
-  created_at?: string
-  updated_at?: string
-}
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { ConversationContext, MultimodalContext } from './context-types'
 
 export class ContextStorage {
-  private supabase: unknown
+  private supabase: SupabaseClient | null
   private inMemoryStorage = new Map<string, ConversationContext>()
 
   constructor() {
@@ -56,7 +39,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await this.supabase
+          const { error } = await (this.supabase as SupabaseClient)
             .from('conversation_contexts')
             .upsert(dataToStore)
 
@@ -64,7 +47,7 @@ export class ContextStorage {
             // If the column doesn't exist, try without multimodal_context
             if (error.message?.includes('multimodal_context') || error.message?.includes('tool_outputs')) {
               const { multimodal_context, tool_outputs, ...dataWithoutExtras } = dataToStore
-              const { error: retryError } = await this.supabase
+              const { error: retryError } = await (this.supabase as SupabaseClient)
                 .from('conversation_contexts')
                 .upsert(dataWithoutExtras)
 
@@ -94,7 +77,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { data, error } = await this.supabase
+          const { data, error } = await (this.supabase as SupabaseClient)
             .from('conversation_contexts')
             .select('*')
             .eq('session_id', sessionId)
@@ -138,7 +121,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await this.supabase
+          const { error } = await (this.supabase as SupabaseClient)
             .from('conversation_contexts')
             .update({
               ...patch,
@@ -195,7 +178,7 @@ export class ContextStorage {
       // Try Supabase first, then in-memory
       if (this.supabase) {
         try {
-          const { error } = await this.supabase
+          const { error } = await (this.supabase as SupabaseClient)
             .from('conversation_contexts')
             .delete()
             .eq('session_id', sessionId)

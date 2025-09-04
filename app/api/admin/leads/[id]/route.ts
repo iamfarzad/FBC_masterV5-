@@ -1,6 +1,7 @@
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { type NextRequest, NextResponse } from "next/server"
-import { adminAuthMiddleware } from '@/app/api-utils/auth'
+import { adminAuthMiddleware } from '@/src/core/auth/index'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 
 export async function PATCH(
@@ -14,9 +15,12 @@ export async function PATCH(
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: request.headers.get('authorization'),
+    'x-admin-password': request.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
 
   try {
@@ -33,8 +37,8 @@ export async function PATCH(
     }
 
     // Update lead status
-    const supabase = getSupabaseStorage()
-    const { data, error } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data, error } = await supabaseClient
       .from("lead_summaries")
       .update({ status })
       .eq("id", id)
@@ -42,7 +46,7 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Lead update error:", error);
+      // console.error("Lead update error:", error); // Commented out console.error
       return NextResponse.json(
         { error: "Failed to update lead" },
         { status: 500 }
@@ -50,10 +54,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true, lead: data });
-  } catch (error) {
-    console.error("Admin lead update error:", error);
+  } catch (error: unknown) {
+    // console.error("Admin lead update error:", error); // Commented out console.error
     return NextResponse.json(
-      { error: "Failed to update lead" },
+      { error: (error as Error).message },
       { status: 500 }
     );
   }
@@ -70,23 +74,27 @@ export async function GET(
   }
 
   // Check admin authentication
-  const authResult = await adminAuthMiddleware(request);
-  if (authResult) {
-    return authResult;
+  const authResponse = await adminAuthMiddleware({
+    authorization: request.headers.get('authorization'),
+    'x-admin-password': request.headers.get('x-admin-password')
+  })
+  if (authResponse) {
+    return authResponse
   }
 
   try {
     const { id } = params;
 
     // Get lead details
-    const { data, error } = await supabase
+    const supabaseClient = getSupabaseService()
+    const { data, error } = await supabaseClient
       .from("lead_summaries")
       .select("*")
       .eq("id", id)
       .single();
 
     if (error) {
-      console.error("Lead fetch error:", error);
+      // console.error("Lead fetch error:", error); // Commented out console.error
       return NextResponse.json(
         { error: "Lead not found" },
         { status: 404 }
@@ -94,10 +102,10 @@ export async function GET(
     }
 
     return NextResponse.json({ lead: data });
-  } catch (error) {
-    console.error("Admin lead fetch error:", error);
+  } catch (error: unknown) {
+    // console.error("Admin lead fetch error:", error); // Commented out console.error
     return NextResponse.json(
-      { error: "Failed to fetch lead" },
+      { error: (error as Error).message },
       { status: 500 }
     );
   }

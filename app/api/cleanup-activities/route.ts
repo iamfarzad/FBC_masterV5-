@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseStorage()
+    const supabaseClient = getSupabaseService()
     
     // Update ALL stale activities (in_progress or pending) to 'failed' status
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseClient
       .from('activities')
       .update({ 
         status: 'failed',
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Also clean up very old completed activities (older than 1 hour)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseClient
       .from('activities')
       .delete()
       .eq('status', 'completed')
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get current activity counts
-    const { data: activities, error: countError } = await supabase
+    const { data: activities, error: countError } = await supabaseClient
       .from('activities')
       .select('status')
     

@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
       if (response.ok) {
         router.push("/admin")
       } else {
-        const data = await response.json()
+        const data: { error?: string } = await response.json()
         setError(data.error || "Invalid password")
       }
     } catch {

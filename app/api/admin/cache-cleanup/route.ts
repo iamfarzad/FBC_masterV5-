@@ -5,12 +5,12 @@ import { geminiConfig } from '@/src/core/models/gemini'
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const authResult = await adminAuthMiddleware({
+    const authResponse = await adminAuthMiddleware({
       authorization: request.headers.get('authorization'),
       'x-admin-password': request.headers.get('x-admin-password')
     })
-    if (authResult) {
-      return authResult
+    if (authResponse) {
+      return authResponse
     }
 
     // Perform cache cleanup
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error('Cache cleanup error:', error)
+    // console.error('Cache cleanup error:', error)
     return NextResponse.json(
       { error: 'Failed to perform cache cleanup' },
       { status: 500 }

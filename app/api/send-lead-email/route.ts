@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { z } from 'zod'
 
@@ -223,7 +224,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get lead data from Supabase
-    const supabase = getSupabaseStorage().getClient()
+    const supabase = getSupabaseService()
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select('*')

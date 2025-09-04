@@ -50,3 +50,4 @@ export class SimpleIntelligenceService {
 
 // Export singleton instance for compatibility
 export const intelligenceService = new SimpleIntelligenceService()
+
