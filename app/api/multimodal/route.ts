@@ -61,7 +61,17 @@ export async function POST(request: NextRequest) {
       console.warn('Intelligence integration failed for multimodal:', intelligenceError)
     }
 
-    const response = { ok: true, modality, sessionId, processedAt: new Date().toISOString() }
+    const response: {
+      ok: boolean,
+      modality: string,
+      sessionId: string,
+      processedAt: string,
+      aiResponse?: string,
+      liveApiSent?: boolean,
+      liveApiError?: boolean,
+      upload?: any,
+      context?: any
+    } = { ok: true, modality, sessionId, processedAt: new Date().toISOString() }
 
     // Route to appropriate handler based on modality
     switch (modality) {
@@ -70,7 +80,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Content required for text modality' }, { status: 400 })
         }
         await multimodalContextManager.addTextMessage(sessionId, content)
-        response.processed = 'text'
+        response.processedAt = new Date().toISOString();
         break
 
       case 'voice':
@@ -118,7 +128,7 @@ export async function POST(request: NextRequest) {
           voiceResponses.push(msg)
         }
 
-        response.processed = 'voice'
+        response.processedAt = new Date().toISOString();
         response.aiResponse = voiceResponses.map(m => m.content).join('') || 'Voice message processed successfully'
         break
 
@@ -224,7 +234,7 @@ export async function POST(request: NextRequest) {
           visionResponses.push(msg)
         }
 
-        response.processed = 'vision'
+        response.processedAt = new Date().toISOString();
         response.aiResponse = visionResponses.map(m => m.content).join('') || 'Visual analysis processed successfully'
         break
 
@@ -235,6 +245,9 @@ export async function POST(request: NextRequest) {
           }, { status: 400 })
         }
 
+        if (!metadata?.fileData) {
+          return NextResponse.json({ error: 'File data required for upload modality' }, { status: 400 })
+        }
         // Handle file upload through existing upload endpoint
         const uploadFormData = new FormData()
         const fileBuffer = Buffer.from(metadata.fileData.split(',')[1], 'base64')
@@ -256,7 +269,7 @@ export async function POST(request: NextRequest) {
         }
 
         const uploadResult = await uploadResponse.json()
-        response.processed = 'upload'
+        response.processedAt = new Date().toISOString();
         response.upload = uploadResult
         break
 

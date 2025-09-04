@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import crypto from 'crypto'
 
+function asErr(e: unknown): e is { name?: string } { return typeof e === "object" && e !== null; }
+
+type GuardCtx = { name?: string; [k: string]: unknown };
+
 type HandlerArgs<T> = {
   req: NextRequest
   body: T
   sessionId?: string
   requestId: string
+  ctx: GuardCtx
 }
 
 export function withApiGuard<TSchema extends z.ZodTypeAny>(opts: {
@@ -35,7 +40,7 @@ export function withApiGuard<TSchema extends z.ZodTypeAny>(opts: {
     return null
   }
 
-  return async function guarded(req: NextRequest) {
+  return async function guarded(req: NextRequest, ctx: GuardCtx) {
     const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
     const sessionId = req.headers.get('x-intelligence-session-id') || undefined
 
@@ -52,13 +57,13 @@ export function withApiGuard<TSchema extends z.ZodTypeAny>(opts: {
         const raw = await req.json()
         body = opts.schema ? opts.schema.parse(raw) : raw
       } catch (e: unknown) {
-        const msg = e?.name === 'ZodError' ? 'Invalid input' : 'Bad request'
+        const msg = asErr(e) && e.name === 'ZodError' ? 'Invalid input' : 'Bad request'
         return NextResponse.json({ ok: false, error: msg }, { status: 400, headers: { 'x-request-id': requestId } })
       }
     }
 
     try {
-      const res = await opts.handler({ req, body, sessionId, requestId } as any)
+      const res = await opts.handler({ req, body, sessionId, requestId, ctx } as any)
       res.headers.set('x-request-id', requestId)
       return res
     } catch (_e) {

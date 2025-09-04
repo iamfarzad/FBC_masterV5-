@@ -49,7 +49,7 @@ export async function detectRole(research: ResearchResultLike): Promise<{ role: 
 
   const match = surfaces.match(ROLE_REGEX)
   if (match) {
-    return { role: normalizeRole(match[1]), confidence: 0.6 }
+    return { role: normalizeRole(match[1] ?? ''), confidence: 0.6 }
   }
 
   // 3) Fallback

@@ -1,4 +1,6 @@
 import { z } from 'zod'
+// Enable ZodError.errors -> .issues compatibility shim
+import '../../polyfills/zod-errors-compat'
 
 // ============================================================================
 // CHAT VALIDATION
@@ -8,7 +10,7 @@ export const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string().min(1).max(10000),
   id: z.string().optional(),
-  meta: z.record(z.unknown()).optional()
+  meta: z.record(z.string(), z.unknown()).optional()
 })
 
 export const chatRequestSchema = z.object({
@@ -17,7 +19,7 @@ export const chatRequestSchema = z.object({
   model: z.string().optional(),
   temperature: z.number().optional(),
   max_tokens: z.number().optional(),
-  data: z.record(z.unknown()).optional()
+  data: z.record(z.string(), z.unknown()).optional()
 })
 
 // ============================================================================
@@ -78,7 +80,7 @@ export const leadUpdateSchema = z.object({
 
 export const adminSearchSchema = z.object({
   query: z.string().min(1),
-  filters: z.record(z.any()).optional(),
+  filters: z.record(z.string(), z.any()).optional(),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0)
 })

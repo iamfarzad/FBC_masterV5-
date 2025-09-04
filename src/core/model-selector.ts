@@ -53,7 +53,7 @@ export class ModelSelector {
    * Uses advanced scoring algorithm considering cost, quality, latency, and capabilities
    */
   static selectModel(useCase: UseCase, requirements: ModelRequirements = {}): string {
-    const capabilities = config.ai.gemini.modelCapabilities
+    const capabilities = (config as any)?.ai?.gemini?.modelCapabilities ?? {}
     const models = config.ai.gemini.models
 
     // Extract requirements
@@ -175,7 +175,7 @@ export class ModelSelector {
       }))
     })
 
-    return scoredModels[0].model
+    return (scoredModels[0] ? scoredModels[0].model : config.ai.gemini.models.default)
   }
 
   /**

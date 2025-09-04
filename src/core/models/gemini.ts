@@ -171,7 +171,9 @@ export class GeminiConfigEnhanced {
     if (messages.length <= 6) {
       // For short conversations, include all messages
       const formattedMessages = this.formatMessages(messages);
-      contents.push(...formattedMessages);
+      if (Array.isArray(formattedMessages)) {
+        contents.push(...(formattedMessages as Array<{ role: string; parts: { text: string }[] }>));
+      }
       totalTokens += this.estimateTokens(messages);
       
       return {
@@ -196,7 +198,9 @@ export class GeminiConfigEnhanced {
 
     // Add recent messages
     const formattedRecent = this.formatMessages(recentMessages);
-    contents.push(...formattedRecent);
+    if (Array.isArray(formattedRecent)) {
+      contents.push(...(formattedRecent as Array<{ role: string; parts: { text: string }[] }>));
+    }
     totalTokens += this.estimateTokens(recentMessages);
 
     return {

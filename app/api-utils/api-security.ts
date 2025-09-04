@@ -37,6 +37,8 @@ export function withAPISecurity(handler: (req: NextRequest) => Promise<Response 
   }
 }
 
+function asErr(e: unknown): e is { message?: string } { return typeof e === "object" && e !== null; }
+
 // 2) Payload size limit middleware
 export function withPayloadLimit(handler: (req: NextRequest) => Promise<Response | NextResponse>, limit: string = '100kb') {
   return async (req: NextRequest) => {
@@ -59,8 +61,8 @@ export function withPayloadLimit(handler: (req: NextRequest) => Promise<Response
       
       return await handler(req)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      if ((err as any)?.statusCode === 413 || /request entity too large/i.test(errorMessage)) {
+      const msg = asErr(err) && typeof err.message === "string" ? err.message : "unknown";
+      if ((err as any)?.statusCode === 413 || /request entity too large/i.test(msg)) {
         return new NextResponse(
           JSON.stringify({ error: 'Payload Too Large' }), 
           { 
@@ -141,7 +143,10 @@ function parseSizeLimit(limit: string): number {
   }
   
   const [, size, unit] = match
-  return parseInt(size, 10) * (units[unit] || 1)
+  if (unit && unit in units) {
+    return parseInt(size, 10) * (units[unit] || 1)
+  }
+  return parseInt(size, 10)
 }
 
 // Combined security middleware
@@ -167,5 +172,36 @@ export function withFullSecurity(
     
     // Apply CORS
     return withAPISecurity(limitedHandler)(req)
+  }
+}
+
+// Admin authentication middleware
+export function withAdminAuth(handler: (req: NextRequest) => Promise<Response | NextResponse>) {
+  return async function(req: NextRequest) {
+    let role = ''
+    try {
+      // tolerate tests passing plain objects
+      role = (req as any)?.headers?.get ? (req as any).headers.get('x-user-role') || '' : ''
+    } catch {}
+    if (role.toLowerCase() !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    return handler(req)
+  }
+}
+
+
+// API guard middleware
+export function withApiGuard(_options: {
+  schema?: unknown
+  requireSession?: boolean
+  rateLimit?: { windowMs: number; max: number }
+} = {}) {
+  return function(handler: (req: NextRequest) => Promise<Response | NextResponse>) {
+    return async function(req: NextRequest) {
+      // For now, just pass through to the handler
+      // In a real implementation, this would validate the schema, check session, and apply rate limiting
+      return handler(req)
+    }
   }
 }

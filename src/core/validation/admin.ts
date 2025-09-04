@@ -45,7 +45,7 @@ export const adminUserSchema = z.object({
 // Export parameters validation
 export const exportSchema = z.object({
   format: z.enum(['csv', 'json', 'xlsx']).default('csv'),
-  filters: z.record(z.any()).optional(),
+  filters: z.record(z.string(), z.any()).optional(),
   dateRange: z.object({
     start: z.string().datetime(),
     end: z.string().datetime(),

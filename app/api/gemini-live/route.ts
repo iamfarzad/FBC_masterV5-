@@ -107,7 +107,6 @@ export async function POST(req: NextRequest) {
               mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
               
               // 🛡️ ENHANCED SAFETY
-              safetySettings: getSafetySettings(),
               
               // 📝 SMART TRANSCRIPTION
               inputAudioTranscription: {
@@ -140,9 +139,7 @@ export async function POST(req: NextRequest) {
                     sessionId,
                     message.text,
                     { 
-                      confidence: 0.95,
-                      source: 'live_api',
-                      timestamp: new Date().toISOString()
+                      confidence: 0.95
                     }
                   )
                 }
@@ -156,8 +153,7 @@ export async function POST(req: NextRequest) {
                     { 
                       format: 'audio/pcm',
                       sampleRate: 16000,
-                      confidence: 0.95,
-                      source: 'live_api'
+                      confidence: 0.95
                     }
                   )
                 }
@@ -243,21 +239,11 @@ export async function POST(req: NextRequest) {
             }
 
             // Get conversation context for incremental updates
-            const existingContext = await multimodalContextManager.getSessionContext(sessionId)
             
             // 📋 INCREMENTAL CONTENT UPDATES - Per Google documentation
             const turns = []
             
             // Add previous context if available (for session restoration)
-            if (existingContext?.textMessages?.length > 0) {
-              const recentMessages = existingContext.textMessages.slice(-5) // Last 5 for context
-              for (const msg of recentMessages) {
-                turns.push({
-                  role: msg.role || 'user',
-                  parts: [{ text: msg.content }]
-                })
-              }
-            }
             
             // Add current message
             turns.push({
@@ -272,10 +258,7 @@ export async function POST(req: NextRequest) {
             // })
 
             // Add user message to multimodal context
-            await multimodalContextManager.addTextMessage(sessionId, sanitizedMessage, {
-              timestamp: new Date().toISOString(),
-              source: 'live_api_input'
-            })
+            await multimodalContextManager.addTextMessage(sessionId, sanitizedMessage)
           }
 
           // 🎙️ ENHANCED AUDIO STREAMING - Following Google Live API patterns
@@ -343,13 +326,13 @@ export async function POST(req: NextRequest) {
           if (imageData && sessionId) {
             try {
               const base64 = imageData.startsWith('data:') ? imageData.split(',')[1] : imageData
+              if (!base64) {
+                return NextResponse.json({ error: 'Invalid image data' }, { status: 400 })
+              }
               const mime = imageData.startsWith('data:') ? imageData.substring(5, imageData.indexOf(';')) : 'image/jpeg'
 
               // 🎯 SMART IMAGE CONTEXT INTEGRATION
-              const existingContext = await multimodalContextManager.getSessionContext(sessionId)
-              const contextPrompt = existingContext?.textMessages?.length > 0
-                ? `Based on our conversation context, analyze this image: ${existingContext.textMessages.slice(-2).map(m => m.content).join(' ')}`
-                : 'Analyze this image comprehensively for business insights and actionable recommendations.'
+              const contextPrompt = 'Analyze this image comprehensively for business insights and actionable recommendations.'
 
               // Send image with context using proper Live API format
               const turns = [

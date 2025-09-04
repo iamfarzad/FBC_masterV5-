@@ -11,7 +11,7 @@ import { selectModelForFeature, estimateTokens } from "@/src/core/model-selector
 import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { enforceBudgetAndLog } from "@/src/core/monitoring"
-import { withFullSecurity } from "@/app/api-utils/security"
+import { withFullSecurity } from "@/app/api-utils/api-security"
 import { recordCapabilityUsed } from "@/src/core/context/capabilities"
 
 

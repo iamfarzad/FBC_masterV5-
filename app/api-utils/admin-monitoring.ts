@@ -237,17 +237,14 @@ class AdminMonitoringService {
     return 'Unknown Error'
   }
 
-  private getTimeRangeMs(timeRange: string): number {
-    const timeRanges: Record<string, number> = {
+  private getTimeRangeMs(timeRange: '1h' | '24h' | '7d' | '30d'): number {
+    const timeRanges: Record<'1h' | '24h' | '7d' | '30d', number> = {
       '1h': 60 * 60 * 1000,
       '24h': 24 * 60 * 60 * 1000,
       '7d': 7 * 24 * 60 * 60 * 1000,
-      '30d': 30 * 24 * 60 * 60 * 1000
-    }
-    if (Object.keys(timeRanges).includes(timeRange)) {
-      return timeRanges[timeRange] as number
-    }
-    return timeRanges['24h']
+      '30d': 30 * 24 * 60 * 1000
+    };
+    return timeRanges[timeRange];
   }
 
   private async sendToMonitoringService(_logEntry: AdminLogEntry) {

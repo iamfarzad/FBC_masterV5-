@@ -19,19 +19,35 @@ export class GoogleGroundingProvider {
 
     try {
       // Search grounding citations - keep your logic
-      const chunks = candidate?.groundingMetadata?.groundingChunks ?? []
-      const searchCitations: GroundedCitation[] = (Array.isArray(chunks) ? chunks : [])
-        .map((c: unknown) => c.web)
-        .filter(Boolean)
-        .map((w: unknown) => ({
-          uri: w.uri || w.url,
+      type WebRef = { uri?: string; url?: string; title?: string; snippet?: string; description?: string }
+      type GroundingChunk = { web?: WebRef | null }
+      type CandidateLike = {
+        groundingMetadata?: { groundingChunks?: unknown }
+        urlContextMetadata?: unknown
+      }
+
+      const asRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
+
+      const safeCandidate: CandidateLike = asRecord(candidate) ? (candidate as CandidateLike) : {}
+      const rawChunks: unknown = safeCandidate.groundingMetadata && asRecord(safeCandidate.groundingMetadata)
+        ? (safeCandidate.groundingMetadata as Record<string, unknown>).groundingChunks
+        : undefined
+
+      const list: unknown[] = Array.isArray(rawChunks) ? rawChunks : []
+      const searchCitations: GroundedCitation[] = list
+        .map((c: unknown) => (asRecord(c) ? (c as GroundingChunk).web : undefined))
+        .filter((w: unknown): w is WebRef => asRecord(w))
+        .map((w: WebRef) => ({
+          uri: w.uri || w.url || '',
           title: w.title || 'Search Result',
           description: w.snippet || w.description || '',
           source: 'search' as const
         }))
 
       // URL Context citations - SIMPLIFIED approach
-      const urlContextMetadata = candidate?.urlContextMetadata
+      const urlContextMetadata = asRecord(safeCandidate.urlContextMetadata)
+        ? (safeCandidate.urlContextMetadata as Record<string, unknown>)
+        : undefined
       const urlCitations: GroundedCitation[] = []
 
       if (urlContextMetadata && typeof urlContextMetadata === 'object') {
@@ -40,12 +56,14 @@ export class GoogleGroundingProvider {
         if (Array.isArray(urlMetadata)) {
           urlMetadata.forEach((meta: unknown) => {
             if (meta && typeof meta === 'object') {
-              const uri = meta.retrievedUrl || meta.url || meta.uri
+              const uri = String((meta as any).retrievedUrl || (meta as any).url || (meta as any).uri || '')
+              const title = String((meta as any).title || 'URL Content')
+              const description = String((meta as any).snippet || (meta as any).description || '')
               if (uri) {
                 urlCitations.push({
-                  uri: String(uri),
-                  title: String(meta.title || 'URL Content'),
-                  description: String(meta.snippet || meta.description || ''),
+                  uri,
+                  title,
+                  description,
                   source: 'url' as const
                 })
               }
@@ -95,7 +113,7 @@ export class GoogleGroundingProvider {
           text = (res as any).text
         } else if ((res as any).candidates?.[0]?.content?.parts) {
           text = (res as any).candidates[0].content.parts
-            .map((p: unknown) => p.text || '')
+            .map((p: unknown) => (typeof p === 'object' && p !== null ? (p as any).text : '') || '')
             .filter(Boolean)
             .join('\n')
         }

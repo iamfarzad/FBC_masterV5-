@@ -41,7 +41,7 @@ export const ContextSnapshotSchema = z.object({
   person: PersonSchema.optional(),
   role: z.string().optional(),
   roleConfidence: z.number().min(0).max(1).optional(),
-  intent: z.object({ type: z.string(), confidence: z.number(), slots: z.record(z.any()) }).optional(),
+  intent: z.object({ type: z.string(), confidence: z.number(), slots: z.record(z.string(), z.any()) }).optional(),
   capabilities: z.array(z.string()).default([]),
 })
 

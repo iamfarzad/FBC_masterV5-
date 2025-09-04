@@ -121,6 +121,7 @@ export class WebRTCAudioProcessor {
           echoCancellation: this.config.enableEchoCancellation,
           noiseSuppression: this.config.enableNoiseSuppression,
           autoGainControl: this.config.enableAutoGainControl,
+          // @ts-expect-error not in lib.dom types; some browsers support it
           latency: 0.01, // 10ms latency target
           googEchoCancellation: this.config.enableEchoCancellation,
           googAutoGainControl: this.config.enableAutoGainControl,

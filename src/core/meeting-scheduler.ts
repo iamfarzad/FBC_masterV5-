@@ -82,7 +82,11 @@ export class MeetingScheduler {
         return []
       }
 
-      const bookedTimes = new Set(bookedSlots.map((slot: unknown) => slot.meeting_time))
+      const bookedTimes = new Set(
+        bookedSlots
+          .map((slot: unknown) => (typeof slot === 'object' && slot !== null ? (slot as any).meeting_time : undefined))
+          .filter((x): x is string => typeof x === 'string')
+      )
 
       return this.TIME_SLOTS.map((time) => ({
         date,
@@ -187,7 +191,7 @@ export class MeetingScheduler {
       checkDate.setDate(startDate.getDate() + i)
 
       const dateString = checkDate.toISOString().split("T")[0]
-      const slots = await this.getAvailableSlots(dateString)
+      const slots = await this.getAvailableSlots(dateString ?? '')
 
       const availableSlot = slots.find((slot) => slot.available)
       if (availableSlot) {

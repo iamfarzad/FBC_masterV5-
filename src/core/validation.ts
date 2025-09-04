@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { chatRequestSchema as chatRequestSchemaV1 } from './validation/index';
 
 // Lead capture validation
 export const leadCaptureSchema = z.object({
@@ -31,32 +32,7 @@ export const chatMessageSchema = z.object({
     .max(10000, 'Message content must be less than 10000 characters'),
 });
 
-export const chatRequestSchema = z.object({
-  messages: z.array(chatMessageSchema)
-    .min(1, 'At least one message is required')
-    .max(50, 'Maximum 50 messages allowed'),
-  model: z.string()
-    .max(50, 'Model name must be less than 50 characters')
-    .optional(),
-  temperature: z.number()
-    .min(0, 'Temperature must be between 0 and 2')
-    .max(2, 'Temperature must be between 0 and 2')
-    .optional(),
-  max_tokens: z.number()
-    .min(1, 'Max tokens must be at least 1')
-    .max(4000, 'Max tokens must be less than 4000')
-    .optional(),
-  data: z.object({
-    leadContext: z.any().optional(),
-    sessionId: z.string().optional(),
-    userId: z.string().optional(),
-    hasWebGrounding: z.boolean().optional(),
-    conversationSessionId: z.string().optional(),
-    enableLeadGeneration: z.boolean().optional(),
-    enableUrlContext: z.boolean().optional(),
-    enableGoogleSearch: z.boolean().optional(),
-  }).optional(),
-});
+export const chatRequestSchema = chatRequestSchemaV1;
 
 // Translation validation moved to @/src/core/validation/index.ts
 
@@ -159,7 +135,7 @@ export const tokenUsageSchema = z.object({
   user_id: z.string()
     .max(100, 'User ID must be less than 100 characters')
     .optional(),
-  metadata: z.record(z.any())
+  metadata: z.record(z.string(), z.any())
     .optional(),
 });
 

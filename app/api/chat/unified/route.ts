@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     // Create the message stream using the unified provider
     const messageStream = unifiedChatProvider.generate({
       messages,
-      ...(context && { context }),
+      context,
       mode
     });
 
@@ -220,7 +220,7 @@ function validateUnifiedRequest(data: unknown): {
         success: true,
         data: {
           messages,
-          context: unifiedData.context,
+          ...(unifiedData.context && { context: unifiedData.context }),
           mode: unifiedData.mode || 'standard',
           stream: unifiedData.stream !== false
         }
@@ -258,7 +258,7 @@ function validateUnifiedRequest(data: unknown): {
       success: true,
       data: {
         messages,
-        context,
+        ...(context && { context }),
         mode: 'standard' as ChatMode,
         stream: true
       }
