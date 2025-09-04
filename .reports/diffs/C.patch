@@ -1,0 +1,37 @@
+diff --git a/app/api/chat/route.ts b/app/api/chat/route.ts
+index 5dd6367..dd7c2f3 100644
+--- a/app/api/chat/route.ts
++++ b/app/api/chat/route.ts
+@@ -11,9 +11,12 @@ export const fetchCache = 'force-no-store'
+ export async function POST(req: NextRequest) {
+   try {
+     const body = await req.json()
++    
++    // Add version to body to conform to ChatRequest
++    const augmentedBody = { ...body, version: 'v1' }
+ 
+     // Validate request using the same pattern as FB-c_labV3-main
+-    const validation = validateRequest(chatRequestSchema, body)
++    const validation = validateRequest(chatRequestSchema, augmentedBody)
+ 
+     if (!validation.success) {
+       return new Response(
+diff --git a/src/core/validation/index.ts b/src/core/validation/index.ts
+index 377e5f5..d680f02 100644
+--- a/src/core/validation/index.ts
++++ b/src/core/validation/index.ts
+@@ -12,8 +12,12 @@ export const chatMessageSchema = z.object({
+ })
+ 
+ export const chatRequestSchema = z.object({
+-  version: z.literal(1),
+-  messages: z.array(chatMessageSchema).min(1).max(50)
++  version: z.literal('v1'),
++  messages: z.array(chatMessageSchema).min(1).max(50),
++  model: z.string().optional(),
++  temperature: z.number().optional(),
++  max_tokens: z.number().optional(),
++  data: z.record(z.unknown()).optional()
+ })
+ 
+ // ============================================================================

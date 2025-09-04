@@ -12,8 +12,12 @@ export const chatMessageSchema = z.object({
 })
 
 export const chatRequestSchema = z.object({
-  version: z.literal(1),
-  messages: z.array(chatMessageSchema).min(1).max(50)
+  version: z.literal('v1'),
+  messages: z.array(chatMessageSchema).min(1).max(50),
+  model: z.string().optional(),
+  temperature: z.number().optional(),
+  max_tokens: z.number().optional(),
+  data: z.record(z.unknown()).optional()
 })
 
 // ============================================================================

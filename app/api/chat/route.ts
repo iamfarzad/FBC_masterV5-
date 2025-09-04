@@ -11,9 +11,12 @@ export const fetchCache = 'force-no-store'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    
+    // Add version to body to conform to ChatRequest
+    const augmentedBody = { ...body, version: 'v1' }
 
     // Validate request using the same pattern as FB-c_labV3-main
-    const validation = validateRequest(chatRequestSchema, body)
+    const validation = validateRequest(chatRequestSchema, augmentedBody)
 
     if (!validation.success) {
       return new Response(
