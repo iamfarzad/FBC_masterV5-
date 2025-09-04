@@ -1,0 +1,45 @@
+
+Backend Testing Interface
+Advanced Chat Testing Interface
+← Back to Home
+Session ID: xv5pxvvx85jmf57ihkv
+Features:
+Intelligence Context
+Voice Input
+Webcam
+Screen Share
+Admin Mode
+user: hi
+assistant:
+system: API Error from /api/gemini-live/start: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/voice/transcribe: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Response from /api/intelligence/context?sessionId=xv5pxvvx85jmf57ihkv: { "ok": true, "output": { "lead": { "email": "", "name": "" }, "role": "", "roleConfidence": 0, "capabilities": [] }, "lead": { "email": "", "name": "" }, "role": "", "roleConfidence": 0, "capabilities": [] }
+system: API Error from /api/tools/webcam/capture: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/chat/memory: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/feature-flags: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/admin/logs?level=error: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/admin/monitoring/realtime: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: API Error from /api/tools/screen/capture: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+system: WebSocket error
+system: API Error from /api/chat/unified: SyntaxError: Failed to execute 'json' on 'Response': Unexpected token 'd', "data: {"id"... is not valid JSON
+Type your message...
+Send
+Stream
+WS Send
+Advanced Functions:
+Connect WebSocket
+Get Intelligence Context
+Get Admin Context
+Test Unified Chat
+Start Gemini Live
+Capture Webcam
+Capture Screen
+Test Voice Transcribe
+Get Chat Memory
+Backend Monitoring:
+Real-time Stats
+Admin Stats
+Feature Flags
+Cache Stats
+Performance Metrics
+Error Logs
