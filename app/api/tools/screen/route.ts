@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { selectModelForFeature, estimateTokens, UseCase } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { ScreenShareSchema } from '@/src/core/services/tool-service'
@@ -43,12 +43,12 @@ export async function POST(req: NextRequest) {
 
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
 
-    const estimatedTokens = estimateTokens('screen analysis') + 2000
-    const modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens)
+    const estimatedTokens = estimateTokens(UseCase.SCREENSHOT_ANALYSIS) + 2000
+    const modelSelection = selectModelForFeature(UseCase.SCREENSHOT_ANALYSIS, estimatedTokens)
     const modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'screenshot_analysis', modelName, estimatedTokens, estimatedTokens * 0.5, true)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, UseCase.SCREENSHOT_ANALYSIS, modelName, estimatedTokens, estimatedTokens * 0.5, true)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'AI analysis failed' }, { status: 500 })
     }
 
-    const response = { ok: true, output: {
+    const response = { success: true, output: {
       analysis: analysisResult,
       insights: ["UI elements detected", "Content structure analyzed"],
       imageSize: image.length,

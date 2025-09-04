@@ -241,7 +241,7 @@ export class SafeStorage {
 
       return {
         success: true,
-        data: { cleanedCount }
+        data: JSON.stringify({ cleanedCount })
       }
     } catch (error) {
       return {

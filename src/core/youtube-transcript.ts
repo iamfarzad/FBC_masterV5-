@@ -13,7 +13,7 @@ interface VideoTranscript {
   transcript: string
   items: TranscriptItem[]
   videoId: string
-  title?: string
+  title: string
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTrans
         };
       }),
       videoId,
-      title
+      title: title || 'YouTube Video'
     }
   } catch (error) {
     console.error('Failed to extract transcript', error)

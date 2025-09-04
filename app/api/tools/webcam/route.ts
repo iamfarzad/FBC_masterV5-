@@ -51,11 +51,12 @@ export async function POST(req: NextRequest) {
     // Budget and access checks
     const estimatedTokens = estimateTokens('image analysis') + 1500
     const modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
+    const modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
 
 
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'image_analysis', modelSelection.model, estimatedTokens)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'image_analysis', modelName, estimatedTokens)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
 
       const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1024, temperature: 0.3, topP: 0.8, topK: 40 })
       const result = await genAI.models.generateContent({
-        model: modelSelection.model,
+        model: modelName,
         config: optimizedConfig,
         contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType, data: base64Data } } ] }],
       })
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'AI analysis failed' }, { status: 500 })
     }
 
-    const response = { ok: true, output: {
+    const response = { success: true, output: {
       analysis: analysisResult,
       insights: ["Objects and context analyzed", "Business relevance extracted"],
       imageSize: image.length,
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
     performanceMonitor.endOperation(operationId, {
       success: true,
       tokensUsed: estimatedTokens,
-      model: modelSelection.model
+      model: modelName
     })
 
     return NextResponse.json(response, { status: 200 })
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     performanceMonitor.endOperation(operationId, {
       success: false,
       tokensUsed: estimatedTokens,
-      model: modelSelection?.model,
+      model: modelName,
       errorCode: (error as any)?.code || 'UNKNOWN_ERROR'
     })
 

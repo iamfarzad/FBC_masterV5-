@@ -241,21 +241,29 @@ export class StreamingOptimizer {
 
             // Sort by priority
             availableStreams.sort((a, b) => {
-              const priorityA = this.getPriorityWeight(streamPriorities[a])
-              const priorityB = this.getPriorityWeight(streamPriorities[b])
+              const priorityA = this.getPriorityWeight(
+                (streamPriorities[a] ?? 'normal') as 'low' | 'normal' | 'high'
+              )
+              const priorityB = this.getPriorityWeight(
+                (streamPriorities[b] ?? 'normal') as 'low' | 'normal' | 'high'
+              )
               return priorityB - priorityA // Higher priority first
             })
 
             const nextStreamIndex = availableStreams[0]
-            activeStreams.add(nextStreamIndex)
 
-            // Process stream
-            this.processStreamChunk(
-              streamControllers[nextStreamIndex],
-              nextStreamIndex,
-              controller,
-              activeStreams
-            )
+            if (typeof nextStreamIndex === 'number') {
+              activeStreams.add(nextStreamIndex)
+              const controller = streamControllers[nextStreamIndex]
+              if (controller) {
+                this.processStreamChunk(
+                  controller,
+                  nextStreamIndex,
+                  controller,
+                  activeStreams
+                )
+              }
+            }
           }
         }
 

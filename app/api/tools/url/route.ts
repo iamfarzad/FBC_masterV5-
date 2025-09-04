@@ -71,9 +71,10 @@ export async function POST(req: NextRequest) {
     // Budget and model selection
     const estimatedTokens = estimateTokens(webContent) + 3000
     const modelSelection = selectModelForFeature('url_analysis', estimatedTokens, !!sessionId)
+    const modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'url_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.6, true)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'url_analysis', modelName, estimatedTokens, estimatedTokens * 0.6, true)
       if (!budgetCheck.allowed) {
         return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
       }
@@ -113,10 +114,11 @@ export async function POST(req: NextRequest) {
       }
       
       analysisPrompt += `Connect the analysis to business context and provide specific actionable insights.\n\n`
-      analysisPrompt += `WEB CONTENT:\n${webContent}`
+      analysisPrompt += `WEB CONTENT:
+${webContent}`
 
       const result = await genAI.models.generateContent({
-        model: modelSelection.model,
+        model: modelName,
         config: optimizedConfig,
         contents: [{
           role: 'user',
@@ -141,7 +143,7 @@ export async function POST(req: NextRequest) {
 
     // 📊 ENHANCED RESPONSE WITH METADATA
     const response = { 
-      ok: true, 
+      success: true, 
       output: {
         analysis: analysisText,
         url,

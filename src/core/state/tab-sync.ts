@@ -240,7 +240,7 @@ export class TabSync {
     const tabsKey = `${this.channelName}_tabs`
     const tabsData = safeStorage.get(tabsKey)
 
-    let tabs = {}
+    const tabs: Record<string, number> = {}
     if (tabsData.success && tabsData.data) {
       try {
         tabs = JSON.parse(tabsData.data)

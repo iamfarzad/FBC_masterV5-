@@ -211,8 +211,8 @@ export class TokenUsageLogger {
 
     // Log the successful request
     await this.logTokenUsage({
-      user_id: userId,
-      session_id: sessionId,
+      user_id: userId ?? '',
+      session_id: sessionId ?? '',
       feature,
       model,
       input_tokens: Math.round(inputTokens),
@@ -220,8 +220,8 @@ export class TokenUsageLogger {
       total_tokens: Math.round(totalTokens),
       estimated_cost: estimatedCost,
       success,
-      error_message: errorMessage,
-      usage_metadata: usageMetadata
+      error_message: errorMessage ?? '',
+      usage_metadata: usageMetadata ?? {}
     })
 
     return { allowed: true }

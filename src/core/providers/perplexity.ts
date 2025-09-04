@@ -76,7 +76,8 @@ export async function *streamPerplexity(params: {
       const payload = line.slice(6).trim()
       if (!payload) continue
       if (payload === '[DONE]') {
-        yield { done: true, citations }
+        const safeCitations: string[] = Array.isArray(citations) ? citations : [];
+        yield { done: true, citations: safeCitations }
         return
       }
       try {
@@ -91,7 +92,8 @@ export async function *streamPerplexity(params: {
       }
     }
   }
-  yield { done: true, citations }
+  const safeCitations: string[] = Array.isArray(citations) ? citations : [];
+  return void (yield { done: true, citations: safeCitations });
 }
 
 

@@ -4,7 +4,7 @@ import { join } from 'path'
 import { GoogleGenAI } from '@google/genai'
 // Mock functionality removed for production
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { selectModelForFeature, estimateTokens, UseCase } from '@/src/core/model-selector'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
@@ -65,13 +65,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Budget and access checks
-    const estimatedTokens = estimateTokens('document analysis') + 2500
-    const modelSelection = selectModelForFeature('document_analysis', estimatedTokens)
+    const estimatedTokens = estimateTokens(UseCase.DOCUMENT_ANALYSIS) + 2500
+    const modelSelection = selectModelForFeature(UseCase.DOCUMENT_ANALYSIS, estimatedTokens)
 
 
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'document_analysis', typeof modelSelection === 'string' ? modelSelection : modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, UseCase.DOCUMENT_ANALYSIS, typeof modelSelection === 'string' ? modelSelection : modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     // 📊 ENHANCED RESPONSE WITH METADATA
     const response = { 
-      ok: true, 
+      success: true, 
       output: {
         analysis: analysisText,
         type: mimeType,

@@ -7,6 +7,7 @@
 import { GoogleGenerativeAI, type GenerateContentRequest, type GenerateContentResponse } from '@google/generative-ai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { estimateTokensForMessages } from '@/src/core/models/gemini'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/monitoring/budget'
 import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'

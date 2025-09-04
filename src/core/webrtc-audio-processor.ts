@@ -179,25 +179,28 @@ export class WebRTCAudioProcessor {
           const outputData = outputBuffer.getChannelData(channel)
 
           // Apply real-time processing
+          const th = Number.isFinite(threshold) ? (threshold as number) : 0
+          const cTh = Number.isFinite(compressionThreshold) ? (compressionThreshold as number) : 1.0
           for (let i = 0; i < inputData.length; i++) {
+            const sample = inputData[i]
+            if (!Number.isFinite(sample)) continue
+
             // Apply noise gate
-            const threshold = 0.01
-            if (Math.abs(inputData[i]) < threshold) {
+            if (Math.abs(sample) < th) {
               outputData[i] = 0
             } else {
               // Apply compression
               const compressionRatio = 4
-              const compressionThreshold = 0.5
-              let sample = inputData[i]
+              let processedSample = sample
 
-              if (Math.abs(sample) > compressionThreshold) {
-                const excess = Math.abs(sample) - compressionThreshold
+              if (Math.abs(sample) > cTh) {
+                const excess = Math.abs(sample) - cTh
                 const compressedExcess = excess / compressionRatio
-                sample =
-                  sample > 0 ? compressionThreshold + compressedExcess : -(compressionThreshold + compressedExcess)
+                processedSample =
+                  sample > 0 ? cTh + compressedExcess : -(cTh + compressedExcess)
               }
 
-              outputData[i] = sample
+              outputData[i] = processedSample
             }
           }
         }

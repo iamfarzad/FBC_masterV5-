@@ -176,8 +176,10 @@ export class TokenCostCalculator {
     const dailyCosts: Record<string, number> = {}
 
     usageLogs.forEach((log) => {
-      const date = new Date(log.created_at).toISOString().split("T")[0]
-      dailyCosts[date] = (dailyCosts[date] || 0) + log.total_cost
+      if (!log || typeof log !== 'object') return
+      const anyLog = log as any
+      const date = new Date(anyLog.created_at).toISOString().split('T')[0]
+      dailyCosts[date] = (dailyCosts[date] || 0) + (anyLog.total_cost ?? 0)
     })
 
     return dailyCosts
@@ -187,12 +189,14 @@ export class TokenCostCalculator {
     const breakdown: Record<string, { cost: number; usage: number }> = {}
 
     usageLogs.forEach((log) => {
-      const provider = log.provider
+      if (!log || typeof log !== 'object') return
+      const anyLog = log as any
+      const provider = String(anyLog.provider ?? 'unknown')
       if (!breakdown[provider]) {
         breakdown[provider] = { cost: 0, usage: 0 }
       }
-      breakdown[provider].cost += log.total_cost
-      breakdown[provider].usage += log.total_tokens
+      breakdown[provider].cost += anyLog.total_cost ?? 0
+      breakdown[provider].usage += anyLog.total_tokens ?? 0
     })
 
     return breakdown

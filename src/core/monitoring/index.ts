@@ -6,6 +6,18 @@
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { createHash } from 'crypto'
 
+export const MODEL_PRICING: Record<string, number> = {
+  'gemini-1.5-pro': 0.5,
+  'gemini-1.5-flash': 0.075,
+  // add others here...
+};
+
+export function estimateCost(totalTokens: number, model: string): number {
+  const costPerMillion = MODEL_PRICING[model];
+  if (typeof costPerMillion !== 'number') return 0;
+  return (totalTokens / 1_000_000) * costPerMillion;
+}
+
 export interface TokenUsageLog {
   id?: string
   user_id?: string
@@ -229,16 +241,8 @@ export class TokenUsageLogger {
   }
 
   private calculateCost(model: string, totalTokens: number): number {
-    // Cost per 1M tokens (approximate)
-    const costs: Record<string, number> = {
-      'gemini-1.5-flash': 0.075, // $0.075 per 1M tokens
-      'gemini-1.5-flash-8b': 0.025, // $0.025 per 1M tokens
-      'gemini-1.5-flash': 0.075,
-      'gemini-1.5-pro': 0.375,
-      'gemini-1.0-pro': 0.5
-    }
-
-    const costPerMillion = costs[model] || costs['gemini-2.5-flash-lite']
+    // Use the global MODEL_PRICING
+    const costPerMillion = MODEL_PRICING[model] || MODEL_PRICING['gemini-1.5-flash']
     return (totalTokens / 1000000) * costPerMillion
   }
 

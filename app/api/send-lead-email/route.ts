@@ -19,11 +19,32 @@ const emailRequestSchema = z.object({
   customData: z.record(z.any()).optional()
 })
 
+const leadSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email(),
+  company: z.string().optional().nullable(),
+  painPoints: z.array(z.string()).optional().nullable(),
+  ai_readiness: z.number().optional().nullable(),
+});
+
+const customDataSchema = z.object({
+  estimatedSavings: z.number().optional(),
+  roiTimeline: z.string().optional(),
+  efficiencyGain: z.string().optional(),
+  recommendations: z.array(z.string()).optional(),
+  meetingDate: z.string().optional(),
+  meetingTime: z.string().optional(),
+  duration: z.string().optional(),
+  location: z.string().optional(),
+  meetingLink: z.string().optional(),
+});
+
 // Email templates
 const emailTemplates = {
   welcome: {
     subject: 'Welcome to F.B Consulting - Your AI Transformation Journey Begins',
-    template: (lead: unknown, data: unknown) => `
+    template: (lead: z.infer<typeof leadSchema>, data: z.infer<typeof customDataSchema>) => `
       <h2>Welcome ${lead.name}!</h2>
       
       <p>Thank you for your interest in F.B Consulting's AI solutions.</p>

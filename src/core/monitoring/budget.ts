@@ -113,8 +113,8 @@ export class DemoBudgetManager {
     
     const newSession: DemoBudget = {
       sessionId: id,
-      ipAddress,
-      userAgent,
+      ipAddress: ipAddress ?? '',
+      userAgent: userAgent ?? '',
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       totalTokensUsed: 0,
