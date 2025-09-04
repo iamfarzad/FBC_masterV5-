@@ -273,3 +273,4 @@ export function useIntersectionObserver(
 
   return [targetRef, isIntersecting] as const
 }
+

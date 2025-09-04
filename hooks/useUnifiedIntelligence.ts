@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useCommonPatterns } from './useCommonPatterns'
+// Remove unused import - functions are available from useCommonPatterns
 
 interface IntelligenceContext {
   lead: { email: string; name: string }
@@ -47,7 +47,11 @@ export function useUnifiedIntelligence() {
     text: true
   })
   
-  const { isLoading, error, startLoading, stopLoading } = useCommonPatterns.useLoadingState()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const startLoading = useCallback(() => setIsLoading(true), [])
+  const stopLoading = useCallback(() => setIsLoading(false), [])
   const sessionIdRef = useRef<string | null>(null)
   const lastFetchedRef = useRef<string | null>(null)
 
