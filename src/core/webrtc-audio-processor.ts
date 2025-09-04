@@ -179,8 +179,8 @@ export class WebRTCAudioProcessor {
           const outputData = outputBuffer.getChannelData(channel)
 
           // Apply real-time processing
-          const th = Number.isFinite(threshold) ? (threshold as number) : 0
-          const cTh = Number.isFinite(compressionThreshold) ? (compressionThreshold as number) : 1.0
+          const th = 0 // safe default threshold
+          const cTh = 1.0
           for (let i = 0; i < inputData.length; i++) {
             const sample = inputData[i]
             if (!Number.isFinite(sample)) continue

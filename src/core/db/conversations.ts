@@ -60,9 +60,19 @@ export async function updateEmailStatus(conversationId: string, status: 'pending
 
 // Increment email retry count
 export async function incrementEmailRetries(conversationId: string) {
+  // First read the current value
+  const { data: current } = await supabaseService
+    .from('conversations')
+    .select('email_retries')
+    .eq('id', conversationId)
+    .single()
+
+  const currentRetries = current?.email_retries ?? 0
+
+  // Then update with the incremented value
   const { data, error } = await supabaseService
     .from('conversations')
-    .update({ email_retries: supabaseService.raw('email_retries + 1') })
+    .update({ email_retries: currentRetries + 1 })
     .eq('id', conversationId)
     .select()
     .single()

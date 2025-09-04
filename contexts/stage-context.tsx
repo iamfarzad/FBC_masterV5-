@@ -5,8 +5,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 export interface StageItem {
   id: string
   label: string
-  done?: boolean
-  current?: boolean
+  done: boolean
+  current: boolean
 }
 
 export interface StageContextType {
@@ -54,8 +54,8 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
 
       if (currentIndex >= 0 && currentIndex < newStages.length - 1) {
         // Mark current stage as done and move to next
-        newStages[currentIndex] = { ...newStages[currentIndex], done: true, current: false }
-        newStages[currentIndex + 1] = { ...newStages[currentIndex + 1], current: true }
+        newStages[currentIndex] = { ...newStages[currentIndex]!, done: true, current: false }
+        newStages[currentIndex + 1] = { ...newStages[currentIndex + 1]!, current: true }
       }
 
       return newStages
@@ -69,8 +69,8 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
 
       if (currentIndex > 0) {
         // Move back to previous stage
-        newStages[currentIndex] = { ...newStages[currentIndex], current: false }
-        newStages[currentIndex - 1] = { ...newStages[currentIndex - 1], current: true, done: false }
+        newStages[currentIndex] = { ...newStages[currentIndex]!, current: false }
+        newStages[currentIndex - 1] = { ...newStages[currentIndex - 1]!, current: true, done: false }
       }
 
       return newStages

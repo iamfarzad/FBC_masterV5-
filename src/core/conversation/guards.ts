@@ -17,6 +17,10 @@ export function canProceedToStage(currentStage: string, nextStage: string, lead:
 }
 
 export function hasConsent(allow: boolean): boolean { return !!allow }
-export function contextReady(ctx: unknown): boolean { return !!(ctx?.company || ctx?.person || ctx?.role) }
+export function contextReady(ctx: unknown): boolean {
+  if (typeof ctx !== 'object' || ctx === null) return false
+  const anyCtx = ctx as any
+  return !!(anyCtx.company || anyCtx.person || anyCtx.role)
+}
 
 

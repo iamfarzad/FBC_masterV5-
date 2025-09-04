@@ -82,7 +82,7 @@ export class GeminiLiveAPI {
       const searchResults = await this.groundedSearchService.searchLead({
         name: leadContext.name,
         email: leadContext.email,
-        company: leadContext.company,
+        company: leadContext.company ?? '',
         sources: ['linkedin.com', 'google.com'],
         leadId: tempLeadId
       })
@@ -96,10 +96,11 @@ export class GeminiLiveAPI {
   }
 
   private buildEnhancedPrompt(leadContext: LeadContext, userMessage: string, searchResults: unknown[]) {
-    const searchContext = searchResults.length > 0 
-      ? `\n\nSEARCH RESULTS FOUND:\n${searchResults.map(result => 
-          `- ${result.source}: ${result.title || result.url}\n  ${result.snippet || 'No snippet available'}`
-        ).join('\n')}`
+    const searchContext = searchResults.length > 0
+      ? `\n\nSEARCH RESULTS FOUND:\n${searchResults.map((r: unknown) => {
+        const result = r as any
+        return `- ${result?.source ?? 'source'}: ${result?.title || result?.url}\n  ${result?.snippet || 'No snippet available'}`
+      }).join('\n')}`
       : '\n\nNOTE: No specific search results found, but proceeding with intelligent analysis based on available information.'
 
     return `You are F.B/c, Farzad Bayat's AI-powered lead generation assistant. 

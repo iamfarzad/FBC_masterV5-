@@ -178,7 +178,7 @@ export class TokenCostCalculator {
     usageLogs.forEach((log) => {
       if (!log || typeof log !== 'object') return
       const anyLog = log as any
-      const date = new Date(anyLog.created_at).toISOString().split('T')[0]
+      const date: string = new Date(anyLog.created_at).toISOString().split('T')[0] as string
       dailyCosts[date] = (dailyCosts[date] || 0) + (anyLog.total_cost ?? 0)
     })
 

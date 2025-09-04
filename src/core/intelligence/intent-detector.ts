@@ -17,8 +17,11 @@ export function detectIntent(userMessage: string): IntentResult {
   if (scores.consulting > scores.workshop && scores.consulting > 0) type = 'consulting'
   else if (scores.workshop > 0) type = 'workshop'
   const confidence = type === 'other' ? 0.4 : Math.min(0.9, (scores[type] || 1) / 3)
-  const slots: Record<string, unknown> = {}
-  return { type, confidence, slots }
+  const cleanSlots: Record<string, string | number | boolean> = {}
+  for (const [k, v] of Object.entries(slots as Record<string, unknown>)) {
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') cleanSlots[k] = v
+  }
+  return { type, confidence, slots: cleanSlots }
 }
 
 

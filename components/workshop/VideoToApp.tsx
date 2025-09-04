@@ -176,12 +176,13 @@ export function VideoToApp({
   }
 
   // 📁 ENHANCED EXPORT SYSTEM - Multiple formats and options
-  const downloadCode = (format: 'html' | 'json' | 'pdf' = exportFormat) => {
+  const downloadCode = (format?: 'html' | 'json' | 'pdf') => {
     if (!generatedCode) return
     
+    const exportFormatToUse = format || exportFormat;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     
-    switch (format) {
+    switch (exportFormatToUse) {
       case 'html':
         const htmlBlob = new Blob([generatedCode], { type: 'text/html' })
         const htmlUrl = URL.createObjectURL(htmlBlob)
@@ -357,10 +358,7 @@ export function VideoToApp({
               return (
                 <div key={step.id} className="flex flex-col items-center gap-2">
                   <motion.div
-                    className={`flex size-10 items-center justify-center rounded-full transition-all duration-300 ${
-                      isCompleted ? 'bg-green-600 text-white' :
-                      isCurrent ? 'bg-brand text-surface' : 'border border-border bg-surface-elevated text-text-muted'
-                    }`}
+                    className={`flex size-10 items-center justify-center rounded-full transition-all duration-300 ${isCompleted ? 'bg-green-600 text-white' : isCurrent ? 'bg-brand text-surface' : 'border border-border bg-surface-elevated text-text-muted'}`}
                     initial={{ scale: 0.8 }}
                     animate={{ scale: isCurrent ? 1.1 : 1 }}
                     transition={{ duration: 0.3 }}
@@ -449,11 +447,7 @@ export function VideoToApp({
                           <button
                             type="button"
                             onClick={() => setSelectedTemplate(template.id as any)}
-                            className={`w-full rounded-lg border p-3 text-left transition-all duration-200 ${
-                              isSelected 
-                                ? 'bg-brand/5 border-brand shadow-md' 
-                                : 'hover:border-brand/50 border-border bg-surface hover:bg-surface-elevated'
-                            }`}
+                            className={`w-full rounded-lg border p-3 text-left transition-all duration-200 ${isSelected ? 'bg-brand/5 border-brand shadow-md' : 'hover:border-brand/50 border-border bg-surface hover:bg-surface-elevated'}`}
                           >
                             <div className="mb-1 flex items-center gap-2">
                               <Icon className={`size-4 ${isSelected ? 'text-brand' : 'text-text-muted'}`} />
@@ -688,7 +682,7 @@ export function VideoToApp({
                   <Button 
                     variant="outline"
                     size="lg"
-                    onClick={downloadCode}
+                    onClick={() => downloadCode()}
                     className="h-12 rounded-xl border-border px-6 hover:bg-surface-elevated"
                   >
                     <Download className="mr-2 size-4" />
@@ -774,10 +768,7 @@ export function VideoToApp({
                   {/* Responsive Preview Container */}
                   <div className="relative overflow-hidden rounded-lg border border-border bg-surface">
                     <motion.div
-                      className={`mx-auto transition-all duration-300 ${
-                        previewMode === 'desktop' ? 'w-full' :
-                        previewMode === 'tablet' ? 'w-3/4 max-w-2xl' : 'w-1/3 max-w-sm'
-                      }`}
+                      className={`mx-auto transition-all duration-300 ${previewMode === 'desktop' ? 'w-full' : previewMode === 'tablet' ? 'w-3/4 max-w-2xl' : 'w-1/3 max-w-sm'}`}
                       layout
                     >
                       <iframe

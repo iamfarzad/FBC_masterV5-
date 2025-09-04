@@ -16,9 +16,9 @@ const examples = [
 
 export default function HallucinationChecker() {
   const [activeTab, setActiveTab] = useState("factual")
-  const [prompt, setPrompt] = useState(examples[0].prompt)
-  const [response, setResponse] = useState(examples[0].response)
-  const [analysis, setAnalysis] = useState(examples[0].analysis)
+  const [prompt, setPrompt] = useState(examples[0]!.prompt)
+  const [response, setResponse] = useState(examples[0]!.response)
+  const [analysis, setAnalysis] = useState(examples[0]!.analysis)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [customPrompt, setCustomPrompt] = useState("")
   const [customResponse, setCustomResponse] = useState("")

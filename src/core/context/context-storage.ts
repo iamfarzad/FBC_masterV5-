@@ -32,7 +32,8 @@ export class ContextStorage {
 
       // Handle multimodal context
       if (dataToStore.multimodal_context) {
-        dataToStore.multimodal_context = JSON.stringify(dataToStore.multimodal_context)
+        // If DB column expects string, convert to JSON string
+        dataToStore.multimodal_context = JSON.stringify(dataToStore.multimodal_context) as any
       }
 
       // Try Supabase first, fallback to in-memory

@@ -3,7 +3,7 @@
  * Helps choose the optimal model based on use case requirements
  */
 
-import { getConfig } from './config';
+import { config as cfg } from './config';
 
 export interface ModelSelection {
   model: string;
@@ -21,7 +21,7 @@ function scoreModelsForFeature(
   estimatedTokens?: number
 ): Array<{ model: string; score: number }> {
   // Map features to model buckets exposed in config.ai.gemini.models
-  const bucketByFeature: Record<string, keyof ReturnType<typeof getConfig>['ai']['gemini']['models']> = {
+  const bucketByFeature: Record<string, keyof typeof cfg['ai']['gemini']['models']> = {
     chat: 'default',
     text_generation: 'default',
     research: 'research',
@@ -31,7 +31,6 @@ function scoreModelsForFeature(
     fast: 'fastResponse',
   };
 
-  const cfg = getConfig();
   const models = cfg.ai.gemini.models;
 
   // Decide a candidate list ordered by preference
@@ -61,7 +60,6 @@ export function selectModelForFeature(
   estimatedTokens?: number,
   _hasSession?: boolean
 ): ModelSelection {
-  const cfg = getConfig();
   const capabilities = (cfg as any)?.ai?.gemini?.modelCapabilities ?? {};
   const scored = scoreModelsForFeature(feature, capabilities, estimatedTokens);
   const chosen = (scored[0]?.model) || cfg.ai.gemini.models.default;

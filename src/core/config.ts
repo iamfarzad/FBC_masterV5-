@@ -41,29 +41,19 @@ export interface AppConfig {
 
 export const config: AppConfig = {
   supabase: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ...(process.env.NEXT_PUBLIC_SUPABASE_URL ? { url: process.env.NEXT_PUBLIC_SUPABASE_URL } : {}),
+    ...(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? { anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY } : {}),
+    ...(process.env.SUPABASE_SERVICE_ROLE_KEY ? { serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY } : {}),
   },
   ai: {
     gemini: {
-      apiKey: process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
-      model: "gemini-2.5-flash",
+      ...(process.env.GEMINI_API_KEY ? { apiKey: process.env.GEMINI_API_KEY } : {}),
+      model: "gemini-2.5-pro",
       models: {
-        // Latest generation models (2.5 series)
-        default: "gemini-2.5-flash",
-        fastResponse: "gemini-2.5-flash-lite",
-        pro: "gemini-2.5-pro",
-        proLatest: "gemini-2.5-pro-latest",
-
-        // Previous generation models (1.5 series) - still supported
-        analysis: "gemini-1.5-flash",
-        research: "gemini-1.5-flash",
-        proLegacy: "gemini-1.5-pro",
-        proLegacyLatest: "gemini-1.5-pro-latest",
-
-        // Specialized models
-        flash8b: "gemini-1.5-flash-8b", // Cost-effective 8B parameter model
+        default: "gemini-2.5-pro",
+        fastResponse: "gemini-2.5-flash",
+        analysis: "gemini-2.5-pro",
+        research: "gemini-2.5-pro"
       },
 
       // Model capabilities and pricing (approximate)
@@ -136,20 +126,20 @@ export const config: AppConfig = {
       }
     },
     openai: {
-      apiKey: process.env.OPENAI_API_KEY,
-      model: "gpt-4",
+      ...(process.env.OPENAI_API_KEY ? { apiKey: process.env.OPENAI_API_KEY } : {}),
+      model: "gpt-4"
     },
   },
   email: {
     resend: {
-      apiKey: process.env.RESEND_API_KEY,
-      webhookSecret: process.env.RESEND_WEBHOOK_SECRET,
+      ...(process.env.RESEND_API_KEY ? { apiKey: process.env.RESEND_API_KEY } : {}),
+      ...(process.env.RESEND_WEBHOOK_SECRET ? { webhookSecret: process.env.RESEND_WEBHOOK_SECRET } : {}),
     },
   },
   search: {
     google: {
-      apiKey: process.env.GOOGLE_SEARCH_API_KEY,
-      engineId: process.env.GOOGLE_SEARCH_ENGINE_ID,
+      ...(process.env.GOOGLE_API_KEY ? { apiKey: process.env.GOOGLE_API_KEY } : {}),
+      ...(process.env.GOOGLE_ENGINE_ID ? { engineId: process.env.GOOGLE_ENGINE_ID } : {}),
     },
   },
   app: {

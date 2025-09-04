@@ -15,7 +15,7 @@ export class MultimodalContextManager {
       conversationHistory: [],
       visualContext: [],
       audioContext: [],
-      leadContext,
+      leadContext: leadContext ?? { name: '', email: '', company: '' },
       metadata: {
         createdAt: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
@@ -41,7 +41,7 @@ export class MultimodalContextManager {
       timestamp: new Date().toISOString(),
       modality: 'text',
       content,
-      metadata
+      metadata: metadata ?? {}
     }
 
     context.conversationHistory.push(entry)
@@ -102,7 +102,7 @@ export class MultimodalContextManager {
       timestamp: new Date().toISOString(),
       modality: 'vision',
       content: analysis,
-      metadata: { imageSize }
+      metadata: { ...(typeof imageSize === 'number' ? { imageSize } : {}) }
     }
 
     context.conversationHistory.push(convEntry)
@@ -113,7 +113,7 @@ export class MultimodalContextManager {
       timestamp: convEntry.timestamp,
       type,
       analysis,
-      imageData: imageData ? `${imageData.substring(0, 1000)  }...` : undefined, // Store truncated version
+      imageData: imageData ?? '',
       metadata: {
         size: imageSize || 0,
         format: type,

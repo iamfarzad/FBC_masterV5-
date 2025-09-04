@@ -13,21 +13,30 @@ export interface NormalizedPerson {
   company?: string
 }
 
-export function normalizePerson(input: RawPersonInput): NormalizedPerson {
-  const fullName = input.name?.trim() || 'Unknown'
-  const role = extractRole(input.text)
+export function normalizePerson(p: {
+  fullName?: string;
+  role?: string;
+  seniority?: string | null;
+  profileUrl?: string | null;
+  company?: string;
+}): NormalizedPerson {
   return {
-    fullName,
-    role: role || undefined,
-    seniority: undefined,
-    profileUrl: input.profileUrl || undefined,
-    company: input.company || undefined,
+    fullName: p.fullName ?? '',
+    ...(typeof p.role === 'string' ? { role: p.role } : {}),
+    seniority: p.seniority ?? null,
+    profileUrl: p.profileUrl ?? null,
+    ...(typeof p.company === 'string' ? { company: p.company } : {})
   }
 }
 
 function extractRole(text?: string | null): string | null {
   if (!text) return null
   const m = text.match(/(cto|ceo|founder|vp engineering|head of [^,\n]+)/i)
+  return m ? m[1] : null
+}
+
+export function extractLinkedInProfile(url: string): string | null {
+  const m = /https?:\/\/([\w.]*linkedin\.com\/in\/[^\/?#]+)/i.exec(url)
   return m ? m[1] : null
 }
 

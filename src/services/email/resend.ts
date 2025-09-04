@@ -31,11 +31,13 @@ export class EmailService {
       const { Resend } = await import('resend')
       const resend = new Resend(this.apiKey)
 
+      const text = template.text ?? template.html.replace(/<[^>]+>/g, ' ')
       const result = await resend.emails.send({
         from: template.from || 'F.B/c <noreply@yourdomain.com>',
         to: template.to,
         subject: template.subject,
         html: template.html,
+        text,
         replyTo: template.replyTo,
         attachments: template.attachments?.map(a => ({
           filename: a.filename,

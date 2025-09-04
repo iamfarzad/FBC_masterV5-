@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 export function CourseOutline() {
   const mods = getAllModules()
-  const firstAnchor = mods.length ? `/workshop/modules/${mods[0].slug}` : '#'
+  const firstAnchor = mods?.length ? `/workshop/modules/${mods[0].slug}` : '#'
   return (
     <Card className="neu-card">
       <CardHeader>
@@ -17,7 +17,7 @@ export function CourseOutline() {
       </CardHeader>
       <CardContent>
         <div className="grid gap-3">
-          {mods.map((m) => (
+          {mods?.map((m) => (
             <a key={m.slug} href={`/workshop/modules/${m.slug}`} className="hover:bg-accent/20 group rounded-md border bg-card p-3 transition-colors">
               <div className="flex items-center justify-between"><div className="font-medium">{m.title}</div><span className="text-xs text-muted-foreground">Phase {m.phase}</span></div>
               <div className="text-sm text-muted-foreground">{m.description}</div>

@@ -1,78 +1,89 @@
-export interface ConversationContext {
-  session_id: string
-  email: string
-  name?: string
-  company_url?: string
-  company_context?: unknown
-  person_context?: unknown
-  role?: string
-  role_confidence?: number
-  intent_data?: unknown
-  last_user_message?: string
-  ai_capabilities_shown?: string[]
-  tool_outputs?: Record<string, unknown>
-  multimodal_context?: MultimodalContext // Add this here
-  created_at?: string
-  updated_at?: string
-}
-
-export interface MultimodalContext {
-  sessionId: string
-  conversationHistory: ConversationEntry[]
-  visualContext: VisualEntry[]
-  audioContext: AudioEntry[]
-  leadContext?: LeadContext
-  metadata: {
-    createdAt: string
-    lastUpdated: string
-    modalitiesUsed: string[]
-    totalTokens: number
-  }
-}
-
-export interface ConversationEntry {
-  id: string
-  timestamp: string
-  modality: 'text' | 'voice' | 'vision'
-  content: string
-  metadata?: {
-    duration?: number // for audio
-    imageSize?: number // for images
-    confidence?: number // for analysis
-    transcription?: string // for voice
-  }
-}
-
-export interface VisualEntry {
-  id: string
-  timestamp: string
-  type: 'webcam' | 'screen' | 'upload'
-  analysis: string
-  imageData?: string // base64, stored temporarily
-  metadata: {
-    size: number
-    format: string
-    confidence: number
-  }
-}
-
-export interface AudioEntry {
-  id: string
-  timestamp: string
-  duration: number
-  transcription: string
-  metadata: {
-    sampleRate: number
-    format: string
-    confidence: number
-  }
-}
-
+/** Basic lead/person/company context used across chat + intelligence layers. */
 export interface LeadContext {
-  name?: string
-  email?: string
-  company?: string
-  role?: string
-  interests?: string[]
-  challenges?: string[]
+  email: string;
+  name: string;
+  company: string;
+}
+
+export interface CompanyContext {
+  name: string;
+  domain: string;
+  industry?: string;
+  size?: string;
+  summary?: string;
+  website?: string;
+  linkedin?: string;
+}
+
+export interface PersonContext {
+  fullName: string;
+  role?: string;
+  seniority?: string;
+  profileUrl?: string | null;
+  company?: string;
+}
+
+/** Multimodal data captured during a session. */
+export interface MultimodalData {
+  imageData?: string;
+  audioData?: Uint8Array | string;
+  /** Added to fix unified-provider video length checks. */
+  videoData?: Uint8Array | string;
+}
+
+/** Conversation entries: text modality with always-present metadata object. */
+export interface ConversationEntry {
+  id: string;
+  timestamp: string; // ISO
+  modality: 'text' | 'image' | 'audio' | 'video';
+  content: string;
+  metadata: {
+    duration?: number;
+    imageSize?: number;
+    confidence?: number;
+    transcription?: string;
+  };
+}
+
+/** Visual analysis entries produced by image/video tools. */
+export interface VisualEntry {
+  id: string;
+  timestamp: string; // ISO
+  type: 'webcam' | 'screen' | 'upload';
+  analysis: string;
+  /** Required string (call-sites can pass empty string). */
+  imageData: string;
+  metadata: {
+    size: number;                    // required number
+    format: 'webcam' | 'screen' | 'upload';
+    confidence: number;              // required number
+  };
+}
+
+/** In-memory multimodal context stored per session. */
+export interface MultimodalContext {
+  sessionId: string;
+  conversationHistory: ConversationEntry[];
+  visualContext: VisualEntry[];
+  audioContext: unknown[]; // refine later
+  /** Required; callers can pass an empty object with empty strings. */
+  leadContext: LeadContext;
+  metadata: {
+    createdAt: string;   // ISO
+    lastUpdated: string; // ISO
+    modalitiesUsed: Array<'text' | 'image' | 'audio' | 'video'>;
+    totalTokens: number;
+  };
+}
+
+/**
+ * Snapshot passed to tool selection / intent logic.
+ * NOTE: `role` is optional to avoid `string | undefined` → `string` errors.
+ */
+export interface ContextSnapshot {
+  lead: { email: string; name: string };
+  capabilities: string[];
+  company?: CompanyContext;
+  person?: PersonContext;
+  role?: string;
 }

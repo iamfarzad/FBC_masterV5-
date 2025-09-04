@@ -78,6 +78,7 @@ export async function* streamEducationalContent(
     )
 
     const currentInteraction = interactionHistory[0]
+    if (!currentInteraction) return
     const pastInteractions = interactionHistory.slice(1)
 
     // Build educational context

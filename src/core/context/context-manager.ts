@@ -31,7 +31,7 @@ export async function getContextSnapshot(sessionId: string): Promise<ContextSnap
   if (!data) return null
 
   const snapshot: ContextSnapshot = {
-    lead: { email: data.email, name: data.name || '' },
+    lead: data.email ? { email: data.email, name: data.name || '' } : undefined,
     company: data.company_context || undefined,
     person: data.person_context || undefined,
     role: data.role || undefined,

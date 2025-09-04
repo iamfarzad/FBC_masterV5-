@@ -88,23 +88,26 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
             )
             multimodalContent += `[Image input received - ${context.multimodalData.imageData.length} bytes]`
           }
-          if (context.multimodalData.videoData) {
-            // Add visual analysis for video to multimodal context
-            await multimodalContextManager.addVisualAnalysis(
-              context.sessionId,
-              `Video input: ${context.multimodalData.videoData.length} bytes`,
-              'screen', // default type for video
-              context.multimodalData.videoData.length,
-              context.multimodalData.videoData
-            )
-            multimodalContent += `[Video input received - ${context.multimodalData.videoData.length} bytes]`
+          {
+            const v = (context.multimodalData as any)?.videoData as Uint8Array | string | undefined
+            if (v) {
+              const len = typeof v === 'string' ? v.length : (typeof (v as any).byteLength === 'number' ? (v as any).byteLength : (v as any).length ?? 0)
+              // Add visual analysis for video to multimodal context
+              await multimodalContextManager.addVisualAnalysis(
+                context.sessionId,
+                `Video input: ${len} bytes`,
+                'screen', // default type for video
+                len,
+                v
+              )
+              multimodalContent += `[Video input received - ${len} bytes]`
+            }
           }
         } catch (multimodalError) {
-          const error = unifiedErrorHandler.handleError(multimodalError, {
-            sessionId: context?.sessionId,
-            mode,
-            userId: context?.adminId
-          }, 'multimodal_processing')
+          const meta1: { sessionId?: string; mode?: string; userId?: string } = { mode }
+          if (context?.sessionId) meta1.sessionId = context.sessionId
+          if (context?.adminId) meta1.userId = context.adminId
+          const error = unifiedErrorHandler.handleError(multimodalError, meta1, 'multimodal_processing')
           // Continue without multimodal processing
         }
       }
@@ -165,11 +168,10 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
       }
 
     } catch (error) {
-      const chatError = unifiedErrorHandler.handleError(error, {
-        sessionId: context?.sessionId,
-        mode,
-        userId: context?.adminId
-      }, 'chat_generation')
+      const meta2: { sessionId?: string; mode?: string; userId?: string } = { mode }
+      if (context?.sessionId) meta2.sessionId = context.sessionId
+      if (context?.adminId) meta2.userId = context.adminId
+      const chatError = unifiedErrorHandler.handleError(error, meta2, 'chat_generation')
 
       // Yield standardized error message
       yield {
@@ -678,9 +680,10 @@ Response Style:
           })}]`
         }
 
-        enhancedMessages[firstUserMessageIndex] = {
-          ...enhancedMessages[firstUserMessageIndex],
-          content: enhancedMessages[firstUserMessageIndex].content + additionalContent
+        {
+          const prev = enhancedMessages[firstUserMessageIndex]
+          const prevContent = prev ? (prev as any).content ?? '' : ''
+          enhancedMessages[firstUserMessageIndex] = { role: 'user', content: prevContent + additionalContent }
         }
       }
     }
@@ -698,41 +701,6 @@ Response Style:
     return `You are F.B/c AI, a helpful and intelligent assistant. Provide clear, actionable responses.`
   }
 
-  // Admin session management implementation
-  async initializeAdminSession(sessionId: string, adminId?: string): Promise<void> {
-    await adminChatService.getOrCreateSession(sessionId, adminId)
-    // Update in-memory tracking
-    this.adminSessions.set(sessionId, {
-      isConnected: true,
-      lastActivity: new Date(),
-      adminId,
-      abortController: null
-    })
-  }
-
-  async updateAdminActivity(sessionId: string): Promise<void> {
-    await adminChatService.updateLastActivity(sessionId)
-    const session = this.adminSessions.get(sessionId)
-    if (session) {
-      session.lastActivity = new Date()
-    }
-  }
-
-  async disconnectAdminSession(sessionId: string): Promise<void> {
-    await adminChatService.disconnectSession(sessionId)
-    this.adminSessions.delete(sessionId)
-  }
-
-  async getAdminSessionStatus(sessionId: string): Promise<{ isActive: boolean; lastActivity: Date } | null> {
-    const session = this.adminSessions.get(sessionId)
-    if (session) {
-      return {
-        isActive: session.isConnected,
-        lastActivity: session.lastActivity
-      }
-    }
-    return null
-  }
 
   // Admin search and context implementation
   async searchAdminConversations(query: string, limit: number = 10, adminId?: string): Promise<any[]> {

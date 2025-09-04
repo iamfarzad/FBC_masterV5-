@@ -137,10 +137,10 @@ class GeminiService {
       const { sessionId, userId } = options
       
       // Extract base64 data and mime type
-      const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData
-      const mimeType = imageData.includes('data:') 
-        ? imageData.split(';')[0].split(':')[1] 
-        : 'image/jpeg'
+      const base64Data = String(imageData.includes(',') ? imageData.split(',')[1] : imageData)
+      const mimeType = String(imageData.includes('data:')
+        ? imageData.split(';')[0].split(':')[1]
+        : 'image/jpeg')
       
       // Estimate tokens (rough estimate for images)
       const estimatedTokens = estimateTokens(prompt) + 258 // Base image token cost

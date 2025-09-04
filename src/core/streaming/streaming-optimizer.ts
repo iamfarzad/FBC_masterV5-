@@ -257,9 +257,9 @@ export class StreamingOptimizer {
               const controller = streamControllers[nextStreamIndex]
               if (controller) {
                 this.processStreamChunk(
-                  controller,
+                  controller as unknown as ReadableStreamDefaultController,
                   nextStreamIndex,
-                  controller,
+                  controller as unknown as ReadableStreamDefaultController,
                   activeStreams
                 )
               }

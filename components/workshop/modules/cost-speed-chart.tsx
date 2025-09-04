@@ -38,11 +38,11 @@ export default function CostSpeedChart() {
           <div className="space-y-6 rounded-xl border bg-card p-6 shadow-sm lg:col-span-1">
             <div className="space-y-2">
               <label className="text-sm font-medium">Input Tokens: {inputTokens.toLocaleString()}</label>
-              <Slider value={[inputTokens]} min={100} max={10000} step={100} onValueChange={(v) => setInputTokens(v[0])} />
+              <Slider value={[inputTokens]} min={100} max={10000} step={100} onValueChange={(v) => setInputTokens(v[0]!)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Output Tokens: {outputTokens.toLocaleString()}</label>
-              <Slider value={[outputTokens]} min={100} max={5000} step={100} onValueChange={(v) => setOutputTokens(v[0])} />
+              <Slider value={[outputTokens]} min={100} max={5000} step={100} onValueChange={(v) => setOutputTokens(v[0]!)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Models</label>

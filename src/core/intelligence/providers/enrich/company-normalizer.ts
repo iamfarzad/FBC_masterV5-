@@ -14,23 +14,9 @@ export interface NormalizedCompany {
   linkedin?: string
 }
 
-export function normalizeCompany(input: RawCompanyInput, fallbackDomain: string): NormalizedCompany {
-  const text = (input.text || '').trim()
-  const domain = fallbackDomain
-  const name = input.title?.trim() || domain.split('.')[0]
-
-  // Extremely lightweight heuristics
-  const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean)
-  const summary = lines.slice(0, 3).join(' ')
-
-  return {
-    name,
-    domain,
-    industry: undefined,
-    size: undefined,
-    summary: summary || undefined,
-    website: input.url || `https://${domain}`,
-  }
+export function normalizeCompany(input: { name?: string; url?: string }): NormalizedCompany {
+  const { name, url } = input
+  return { name: name ?? '', url: url ?? '' }
 }
 
 

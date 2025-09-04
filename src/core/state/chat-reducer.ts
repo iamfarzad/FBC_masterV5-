@@ -146,7 +146,6 @@ export function createInitialChatState(): ChatState {
     sessionId: null,
     feature: 'chat',
     // showProgressRail removed: not in ChatState
-    activities: [],
     currentStage: 1,
     input: '',
     showVoiceOverlay: false,

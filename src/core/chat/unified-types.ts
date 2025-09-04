@@ -112,9 +112,9 @@ export interface IntelligenceContext {
 }
 
 export interface MultimodalData {
-  images?: string[]
-  audio?: string[]
-  video?: string[]
+  imageData?: string
+  audioData?: Uint8Array | string
+  videoData?: Uint8Array | string
 }
 
 export interface ChatCapabilities {

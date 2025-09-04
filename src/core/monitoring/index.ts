@@ -122,8 +122,8 @@ export class TokenUsageLogger {
         .eq('user_id', userId)
         .gte('created_at', startOfMonth.toISOString())
 
-      const currentDailyUsage = dailyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
-      const currentMonthlyUsage = monthlyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
+      const currentDailyUsage = dailyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
+      const currentMonthlyUsage = monthlyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
 
       // Count requests
       const { count: dailyRequests } = await supabase
@@ -224,8 +224,8 @@ export class TokenUsageLogger {
 
     // Log the successful request
     await this.logTokenUsage({
-      user_id: userId,
-      session_id: sessionId,
+      user_id: userId ?? '',
+      session_id: sessionId ?? '',
       feature,
       model,
       input_tokens: Math.round(inputTokens),
@@ -233,8 +233,8 @@ export class TokenUsageLogger {
       total_tokens: Math.round(totalTokens),
       estimated_cost: estimatedCost,
       success,
-      error_message: errorMessage,
-      usage_metadata: usageMetadata
+      error_message: errorMessage ?? '',
+      usage_metadata: (usageMetadata as Record<string, unknown>) ?? {}
     })
 
     return { allowed: true }
@@ -243,7 +243,8 @@ export class TokenUsageLogger {
   private calculateCost(model: string, totalTokens: number): number {
     // Use the global MODEL_PRICING
     const costPerMillion = MODEL_PRICING[model] || MODEL_PRICING['gemini-1.5-flash']
-    return (totalTokens / 1000000) * costPerMillion
+    if (typeof costPerMillion !== 'number') return 0
+  return (totalTokens / 1000000) * costPerMillion
   }
 
   async getUsageStats(userId?: string, sessionId?: string, timeframe: 'day' | 'week' | 'month' = 'day'): Promise<{

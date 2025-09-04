@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseService } from "@/src/lib/supabase";
 import { logServerActivity } from "@/src/core/server-activity-logger"
 import { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/src/core/database.types";
 
 // Type definitions for Resend webhook payload
 interface ResendWebhookData {
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleEmailSent(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailSent(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -122,10 +123,18 @@ async function handleEmailSent(supabase: SupabaseClient, data: ResendWebhookData
 
     // Update email campaign status if applicable
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("sent_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.sent_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          sent_count: supabase.raw("sent_count + 1"),
+          sent_count: currentCount + 1,
           last_sent_at: new Date().toISOString(),
         })
         .eq("id", data.tags.campaign_id)
@@ -136,7 +145,7 @@ async function handleEmailSent(supabase: SupabaseClient, data: ResendWebhookData
   }
 }
 
-async function handleEmailDelivered(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailDelivered(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -149,10 +158,18 @@ async function handleEmailDelivered(supabase: SupabaseClient, data: ResendWebhoo
 
     // Update email campaign delivery stats
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("delivered_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.delivered_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          delivered_count: supabase.raw("delivered_count + 1"),
+          delivered_count: currentCount + 1,
         })
         .eq("id", data.tags.campaign_id)
     }
@@ -162,7 +179,7 @@ async function handleEmailDelivered(supabase: SupabaseClient, data: ResendWebhoo
   }
 }
 
-async function handleEmailBounced(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailBounced(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -176,10 +193,18 @@ async function handleEmailBounced(supabase: SupabaseClient, data: ResendWebhookD
 
     // Update email campaign bounce stats
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("bounced_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.bounced_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          bounced_count: supabase.raw("bounced_count + 1"),
+          bounced_count: currentCount + 1,
         })
         .eq("id", data.tags.campaign_id)
     }
@@ -200,7 +225,7 @@ async function handleEmailBounced(supabase: SupabaseClient, data: ResendWebhookD
   }
 }
 
-async function handleEmailComplained(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailComplained(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -213,10 +238,18 @@ async function handleEmailComplained(supabase: SupabaseClient, data: ResendWebho
 
     // Update email campaign complaint stats
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("complained_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.complained_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          complained_count: supabase.raw("complained_count + 1"),
+          complained_count: currentCount + 1,
         })
         .eq("id", data.tags.campaign_id)
     }
@@ -238,7 +271,7 @@ async function handleEmailComplained(supabase: SupabaseClient, data: ResendWebho
   }
 }
 
-async function handleEmailOpened(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailOpened(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -251,21 +284,37 @@ async function handleEmailOpened(supabase: SupabaseClient, data: ResendWebhookDa
 
     // Update email campaign open stats
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("opened_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.opened_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          opened_count: supabase.raw("opened_count + 1"),
+          opened_count: currentCount + 1,
         })
         .eq("id", data.tags.campaign_id)
     }
 
     // Update lead engagement
     if (data.to) {
+      const { data: current } = await supabase
+        .from("leads")
+        .select("email_engagement_score")
+        .eq("email", Array.isArray(data.to) ? data.to[0] : data.to)
+        .single()
+
+      const currentScore = current?.email_engagement_score ?? 0
+
       await supabase
         .from("leads")
         .update({
           last_email_opened: new Date().toISOString(),
-          email_engagement_score: supabase.raw("COALESCE(email_engagement_score, 0) + 1"),
+          email_engagement_score: currentScore + 1,
         })
         .eq("email", Array.isArray(data.to) ? data.to[0] : data.to)
     }
@@ -275,7 +324,7 @@ async function handleEmailOpened(supabase: SupabaseClient, data: ResendWebhookDa
   }
 }
 
-async function handleEmailClicked(supabase: SupabaseClient, data: ResendWebhookData) {
+async function handleEmailClicked(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -289,21 +338,37 @@ async function handleEmailClicked(supabase: SupabaseClient, data: ResendWebhookD
 
     // Update email campaign click stats
     if (data.tags?.campaign_id) {
+      const { data: current } = await supabase
+        .from("email_campaigns")
+        .select("clicked_count")
+        .eq("id", data.tags.campaign_id)
+        .single()
+
+      const currentCount = current?.clicked_count ?? 0
+
       await supabase
         .from("email_campaigns")
         .update({
-          clicked_count: supabase.raw("clicked_count + 1"),
+          clicked_count: currentCount + 1,
         })
         .eq("id", data.tags.campaign_id)
     }
 
     // Update lead engagement (clicks are worth more than opens)
     if (data.to) {
+      const { data: current } = await supabase
+        .from("leads")
+        .select("email_engagement_score")
+        .eq("email", Array.isArray(data.to) ? data.to[0] : data.to)
+        .single()
+
+      const currentScore = current?.email_engagement_score ?? 0
+
       await supabase
         .from("leads")
         .update({
           last_email_clicked: new Date().toISOString(),
-          email_engagement_score: supabase.raw("COALESCE(email_engagement_score, 0) + 3"),
+          email_engagement_score: currentScore + 3,
         })
         .eq("email", Array.isArray(data.to) ? data.to[0] : data.to)
     }

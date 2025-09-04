@@ -230,7 +230,7 @@ export class URLContextService {
 
     // Canonical URL
     const canonicalMatch = html.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/i);
-    metadata.canonicalUrl = canonicalMatch ? canonicalMatch[1] : '';
+    metadata.canonicalUrl = canonicalMatch?.[1] ?? '';
 
     // Keywords
     const keywordsMatch = html.match(/<meta[^>]*name="keywords"[^>]*content="([^"]+)"/i);

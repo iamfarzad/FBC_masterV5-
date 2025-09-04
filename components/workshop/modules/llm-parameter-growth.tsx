@@ -25,8 +25,9 @@ export default function LLMParameterGrowth() {
   const animationRef = useRef<number | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const currentYear = modelData[yearIndex].year
+  const currentYear = modelData[yearIndex]?.year
   const visibleModels = modelData.filter((m) => m.year <= currentYear)
+  const selectedModelData = selectedModel !== null ? visibleModels[selectedModel] : null;
 
   useEffect(() => {
     if (!isPlaying) return
@@ -112,7 +113,7 @@ export default function LLMParameterGrowth() {
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <div className="space-y-1"><Slider value={[yearIndex]} min={0} max={modelData.length - 1} step={1} onValueChange={(v) => { setYearIndex(v[0]); setIsPlaying(false) }} /><div className="flex justify-between text-xs text-muted-foreground"><span>2018</span><span>2024</span></div></div>
+                                            <div className="space-y-1"><Slider value={[yearIndex]} min={0} max={modelData.length - 1} step={1} onValueChange={(v) => { setYearIndex(v[0]!); setIsPlaying(false) }} /><div className="flex justify-between text-xs text-muted-foreground"><span>2018</span><span>2024</span></div></div>
                       <div className="flex justify-center gap-2">
                         <Button variant={isPlaying ? 'default' : 'outline'} size="sm" onClick={() => { if (isPlaying) setIsPlaying(false); else { if (yearIndex >= modelData.length - 1) setYearIndex(0); setIsPlaying(true) } }}>{isPlaying ? 'Pause' : 'Play Animation'}</Button>
                         <Button variant="outline" size="sm" onClick={() => { setIsPlaying(false); setYearIndex(0); setSelectedModel(null) }}>Reset</Button>
@@ -124,11 +125,11 @@ export default function LLMParameterGrowth() {
                   <div className="h-full rounded-xl border bg-card p-6 shadow-sm">
                     <h3 className="mb-4 text-xl font-medium">Model Details</h3>
                     <AnimatePresence mode="wait">
-                      {selectedModel !== null ? (
+                      {selectedModelData ? (
                         <motion.div key={`details-${selectedModel}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
-                          <div className={cn("w-full h-2 rounded-full", visibleModels[selectedModel].color)} />
-                          <div><h4 className="text-lg font-bold">{visibleModels[selectedModel].name} ({visibleModels[selectedModel].year})</h4><p className="text-sm text-muted-foreground">{visibleModels[selectedModel].description}</p></div>
-                          <div><div className="text-sm font-medium">Parameters</div><div className="text-2xl font-bold">{typeof visibleModels[selectedModel].parameters === 'number' ? `${visibleModels[selectedModel].parameters} billion` : visibleModels[selectedModel].parameters}</div></div>
+                          <div className={cn("w-full h-2 rounded-full", selectedModelData.color)} />
+                          <div><h4 className="text-lg font-bold">{selectedModelData.name} ({selectedModelData.year})</h4><p className="text-sm text-muted-foreground">{selectedModelData.description}</p></div>
+                          <div><div className="text-sm font-medium">Parameters</div><div className="text-2xl font-bold">{typeof selectedModelData.parameters === 'number' ? `${selectedModelData.parameters} billion` : selectedModelData.parameters}</div></div>
                         </motion.div>
                       ) : (
                         <motion.div key="no-selection" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
@@ -145,7 +146,7 @@ export default function LLMParameterGrowth() {
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                   <motion.div className="h-full rounded-xl border bg-card p-6 shadow-sm" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                    <div className="mb-6 flex items-center justify-between"><h3 className="text-xl font-medium">Neural Network Architecture</h3><div className="text-sm text-muted-foreground">{selectedModel !== null ? `${visibleModels[selectedModel].name} (${visibleModels[selectedModel].year})` : 'Select a model to view architecture'}</div></div>
+                    <div className="mb-6 flex items-center justify-between"><h3 className="text-xl font-medium">Neural Network Architecture</h3><div className="text-sm text-muted-foreground">{selectedModelData ? `${selectedModelData.name} (${selectedModelData.year})` : 'Select a model to view architecture'}</div></div>
                     <div className="bg-muted/30 relative mb-6 h-[400px] overflow-hidden rounded-lg">{selectedModel === null ? (<div className="absolute inset-0 flex items-center justify-center text-muted-foreground">Click a model in Size Evolution</div>) : (<canvas ref={canvasRef} width={800} height={400} className="size-full" />)}</div>
                   </motion.div>
                 </div>

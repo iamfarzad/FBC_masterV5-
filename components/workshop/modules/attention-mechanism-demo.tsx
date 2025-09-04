@@ -9,11 +9,11 @@ import { cn } from '@/src/core/utils'
 const examples = [
   { id: "example1", sentence: "The cat sat on the mat because it was comfortable.", focusWord: "it", attentionScores: { The: 0.05, cat: 0.65, sat: 0.1, on: 0.05, the: 0.05, mat: 0.3, because: 0.1, it: 0.1, was: 0.2, comfortable: 0.4 }, explanation: "The model pays most attention to 'cat' (65%) when processing 'it', correctly identifying that 'it' refers to the cat, not the mat." },
   { id: "example2", sentence: "The cat sat on the mat because it was soft.", focusWord: "it", attentionScores: { The: 0.05, cat: 0.3, sat: 0.1, on: 0.05, the: 0.05, mat: 0.7, because: 0.1, it: 0.1, was: 0.2, soft: 0.4 }, explanation: "The model pays most attention to 'mat' (70%) when processing 'it', correctly identifying that 'it' refers to the mat in this context, not the cat." },
-  { id: "example3", sentence: "The developers released the update after they fixed the bugs.", focusWord: "they", attentionScores: { The: 0.1, developers: 0.8, released: 0.2, the: 0.05, update: 0.1, after: 0.1, they: 0.1, fixed: 0.2, the: 0.05, bugs: 0.3 }, explanation: "The model pays most attention to 'developers' (80%) when processing 'they', correctly resolving the pronoun reference." },
+  { id: "example3", sentence: "The developers released the update after they fixed the bugs.", focusWord: "they", attentionScores: { The: 0.1, developers: 0.8, released: 0.2, the: 0.05, update: 0.1, after: 0.1, they: 0.1, fixed: 0.2, bugs: 0.3 }, explanation: "The model pays most attention to 'developers' (80%) when processing 'they', correctly resolving the pronoun reference." },
 ]
 
 export default function AttentionMechanismDemo() {
-  const [activeExample, setActiveExample] = useState(examples[0])
+  const [activeExample, setActiveExample] = useState(() => examples[0]);
   const [focusWord, setFocusWord] = useState<string | null>(null)
   const [showExplanation, setShowExplanation] = useState(false)
   const [animationSpeed, setAnimationSpeed] = useState(1)
@@ -54,14 +54,15 @@ export default function AttentionMechanismDemo() {
                       const isHighlightable = word === activeExample.focusWord
                       const isSelected = word === focusWord
                       const attentionScores = focusWord ? activeExample.attentionScores : null
+                      const attentionScore = attentionScores ? attentionScores[word as keyof typeof attentionScores] : 0;
                       return (
                         <div key={index} className="relative">
                           <motion.div className={cn("px-3 py-2 rounded-lg text-lg relative z-10 transition-colors", isHighlightable ? "cursor-pointer" : "cursor-default", isSelected ? "bg-info text-surface" : isHighlightable ? "bg-info/10 dark:bg-info/30" : "")} onClick={() => { if (isHighlightable && !isAnimating) { setFocusWord(isSelected ? null : word); setShowExplanation(false) } }} whileHover={isHighlightable && !isAnimating ? { scale: 1.05 } : {}} whileTap={isHighlightable && !isAnimating ? { scale: 0.95 } : {}}>
                             {word}
                           </motion.div>
-                          {attentionScores && attentionScores[word] > 0.1 && (
+                          {attentionScores && attentionScore > 0.1 && (
                             <motion.div className="absolute -bottom-8 left-1/2 -translate-x-1/2 transform text-xs font-medium" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                              <span className={cn("px-1.5 py-0.5 rounded", attentionScores[word] > 0.5 ? "bg-info text-surface" : "bg-info/10 dark:bg-info/30")}>{(attentionScores[word] * 100).toFixed(0)}%</span>
+                              <span className={cn("px-1.5 py-0.5 rounded", attentionScore > 0.5 ? "bg-info text-surface" : "bg-info/10 dark:bg-info/30")}>{(attentionScore * 100).toFixed(0)}%</span>
                             </motion.div>
                           )}
                         </div>

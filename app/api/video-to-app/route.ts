@@ -212,7 +212,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
         sessionId,
         'video_to_app',
         modelSelection.model,
-        estimatedTokens
+        estimatedTokens,
+        0
       )
       
       if (!budgetResult.allowed) {
@@ -320,7 +321,8 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
         sessionId,
         'video_to_app',
         modelSelection.model,
-        estimatedTokens
+        estimatedTokens,
+        0
       )
       
       if (!budgetResult.allowed) {

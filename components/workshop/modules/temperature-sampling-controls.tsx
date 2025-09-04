@@ -32,15 +32,15 @@ export default function TemperatureSamplingControls() {
         <div className="w-full max-w-3xl space-y-6 rounded-xl border bg-card p-6 shadow-sm">
           <div className="space-y-2">
             <div className="flex justify-between text-sm"><span>Temperature</span><span>{temperature.toFixed(2)}</span></div>
-            <Slider value={[temperature]} min={0} max={1.5} step={0.05} onValueChange={(v) => setTemperature(v[0])} />
+            <Slider value={[temperature]} min={0} max={1.5} step={0.05} onValueChange={(v) => setTemperature(v[0]!)} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm"><span>Top‑p</span><span>{topP.toFixed(2)}</span></div>
-            <Slider value={[topP]} min={0.1} max={1} step={0.05} onValueChange={(v) => setTopP(v[0])} />
+            <Slider value={[topP]} min={0.1} max={1} step={0.05} onValueChange={(v) => setTopP(v[0]!)} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm"><span>Top‑k</span><span>{topK}</span></div>
-            <Slider value={[topK]} min={0} max={100} step={5} onValueChange={(v) => setTopK(v[0])} />
+            <Slider value={[topK]} min={0} max={100} step={5} onValueChange={(v) => setTopK(v[0]!)} />
           </div>
           <div className="space-y-2">
             <div className={`bg-muted/30 min-h-[120px] whitespace-pre-wrap rounded-md p-4 ${isGenerating ? 'animate-pulse' : ''}`}>{output}</div>

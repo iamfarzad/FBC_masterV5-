@@ -54,6 +54,7 @@ export default function EmbeddingExplorer() {
           const opacity = Math.max(0, 1 - distance)
           ctx.strokeStyle = `hsla(var(--brand), ${opacity.toFixed(2)})`; ctx.lineWidth = 2 * opacity
           ctx.beginPath(); ctx.moveTo(selectedX, selectedY); ctx.lineTo(x, y); ctx.stroke()
+          const brandColor = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || "hsl(var(--brand))";
           const midX = (selectedX + x) / 2; const midY = (selectedY + y) / 2
           ctx.fillStyle = brandColor; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.fillText((1 - distance).toFixed(2), midX, midY - 5)
         })
@@ -92,7 +93,7 @@ export default function EmbeddingExplorer() {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm"><span>Zoom Level</span><span>{zoomLevel.toFixed(1)}x</span></div>
-                    <Slider value={[zoomLevel]} min={0.5} max={2} step={0.1} onValueChange={(v) => setZoomLevel(v[0])} />
+                    <Slider value={[zoomLevel]} min={0.5} max={2} step={0.1} onValueChange={(v) => setZoomLevel(v[0]!)} />
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedWords.map((word) => (

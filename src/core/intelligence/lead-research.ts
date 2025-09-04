@@ -91,7 +91,7 @@ export class LeadResearchService {
 
       // Prepare lead context for workflow
       const leadContext: LeadContext = {
-        name: name || email.split('@')[0],
+        name: (name ?? email.split('@')[0]),
         email,
         summary,
         leadScore: researchResult.confidence * 100,
@@ -193,7 +193,7 @@ Citations: ${research.citations?.length || 0} sources reviewed`
       }
 
       // Use Google Grounding for comprehensive research
-      const researchResult = await this.researchWithGrounding(email, name, domain, companyUrl)
+      const researchResult = await this.researchWithGrounding(email, (name ?? email.split('@')[0]), domain, companyUrl ?? '')
       
       // Record capability usage for search
       if (sessionId) {
@@ -239,13 +239,13 @@ Citations: ${research.citations?.length || 0} sources reviewed`
       // Action logged
       return {
         company: {
-          name: domain.split('.')[0],
+          name: (domain?.split('.')[0] ?? ''),
           domain,
           summary: `${domain} is a reserved domain name used for documentation and testing purposes.`,
-          website: companyUrl || `https://${domain}`
+          website: companyUrl ?? `https://${domain}`
         },
         person: {
-          fullName: name || email.split('@')[0],
+          fullName: (name ?? email.split('@')[0]),
           company: domain.split('.')[0]
         },
         role: 'Test Account',
@@ -266,8 +266,8 @@ Citations: ${research.citations?.length || 0} sources reviewed`
     // Run all searches in parallel with timeouts
     const [companySearch, personSearch, roleSearch] = await Promise.allSettled([
       withTimeout(this.groundingProvider.searchCompany(domain), 6000),
-      withTimeout(this.groundingProvider.searchPerson(name || email.split('@')[0], domain), 6000),
-      withTimeout(this.groundingProvider.searchRole(name || email.split('@')[0], domain), 6000)
+      withTimeout(this.groundingProvider.searchPerson((name ?? email.split('@')[0]), domain), 6000),
+      withTimeout(this.groundingProvider.searchRole((name ?? email.split('@')[0]), domain), 6000)
     ])
 
     // Extract successful results
@@ -331,7 +331,7 @@ Be thorough and accurate. If information is not available, use null for that fie
       ? (result as any).text()
       : (result as any).text
         ?? (((result as any).candidates?.[0]?.content?.parts || [])
-              .map((p: unknown) => p.text || '')
+              .map((p: unknown) => (typeof p === 'object' && p !== null ? (p as any).text : '') || '')
               .filter(Boolean)
               .join('\n'))
 
@@ -342,7 +342,7 @@ Be thorough and accurate. If information is not available, use null for that fie
       try {
         const { normalizeCompany } = await import('./providers/enrich/company-normalizer')
         const { normalizePerson } = await import('./providers/enrich/person-normalizer')
-        const nc = normalizeCompany({ text: companyResult?.text || '', url: companyUrl }, domain)
+        const nc = normalizeCompany({ text: companyResult?.text || '', url: companyUrl ?? '' }, domain)
         const np = normalizePerson({ text: personResult?.text || '', name: researchData?.person?.fullName, company: nc.name })
         return {
           company: { ...nc, ...researchData.company },
@@ -365,13 +365,13 @@ Be thorough and accurate. If information is not available, use null for that fie
     // Fallback if no JSON found
     return {
       company: {
-        name: domain.split('.')[0],
+        name: (domain?.split('.')[0] ?? ''),
         domain,
-        website: companyUrl || `https://${domain}`,
+        website: companyUrl ?? `https://${domain}`,
         summary: 'Company information unavailable'
       },
       person: {
-        fullName: name || email.split('@')[0],
+        fullName: (name ?? email.split('@')[0]),
         company: domain.split('.')[0]
       },
       role: 'Business Professional',
@@ -410,7 +410,7 @@ Be thorough and accurate. If information is not available, use null for that fie
       }
 
       // Create the lead summary
-      const lead = await createLeadSummary(leadData)
+      const lead = await createLeadSummary({ company_name: leadData.company, ...leadData })
 
       // Store the full research JSON in search results for retrieval by PDF/email services
       const researchRecord = {
