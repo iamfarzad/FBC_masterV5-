@@ -39,6 +39,7 @@ export default function ChatPage() {
         body: JSON.stringify({ 
           messages: newMessages,
           sessionId,
+          stream: false, // Explicitly request non-streaming response
           context: contextEnabled ? { 
             intelligenceEnabled: true,
             multimodal: {
@@ -51,13 +52,57 @@ export default function ChatPage() {
         })
       })
       
-      const data = await response.json()
-      if (data.message) {
-        setMessages([...newMessages, { role: 'assistant', content: data.message, metadata: data.metadata }])
+      // Check if response is streaming (SSE)
+      const contentType = response.headers.get('content-type')
+      if (contentType?.includes('text/event-stream')) {
+        // Handle streaming response
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let fullMessage = ''
+        
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            
+            const chunk = decoder.decode(value)
+            const lines = chunk.split('\n')
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6)
+                if (data === '[DONE]') break
+                try {
+                  const parsed = JSON.parse(data)
+                  if (parsed.content) {
+                    fullMessage += parsed.content
+                  }
+                } catch (e) {
+                  fullMessage += data
+                }
+              }
+            }
+          }
+          setMessages([...newMessages, { role: 'assistant', content: fullMessage }])
+        }
+      } else {
+        // Handle JSON response
+        const text = await response.text()
+        try {
+          const data = JSON.parse(text)
+          if (data.message) {
+            setMessages([...newMessages, { role: 'assistant', content: data.message, metadata: data.metadata }])
+          } else if (data.error) {
+            setMessages([...newMessages, { role: 'assistant', content: `Error: ${data.error}` }])
+          }
+        } catch (e) {
+          // If not JSON, just display the text
+          setMessages([...newMessages, { role: 'assistant', content: text }])
+        }
       }
     } catch (error) {
       console.error('Chat error:', error)
-      setMessages([...newMessages, { role: 'assistant', content: 'Error: Failed to get response' }])
+      setMessages([...newMessages, { role: 'assistant', content: `Error: ${error}` }])
     } finally {
       setLoading(false)
     }
