@@ -143,7 +143,7 @@ export default function ChatPage() {
     if (sessionId && sessionId !== 'anonymous') {
       fetchContextFromLocalSession()
     }
-  }, [sessionId])
+  }, [sessionId, fetchContextFromLocalSession])
 
   // Handle consent submission
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
@@ -240,19 +240,37 @@ export default function ChatPage() {
 
 
   // Conversational Intelligence Context - using unified chat
-  const context = null // TODO: Replace with proper context from unified chat
-  const fetchContextFromLocalSession = () => {} // TODO: Implement
-  const clearContextCache = () => {} // TODO: Implement
+  const [context, setContext] = useState<any>(null)
+
+  const fetchContextFromLocalSession = useCallback(async () => {
+    if (!sessionId || sessionId === 'anonymous') return
+
+    try {
+      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.ok && data.output) {
+          setContext(data.output)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to fetch intelligence context:', error)
+    }
+  }, [sessionId])
+
+  const clearContextCache = useCallback(() => {
+    setContext(null)
+  }, [])
 
   // Lead Context Data
   const leadContextData = useMemo(() => {
     if (!context) return undefined
     return {
-      name: (context as any)?.person?.fullName || (context as any)?.lead?.name,
-      email: (context as any)?.lead?.email,
-      company: (context as any)?.company?.name,
-      role: (context as any)?.role,
-      industry: (context as any)?.company?.industry,
+      name: context?.person?.fullName || context?.lead?.name,
+      email: context?.lead?.email,
+      company: context?.company?.name,
+      role: context?.role,
+      industry: context?.company?.industry,
     }
   }, [context])
 
@@ -260,7 +278,7 @@ export default function ChatPage() {
   const unifiedContext = (() => {
     const ctx: any = {};
     if (leadContextData) ctx.leadContext = leadContextData;
-    if (context ?? undefined) ctx.intelligenceContext = context ?? undefined; // convert null→undefined by not setting it
+    if (context) ctx.intelligenceContext = context; // Include intelligence context when available
     return Object.keys(ctx).length ? ctx : undefined;
   })();
 
