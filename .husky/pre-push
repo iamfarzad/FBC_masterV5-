@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔎 TypeScript check..."
+pnpm exec tsc --noEmit --pretty false || exit 1
+
+echo "🧹 Linting..."
+pnpm run lint || exit 1
