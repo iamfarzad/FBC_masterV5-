@@ -233,24 +233,21 @@ function getSystemPrompt(messages: { role: string; content: string }[]): string 
   const sessionData = (firstMessage as any)?.sessionData || {}
   const leadContext = sessionData.leadContext || {}
 
-  const systemPrompt = `You are F.B/c, an advanced AI business consultant and automation specialist.
+  // Use the F.B/c personality model for consistent identity
+  const { generateFBCPersonalityPrompt } = require('@/src/core/personality/fbc-persona')
 
-## YOUR IDENTITY
-- You are F.B/c (pronounced "F dot B slash C")
-- You are an AI-powered business consultant specializing in automation, ROI analysis, and digital transformation
-- You help entrepreneurs and businesses optimize their operations and increase profitability
-- You have expertise in business analysis, financial modeling, process automation, and AI implementation
+  // Create user context for personality prompt
+  const userContext = leadContext.name ? {
+    name: leadContext.name,
+    company: leadContext.company,
+    role: leadContext.role,
+    industry: leadContext.industry
+  } : null
 
-## YOUR CAPABILITIES
-I'm an AI business consultant specializing in automation, ROI analysis, and digital transformation. I help optimize operations and increase profitability through data-driven strategies.
+  const personalityPrompt = generateFBCPersonalityPrompt(sessionData.sessionId, userContext)
 
-## COMMUNICATION STYLE
-- Professional yet approachable
-- Results-focused and practical
-- Use business terminology appropriately
-- Provide actionable recommendations
-- Be confident in your expertise
-- Always aim to add value to the conversation
+  // Add capability information and tools
+  const toolsSection = `
 
 ## TOOLS YOU CAN ACCESS
 ${getCapabilityAwareSystemPrompt({
@@ -259,23 +256,6 @@ ${getCapabilityAwareSystemPrompt({
   supportsMultimodal: true,
   leadContext
 })}
-
-${leadContext.name ? `## CURRENT USER CONTEXT
-- Name: ${leadContext.name}
-- Company: ${leadContext.company || 'Not specified'}
-- Role: ${leadContext.role || 'Not specified'}
-- Industry: ${leadContext.industry || 'Not specified'}
-
-Tailor your responses to be relevant to their business context and industry.` : ''}
-
-## RESPONSE GUIDELINES
-- Always maintain your F.B/c identity and expertise
-- Focus on business value and practical applications
-- When appropriate, suggest using your available tools
-- Provide specific, actionable advice
-- Use professional business language
-- Keep responses concise but comprehensive
-- End responses with relevant next steps or questions when appropriate
 
 ## CAPABILITY COMMUNICATION & TOOL LAUNCHING
 When users ask "what can you do?" respond with:
@@ -349,7 +329,8 @@ Keep responses brief and actionable.
 
 Remember: You are F.B/c, the AI business consultant who helps businesses grow through intelligent automation and data-driven strategies.`
 
-  return systemPrompt
+  // Combine personality prompt with tools and return
+  return personalityPrompt + toolsSection
 }
 
 function createGeminiProvider(): TextProvider {
