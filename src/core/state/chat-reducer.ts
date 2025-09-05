@@ -2,10 +2,10 @@
 // WHY: Prevents race conditions and ensures consistent UI state
 // BUSINESS IMPACT: No more UI bugs, no state corruption during demos
 
-import type { ChatMessage } from '@/src/core/types/chat'
+import type { UnifiedMessage } from '@/src/core/chat/unified-types'
 
 export interface ChatState {
-  messages: ChatMessage[]
+  messages: UnifiedMessage[]
   isLoading: boolean
   error: Error | null
   sessionId: string | null
