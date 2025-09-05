@@ -138,6 +138,29 @@ export default function ChatPage() {
     }
   }, [])
 
+  // Conversational Intelligence Context - using unified chat
+  const [context, setContext] = useState<any>(null)
+
+  const fetchContextFromLocalSession = useCallback(async () => {
+    if (!sessionId || sessionId === 'anonymous') return
+
+    try {
+      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.ok && data.output) {
+          setContext(data.output)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to fetch intelligence context:', error)
+    }
+  }, [sessionId])
+
+  const clearContextCache = useCallback(() => {
+    setContext(null)
+  }, [])
+
   // Fetch intelligence context when session is available
   useEffect(() => {
     if (sessionId && sessionId !== 'anonymous') {
@@ -238,29 +261,6 @@ export default function ChatPage() {
 
 
 
-
-  // Conversational Intelligence Context - using unified chat
-  const [context, setContext] = useState<any>(null)
-
-  const fetchContextFromLocalSession = useCallback(async () => {
-    if (!sessionId || sessionId === 'anonymous') return
-
-    try {
-      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.ok && data.output) {
-          setContext(data.output)
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to fetch intelligence context:', error)
-    }
-  }, [sessionId])
-
-  const clearContextCache = useCallback(() => {
-    setContext(null)
-  }, [])
 
   // Lead Context Data
   const leadContextData = useMemo(() => {
