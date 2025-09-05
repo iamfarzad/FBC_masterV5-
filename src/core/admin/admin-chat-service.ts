@@ -2,8 +2,20 @@ import { supabaseService } from '../supabase/client'
 import type { Database } from '../database.types'
 
 type AdminMessageType = 'user' | 'assistant' | 'system'
-type AdminConversation = Database['public']['Tables']['admin_conversations']['Row']
-type AdminSession = Database['public']['Tables']['admin_sessions']['Row']
+
+type AdminConversationRow = {
+  id: string;
+  created_at?: string | null;
+  title?: string | null;
+  metadata?: unknown;
+};
+
+type AdminSessionRow = {
+  id: string;
+  created_at?: string | null;
+  admin_id?: string | null;
+  status?: string | null;
+};
 
 export interface AdminMessage {
   id?: string
@@ -45,11 +57,11 @@ export class AdminChatService {
   /**
    * Create or get admin session
    */
-  async getOrCreateSession(sessionId: string, adminId?: string, sessionName?: string): Promise<AdminSession> {
+  async getOrCreateSession(sessionId: string, adminId?: string, sessionName?: string): Promise<AdminSessionRow> {
     // Check if session exists
+    // cast table names to bypass Database<> mismatch
     const { data: existingSession } = await supabaseService
-
-      .from('admin_sessions')
+      .from('admin_sessions' as any)
       .select('*')
       .eq('id', sessionId)
       .single()
@@ -57,8 +69,7 @@ export class AdminChatService {
     if (existingSession) {
       // Update last activity
       await supabaseService
-  
-        .from('admin_sessions')
+        .from('admin_sessions' as any)
         .update({ last_activity: new Date().toISOString() })
         .eq('id', sessionId)
 
@@ -84,7 +95,7 @@ export class AdminChatService {
   /**
    * Save message to persistent storage with embeddings
    */
-  async saveMessage(message: AdminMessage): Promise<AdminConversation> {
+  async saveMessage(message: AdminMessage): Promise<AdminConversationRow> {
     console.log('Saving admin message:', { sessionId: message.sessionId, type: message.type, contentLength: message.content.length })
 
     // Generate embeddings for the message content (optional - don't fail if it doesn't work)
@@ -96,12 +107,12 @@ export class AdminChatService {
     }
 
     const { data, error } = await supabaseService
-      .from('admin_conversations')
+      .from('admin_conversations' as any)
       .insert({
         conversation_id: message.conversationId,
         admin_id: message.adminId,
         session_id: message.sessionId,
-        message_type: message.role,
+        message_type: message.type,
         message_content: message.content,
         message_metadata: message.metadata,
         embeddings,
@@ -146,26 +157,32 @@ export class AdminChatService {
       })
 
     // Format messages
-    const messages: AdminMessage[] = (recentMessages || []).map(msg => ({
-      id: msg.id,
-      sessionId: msg.session_id,
-      conversationId: msg.conversation_id,
-      adminId: msg.admin_id,
-      type: msg.message_type as AdminMessageType,
-      content: msg.message_content,
-      metadata: msg.message_metadata,
-      contextLeads: msg.context_leads,
-      embeddings: msg.embeddings
-    })).reverse() // Reverse to chronological order
+    const messages: AdminMessage[] = (recentMessages || []).map((msg: unknown) => {
+      const m = msg as { id?: string; session_id?: string; conversation_id?: string; admin_id?: string; message_type?: string; message_content?: string; [k: string]: unknown }
+      return {
+        id: m.id,
+        sessionId: m.session_id,
+        conversationId: m.conversation_id,
+        adminId: m.admin_id,
+        type: m.message_type as AdminMessageType,
+        content: m.message_content,
+        metadata: m.message_metadata,
+        contextLeads: m.context_leads,
+        embeddings: m.embeddings
+      }
+    }).reverse() // Reverse to chronological order
 
-    const relevantHistory: AdminMessage[] = (similarMessages || []).map((msg: any) => ({
-      id: msg.id,
-      sessionId: msg.session_id,
-      conversationId: msg.conversation_id,
-      type: msg.message_type as AdminMessageType,
-      content: String(msg.message_content ?? ''),
-      contextLeads: msg.context_leads
-    }))
+    const relevantHistory: AdminMessage[] = (similarMessages || []).map((msg: unknown) => {
+      const m = msg as { id?: string; session_id?: string; conversation_id?: string; admin_id?: string; message_type?: string; message_content?: string; message_metadata?: any; context_leads?: string[]; embeddings?: number[]; [k: string]: unknown }
+      return {
+        id: m.id,
+        sessionId: m.session_id,
+        conversationId: m.conversation_id,
+        type: m.message_type as AdminMessageType,
+        content: String(m.message_content ?? ''),
+        contextLeads: m.context_leads
+      }
+    })
 
     return {
       sessionId,
@@ -185,14 +202,17 @@ export class AdminChatService {
       .select('id, name, email, summary, lead_score, research_json')
       .in('id', conversationIds)
 
-    return (conversations || []).map(conv => ({
-      conversationId: conv.id,
-      name: conv.name || 'Unknown',
-      email: conv.email || '',
-      summary: conv.summary || '',
-      leadScore: conv.lead_score || 0,
-      researchData: conv.research_json
-    }))
+    return (conversations || []).map((conv: unknown) => {
+      const c = conv as { id?: string; name?: string; email?: string; summary?: string; lead_score?: number; research_json?: unknown }
+      return {
+        conversationId: c.id || '',
+        name: c.name || 'Unknown',
+        email: c.email || '',
+        summary: c.summary || '',
+        leadScore: c.lead_score || 0,
+        researchData: c.research_json
+      }
+    })
   }
 
   /**
@@ -210,7 +230,7 @@ export class AdminChatService {
     // Add recent conversation history
     if (context.messages.length > 0) {
       contextString += `## Recent Conversation History\n`
-      context.messages.forEach(msg => {
+      context.messages.forEach((msg: AdminMessage) => {
         contextString += `**${msg.type.toUpperCase()}:** ${msg.content}\n\n`
       })
     }
@@ -218,7 +238,7 @@ export class AdminChatService {
     // Add semantically relevant history
     if (context.relevantHistory.length > 0) {
       contextString += `## Relevant Historical Context\n`
-      context.relevantHistory.forEach(msg => {
+      context.relevantHistory.forEach((msg: AdminMessage) => {
         contextString += `**${msg.type.toUpperCase()}:** ${msg.content}\n\n`
       })
     }
@@ -229,7 +249,8 @@ export class AdminChatService {
       const list = Array.isArray(leadContext) ? leadContext : [];
       if (list.length > 0) {
         contextString += `## Lead Context\n`
-        list.forEach(lead => {
+        // ⬇️ implicit anys
+        list.forEach((lead: any) => {
           contextString += `### Lead: ${lead.name} (${lead.email})\n`
           contextString += `**Lead Score:** ${lead.leadScore}/100\n`
           contextString += `**Summary:** ${lead.summary}\n\n`
@@ -258,7 +279,7 @@ export class AdminChatService {
   private async generateEmbeddings(text: string): Promise<number[]> {
     try {
       // Import the embeddings service dynamically to avoid circular dependencies
-      const { embedText } = await import('../embeddings/gemini')
+      const { embedText } = await import('../embeddings/gemini.js')
 
       // Generate embeddings using the Gemini service
       const embeddings = await embedText([text])
@@ -290,20 +311,23 @@ export class AdminChatService {
         similarity_threshold: 0.6
       })
 
-    return (data || []).map(msg => ({
-      id: msg.id,
-      sessionId: msg.session_id,
-      conversationId: msg.conversation_id,
-      type: msg.message_type as AdminMessageType,
-      content: msg.message_content,
-      contextLeads: msg.context_leads
-    }))
+    return (data || []).map((msg: unknown) => {
+      const m = msg as { id?: string; session_id?: string; conversation_id?: string; admin_id?: string; message_type?: string; message_content?: string; [k: string]: unknown }
+      return {
+        id: m.id,
+        sessionId: m.session_id,
+        conversationId: m.conversation_id,
+        type: m.message_type as AdminMessageType,
+        content: m.message_content,
+        contextLeads: m.context_leads
+      }
+    })
   }
 
   /**
    * Get session list for admin
    */
-  async getAdminSessions(adminId?: string, limit: number = 20): Promise<AdminSession[]> {
+  async getAdminSessions(adminId?: string, limit: number = 20): Promise<AdminSessionRow[]> {
     let query = supabaseService
 
       .from('admin_sessions')

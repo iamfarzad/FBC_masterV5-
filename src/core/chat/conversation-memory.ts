@@ -1,4 +1,5 @@
 import { config } from '../config'
+import { randomUUID } from 'node:crypto'
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system'
@@ -149,10 +150,11 @@ export class ConversationMemory {
     const recentMessages = messages.slice(-maxContextMessages)
 
     // Convert to AI-friendly format
+    // ⬇️ when constructing ConversationMessage:
     return recentMessages.map(msg => ({
       role: msg.role,
       content: msg.content,
-      id: msg.id,
+      id: msg.id ?? randomUUID(), // or a stable fallback like `''` if you prefer
       timestamp: new Date()
     }))
   }

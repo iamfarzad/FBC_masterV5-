@@ -80,7 +80,7 @@ export class GeminiTranslator {
     options: TranslationOptions = {}
   ): Promise<string> {
     // Return original text if translator is not available
-    if (!this.isAvailable || !this.genAI) {
+    if (!this.isAvailable) {
       console.log('GeminiTranslator: Not available, returning original text');
       return text;
     }

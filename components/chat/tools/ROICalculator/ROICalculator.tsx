@@ -126,7 +126,7 @@ export function ROICalculator({
       try {
         const payload: ROIResultPayload = {
           roi: data.output.roi,
-          paybackPeriod: data.output.paybackPeriod,
+          paybackMonths: data.output.paybackPeriod,
           netProfit: data.output.netProfit,
           monthlyProfit: data.output.monthlyProfit,
           totalRevenue: data.output.totalRevenue,

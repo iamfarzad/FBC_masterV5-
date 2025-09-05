@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 export function CourseOutline() {
   const mods = getAllModules()
-  const firstAnchor = mods?.length ? `/workshop/modules/${mods[0].slug}` : '#'
+  const firstAnchor = (mods?.length ?? 0) > 0 && mods[0]?.slug ? `/workshop/modules/${mods[0].slug}` : '#'
   return (
     <Card className="neu-card">
       <CardHeader>

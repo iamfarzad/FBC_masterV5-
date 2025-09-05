@@ -1,17 +1,16 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/src/core/database.types';
-import type { SupabaseClientCompat } from '@/src/types/supabase-compat';
 
 function requireEnv(name: string){ const v=process.env[name]; if(!v) throw new Error(`Missing env: ${name}`); return v; }
 
-export function getSupabaseServer(): SupabaseClientCompat<Database> {
+export function getSupabaseServer() {
   const url=requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const anon=requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  return createClient<Database, any, any, any, any, any>(url, anon);
+  return createClient<Database>(url, anon);
 }
 
-export function getSupabaseService(): SupabaseClientCompat<Database> {
+export function getSupabaseService() {
   const url=requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const svc=requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-  return createClient<Database, any, any, any, any, any>(url, svc);
+  return createClient<Database>(url, svc);
 }

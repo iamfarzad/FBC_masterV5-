@@ -222,7 +222,7 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
                   setFinishOpen(false)
                   toast({ title: 'Email sent', description: 'Summary was emailed to the recipient.' })
                 } catch (e) {
-    console.error('Email error', error)
+    console.error('Email error', e)
                   toast({ title: 'Email failed', description: 'Could not send the email.', variant: 'destructive' })
                 }
               }}
@@ -261,7 +261,7 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
         <Button
           key={s.id}
           size="sm"
-          variant={s.capability === 'exportPdf' ? 'primary' : 'outline'}
+          variant={s.capability === 'exportPdf' ? 'default' : 'outline'}
           onClick={() => onRun?.(s)}
         >
           {s.label}

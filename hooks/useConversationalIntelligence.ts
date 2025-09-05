@@ -218,9 +218,9 @@ export function useConversationalIntelligence() {
           sessionId,
           leadContext: leadContext ? {
             name: leadContext.name,
-            email: leadContext.email,
-            company: leadContext.company,
-            role: leadContext.role
+            email: leadContext && typeof leadContext === 'object' && 'email' in leadContext ? (leadContext as { email: string }).email : '',
+            company: leadContext && typeof leadContext === 'object' && 'company' in leadContext ? (leadContext as { company: string }).company : '',
+            role: leadContext && typeof leadContext === 'object' && 'role' in leadContext ? (leadContext as { role: string }).role : ''
           } : undefined
         })
       })

@@ -4,7 +4,7 @@
  * Replaces useChat and useRealtimeChat
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   UnifiedMessage,
   UnifiedChatOptions,
@@ -15,12 +15,32 @@ import {
 } from '@/src/core/chat/unified-types'
 import { unifiedStreamingService } from '@/src/core/streaming/unified-stream'
 import { unifiedErrorHandler } from '@/src/core/chat/unified-error-handler'
+import { asString } from '@/src/core/utils/safe.js'
+
+// helper
+function toError(e: unknown): Error {
+  if (e instanceof Error) return e;
+  if (typeof e === 'string') return new Error(e);
+  try { return new Error(JSON.stringify(e)); } catch { return new Error('Unknown error'); }
+}
 
 export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
+  // Build options object without undefined properties
+  const opts = {
+    sessionId: options.sessionId,
+    mode: options.mode,
+    userId: options.context?.adminId
+  };
+
+  // Filter out undefined values
+  const cleanOpts: { sessionId?: string; mode?: string; userId?: string } = {};
+  if (opts.sessionId) cleanOpts.sessionId = opts.sessionId;
+  if (opts.mode) cleanOpts.mode = opts.mode;
+  if (opts.userId) cleanOpts.userId = opts.userId;
   const [messages, setMessages] = useState<UnifiedMessage[]>(options.initialMessages || [])
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const [lastError, setLastError] = useState<Error | null>(null)
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const sessionRef = useRef(options.sessionId)
@@ -58,7 +78,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
 
     try {
       setIsLoading(true)
-      setError(null)
+      setLastError(null)
 
       // Abort any existing request
       if (abortControllerRef.current) {
@@ -144,16 +164,18 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       setIsLoading(false)
       setIsStreaming(false)
 
-      const chatError = unifiedErrorHandler.handleError(err, {
-        sessionId: options.sessionId,
-        mode: options.mode,
-        userId: options.context?.adminId
-      }, 'unified_chat_hook')
+      const errorArgs: { sessionId?: string; mode?: string; userId?: string } = {
+        ...(options.sessionId ? { sessionId: options.sessionId } : {}),
+        ...(options.mode ? { mode: options.mode } : {}),
+        ...(options.context?.adminId ? { userId: options.context.adminId } : {}),
+      };
 
-      const errObj = new Error(chatError.message)
-      // if your ChatError has code, attach it for consumers
-      ;(errObj as any).code = (chatError as any).code
-      setError(errObj)
+      const chatError = unifiedErrorHandler.handleError(err, errorArgs, 'unified_chat_hook')
+      const normalizedError = toError(err)
+      setLastError(normalizedError)
+
+      // Call onError callback if provided
+      options.onError?.(normalizedError)
 
       if (err instanceof Error && err.name !== 'AbortError') {
         // Add standardized error message to chat
@@ -168,8 +190,6 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
             recoverable: chatError.recoverable
           }
         })
-
-        options.onError?.(chatError)
       }
     } finally {
       abortControllerRef.current = null
@@ -178,7 +198,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
 
   const clearMessages = useCallback(() => {
     setMessages([])
-    setError(null)
+    setLastError(null)
   }, [])
 
   const updateContext = useCallback((context: Partial<UnifiedContext>) => {
@@ -195,21 +215,17 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     }
   }, [])
 
+  // final return (ensure names match your declared type)
   return {
+    sendMessage,           // <- ensure this name exists in the type
+    addMessage,
     messages,
-    isLoading,
     isStreaming,
-    error,
-    sendMessage,
+    isLoading,
+    error: lastError,
     clearMessages,
     updateContext,
-    addMessage,
-    // Real-time compatibility fields
-    isConnected: false,
-    isConnecting: false,
-    lastActivity: null,
-    correlationId: undefined
-  }
+  };
 }
 
 /**

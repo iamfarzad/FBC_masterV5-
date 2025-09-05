@@ -96,6 +96,11 @@ export async function GET(req: NextRequest) {
       await contextStorage.store(sessionId, contextData)
     }
 
+    // Guard against null contextData
+    if (!contextData) {
+      return NextResponse.json({ ok: false, error: 'No context' }, { status: 404 });
+    }
+
     // Return merged context snapshot
     const snapshot = {
       lead: { email: contextData.email || '', name: contextData.name || '' },

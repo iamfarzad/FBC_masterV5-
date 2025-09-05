@@ -320,7 +320,7 @@ function createGeminiProvider(): TextProvider {
 
         // Execute with retry logic
         const result = await errorRecoveryManager.executeWithRetry(async () => {
-          const { gemini } = await import('@/src/core/gemini-adapter')
+          const { gemini } = await import('@/src/core/gemini-adapter.js')
 
           if (!process.env.GEMINI_API_KEY) {
             throw new Error('GEMINI_API_KEY environment variable is not set')
@@ -342,9 +342,15 @@ function createGeminiProvider(): TextProvider {
 
           // Collect the streaming response
           let fullResponse = ''
-          for await (const chunk of result.stream) {
-            const text = chunk.text()
-            if (text) fullResponse += text
+          // ⬇️ BEFORE:
+          // for await (const chunk of result.stream) { … }
+
+          // ⬇️ AFTER:
+          for await (const chunk of result) {
+            // chunk?.text (guard!) or your SDK's recommended accessor
+            const textPart = (chunk as any)?.text ?? '';   // text can be undefined on some chunks
+            // DO NOT call chunk.text() — it's not a function; the error you saw was "get accessor"
+            if (textPart) fullResponse += textPart
           }
           return fullResponse
         }, 'gemini-api-call')

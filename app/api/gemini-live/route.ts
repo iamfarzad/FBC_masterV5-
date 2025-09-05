@@ -307,13 +307,10 @@ export async function POST(req: NextRequest) {
                 sessionId,
                 `[Real-time audio stream - ${audioData.length} bytes]`,
                 Math.round(audioBytes.length / 16000), // Estimate duration from sample rate
-                { 
-                  sampleRate: 16000, 
-                  format: audioMimeType, 
-                  confidence: 0.9,
-                  source: 'live_api_audio',
-                  chunked: true,
-                  totalChunks: Math.ceil(audioBytes.length / chunkSize)
+                {
+                  sampleRate: 16000,
+                  format: audioMimeType,
+                  confidence: 0.9
                 }
               )
               

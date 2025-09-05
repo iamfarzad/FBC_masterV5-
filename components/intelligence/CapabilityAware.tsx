@@ -108,7 +108,7 @@ export function CapabilityAware({ variant = 'compact', className }: CapabilityAw
 export function getCapabilityListText(): string {
   const categories = CORE_CAPABILITIES.reduce((acc, cap) => {
     if (!acc[cap.category]) acc[cap.category] = []
-    acc[cap.category].push(cap)
+    acc[cap.category]!.push(cap)
     return acc
   }, {} as Record<string, typeof CORE_CAPABILITIES[number][]>)
 

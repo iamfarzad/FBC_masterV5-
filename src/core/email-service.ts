@@ -23,12 +23,12 @@ export class EmailService {
       const text = template.text ?? (template.html ? template.html.replace(/<[^>]+>/g, ' ') : '')
       const { data, error } = await resend.emails.send({
         from: "F.B/c <contact@farzadbayat.com>",
-        to: [template.to],
+        to: template.to,
         subject: template.subject,
         html: template.html,
         text,
-        tags: template.tags ? Object.entries(template.tags).map(([key, value]) => ({ name: key, value })) : undefined,
-        attachments: template.attachments?.map(a => ({ filename: a.filename, content: a.content as any, contentType: a.contentType ?? 'application/octet-stream' }))
+        ...(template.tags ? { tags: Object.entries(template.tags).map(([key, value]) => ({ name: key, value })) } : {}),
+        ...(template.attachments ? { attachments: template.attachments.map(a => ({ filename: a.filename, content: a.content as any, contentType: a.contentType ?? 'application/octet-stream' })) } : {})
       })
 
       if (error) {

@@ -92,12 +92,15 @@ export class GroundedSearchService {
         return []
       }
 
-      return data?.map(item => ({
-        url: item.url,
-        title: item.title,
-        snippet: item.snippet,
-        source: item.source
-      })) || []
+      return data?.map((item: unknown) => {
+        const i = item as { url?: string; title?: string; snippet?: string; source?: string }
+        return {
+          url: i.url || '',
+          title: i.title || '',
+          snippet: i.snippet || '',
+          source: i.source || ''
+        }
+      }) || []
 
     } catch (error) {
     console.error('Error fetching search results', error)

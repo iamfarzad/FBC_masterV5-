@@ -12,16 +12,16 @@ export class ConversationalIntelligence {
 
   async initSession(input: { sessionId: string; email: string; name?: string; companyUrl?: string }): Promise<ContextSnapshot | null> {
     const { sessionId, email, name, companyUrl } = input
-    const researchResult = await this.research.researchLead(email, name, companyUrl, sessionId)
+    const researchResult = await this.research.researchLead({ email, name, companyUrl, sessionId } as any)
     const role = await detectRole({
       company: {
-        summary: researchResult.company?.summary,
-        industry: researchResult.company?.industry
-      },
+        ...(researchResult.company?.summary ? { summary: researchResult.company.summary } : {}),
+        ...(researchResult.company?.industry ? { industry: researchResult.company.industry } : {})
+      } as any,
       person: {
-        role: researchResult.person?.role,
-        seniority: researchResult.person?.seniority
-      },
+        ...(researchResult.person?.role ? { role: researchResult.person.role } : {}),
+        ...(researchResult.person?.seniority ? { seniority: researchResult.person.seniority } : {})
+      } as any,
       role: researchResult.role,
     })
     await updateContext(sessionId, {
@@ -34,21 +34,31 @@ export class ConversationalIntelligence {
   }
 
   async researchLead(input: { sessionId: string; email: string; name?: string; companyUrl?: string }) {
-    return this.research.researchLead(input.email, input.name, input.companyUrl, input.sessionId)
+    return this.research.researchLead(input)
+  }
+
+  // 🔧 PATCH: unknown → guard
+  private isResearchResultLike(v: unknown): v is { citations?: unknown[] } {
+    return !!v && typeof v === 'object';
   }
 
   async detectRoleFromResearch(research: unknown) {
-    return detectRole(research)
+    if (!this.isResearchResultLike(research)) {
+      // handle invalid shape
+      throw new Error('Invalid research result shape');
+    }
+    return detectRole(research as any)
   }
 
   async detectIntent(text: string, context: ContextSnapshot): Promise<IntentResult> {
     // Import the intent detector dynamically to avoid circular dependencies
-    const { detectIntent } = await import('./intent-detector')
+    // 🔧 PATCH: make NodeNext happy
+    const { detectIntent } = await import('./intent-detector.js')
     return detectIntent(text)
   }
 
   async suggestTools(context: ContextSnapshot, intent: IntentResult, stage: string): Promise<Suggestion[]> {
-    return suggestTools(context, intent)
+    return suggestTools(context as any, intent as any)
   }
 }
 

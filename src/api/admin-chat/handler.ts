@@ -1,6 +1,12 @@
 import { handleChat } from '../chat/handler'
 import type { UnifiedMessage } from '@/src/core/chat/unified-types'
 
+// ⬇️ imports at top (NodeNext)
+import type { ChatRequest, ChatMessage } from '@/src/core/types/chat.js';
+
+// ⬇️ if there's a random global `socket`, guard it or remove:
+const socket: unknown = (globalThis as any)?.socket ?? undefined;
+
 export interface AdminChatOptions {
   userId?: string
   headers?: Record<string, string | null>
@@ -70,11 +76,12 @@ Response Style:
 
   // Parse and enhance the request
   const request = body as ChatRequest
-  const hasSystemMessage = request.messages.some(msg => msg.role === 'system')
+  // ⬇️ add parameter types to silence implicit any
+  const hasSystemMessage = request.messages.some((msg: ChatMessage) => msg.role === 'system')
   const enhancedBody: ChatRequest = {
     ...request,
-    messages: hasSystemMessage 
-      ? request.messages 
+    messages: hasSystemMessage
+      ? request.messages
       : [adminSystemMessage, ...request.messages]
   }
 

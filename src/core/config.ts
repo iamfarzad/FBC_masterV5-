@@ -15,6 +15,23 @@ export interface AppConfig {
         analysis: string
         research: string
       }
+      caching?: {
+        enabled: boolean
+        ttl: number
+        maxCacheSize: number
+        compression: boolean
+      }
+      rateLimiting?: {
+        requestsPerMinute: number
+        requestsPerHour: number
+        burstLimit: number
+      }
+      retry?: {
+        maxRetries: number
+        baseDelay: number
+        maxDelay: number
+        backoffMultiplier: number
+      }
     }
     openai: {
       apiKey?: string

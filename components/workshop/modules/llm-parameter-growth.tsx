@@ -25,7 +25,7 @@ export default function LLMParameterGrowth() {
   const animationRef = useRef<number | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const currentYear = modelData[yearIndex]?.year
+  const currentYear = modelData[yearIndex]?.year ?? new Date().getFullYear()
   const visibleModels = modelData.filter((m) => m.year <= currentYear)
   const selectedModelData = selectedModel !== null ? visibleModels[selectedModel] : null;
 

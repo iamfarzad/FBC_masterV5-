@@ -87,3 +87,11 @@ export interface ContextSnapshot {
   person?: PersonContext;
   role?: string;
 }
+
+/** Database conversation context interface */
+export interface DatabaseConversationContext {
+  // New optional fields used by analyze-image route:
+  preferences?: Record<string, unknown>;
+  webcamAnalysisCount?: number;
+  lastWebcamAnalysis?: string; // ISO string or Date
+}

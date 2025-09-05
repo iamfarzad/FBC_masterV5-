@@ -6,12 +6,13 @@
 
 import { gemini, type GeminiModel } from '@/src/core/gemini-adapter'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { selectModelForFeature } from '@/src/core/model-selector'
 import { estimateTokensForMessages } from '@/src/core/models/gemini'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/monitoring/budget'
 import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'
 import { logger } from '@/src/lib/logger'
+import { omitUndefined } from '../utils/safe.js'
 
 export interface GeminiServiceOptions {
   sessionId?: string
@@ -41,6 +42,14 @@ class GeminiService {
     this.supabase = getSupabaseServer()
   }
 
+  // 🔧 PATCH: put near top of the class
+  private estimateTokens(text: string | undefined): number {
+    if (!text) return 0;
+    // cheap heuristic: ~4 chars per token
+    return Math.max(1, Math.ceil(text.length / 4));
+  }
+
+
   /**
    * Generate text response
    */
@@ -52,7 +61,7 @@ class GeminiService {
       const { sessionId, userId, correlationId } = options
       
       // Estimate tokens
-      const estimatedTokens = estimateTokens(prompt)
+      const estimatedTokens = this.estimateTokens(prompt)
       const modelSelection = selectModelForFeature('text_generation', estimatedTokens, !!sessionId)
       
       // Check demo budget if session ID provided
@@ -68,13 +77,14 @@ class GeminiService {
       // Check user budget if authenticated
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          sessionId || 'default',
+          userId,
+          sessionId,
           'text_generation',
           modelSelection.model,
           estimatedTokens,
-          0
+          0 // output tokens not known yet
         )
-        
+
         if (!budgetCheck.allowed) {
           return {
             error: budgetCheck.reason || 'Budget limit exceeded'
@@ -101,8 +111,8 @@ class GeminiService {
         text,
         tokens: {
           input: estimatedTokens,
-          output: estimateTokens(text),
-          total: estimatedTokens + estimateTokens(text)
+          output: this.estimateTokens(text),
+          total: estimatedTokens + this.estimateTokens(text)
         },
         cost: modelSelection.estimatedCost
       }
@@ -126,13 +136,13 @@ class GeminiService {
       const { sessionId, userId } = options
       
       // Extract base64 data and mime type
-      const base64Data = String(imageData.includes(',') ? imageData.split(',')[1] : imageData)
-      const mimeType = String(imageData.includes('data:')
-        ? imageData.split(';')[0].split(':')[1]
+      const base64Data = String(imageData?.includes(',') ? imageData.split(',')[1] : imageData)
+      const mimeType = String(imageData?.includes('data:')
+        ? imageData.split(';')[0]?.split(':')[1]
         : 'image/jpeg')
       
       // Estimate tokens (rough estimate for images)
-      const estimatedTokens = estimateTokens(prompt) + 258 // Base image token cost
+      const estimatedTokens = this.estimateTokens(prompt) + 258 // Base image token cost
       const modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
       
       // Budget checks
@@ -145,13 +155,14 @@ class GeminiService {
       
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          sessionId || 'default',
+          userId,
+          sessionId,
           'image_analysis',
           modelSelection.model,
           estimatedTokens,
-          0
+          0 // output tokens not known yet
         )
-        
+
         if (!budgetCheck.allowed) {
           return { error: budgetCheck.reason || 'Budget limit exceeded' }
         }
@@ -176,8 +187,8 @@ class GeminiService {
         text: analysis,
         tokens: {
           input: estimatedTokens,
-          output: estimateTokens(analysis),
-          total: estimatedTokens + estimateTokens(analysis)
+          output: this.estimateTokens(analysis),
+          total: estimatedTokens + this.estimateTokens(analysis)
         },
         cost: modelSelection.estimatedCost
       }
@@ -205,7 +216,7 @@ class GeminiService {
       const analysisPrompt = this.buildDocumentAnalysisPrompt(fileName, mimeType)
       
       // Estimate tokens
-      const estimatedTokens = estimateTokens(documentData + analysisPrompt)
+      const estimatedTokens = this.estimateTokens(documentData + analysisPrompt)
       const modelSelection = selectModelForFeature('document_analysis', estimatedTokens, !!sessionId)
       
       // Budget checks
@@ -218,13 +229,14 @@ class GeminiService {
       
       if (userId) {
         const budgetCheck = await enforceBudgetAndLog(
-          sessionId || 'default',
+          userId,
+          sessionId,
           'document_analysis',
           modelSelection.model,
           estimatedTokens,
-          0
+          0 // output tokens not known yet
         )
-        
+
         if (!budgetCheck.allowed) {
           return { error: budgetCheck.reason || 'Budget limit exceeded' }
         }
@@ -249,8 +261,8 @@ class GeminiService {
         text: analysis,
         tokens: {
           input: estimatedTokens,
-          output: estimateTokens(analysis),
-          total: estimatedTokens + estimateTokens(analysis)
+          output: this.estimateTokens(analysis),
+          total: estimatedTokens + this.estimateTokens(analysis)
         },
         cost: modelSelection.estimatedCost
       }
@@ -377,8 +389,8 @@ class GeminiService {
       
       // Generate streaming response
       const stream = await gemini.streamWithHistory(history, prompt, modelSelection.model as GeminiModel)
-      for await (const chunk of stream.stream) {
-        const text = chunk.text()
+      for await (const chunk of stream) {
+        const text = (chunk as any)?.text ?? ''
         if (text) yield text
       }
       
@@ -428,7 +440,8 @@ class GeminiService {
         5. Summary and recommendations`
     }
     
-    return prompts[fileExtension ?? ''] || prompts.default
+    const key = fileExtension && prompts[fileExtension] ? fileExtension : 'default';
+    return (prompts[key] ?? prompts.default) as string;
   }
 }
 

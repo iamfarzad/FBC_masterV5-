@@ -45,7 +45,7 @@ export class SimpleIntelligenceService {
 
     return {
       company,
-      person,
+      person: { ...person, profileUrl: person.profileUrl ?? '' },
       role: 'Business Professional',
       confidence: 0.5
     }

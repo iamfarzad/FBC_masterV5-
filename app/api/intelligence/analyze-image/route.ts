@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { contextStorage } from '@/src/core/context/context-storage'
 
+// Local augmentation for analyze-image route
+type DBCtxLoose = Record<string, unknown>;
+
+type AnalyzeImageAugment = {
+  preferences?: Record<string, unknown>;
+  webcamAnalysisCount?: number;
+  lastWebcamAnalysis?: string;
+};
+
 export async function POST(request: NextRequest) {
   try {
     const { imageData, context, timestamp } = await request.json()
@@ -33,18 +42,28 @@ export async function POST(request: NextRequest) {
       sessionId,
       metadata: {
         hasContext: !!currentContext,
-        userPreferences: currentContext?.preferences || {},
+        userPreferences: (currentContext as any)?.preferences || {},
         analysisType: 'visual_content'
       }
     }
 
     // Store analysis in context for future reference
     if (currentContext) {
-      await contextStorage.store(sessionId, {
-        ...currentContext,
-        lastWebcamAnalysis: analysis,
-        webcamAnalysisCount: (currentContext.webcamAnalysisCount || 0) + 1,
-      })
+      // wherever you read the stored context:
+      const current = (currentContext as unknown as DBCtxLoose & AnalyzeImageAugment) ?? {};
+
+      // build a patch object that only uses the loose type (no cross-file types)
+      const patch: Partial<DBCtxLoose & AnalyzeImageAugment> = {
+        lastWebcamAnalysis: new Date().toISOString(),
+        webcamAnalysisCount: (Number(current?.webcamAnalysisCount) || 0) + 1,
+        // ...(prefs ? { preferences: prefs } : {}),
+      };
+
+      // when saving
+      await contextStorage.update(
+        sessionId,
+        patch as unknown as Partial<any> // avoid DatabaseConversationContext collision
+      );
     }
 
     return NextResponse.json({

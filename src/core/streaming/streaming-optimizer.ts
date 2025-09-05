@@ -29,6 +29,7 @@ export interface StreamMetrics {
 
 export class StreamingOptimizer {
   private activeStreams = new Map<string, ReadableStreamDefaultController>()
+  private streamControllers = new Map<any, ReadableStreamDefaultController>()
   private streamMetrics = new Map<string, StreamMetrics>()
   private connectionPool = new Map<string, WebSocket[]>()
   private deduplicationCache = new Map<string, string>()
@@ -410,8 +411,10 @@ export class StreamingOptimizer {
         if (done) break
 
         // Find the controller for this stream index to enqueue
-        const controller = Array.from(this.streamControllers.entries())
-          .find(([_, ctrl]) => ctrl === controllerOrReader)?.[1] as ReadableStreamDefaultController;
+        const entry = Array.from(this.streamControllers.entries())
+          .find(([key, ctrl]) => ctrl === controllerOrReader);
+
+        const controller = entry ? entry[1] as ReadableStreamDefaultController : undefined;
 
         if (controller) {
           controller.enqueue(value)

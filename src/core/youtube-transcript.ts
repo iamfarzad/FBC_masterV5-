@@ -20,7 +20,7 @@ interface VideoTranscript {
  * Extract transcript from YouTube video
  */
 export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTranscript> {
-  const { getYouTubeVideoId } = await import('./youtube')
+  const { getYouTubeVideoId } = await import('./youtube.js')
   
   const videoId = getYouTubeVideoId(videoUrl)
   if (!videoId) {
@@ -46,7 +46,7 @@ export async function getYouTubeTranscript(videoUrl: string): Promise<VideoTrans
     // Get video title
     let title: string | undefined
     try {
-      const { getYouTubeVideoTitle } = await import('./youtube')
+      const { getYouTubeVideoTitle } = await import('./youtube.js')
       title = await getYouTubeVideoTitle(videoUrl)
     } catch (_e) {
       // Warning log removed - could add proper error handling here

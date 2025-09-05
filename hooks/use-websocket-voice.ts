@@ -608,9 +608,9 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     // Convert ArrayBuffer to base64 string
     let binary = '';
     const bytes = new Uint8Array(audioData);
-    const len = bytes.byteLength;
+    const len = bytes?.byteLength ?? 0;
     for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+        binary += String.fromCharCode(bytes[i] ?? 0);
     }
     const base64Audio = btoa(binary);
     

@@ -28,6 +28,11 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
     adminId?: string
   }>()
 
+  // 🔧 PATCH: if something may be a Uint8Array but param is string | undefined
+  private asMaybeString(v: unknown): string | undefined {
+    return typeof v === 'string' ? v : undefined;
+  }
+
   private realtimeSessions = new Map<string, {
     isConnected: boolean
     isConnecting: boolean
@@ -90,20 +95,19 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
           }
           {
             const vd = context?.multimodalData?.videoData;
-            const videoNote = typeof vd === 'string'
-              ? vd
-              : (vd instanceof Uint8Array ? `[Video input received - ${vd.length} bytes]` : undefined);
+            // where TS says: 'string | Uint8Array' not assignable to 'string | undefined'
+            const videoNote = this.asMaybeString(vd);
             if (videoNote) {
               multimodalContent += videoNote;
             }
           }
         } catch (multimodalError) {
           const meta = {
-            sessionId,
+            sessionId: context?.sessionId,
             mode,
-            ...(adminId ? { userId: adminId } : {}) // omit when undefined
+            ...(context?.adminId ? { userId: context.adminId } : {})
           };
-          const error = unifiedErrorHandler.handleError(multimodalError, meta, 'multimodal_processing')
+          unifiedErrorHandler.handleError(multimodalError, meta, 'multimodal_processing');
           // Continue without multimodal processing
         }
       }
@@ -194,11 +198,12 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
 
   // Admin Chat Methods
   async initializeAdminSession(sessionId: string, adminId?: string): Promise<void> {
+    // when passing the status payload (example)
     this.adminSessions.set(sessionId, {
       isConnected: true,
       lastActivity: new Date(),
       messageCount: 0,
-      adminId
+      ...(adminId ? { adminId } : {}) // ← conditional spread instead of adminId: string|undefined
     })
   }
 
@@ -210,21 +215,15 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
     }
   }
 
-  getAdminSessionStatus(sessionId: string): {
-    isConnected: boolean
-    lastActivity: Date | null
-    messageCount: number
-  } | null {
-    const session = this.adminSessions.get(sessionId)
-    return session ? {
-      isConnected: session.isConnected,
-      lastActivity: session.lastActivity,
-      messageCount: session.messageCount
-    } : null
+  // methods must match the base type: return Promise
+  async getAdminSessionStatus(sessionId: string): Promise<{ isActive: boolean; lastActivity: Date } | null> {
+    const s = this.adminSessions.get(sessionId);
+    if (!s) return null;
+    return { isActive: !!s.isConnected, lastActivity: s.lastActivity ?? new Date(0) };
   }
 
-  disconnectAdminSession(sessionId: string): void {
-    this.adminSessions.delete(sessionId)
+  async disconnectAdminSession(sessionId: string): Promise<void> {
+    this.adminSessions.delete(sessionId);
   }
 
   // Real-time Chat Methods
@@ -262,7 +261,7 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
       isStreaming: session.isStreaming,
       lastActivity: session.lastActivity,
       messageCount: session.messageCount,
-      correlationId: session.correlationId
+      ...(session.correlationId ? { correlationId: session.correlationId } : {})
     } : null
   }
 
@@ -333,10 +332,10 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
         // Convert UnifiedMessage to AdminMessage format
         const adminUserMessage = {
           sessionId,
-          adminId,
+          ...(adminId ? { adminId } : {}),
           type: userMessage.role,
           content: userMessage.content,
-          contextLeads: context?.conversationIds,
+          ...(context?.conversationIds ? { contextLeads: context.conversationIds } : {}),
           metadata: {
             mode: 'admin',
             timestamp: userMessage.timestamp.toISOString(),
@@ -448,10 +447,10 @@ Response Style:
         // Convert to AdminMessage format
         const adminAssistantMessage = {
           sessionId,
-          adminId,
+          ...(adminId ? { adminId } : {}),
           type: 'assistant' as const,
           content: responseText,
-          contextLeads: context?.conversationIds,
+          ...(context?.conversationIds ? { contextLeads: context.conversationIds } : {}),
           metadata: {
             mode: 'admin',
             contextUsed: adminContext.length > 0,
@@ -498,7 +497,7 @@ Response Style:
       const chatError = unifiedErrorHandler.handleError(error, {
         sessionId,
         mode: 'admin',
-        userId: adminId
+        ...(adminId ? { userId: adminId } : {})
       }, 'admin_mode_processing')
 
       yield {
@@ -565,15 +564,15 @@ Response Style:
               `Video input: ${context.multimodalData.videoData.length} bytes`,
               'screen',
               context.multimodalData.videoData.length,
-              context.multimodalData.videoData
+              this.asMaybeString(context.multimodalData.videoData)
             )
             multimodalContent += `[Video input received - ${context.multimodalData.videoData.length} bytes]`
           }
         } catch (multimodalError) {
           const error = unifiedErrorHandler.handleError(multimodalError, {
-            sessionId: context?.sessionId,
+            ...(context?.sessionId ? { sessionId: context.sessionId } : {}),
             mode,
-            userId: context?.adminId
+            ...(context?.adminId ? { userId: context.adminId } : {})
           }, 'multimodal_processing')
         }
       }
@@ -607,9 +606,9 @@ Response Style:
 
     } catch (error) {
       const chatError = unifiedErrorHandler.handleError(error, {
-        sessionId: context?.sessionId,
+        ...(context?.sessionId ? { sessionId: context.sessionId } : {}),
         mode,
-        userId: context?.adminId
+        ...(context?.adminId ? { userId: context.adminId } : {})
       }, 'legacy_stream_generation')
 
       // Return error response in legacy format

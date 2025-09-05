@@ -1,4 +1,19 @@
-import { intelligenceService } from '@/src/core/intelligence'
+import { z } from 'zod';
+// REMOVE broken named import; use namespace with .js
+import * as Intelligence from '@/src/core/intelligence/index.js';
+
+export const sessionInitSchema = z.object({
+  sessionId: z.string().optional(),
+  userId: z.string().optional(),
+  mode: z.string().optional(),
+});
+
+// tolerate both shapes at runtime without typing explosions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const intelligenceService: any =
+  (Intelligence as any).intelligenceService ??
+  (Intelligence as any).service ??
+  null;
 
 export interface IntelligenceRequest {
   action: 'init-session' | 'analyze-message' | 'research-lead'
@@ -16,7 +31,7 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
     }
 
     case 'analyze-message': {
-      const { message, context } = data as { message: string; context?: ContextSnapshot }
+      const { message, context } = data as { message: string; context?: any }
       const intent = await intelligenceService.analyzeMessage(message, context)
       return { success: true, intent }
     }
@@ -30,7 +45,8 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
       // Store in context if sessionId provided
       if (sessionId) {
-        const { ContextStorage } = await import('@/src/core/context/context-storage')
+        // From src/api/intelligence/handler.ts to src/core/** is TWO levels up
+        const { ContextStorage } = await import('../../core/context/context-storage.js')
         const contextStorage = new ContextStorage()
 
         await contextStorage.update(sessionId, {
@@ -42,8 +58,8 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
         // Optional: store embeddings for memory when enabled
         if (process.env.EMBEDDINGS_ENABLED === 'true') {
-          const { embedTexts } = await import('@/src/core/embeddings/gemini')
-          const { upsertEmbeddings } = await import('@/src/core/embeddings/query')
+          const { embedTexts } = await import('../../core/embeddings/gemini.js')
+          const { upsertEmbeddings } = await import('../../core/embeddings/query.js')
 
           const texts: string[] = []
           if (result.company?.summary) texts.push(String(result.company.summary))

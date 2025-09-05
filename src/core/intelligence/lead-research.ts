@@ -73,28 +73,13 @@ export class LeadResearchService {
 
       // Prepare lead context for workflow
       const leadContext: LeadContext = {
-        name: (name ?? email.split('@')[0]),
+        name: (name ?? email.split('@')[0] ?? 'Unknown').toString(),
         email,
-        summary,
-        leadScore: researchResult.confidence * 100,
-        researchJson: {
-          company: researchResult.company,
-          person: researchResult.person,
-          intelligence: {
-            keywords: researchResult.citations?.map(c => c.title).slice(0, 5) || [],
-            confidence: researchResult.confidence
-          },
-          session: {
-            id: sessionId,
-            stage: 'solution_presentation',
-            score: Math.round(researchResult.confidence * 100),
-            timestamp: new Date().toISOString()
-          }
-        }
+        company: researchResult.company.name || 'Unknown Company'
       }
 
       // Execute the complete workflow
-      const result = await finalizeLeadSession(leadContext)
+      const result = await finalizeLeadSession(leadContext as any)
 
       // Clear cache after successful completion
       this.cache.delete(this.generateCacheKey(email, name, companyUrl))
@@ -135,7 +120,7 @@ Citations: ${research.citations?.length || 0} sources reviewed`
     try {
       // Action logged
 
-      const domain = email.split('@')[1]
+      const domain = email.split('@')[1] ?? 'unknown.com'
 
       // Known profile fallback for Farzad Bayat
       if (email === 'farzad@talktoeve.com' && ((name ?? '').toLowerCase().includes('farzad') || !name)) {
@@ -176,7 +161,7 @@ Citations: ${research.citations?.length || 0} sources reviewed`
       }
 
       // Use Google Grounding for comprehensive research
-      const researchResult = await this.researchWithGrounding(email, (name ?? email.split('@')[0]), domain, companyUrl ?? '')
+      const researchResult = await this.researchWithGrounding(email, (name ?? email.split('@')[0] ?? 'Unknown').toString(), domain, companyUrl as any)
       
       // Record capability usage for search
       if (sessionId) {
@@ -213,7 +198,7 @@ Citations: ${research.citations?.length || 0} sources reviewed`
     }
   }
 
-  private async researchWithGrounding(email: string, name: string | undefined, domain: string, companyUrl: string | undefined): Promise<ResearchResult> {
+  private async researchWithGrounding(email: string, name: string | undefined, domain: string, companyUrl?: string): Promise<ResearchResult> {
     const allCitations: Array<{ uri: string; title?: string; description?: string }> = []
 
     // Fast path for known reserved domains
@@ -228,9 +213,9 @@ Citations: ${research.citations?.length || 0} sources reviewed`
           website: companyUrl ?? `https://${domain}`
         },
         person: {
-          fullName: (name ?? email.split('@')[0]),
-          company: domain.split('.')[0]
-        },
+          fullName: (name ?? email.split('@')[0] ?? 'Unknown').toString(),
+          company: domain.split('.')[0] ?? 'Unknown'
+        } as any,
         role: 'Test Account',
         confidence: 0.95,
         citations: [{
@@ -249,8 +234,8 @@ Citations: ${research.citations?.length || 0} sources reviewed`
     // Run all searches in parallel with timeouts
     const [companySearch, personSearch, roleSearch] = await Promise.allSettled([
       withTimeout(this.groundingProvider.searchCompany(domain), 6000),
-      withTimeout(this.groundingProvider.searchPerson((name ?? email.split('@')[0]), domain), 6000),
-      withTimeout(this.groundingProvider.searchRole((name ?? email.split('@')[0]), domain), 6000)
+      withTimeout(this.groundingProvider.searchPerson((name ?? email.split('@')[0] ?? 'Unknown').toString(), domain), 6000),
+      withTimeout(this.groundingProvider.searchRole((name ?? email.split('@')[0] ?? 'Unknown').toString(), domain), 6000)
     ])
 
     // Extract successful results
@@ -323,10 +308,10 @@ Be thorough and accurate. If information is not available, use null for that fie
     if (jsonMatch) {
       const researchData = JSON.parse(jsonMatch[0])
       try {
-        const { normalizeCompany } = await import('./providers/enrich/company-normalizer')
-        const { normalizePerson } = await import('./providers/enrich/person-normalizer')
-        const nc = normalizeCompany({ text: companyResult?.text || '', url: String(companyUrl ?? '') }, domain)
-        const np = normalizePerson({ text: personResult?.text || '', name: researchData?.person?.fullName, company: nc.name })
+        const { normalizeCompany } = await import('./providers/enrich/company-normalizer.js')
+        const { normalizePerson } = await import('./providers/enrich/person-normalizer.js')
+        const nc = normalizeCompany({ name: domain.split('.')[0] ?? '', domain })
+        const np = normalizePerson({ fullName: researchData?.person?.fullName, company: nc.name })
         return {
           company: { ...nc, ...researchData.company },
           person: { ...np, ...researchData.person },
@@ -354,9 +339,9 @@ Be thorough and accurate. If information is not available, use null for that fie
         summary: 'Company information unavailable'
       },
       person: {
-        fullName: (name ?? email.split('@')[0]),
-        company: domain.split('.')[0]
-      },
+        fullName: (name ?? email.split('@')[0] ?? 'Unknown').toString(),
+        company: domain.split('.')[0] ?? 'Unknown'
+      } as any,
       role: 'Business Professional',
       confidence: 0.2,
       citations: allCitations
@@ -400,7 +385,7 @@ Be thorough and accurate. If information is not available, use null for that fie
         lead_id: lead.id,
         source: 'lead_research',
         url: researchResult.company.website || researchResult.company.domain,
-        title: `Research Data for ${researchResult.person.fullName}`,
+        title: `Research Data for ${researchResult.person.fullName || 'Unknown Person'}`,
         snippet: `Company: ${researchResult.company.name}, Role: ${researchResult.role}`,
         raw: researchResult
       }

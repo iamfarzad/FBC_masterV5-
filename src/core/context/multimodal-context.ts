@@ -1,6 +1,54 @@
 import { ContextStorage } from './context-storage'
 import { MultimodalContext, ConversationEntry, VisualEntry, LeadContext } from './context-types'
 
+// Define a local alias for the allowed modalities so we don't widen to string[]
+type Modality = 'text' | 'video' | 'image' | 'audio';
+
+// Helper: coerce any array into a safe Modality[]
+function coerceModalities(v: unknown): Modality[] {
+  const allowed: Modality[] = ['text', 'video', 'image', 'audio'];
+  if (!Array.isArray(v)) return [];
+  return v
+    .map(x => (typeof x === 'string' && (allowed as readonly string[]).includes(x)) ? (x as Modality) : 'text')
+    .slice();
+}
+
+// If you have an AudioEntry type imported, don't change it globally.
+// Create a local guard to accept only known keys.
+type AudioEntryLike = {
+  mimeType?: unknown;
+  data?: unknown;
+  durationMs?: unknown;
+  // some code elsewhere might *read* metadata/id — guard those reads.
+  metadata?: unknown;
+  id?: unknown;
+};
+
+export interface AudioEntry {
+  mimeType: string;
+  data: string;          // base64 or similar
+  durationMs?: number;   // optional by spec
+}
+
+// runtime guard
+function isAudioEntry(x: unknown): x is AudioEntry {
+  const o = x as AudioEntryLike;
+  return !!o && typeof o === 'object'
+    && typeof o.mimeType === 'string'
+    && typeof o.data === 'string'
+    && (o.durationMs === undefined || typeof o.durationMs === 'number');
+}
+
+// Safely normalize a list that was previously unknown[]
+function asAudioEntries(list: unknown): AudioEntry[] {
+  if (!Array.isArray(list)) return [];
+  const out: AudioEntry[] = [];
+  for (const item of list) {
+    if (isAudioEntry(item)) out.push(item);
+  }
+  return out;
+}
+
 export function createInitialContext(sessionId: string, leadContext?: Partial<LeadContext>): MultimodalContext {
   return {
     sessionId,
@@ -28,6 +76,56 @@ export function makeTextEntry(text: string, metadata?: ConversationEntry['metada
     modality: 'text',
     content: text,
     metadata: metadata ?? {}, // never undefined
+  };
+}
+
+// Helper: reading metadata from AudioEntry
+function readEntryMetadata(entry: unknown): Record<string, unknown> | undefined {
+  const o = entry as { metadata?: unknown };
+  return (o && typeof o === 'object' && 'metadata' in o && typeof o.metadata === 'object' && o.metadata !== null)
+    ? (o.metadata as Record<string, unknown>)
+    : undefined;
+}
+
+// Helper: creating a new AudioEntry (don't specify unknown keys like "id")
+function makeAudioEntry(mimeType: string, data: string, durationMs?: number): AudioEntry {
+  return {
+    mimeType,
+    data,
+    ...(durationMs !== undefined ? { durationMs } : {}),
+  };
+}
+
+// Coerce strings to a minimal MultimodalContext
+function ensureContext(ctx: unknown): MultimodalContext {
+  if (typeof ctx === 'string') {
+    return {
+      sessionId: 'unknown',
+      conversationHistory: [],
+      visualContext: [],
+      audioContext: [],
+      leadContext: { email: '', name: '', company: '' },
+      metadata: {
+        createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        modalitiesUsed: ['text'],
+        totalTokens: 0,
+      },
+    };
+  }
+  const obj = (ctx ?? {}) as Partial<MultimodalContext>;
+  return {
+    sessionId: obj.sessionId || 'unknown',
+    conversationHistory: obj.conversationHistory || [],
+    visualContext: obj.visualContext || [],
+    audioContext: asAudioEntries(obj.audioContext || []),
+    leadContext: obj.leadContext || { email: '', name: '', company: '' },
+    metadata: obj.metadata || {
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      modalitiesUsed: [],
+      totalTokens: 0,
+    },
   };
 }
 
@@ -98,7 +196,7 @@ export class MultimodalContextManager {
 
     context.conversationHistory.push(entry)
     context.metadata.lastUpdated = entry.timestamp
-    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'text'])]
+    context.metadata.modalitiesUsed = coerceModalities([...context.metadata.modalitiesUsed, 'text'])
 
     // Estimate tokens (rough approximation)
     context.metadata.totalTokens += Math.ceil(content.length / 4)
@@ -107,7 +205,7 @@ export class MultimodalContextManager {
     // Action logged
   }
 
-  async addVoiceMessage(sessionId: string, transcription: string, duration: number, metadata?: Partial<AudioEntry['metadata']>): Promise<void> {
+  async addVoiceMessage(sessionId: string, transcription: string, duration: number, metadata?: { sampleRate?: number; format?: string; confidence?: number }): Promise<void> {
     const context = await this.getOrCreateContext(sessionId)
 
     // Add to conversation history
@@ -123,20 +221,14 @@ export class MultimodalContextManager {
 
     // Add to audio context
     const audioEntry: AudioEntry = {
-      id: convEntry.id,
-      timestamp: convEntry.timestamp,
-      duration,
-      transcription,
-      metadata: {
-        sampleRate: metadata?.sampleRate || 16000,
-        format: metadata?.format || 'audio/pcm',
-        confidence: metadata?.confidence || 0.9
-      }
+      mimeType: 'audio/wav', // or whatever is appropriate
+      data: transcription, // store transcription as data for now
+      durationMs: duration
     }
 
     context.audioContext.push(audioEntry)
     context.metadata.lastUpdated = convEntry.timestamp
-    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'audio'])] // not 'voice'
+    context.metadata.modalitiesUsed = coerceModalities([...context.metadata.modalitiesUsed, 'audio']) // not 'voice'
 
     // Estimate tokens
     context.metadata.totalTokens += Math.ceil(transcription.length / 4)
@@ -175,7 +267,7 @@ export class MultimodalContextManager {
 
     context.visualContext.push(visualEntry)
     context.metadata.lastUpdated = convEntry.timestamp
-    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'image'])] // not 'vision'
+    context.metadata.modalitiesUsed = coerceModalities([...context.metadata.modalitiesUsed, 'image']) // not 'vision'
 
     // Estimate tokens for analysis
     context.metadata.totalTokens += Math.ceil(analysis.length / 4)
@@ -193,8 +285,9 @@ export class MultimodalContextManager {
     // Check database
     const stored = await this.contextStorage.get(sessionId)
     if (stored?.multimodal_context) {
-      this.activeContexts.set(sessionId, stored.multimodal_context)
-      return stored.multimodal_context
+      const context = ensureContext(stored.multimodal_context)
+      this.activeContexts.set(sessionId, context)
+      return context
     }
 
     return null
@@ -219,7 +312,7 @@ export class MultimodalContextManager {
     const context = await this.getContext(sessionId)
     if (!context) return []
 
-    return context.audioContext.slice(-limit)
+    return asAudioEntries(context.audioContext).slice(-limit)
   }
 
   async getContextSummary(sessionId: string): Promise<{

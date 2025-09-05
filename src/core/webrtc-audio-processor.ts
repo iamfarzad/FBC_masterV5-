@@ -185,22 +185,23 @@ export class WebRTCAudioProcessor {
             const sample = inputData[i]
             if (!Number.isFinite(sample)) continue
 
+            const s = sample ?? 0;
             // Apply noise gate
-            if (Math.abs(sample) < th) {
+            if (Math.abs(s) < th) {
               outputData[i] = 0
             } else {
               // Apply compression
               const compressionRatio = 4
-              let processedSample = sample
+              let processedSample = s
 
-              if (Math.abs(sample) > cTh) {
-                const excess = Math.abs(sample) - cTh
+              if (Math.abs(s) > cTh) {
+                const excess = Math.abs(s) - cTh
                 const compressedExcess = excess / compressionRatio
                 processedSample =
-                  sample > 0 ? cTh + compressedExcess : -(cTh + compressedExcess)
+                  s > 0 ? cTh + compressedExcess : -(cTh + compressedExcess)
               }
 
-              outputData[i] = processedSample
+              outputData[i] = processedSample ?? 0
             }
           }
         }

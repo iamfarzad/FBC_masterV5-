@@ -31,7 +31,10 @@ export class EmailService {
       const { Resend } = await import('resend')
       const resend = new Resend(this.apiKey)
 
-      const text = template.text ?? template.html.replace(/<[^>]+>/g, ' ');
+      const text =
+        'text' in template && typeof (template as any).text === 'string'
+          ? (template as any).text
+          : template.html.replace(/<[^>]+>/g, ' ');
       const baseOpts: any = {
         from: template.from || 'F.B/c <noreply@yourdomain.com>',
         to: template.to,

@@ -103,7 +103,13 @@ async function generatePdfWithPdfLib(summaryData: SummaryData, outputPath: strin
   const drawText = (text: string, opts?: { size?: number; color?: unknown; bold?: boolean }) => {
     const size = opts?.size ?? 11
     const color = opts?.color ?? rgb(0.1, 0.1, 0.1)
-    currentPage.drawText(text, { x: marginX, y, size, color: (color as Color | undefined), font: opts?.bold ? fontBold : font })
+    currentPage.drawText(text, {
+      x: marginX,
+      y,
+      size,
+      font: opts?.bold ? fontBold : font,
+      ...(color ? { color: color as Color } : {}),
+    })
     y -= lineHeight * 1.2
     ensurePage()
   }

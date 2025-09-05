@@ -19,11 +19,11 @@ export function normalizeCompany(input: { name?: string; domain?: string }): Nor
   return {
     name: name ?? '',
     domain: domain ?? '',
-    industry: undefined,
-    size: undefined,
-    summary: undefined,
-    website: undefined,
-    linkedin: undefined
+    industry: '',
+    size: '',
+    summary: '',
+    website: '',
+    linkedin: ''
   }
 }
 

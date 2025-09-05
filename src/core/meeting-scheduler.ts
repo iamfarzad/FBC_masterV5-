@@ -85,7 +85,7 @@ export class MeetingScheduler {
       const bookedTimes = new Set(
         bookedSlots
           .map((slot: unknown) => (typeof slot === 'object' && slot !== null ? (slot as any).meeting_time : undefined))
-          .filter((x): x is string => typeof x === 'string')
+          .filter((x: unknown): x is string => typeof x === 'string')
       )
 
       return this.TIME_SLOTS.map((time) => ({

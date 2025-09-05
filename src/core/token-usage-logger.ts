@@ -21,6 +21,24 @@ export interface TokenUsageLog {
   created_at?: string
 }
 
+// 🔧 PATCH: add local types + guards at top
+type TokenLog = {
+  total_tokens?: number;
+  input_tokens?: number;
+  output_tokens?: number;
+  estimated_cost?: number;
+  model?: string;
+  ts?: string | number | Date;
+  [k: string]: unknown;
+};
+
+function isTokenLog(v: unknown): v is TokenLog {
+  return !!v && typeof v === 'object';
+}
+
+const sumTotals = (logs: unknown[]) =>
+  (logs as TokenLog[]).reduce((sum: number, log: TokenLog) => sum + (log.total_tokens ?? 0), 0);
+
 export interface UserPlanBudget {
   daily_tokens: number
   monthly_tokens: number
@@ -109,8 +127,8 @@ export class TokenUsageLogger {
         .eq('user_id', userId)
         .gte('created_at', startOfMonth.toISOString())
 
-      const currentDailyUsage = dailyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
-      const currentMonthlyUsage = monthlyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
+      const currentDailyUsage = dailyUsage ? sumTotals(dailyUsage) : 0
+      const currentMonthlyUsage = monthlyUsage ? sumTotals(monthlyUsage) : 0
 
       // Count requests
       const { count: dailyRequests } = await supabase
@@ -285,18 +303,23 @@ export class TokenUsageLogger {
       let totalTokens = 0
       let totalCost = 0
 
-      logs.forEach(log => {
-        totalTokens += log.total_tokens
-        totalCost += log.estimated_cost
+      // 🔧 PATCH: guard unknown in loops
+      logs.forEach((log: unknown) => {
+        if (!isTokenLog(log)) return;
+        const inTok = typeof log.input_tokens === 'number' ? log.input_tokens : 0;
+        const outTok = typeof log.output_tokens === 'number' ? log.output_tokens : 0;
+        // …use inTok/outTok safely…
+        totalTokens += log.total_tokens ?? 0
+        totalCost += log.estimated_cost ?? 0
 
-        const feature = log.task_type || 'unknown' // Use task_type instead of feature
+        const feature = (log as any).task_type || 'unknown' // Use task_type instead of feature
 
         if (!featureBreakdown[feature]) {
           featureBreakdown[feature] = { tokens: 0, cost: 0, requests: 0 }
         }
 
-        featureBreakdown[feature].tokens += log.total_tokens
-        featureBreakdown[feature].cost += log.estimated_cost
+        featureBreakdown[feature].tokens += log.total_tokens ?? 0
+        featureBreakdown[feature].cost += log.estimated_cost ?? 0
         featureBreakdown[feature].requests += 1
       })
 

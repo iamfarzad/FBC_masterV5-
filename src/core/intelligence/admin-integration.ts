@@ -55,7 +55,7 @@ export class AdminIntelligenceHandler {
           adminContext += `- Company: ${researchResult.company?.name || 'Unknown'} (${researchResult.company?.industry || 'Unknown industry'})\n`
           adminContext += `- Person: ${researchResult.person?.fullName || 'Unknown'} (${researchResult.role || 'Unknown role'})\n`
           adminContext += `- Confidence: ${Math.round(researchResult.confidence * 100)}%\n`
-          if (researchResult.citations?.length > 0) {
+          if (researchResult.citations && researchResult.citations.length > 0) {
             adminContext += `- Sources: ${researchResult.citations.length} citations\n`
           }
         }
@@ -76,7 +76,7 @@ export class AdminIntelligenceHandler {
    * Get intelligence context for a single lead
    */
   async getLeadIntelligence(email: string, name?: string, companyUrl?: string): Promise<ResearchResult> {
-    return intelligenceService.researchLead?.({ sessionId: 'temp', email, name })
+    return intelligenceService.researchLead?.({ sessionId: 'temp', email, name } as any)
   }
 
   /**
@@ -87,7 +87,7 @@ export class AdminIntelligenceHandler {
       sessionId,
       email,
       name
-    })
+    } as any)
   }
 
   /**

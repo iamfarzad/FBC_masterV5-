@@ -322,8 +322,7 @@ export function getCapabilityByKeyword(keyword: string): AICapability[] {
 
 export function formatCapabilitiesForPrompt(capabilities: AICapability[]): string {
   const byCategory = capabilities.reduce((acc, cap) => {
-    if (!acc[cap.category]) acc[cap.category] = []
-    acc[cap.category].push(cap)
+    (acc[cap.category] ??= []).push(cap)
     return acc
   }, {} as Record<string, AICapability[]>)
 
@@ -331,6 +330,7 @@ export function formatCapabilitiesForPrompt(capabilities: AICapability[]): strin
   
   Object.entries(byCategory).forEach(([category, caps]) => {
     const categoryInfo = CAPABILITY_CATEGORIES[category as keyof typeof CAPABILITY_CATEGORIES]
+    if (!categoryInfo) return; // Guard against undefined category
     prompt += `\n### ${categoryInfo.name}\n`
     
     caps.forEach(cap => {

@@ -49,7 +49,7 @@ export function useAdminChat({
     mode: 'admin',
     initialMessages: initialMessages as UnifiedMessage[],
     context: {
-      adminId,
+      adminId: adminId ?? '',
       conversationIds: conversationIds ?? [],
       sessionId
     }
@@ -70,7 +70,7 @@ export function useAdminChat({
       content: newMessage.content,
       timestamp: newMessage.timestamp,
       type: 'text',
-      metadata: newMessage.metadata
+      metadata: newMessage.metadata ?? {}
     })
     return newMessage
   }, [unifiedChat])

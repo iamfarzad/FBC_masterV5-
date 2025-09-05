@@ -1,12 +1,23 @@
 import { ContextStorage } from '@/src/core/context/context-storage'
 
+function pickLead(ctx: unknown): { email: string; name: string } | undefined {
+  const obj = ctx as Record<string, unknown>;
+  const lead = (obj && typeof obj === 'object' && 'lead' in obj) ? (obj as any).lead : undefined;
+  const email = lead?.email;
+  const name = lead?.name;
+  if (typeof email === 'string' && typeof name === 'string') {
+    return { email, name };
+  }
+  return undefined;
+}
+
 export async function getMergedContext(sessionId: string) {
   const storage = new ContextStorage()
   const raw = await storage.get(sessionId)
   if (!raw) return null
   const snapshot = {
     sessionId,
-    lead: raw.lead,
+    lead: pickLead(raw),
     company: raw.company_context,
     person: raw.person_context,
     role: raw.role,
@@ -31,7 +42,7 @@ export async function getContextSnapshot(sessionId: string): Promise<ContextSnap
   if (!data) return null
 
   const snapshot: ContextSnapshot = {
-    lead: data.email ? { email: data.email, name: data.name || '' } : undefined,
+    lead: pickLead(data) || { email: '', name: '' },
     company: data.company_context || undefined,
     person: data.person_context || undefined,
     role: data.role || undefined,

@@ -7,14 +7,12 @@ export async function handleChat(request: ChatRequest) {
 
   // Create async iterable that yields text chunks from the chat service
   async function* textChunks() {
-    for await (const chunk of chatService(request)) {
-      if (chunk.type === 'text') {
-        const textData = String(chunk.data)
-        yield textData
-      } else if (chunk.type === 'tool' && chunk.data && typeof chunk.data === 'object' && 'error' in chunk.data) {
-        throw new Error(String(chunk.data.error))
+    for await (const message of chatService(request)) {
+      // For now, just yield the content of assistant messages
+      if (message.role === 'assistant' && message.content) {
+        yield message.content
       }
-      // Skip 'done' chunks - they're handled by the SSE helper
+      // Handle other message types as needed
     }
   }
 

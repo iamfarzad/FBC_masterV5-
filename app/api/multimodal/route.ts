@@ -150,9 +150,7 @@ export async function POST(request: NextRequest) {
             {
               sampleRate: 16000,
               format: 'audio/pcm',
-              confidence: 0.9,
-              isRealtime: true,
-              streamId: metadata.streamId
+              confidence: 0.9
             }
           )
 

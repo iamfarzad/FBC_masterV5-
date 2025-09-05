@@ -2,18 +2,31 @@ import type { UnifiedMessage } from './unified-types'
 import { getProvider } from '../ai'
 import { ContextStorage } from '../context/context-storage'
 
-export async function* chatService(req: ChatRequest): AsyncIterable<ChatChunk> {
+// Option A (preferred if you don't actually need a shared type): define a local minimal type and remove the import.
+
+// Use proper types from the types file
+import type { ChatMessage, ChatRequest as BaseChatRequest } from '../types/chat'
+
+// Extend the base ChatRequest with additional fields used by the service
+type ChatRequest = BaseChatRequest & {
+  sessionId?: string;
+  mode?: string;
+  userId?: string;
+};
+
+export async function* chatService(req: ChatRequest): AsyncIterable<ChatMessage> {
   const provider = getProvider()
   let chunkId = 0
   let responseText = ''
 
   try {
     // Extract session ID and lead context from request
-    const sessionId = (req as any).sessionId || 'default-session'
-    const leadContext = (req as any).leadContext || {}
+    const sessionId = req.sessionId || 'default-session'
+    const leadContext = req.data?.leadContext || {}
 
     // Add session data to first message for system prompt generation
-    const enhancedMessages = req.messages.map((msg, index) => ({
+    // ⬇️ annotate params
+    const enhancedMessages = req.messages.map((msg: ChatMessage, index: number) => ({
       ...msg,
       ...(index === 0 ? {
         sessionData: {
@@ -28,9 +41,8 @@ export async function* chatService(req: ChatRequest): AsyncIterable<ChatChunk> {
     for await (const text of provider.generate({ messages: enhancedMessages })) {
       responseText += text
       yield {
-        id: String(chunkId++),
-        type: 'text',
-        data: text
+        role: 'assistant' as const,
+        content: text
       }
     }
 
@@ -50,27 +62,15 @@ export async function* chatService(req: ChatRequest): AsyncIterable<ChatChunk> {
       }
     }
 
-    yield {
-      id: 'done',
-      type: 'done',
-      data: null
-    }
   } catch (error) {
     console.error('Chat service error:', error)
 
     // If we haven't yielded anything yet, send an error response
     if (chunkId === 0) {
       yield {
-        id: 'error',
-        type: 'text',
-        data: 'I apologize, but I\'m having trouble responding right now. Please try again.'
+        role: 'assistant' as const,
+        content: 'I apologize, but I\'m having trouble responding right now. Please try again.'
       }
-    }
-
-    yield {
-      id: 'done',
-      type: 'done',
-      data: null
     }
   }
 }

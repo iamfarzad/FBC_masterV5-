@@ -13,11 +13,11 @@ export const POST = withApiGuard({ schema: Body, requireSession: false, rateLimi
   const raw = await contextStorage.get(body.sessionId)
   if (!raw) return NextResponse.json({ ok: false, error: 'Context not found' } satisfies ToolRunResult, { status: 404 })
   const snapshot: ContextSnapshot = {
-    lead: { email: raw.email, name: raw.name },
+    lead: { email: (raw.email ?? '').toString(), name: (raw.name ?? '').toString() },
     company: (raw.company_context && Object.keys(raw.company_context).length > 0) ? raw.company_context : undefined,
     person: (raw.person_context && Object.keys(raw.person_context).length > 0) ? raw.person_context : undefined,
-    role: raw.role ?? undefined,
-    roleConfidence: raw.role_confidence ?? undefined,
+    role: raw.role ?? '',
+    roleConfidence: raw.role_confidence ?? 0,
     intent: raw.intent_data ?? undefined,
     capabilities: raw.ai_capabilities_shown || [],
   }

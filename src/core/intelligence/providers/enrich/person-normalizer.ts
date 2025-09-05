@@ -22,22 +22,22 @@ export function normalizePerson(p: {
 }): NormalizedPerson {
   return {
     fullName: p.fullName ?? '',
-    role: p.role,
-    seniority: p.seniority ?? undefined,
-    profileUrl: p.profileUrl ?? undefined,
-    company: p.company
+    ...(p.role ? { role: p.role } : {}),
+    ...(p.seniority ? { seniority: p.seniority } : {}),
+    ...(p.profileUrl ? { profileUrl: p.profileUrl } : {}),
+    ...(p.company ? { company: p.company } : {})
   }
 }
 
 function extractRole(text?: string | null): string | null {
   if (!text) return null
   const m = text.match(/(cto|ceo|founder|vp engineering|head of [^,\n]+)/i)
-  return m ? m[1] : null
+  return m ? m[1] ?? null : null
 }
 
 export function extractLinkedInProfile(url: string): string | null {
   const m = /https?:\/\/([\w.]*linkedin\.com\/in\/[^\/?#]+)/i.exec(url)
-  return m ? m[1] : null
+  return m ? m[1] ?? null : null
 }
 
 
