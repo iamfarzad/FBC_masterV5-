@@ -22,7 +22,7 @@ export interface ChatState {
 
 export type ChatAction =
   | { type: 'SEND_MESSAGE'; payload: { content: string } }
-  | { type: 'RECEIVE_MESSAGE'; payload: { message: ChatMessage } }
+  | { type: 'RECEIVE_MESSAGE'; payload: { message: UnifiedMessage } }
   | { type: 'SET_LOADING'; payload: { loading: boolean } }
   | { type: 'SET_ERROR'; payload: { error: Error | null } }
   | { type: 'SET_FEATURE'; payload: { feature: ChatState['feature'] } }
@@ -43,9 +43,11 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         messages: [...state.messages, {
+          id: crypto.randomUUID(),
           role: 'user',
           content: action.payload.content,
-          timestamp: new Date().toISOString()
+          timestamp: new Date(),
+          type: 'text'
         }],
         isLoading: true,
         error: null,

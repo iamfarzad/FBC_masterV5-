@@ -1,10 +1,8 @@
 module.exports = {
   extends: ['next/core-web-vitals'],
   rules: {
-    'react/no-unescaped-entities': 'off', // Temporarily disabled for commit
-    '@next/next/no-assign-module-variable': 'off', // Temporarily disabled for commit
-    '@typescript-eslint/no-explicit-any': 'off', // Temporarily disabled for commit
-    '@typescript-eslint/no-empty-interface': 'off', // Temporarily disabled for commit
+    '@typescript-eslint/no-explicit-any': 'off', // Allow explicit any types where needed
+    '@typescript-eslint/no-empty-interface': 'off' // Allow empty interfaces for future extension
     'no-restricted-imports': [
       'error',
       {

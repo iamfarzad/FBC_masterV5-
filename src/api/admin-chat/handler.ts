@@ -1,5 +1,5 @@
 import { handleChat } from '../chat/handler'
-import type { UnifiedMessage } from '@/src/core/chat/unified-types'
+import type { UnifiedMessage, UnifiedChatRequest } from '@/src/core/chat/unified-types'
 
 // ⬇️ imports at top (NodeNext)
 import type { ChatRequest, ChatMessage } from '@/src/core/types/chat.js';
@@ -50,7 +50,8 @@ export async function handleAdminChat(body: unknown, options?: AdminChatOptions)
   }
 
   // Add admin-specific system message if not present
-  const adminSystemMessage = {
+  const adminSystemMessage: UnifiedMessage = {
+    id: crypto.randomUUID(),
     role: 'system' as const,
     content: `You are F.B/c AI Admin Assistant, a specialized business intelligence and management AI.
 
@@ -71,18 +72,22 @@ Response Style:
 - Provide specific recommendations with rationale
 - Use the context data to support your suggestions
 - Suggest next steps and priorities
-- Maintain professional, business-focused tone`
+- Maintain professional, business-focused tone`,
+    timestamp: new Date(),
+    type: 'text'
   }
 
   // Parse and enhance the request
   const request = body as ChatRequest
   // ⬇️ add parameter types to silence implicit any
   const hasSystemMessage = request.messages.some((msg: ChatMessage) => msg.role === 'system')
-  const enhancedBody: ChatRequest = {
+
+  // Convert to UnifiedChatRequest format
+  const enhancedBody: UnifiedChatRequest = {
     ...request,
     messages: hasSystemMessage
-      ? request.messages
-      : [adminSystemMessage, ...request.messages]
+      ? request.messages.map(msg => ({ ...msg, id: crypto.randomUUID(), timestamp: new Date() }))
+      : [adminSystemMessage, ...request.messages.map(msg => ({ ...msg, id: crypto.randomUUID(), timestamp: new Date() }))]
   }
 
   // Reuse the same chat handler with enhanced context
