@@ -1,5 +1,5 @@
 import { ContextStorage } from './context-storage'
-import { MultimodalContext, ConversationEntry, VisualEntry, AudioEntry, LeadContext } from './context-types'
+import { MultimodalContext, ConversationEntry, VisualEntry, LeadContext } from './context-types'
 
 export function createInitialContext(sessionId: string, leadContext?: Partial<LeadContext>): MultimodalContext {
   return {
@@ -114,7 +114,7 @@ export class MultimodalContextManager {
     const convEntry: ConversationEntry = {
       id: `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
-      modality: 'voice',
+      modality: 'audio', // not 'voice'
       content: transcription,
       metadata: { duration, transcription }
     }
@@ -136,7 +136,7 @@ export class MultimodalContextManager {
 
     context.audioContext.push(audioEntry)
     context.metadata.lastUpdated = convEntry.timestamp
-    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'voice'])]
+    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'audio'])] // not 'voice'
 
     // Estimate tokens
     context.metadata.totalTokens += Math.ceil(transcription.length / 4)
@@ -152,7 +152,7 @@ export class MultimodalContextManager {
     const convEntry: ConversationEntry = {
       id: `vision_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
-      modality: 'vision',
+      modality: 'image', // not 'vision'
       content: analysis,
       metadata: { ...(typeof imageSize === 'number' ? { imageSize } : {}) }
     }
@@ -175,7 +175,7 @@ export class MultimodalContextManager {
 
     context.visualContext.push(visualEntry)
     context.metadata.lastUpdated = convEntry.timestamp
-    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'vision'])]
+    context.metadata.modalitiesUsed = [...new Set([...context.metadata.modalitiesUsed, 'image'])] // not 'vision'
 
     // Estimate tokens for analysis
     context.metadata.totalTokens += Math.ceil(analysis.length / 4)

@@ -56,51 +56,6 @@ export const config: AppConfig = {
         research: "gemini-2.5-pro"
       },
 
-      // Model capabilities and pricing (approximate)
-      modelCapabilities: {
-        "gemini-2.5-flash": {
-          contextWindow: 1048576, // 1M tokens
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 0.15, output: 0.60 } // per 1M tokens
-        },
-        "gemini-2.5-flash-lite": {
-          contextWindow: 1048576,
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 0.075, output: 0.30 }
-        },
-        "gemini-2.5-pro": {
-          contextWindow: 2097152, // 2M tokens
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 1.25, output: 5.00 }
-        },
-        "gemini-1.5-flash": {
-          contextWindow: 1048576,
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 0.35, output: 1.05 }
-        },
-        "gemini-1.5-pro": {
-          contextWindow: 2097152,
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 3.50, output: 10.50 }
-        },
-        "gemini-1.5-flash-8b": {
-          contextWindow: 1048576,
-          multimodal: true,
-          functionCalling: true,
-          maxOutputTokens: 8192,
-          pricing: { input: 0.075, output: 0.30 }
-        }
-      },
 
       // Caching configuration
       caching: {
