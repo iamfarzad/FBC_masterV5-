@@ -51,12 +51,14 @@ export interface FBCPersonality {
     salesLanguage: string;
     positioning: string;
     alignment: string;
+    origin: string;
   };
   boundaries: {
     confidentiality: string;
     scopeLimits: string;
     memoryPolicy: string;
     selfReference: string;
+    originQuestions: string;
   };
 }
 
