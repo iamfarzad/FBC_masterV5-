@@ -48,7 +48,7 @@ const bad = files.filter(p => {
     const hasDirectGeminiCall = /@google\/genai|models\.generate/i.test(s);
 
     // Allow direct calls in these infrastructure areas:
-    const isAllowedInfrastructure = /unified-provider|gemini-adapter|fbc-inject|embeddings|config\/safety|educational-gemini-service|intelligence\/providers/i.test(p);
+    const isAllowedInfrastructure = /unified-provider|gemini-adapter|fbc-inject|embeddings|config\/safety|educational-gemini-service|intelligence\/providers|src\/core\/live/i.test(p);
 
     // Block direct calls in user-facing components and hooks
     const isUserFacingComponent = /components\/|hooks\/|app\/.*page\.|app\/.*layout\./i.test(p);

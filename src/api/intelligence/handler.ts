@@ -43,7 +43,12 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
       // Use the actual LeadResearchService instead of the simple mock
       const { LeadResearchService } = await import('../../core/intelligence/lead-research')
       const leadResearchService = new LeadResearchService()
-      const result = await leadResearchService.researchLead({ email, name, companyUrl, sessionId })
+      const result = await leadResearchService.researchLead({
+        email,
+        ...(name ? { name } : {}),
+        ...(companyUrl ? { companyUrl } : {}),
+        ...(sessionId ? { sessionId } : {})
+      })
 
       // Store in context if sessionId provided
       if (sessionId) {
@@ -64,7 +69,8 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
           const texts: string[] = []
           if (result.company?.summary) texts.push(String(result.company.summary))
-          if (result.person?.summary) texts.push(String(result.person.summary))
+          if (result.person?.fullName) texts.push(`Person: ${result.person.fullName}`)
+          if (result.person?.role) texts.push(`Role: ${result.person.role}`)
           const vectors = texts.length ? await embedTexts(texts, 1536) : []
           if (vectors.length) await upsertEmbeddings(sessionId, 'lead_research', texts, vectors)
         }

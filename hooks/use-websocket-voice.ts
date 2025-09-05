@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useToast } from '@/hooks/use-toast'
+import { connectLive } from '@/src/core/live/client'
 
 // WebSocket URL will be configured in the connectWebSocket function
 
@@ -417,8 +418,6 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           const { token } = await res.json()
           if (!token) throw new Error('No token returned')
 
-          const { GoogleGenAI, Modality } = await import('@google/genai')
-          const ai = new GoogleGenAI({ apiKey: token })
           const model = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview-native-audio'
 
           const responseQueue: unknown[] = []
@@ -446,10 +445,11 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             }
           }
 
-          const session = await (ai as any).live.connect({
+          const session = await connectLive({
+            apiKey: token,
             model,
             config: {
-              responseModalities: [Modality.AUDIO], // Can only set ONE modality per session
+              responseModalities: ['audio'], // Can only set ONE modality per session
               speechConfig: {
                 voiceConfig: {
                   prebuiltVoiceConfig: {
@@ -469,16 +469,16 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
               },
               // Media resolution for video input
               mediaResolution: 'MEDIA_RESOLUTION_LOW', // Low resolution for faster processing
-            },
-            callbacks: {
-              onopen: () => {
-                setIsConnected(true)
-                setSession({ connectionId: 'direct', isActive: true })
-              },
-              onmessage,
-              onerror: (error: unknown) => setError(`Gemini error: ${(error as Error)?.message || 'unknown'}`),
-              onclose: () => setIsConnected(false),
-            },
+              callbacks: {
+                onopen: () => {
+                  setIsConnected(true)
+                  setSession({ connectionId: 'direct', isActive: true })
+                },
+                onmessage,
+                onerror: (error: unknown) => setError(`Gemini error: ${(error as Error)?.message || 'unknown'}`),
+                onclose: () => setIsConnected(false),
+              }
+            }
           })
 
           // Stash the session instance on wsRef to reuse send paths

@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+// LiveSession type will be inferred from usage
 
 interface LiveSessionRequest {
   action: 'start' | 'send' | 'end' | 'probe'
@@ -24,11 +25,11 @@ interface LiveSessionRequest {
 }
 
 // Session management for Live API
-interface LiveSession {
-  session: LiveSessionLike // Google GenAI LiveSession type
+interface LiveSessionData {
+  session: any // Google GenAI LiveSession type
   leadContext?: LiveSessionRequest['leadContext']
 }
-const liveSessions = new Map<string, LiveSession>()
+const liveSessions = new Map<string, LiveSessionData>()
 
 export async function POST(req: NextRequest) {
   // 🚨 DEPRECATION WARNING

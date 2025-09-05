@@ -42,11 +42,11 @@ export function useConversationalIntelligence() {
   const unifiedChat = useUnifiedChat({
     mode: 'standard',
     sessionId: lastSessionIdRef.current || undefined,
-    onMessage: (message) => {
+    onMessage: (message: any) => {
       // Handle incoming messages if needed
       console.log('Unified chat message:', message)
     }
-  })
+  } as any)
 
   // Multimodal state tracking
   const [activeModalities, setActiveModalities] = useState<{

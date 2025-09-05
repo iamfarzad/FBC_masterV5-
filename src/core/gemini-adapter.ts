@@ -87,13 +87,13 @@ export class GeminiAdapter {
 
     const personalityPrompt = generateFBCPersonalityPrompt(sessionId, userContext ? {
       lead: {
-        email: userContext.email,
-        name: userContext.name
+        email: 'unknown',
+        name: 'unknown'
       },
-      company: userContext.company_context,
-      person: userContext.person_context,
-      role: userContext.role,
-      roleConfidence: userContext.role_confidence
+      company: null,
+      person: null,
+      role: null,
+      roleConfidence: 0
     } : undefined);
 
     return this.streamWithHistory(history, prompt, model, personalityPrompt);

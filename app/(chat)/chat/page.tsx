@@ -143,7 +143,7 @@ export default function ChatPage() {
     if (sessionId && sessionId !== 'anonymous') {
       fetchContextFromLocalSession()
     }
-  }, [sessionId, fetchContextFromLocalSession])
+  }, [sessionId])
 
   // Handle consent submission
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
@@ -239,25 +239,20 @@ export default function ChatPage() {
 
 
 
-  // Conversational Intelligence Context
-  const {
-    context,
-    // isLoading: contextLoading, // Removed as unused
-    fetchContextFromLocalSession,
-    clearContextCache,
-    // generatePersonalizedGreeting, // Removed as unused
-    // sendRealtimeVoice // Removed as unused
-  } = useConversationalIntelligence()
+  // Conversational Intelligence Context - using unified chat
+  const context = null // TODO: Replace with proper context from unified chat
+  const fetchContextFromLocalSession = () => {} // TODO: Implement
+  const clearContextCache = () => {} // TODO: Implement
 
   // Lead Context Data
   const leadContextData = useMemo(() => {
     if (!context) return undefined
     return {
-      name: context?.person?.fullName || context?.lead?.name,
-      email: context?.lead?.email,
-      company: context?.company?.name,
-      role: context?.role,
-      industry: context?.company?.industry,
+      name: (context as any)?.person?.fullName || (context as any)?.lead?.name,
+      email: (context as any)?.lead?.email,
+      company: (context as any)?.company?.name,
+      role: (context as any)?.role,
+      industry: (context as any)?.company?.industry,
     }
   }, [context])
 

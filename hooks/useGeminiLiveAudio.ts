@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { GoogleGenAI, Modality } from '@google/genai'
 import { useAudioPlayer } from '@/hooks/useAudioPlayer'
+import { connectLive } from '@/src/core/live/client'
 import { logTokenUsage } from '@/src/core/token-usage-logger'
 import { TokenCostCalculator } from '@/src/core/token-cost-calculator'
 import { supabase } from '@/src/core/supabase/client'
@@ -184,31 +184,29 @@ export function useGeminiLiveAudio({
         throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((rateLimit.resetTime - Date.now()) / 1000)} seconds`)
       }
 
-      // Initialize Gemini client with correct SDK
-      const genAI = new GoogleGenAI({ apiKey })
-      
-      // Use the live.connect() method for real-time audio
-      const session = await genAI.live.connect({
+      // Use the live adapter to connect to Gemini
+      const session = await connectLive({
+        apiKey,
         model: modelName,
-        callbacks: {
-          onopen: () => {
-            setIsConnected(true)
-            setError(null)
-            onStatusChange?.('connected')
-            logActivity('info', 'Gemini Live session connected')
-          },
-          onmessage: handleMessage,
-          onerror: handleError,
-          onclose: handleClose
-        },
         config: {
-          responseModalities: [Modality.AUDIO, Modality.TEXT],
+          responseModalities: ['audio', 'text'],
           speechConfig: {
-            voiceConfig: { 
-              prebuiltVoiceConfig: { 
-                voiceName: 'Zephyr' 
-              } 
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: 'Zephyr'
+              }
             }
+          },
+          callbacks: {
+            onopen: () => {
+              setIsConnected(true)
+              setError(null)
+              onStatusChange?.('connected')
+              logActivity('info', 'Gemini Live session connected')
+            },
+            onmessage: handleMessage,
+            onerror: handleError,
+            onclose: handleClose
           }
         }
       })

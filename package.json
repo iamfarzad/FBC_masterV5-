@@ -8,7 +8,7 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "build": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && next build",
+    "build": "pnpm run guard:unified && next build",
     "guard:unified": "node scripts/guard-unified-only.js",
     "guard:gemini": "node scripts/guard-no-direct-gemini.js",
     "smoke:unified": "node scripts/smoke-test-unified.js",

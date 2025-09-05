@@ -34,7 +34,7 @@ export interface UnifiedContext {
 }
 
 // Chat modes
-export type ChatMode = 'standard' | 'realtime' | 'admin' | 'multimodal'
+export type ChatMode = 'standard' | 'realtime' | 'admin' | 'multimodal' | 'automation'
 
 // Provider interface
 export interface UnifiedChatProvider {
