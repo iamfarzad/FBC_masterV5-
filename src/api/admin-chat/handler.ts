@@ -78,9 +78,9 @@ Response Style:
   }
 
   // Parse and enhance the request
-  const request = body as ChatRequest
+  const request = body as UnifiedChatRequest
   // ⬇️ add parameter types to silence implicit any
-  const hasSystemMessage = request.messages.some((msg: ChatMessage) => msg.role === 'system')
+  const hasSystemMessage = request.messages.some((msg: UnifiedMessage) => msg.role === 'system')
 
   // Convert to UnifiedChatRequest format
   const enhancedBody: UnifiedChatRequest = {
