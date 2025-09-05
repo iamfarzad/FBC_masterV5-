@@ -3,6 +3,15 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/src/lib/logger'
 import { ConversationContext, MultimodalContext } from './context-types'
 
+// Type-safe conversion for multimodal context storage
+type StorableMultimodal = string | MultimodalContext;
+
+function toStorable(ctx: MultimodalContext): StorableMultimodal {
+  // If DB column is text, upstream code should treat as string.
+  // Keep runtime as string, compile-time as compatible union.
+  return JSON.stringify(ctx) as unknown as StorableMultimodal;
+}
+
 export class ContextStorage {
   private supabase: SupabaseClient | null
   private inMemoryStorage = new Map<string, ConversationContext>()
@@ -32,8 +41,8 @@ export class ContextStorage {
 
       // Handle multimodal context
       if (dataToStore.multimodal_context) {
-        // If DB column expects string, convert to JSON string
-        dataToStore.multimodal_context = JSON.stringify(dataToStore.multimodal_context) as any
+        // Convert to storable format (JSON string for DB)
+        dataToStore.multimodal_context = toStorable(dataToStore.multimodal_context as unknown as MultimodalContext)
       }
 
       // Try Supabase first, fallback to in-memory

@@ -26,7 +26,7 @@ import { Task, TaskTrigger, TaskContent, TaskItem } from '@/components/ai-elemen
 import { WebPreview, WebPreviewNavigation, WebPreviewUrl, WebPreviewBody } from '@/components/ai-elements/web-preview'
 import { Loader } from '@/components/ai-elements/loader'
 import { Message as ChatMessage } from '@/src/core/types/chat'
-import { useTools } from '@/hooks/useTools-ui'
+import { useTools, type ToolInput, type ToolResult } from '@/hooks/useTools-ui'
 
 interface ChatMessagesProps {
   messages: ChatMessage[]
@@ -43,7 +43,7 @@ interface MessageComponentProps {
   isLast: boolean
   isLoading?: boolean
   sessionId?: string | null
-  onExecuteTool?: (type: string, input: unknown, sessionId?: string) => Promise<unknown>
+  onExecuteTool?: (type: string, input: ToolInput, sessionId?: string) => Promise<ToolResult>
 }
 
 export function ChatMessages({
@@ -129,7 +129,7 @@ export function ChatMessages({
 }
 
 // Message Component using proper ai-elements (replacing custom MessageBubble)
-function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool }: MessageComponentProps) {
+function MessageComponent({ message, isLast, isLoading = false, sessionId, onExecuteTool }: MessageComponentProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [isTranslating, setIsTranslating] = useState(false)
   const [translation, setTranslation] = useState<string | null>(null)
@@ -154,7 +154,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
         targetLang: 'es'
       }, sessionId || undefined)
       
-      if (result.ok && result.output?.translated) {
+      if (result.ok && result.output && typeof result.output.translated === 'string') {
         setTranslation(result.output.translated)
       }
     } catch (error) {
@@ -256,7 +256,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
           <div className="mt-3">
             <Tool>
               <ToolHeader 
-                type="roi_calculator"
+                type="tool-roi_calculator"
                 state="output-available"
               />
               <ToolContent>
@@ -285,6 +285,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
                       </div>
                     </div>
                   }
+                  errorText={undefined}
                 />
               </ToolContent>
             </Tool>
@@ -480,7 +481,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
           <Suggestions>
             <Suggestion 
               suggestion="Calculate ROI for this proposal" 
-              onClick={async (suggestion) => {
+              onClick={async (suggestion: string) => {
                 if (onExecuteTool) {
                   await onExecuteTool('roi', {
                     initialInvestment: 25000,
@@ -493,7 +494,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
             />
             <Suggestion 
               suggestion="Generate implementation tasks" 
-              onClick={async (suggestion) => {
+              onClick={async (suggestion: string) => {
                 if (onExecuteTool) {
                   await onExecuteTool('task-generator', {
                     prompt: 'Create implementation tasks for business proposal',
@@ -504,7 +505,7 @@ function MessageComponent({ message, isLast, isLoading, sessionId, onExecuteTool
             />
             <Suggestion 
               suggestion="Schedule consultation call" 
-              onClick={(suggestion) => {
+              onClick={(suggestion: string) => {
                 // Handle consultation booking - feature coming soon
               }} 
             />

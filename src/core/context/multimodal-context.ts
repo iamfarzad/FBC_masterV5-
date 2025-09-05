@@ -1,6 +1,58 @@
 import { ContextStorage } from './context-storage'
 import { MultimodalContext, ConversationEntry, VisualEntry, AudioEntry, LeadContext } from './context-types'
 
+export function createInitialContext(sessionId: string, leadContext?: Partial<LeadContext>): MultimodalContext {
+  return {
+    sessionId,
+    conversationHistory: [],
+    visualContext: [],
+    audioContext: [],
+    leadContext: {
+      email: leadContext?.email ?? '',
+      name: leadContext?.name ?? '',
+      company: leadContext?.company ?? '',
+    },
+    metadata: {
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      modalitiesUsed: [],
+      totalTokens: 0,
+    },
+  };
+}
+
+export function makeTextEntry(text: string, metadata?: ConversationEntry['metadata']): ConversationEntry {
+  return {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    modality: 'text',
+    content: text,
+    metadata: metadata ?? {}, // never undefined
+  };
+}
+
+export function makeVisualEntry(p: {
+  type: VisualEntry['type'];
+  analysis: string;
+  imageData?: string;
+  size?: number;
+  confidence?: number;
+  format?: VisualEntry['metadata']['format'];
+}): VisualEntry {
+  return {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    type: p.type,
+    analysis: p.analysis,
+    imageData: p.imageData ?? '',
+    metadata: {
+      size: p.size ?? 0,
+      format: p.format ?? p.type,
+      confidence: p.confidence ?? 0,
+    },
+  };
+}
+
 export class MultimodalContextManager {
   private contextStorage: ContextStorage
   private activeContexts = new Map<string, MultimodalContext>()

@@ -8,7 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 import 'katex/dist/katex.min.css';
 import hardenReactMarkdown from 'harden-react-markdown';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
  */
-function parseIncompleteMarkdown(text: string): string {
+function parseIncompleteMarkdown(text: string | undefined): string | undefined {
   if (!text || typeof text !== 'string') {
     return text;
   }

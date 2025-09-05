@@ -42,11 +42,11 @@ export class AdminIntelligenceHandler {
 
         if (leadData?.email) {
           // Use intelligence service to research this lead
-          const researchResult = await intelligenceService.researchLead(
-            leadData.email,
-            leadData.name,
-            leadData.company_url
-          )
+          const researchResult = await intelligenceService.researchLead?.({
+            sessionId,
+            email: leadData.email,
+            name: leadData.name
+          })
 
           leadResearch.push(researchResult)
 
@@ -76,7 +76,7 @@ export class AdminIntelligenceHandler {
    * Get intelligence context for a single lead
    */
   async getLeadIntelligence(email: string, name?: string, companyUrl?: string): Promise<ResearchResult> {
-    return intelligenceService.researchLead(email, name, companyUrl)
+    return intelligenceService.researchLead?.({ sessionId: 'temp', email, name })
   }
 
   /**
@@ -86,8 +86,7 @@ export class AdminIntelligenceHandler {
     return intelligenceService.initSession({
       sessionId,
       email,
-      name,
-      companyUrl
+      name
     })
   }
 

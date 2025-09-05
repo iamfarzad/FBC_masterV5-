@@ -16,7 +16,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const emailRequestSchema = z.object({
   leadId: z.union([z.string().uuid(), z.literal('TEST_MODE')]),
   emailType: z.enum(['welcome', 'follow_up', 'report', 'meeting_confirmation', 'proposal', 'check_in']),
-  customData: z.record(z.any()).optional()
+  customData: z.record(z.string(), z.any()).optional()
 })
 
 const leadSchema = z.object({
@@ -39,17 +39,6 @@ const customDataSchema = z.object({
   location: z.string().optional(),
   meetingLink: z.string().optional(),
 });
-
-const leadSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-  company: z.string().optional().nullable(),
-  painPoints: z.array(z.string()).optional().nullable(),
-  ai_readiness: z.number().optional().nullable(),
-});
-
-const customDataSchema = z.record(z.any());
 
 // Email templates
 const emailTemplates = {

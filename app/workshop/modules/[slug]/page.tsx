@@ -33,8 +33,11 @@ export default function WorkshopModulePage() {
     setIsCompleted(completedModules.includes(slug))
     const modules = getAllModules()
     const idx = modules.findIndex(m => m.slug === slug)
-    if (idx >= 0 && idx < modules.length - 1) setNextModule(modules[idx + 1].slug)
-    else setNextModule(null)
+    if (idx >= 0 && idx < modules.length - 1 && modules[idx + 1]) {
+      setNextModule(modules[idx + 1].slug)
+    } else {
+      setNextModule(null)
+    }
   }, [module, slug, completedModules])
 
   useEffect(() => { if (redirect) router.push('/workshop/modules') }, [redirect, router])

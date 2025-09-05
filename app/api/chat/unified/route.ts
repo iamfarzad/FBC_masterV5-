@@ -44,8 +44,11 @@ export async function POST(req: NextRequest) {
 
     const { messages, context, mode, stream } = validation.data
 
+    const chatMode = mode || 'standard';
+    const chatContext = context || { sessionId: 'anonymous' };
+
     // Check if the provider supports the requested mode
-    if (!unifiedChatProvider.supportsMode(mode)) {
+    if (!unifiedChatProvider.supportsMode(chatMode)) {
       return new Response(
         JSON.stringify({
           error: `Unsupported chat mode: ${mode}`,
@@ -61,8 +64,8 @@ export async function POST(req: NextRequest) {
     // Create the message stream using the unified provider
     const messageStream = unifiedChatProvider.generate({
       messages,
-      context,
-      mode
+      context: chatContext,
+      mode: chatMode
     });
 
     // Handle streaming vs non-streaming responses
@@ -71,19 +74,19 @@ export async function POST(req: NextRequest) {
       return unifiedStreamingService.createChatStream(messageStream, {
         headers: {
           'X-Unified-Chat': 'true',
-          'X-Chat-Mode': mode,
-          'X-Session-Id': context?.sessionId || 'anonymous'
+          'X-Chat-Mode': chatMode,
+          'X-Session-Id': chatContext?.sessionId || 'anonymous'
         }
       })
     } else {
       // Collect all messages for non-streaming response
-      const messages: any[] = []
+      const responseMessages: any[] = []
       for await (const message of messageStream) {
-        messages.push(message)
+        responseMessages.push(message)
       }
 
       return NextResponse.json({
-        messages,
+        messages: responseMessages,
         mode,
         sessionId: context?.sessionId,
         timestamp: new Date().toISOString()
@@ -163,8 +166,8 @@ export async function GET(req: NextRequest) {
           message: 'Unified Chat API',
           endpoints: {
             POST: '/api/chat/unified - Send chat messages',
-            GET: '/api/chat/unified?action=capabilities - Get capabilities',
-            GET: '/api/chat/unified?action=status - Get status'
+            'GET (capabilities)': '/api/chat/unified?action=capabilities - Get capabilities',
+            'GET (status)': '/api/chat/unified?action=status - Get status'
           },
           supportedModes: unifiedChatProvider.getCapabilities().supportedModes,
           timestamp: new Date().toISOString()
@@ -220,8 +223,8 @@ function validateUnifiedRequest(data: unknown): {
         success: true,
         data: {
           messages,
-          ...(unifiedData.context && { context: unifiedData.context }),
-          mode: unifiedData.mode || 'standard',
+          context: unifiedData.context,
+          mode: unifiedData.mode || ('standard' as ChatMode),
           stream: unifiedData.stream !== false
         }
       }
@@ -244,21 +247,22 @@ function validateUnifiedRequest(data: unknown): {
     }))
 
     // Extract context from legacy data
+    const leadContextData = (legacyData as any).data?.leadContext;
     const context: UnifiedContext = {
       sessionId: (legacyData as any).data?.conversationSessionId,
-      leadContext: (legacyData as any).data?.leadContext ? {
-        name: (legacyData as any).data.leadContext.name,
-        email: (legacyData as any).data.leadContext.email,
-        company: (legacyData as any).data.leadContext.company,
-        role: (legacyData as any).data.leadContext.role
-      } : undefined
+      ...(leadContextData && { leadContext: {
+        name: leadContextData.name || '',
+        email: leadContextData.email || '',
+        company: leadContextData.company || '',
+        role: leadContextData.role || ''
+      }})
     }
 
     return {
       success: true,
       data: {
         messages,
-        ...(context && { context }),
+        context,
         mode: 'standard' as ChatMode,
         stream: true
       }

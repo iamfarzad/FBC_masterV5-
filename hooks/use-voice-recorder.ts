@@ -66,21 +66,21 @@ export function useVoiceRecorder({
           }
         });
         mediaStreamRef.current = stream;
-      } catch (mediaError) {
+      } catch (error) {
     console.error('Failed to get user media', error)
         let errorMessage = 'Microphone access failed';
         
-        if (mediaError instanceof Error) {
-          if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+        if (error instanceof Error) {
+          if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
             errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
-          } else if (mediaError.name === 'NotFoundError' || mediaError.name === 'DevicesNotFoundError') {
+          } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
             errorMessage = 'No microphone found. Please connect a microphone and try again.';
-          } else if (mediaError.name === 'NotReadableError' || mediaError.name === 'TrackStartError') {
+          } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
             errorMessage = 'Microphone is already in use by another application.';
-          } else if (mediaError.name === 'OverconstrainedError' || mediaError.name === 'ConstraintNotSatisfiedError') {
+          } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
             errorMessage = 'Microphone does not support the required audio settings.';
           } else {
-            errorMessage = `Microphone error: ${mediaError.message}`;
+            errorMessage = `Microphone error: ${error.message}`;
           }
         }
         
@@ -122,7 +122,9 @@ export function useVoiceRecorder({
       const srcIdx = i * ratio;
       const idx = Math.floor(srcIdx);
       const frac = srcIdx - idx;
-      output[i] = input[idx] * (1 - frac) + (input[idx + 1] || 0) * frac;
+      const sample1 = input[idx];
+      const sample2 = input[idx + 1] || 0;
+      output[i] = sample1 * (1 - frac) + sample2 * frac;
     }
     
     return output;

@@ -14,9 +14,17 @@ export interface NormalizedCompany {
   linkedin?: string
 }
 
-export function normalizeCompany(input: { name?: string; url?: string }): NormalizedCompany {
-  const { name, url } = input
-  return { name: name ?? '', url: url ?? '' }
+export function normalizeCompany(input: { name?: string; domain?: string }): NormalizedCompany {
+  const { name, domain } = input
+  return {
+    name: name ?? '',
+    domain: domain ?? '',
+    industry: undefined,
+    size: undefined,
+    summary: undefined,
+    website: undefined,
+    linkedin: undefined
+  }
 }
 
 

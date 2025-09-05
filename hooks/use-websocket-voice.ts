@@ -422,7 +422,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           const model = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview-native-audio'
 
           const responseQueue: unknown[] = []
-          function onmessage(message: unknown) {
+          function onmessage(message: any) {
             responseQueue.push(message)
 
             // Handle usage metadata for token counting
@@ -439,7 +439,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             if (text) setTranscript(prev => prev + text)
 
             // Audio stream - AI can talk back
-            const inline = message?.serverContent?.modelTurn?.parts?.find((p: unknown) => p.inlineData?.data)
+            const inline = message?.serverContent?.modelTurn?.parts?.find((p: any) => p.inlineData?.data)
             if (inline?.inlineData?.data) {
               setAudioQueue(prev => [...prev, { data: inline.inlineData.data, mimeType: 'audio/pcm;rate=24000' }])
               playNextAudioRef.current()
@@ -476,7 +476,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
                 setSession({ connectionId: 'direct', isActive: true })
               },
               onmessage,
-              onerror: (e: unknown) => setError(`Gemini error: ${e?.message || 'unknown'}`),
+              onerror: (error: unknown) => setError(`Gemini error: ${(error as Error)?.message || 'unknown'}`),
               onclose: () => setIsConnected(false),
             },
           })
@@ -486,9 +486,9 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           wsRef.current = session as unknown as WebSocket
           setIsProcessing(true)
           return
-        } catch (e: unknown) {
-          setError(e?.message || 'Failed to start direct Gemini session')
-          throw e
+        } catch (error: unknown) {
+          setError((error as Error)?.message || 'Failed to start direct Gemini session')
+          throw error
         }
       }
 
@@ -616,13 +616,13 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     
     // If using direct Gemini Live session, send via session API instead of WS
     const isDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
-    const sessionLike: unknown = wsRef.current as unknown
+    const sessionLike: any = wsRef.current as any
     if (isDirect && sessionLike && typeof sessionLike.sendRealtimeInput === 'function') {
       try {
         sessionLike.sendRealtimeInput({
           audio: { data: base64Audio, mimeType: 'audio/pcm;rate=16000' },
         })
-      } catch (e) {
+      } catch (error) {
     console.error('[useWebSocketVoice] Failed to send audio chunk via direct session', error)
       }
       return
@@ -653,11 +653,11 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   const onTurnComplete = useCallback(() => {
     // If using direct Gemini Live session, send turnComplete directly
     const isDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
-    const sessionLike: unknown = wsRef.current as any
+    const sessionLike: any = wsRef.current as any
     if (isDirect && sessionLike && typeof sessionLike.sendRealtimeInput === 'function') {
       try {
         sessionLike.sendRealtimeInput({ turnComplete: true })
-      } catch (e) {
+      } catch (error) {
     console.error('[useWebSocketVoice] Failed to send TURN_COMPLETE via direct session', error)
       }
       return
@@ -686,7 +686,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       const base64 = dataUrl.startsWith('data:') ? dataUrl.split(',')[1] : dataUrl
       const mime = dataUrl.startsWith('data:') ? (dataUrl.substring(5, dataUrl.indexOf(';')) || 'image/jpeg') : 'image/jpeg'
 
-      const sessionLike: unknown = wsRef.current as any
+      const sessionLike: any = wsRef.current as any
       if (isDirect && sessionLike && typeof sessionLike.sendRealtimeInput === 'function') {
         try {
           sessionLike.sendRealtimeInput({

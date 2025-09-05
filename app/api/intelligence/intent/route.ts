@@ -21,7 +21,7 @@ export const POST = withApiGuard({
       // Back-compat: include top-level fields alongside ToolRunResult
       return NextResponse.json({ ok: true, output: intent, ...intent } satisfies any)
     } catch (e: unknown) {
-      return NextResponse.json({ ok: false, error: 'server_error', details: e?.message || 'unknown' } satisfies ToolRunResult, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'server_error' } satisfies ToolRunResult, { status: 500 })
     }
   }
 })

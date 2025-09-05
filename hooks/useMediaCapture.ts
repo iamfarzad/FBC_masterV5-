@@ -33,11 +33,7 @@ export function useMediaCapture({
   // Initialize media service on mount
   useEffect(() => {
     try {
-      mediaService.current = getMediaService({
-        onDataAvailable: (data: Blob) => {
-          onStop?.(data);
-        },
-      });
+      mediaService.current = getMediaService();
       setIsInitialized(true);
     } catch (error) {
       console.warn('MediaService not available:', error);
@@ -202,7 +198,6 @@ export function useMediaCapture({
         onResume();
       }
       
-      return newItem;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to resume capture');
       setError(error);

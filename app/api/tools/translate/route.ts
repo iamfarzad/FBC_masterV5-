@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validation = validateRequest(translationRequestSchema, body)
     if (!validation.success) {
-      return new Response(JSON.stringify({ ok: false, error: 'Validation failed', details: validation.errors } satisfies ToolRunResult), { status: 400 })
+      return new Response(JSON.stringify({ ok: false, error: 'Validation failed' } satisfies ToolRunResult), { status: 400 })
     }
 
     const { text, targetLang, sourceLang, sessionId: bodySessionId } = validation.data as any
@@ -101,10 +101,11 @@ TRANSLATED TEXT:`
 
     return new Response(JSON.stringify({ ok: true, output: { translated } } satisfies ToolRunResult), { status: 200, headers: { 'Content-Type': 'application/json' } })
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     await logServerActivity({
       type: 'error',
       title: 'Translate Failed',
-      description: error.message || 'Unknown error',
+      description: errorMessage,
       status: 'failed',
       metadata: { correlationId }
     })

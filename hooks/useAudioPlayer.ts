@@ -117,7 +117,6 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
     return () => {
       audio.pause()
       audio.src = ''
-      audio.remove()
     }
   }, [initialVolume, onPlay, onPause, onEnd, onError, onTimeUpdate])
 
@@ -271,7 +270,9 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
         duration: combinedBuffer.duration 
       }))
       
-      sourceRef.current.start()
+      if (sourceRef.current) {
+        sourceRef.current.start()
+      }
       onPlay?.()
 
     } catch (error) {

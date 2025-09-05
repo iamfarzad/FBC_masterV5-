@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
     if (sessionId && idemKey) idem.set(`${sessionId}:${idemKey}`, { body, expires: Date.now() + 5 * 60_000 })
     return NextResponse.json(body, { status: 200 })
   } catch (e: unknown) {
-    return NextResponse.json({ error: e?.message || 'Failed to mint token' }, { status: 500 })
+    const errorMessage = e instanceof Error ? e.message : 'Failed to mint token';
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
 

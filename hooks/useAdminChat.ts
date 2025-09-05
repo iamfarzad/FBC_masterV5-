@@ -59,12 +59,12 @@ export function useAdminChat({
     const newMessage: AdminMessage = {
       ...message,
       id: crypto.randomUUID(),
-      timestamp: message.timestamp || new Date(),
+      timestamp: new Date(),
       type: message.type || 'text',
       metadata: message.metadata
     }
 
-    unifiedChat.addMessage(newMessage)
+    unifiedChat.append(newMessage)
     return newMessage
   }, [unifiedChat])
 

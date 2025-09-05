@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         },
       ],
     });
-    const supabase: SupabaseClient = getSupabaseStorage().getClient()
+    const supabase = getSupabaseStorage().getClient()
 
     if (enableStreaming) {
       // Streaming response
@@ -240,12 +240,14 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     console.error('Error in AI stream handler', error)
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Internal server error",
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? errorStack : undefined,
       },
       { status: 500 },
     )

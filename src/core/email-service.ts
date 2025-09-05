@@ -7,6 +7,7 @@ export interface EmailTemplate {
   to: string
   subject: string
   html: string
+  text?: string
   tags?: Record<string, string>
   attachments?: Array<{ filename: string; content: string | Uint8Array; contentType?: string }>
 }

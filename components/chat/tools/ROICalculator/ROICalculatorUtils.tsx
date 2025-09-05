@@ -58,7 +58,7 @@ export function createDefaultCompanyInfo(defaults?: any) {
 
 // Validate form data
 export function validateFormData(formData: any): boolean {
-  return Object.values(formData).every(value => value > 0)
+  return Object.values(formData).every(value => typeof value === 'number' && value > 0)
 }
 
 // Validate company info

@@ -24,7 +24,7 @@ export interface ROICalculatorProps {
     industry?: string
     useCase?: string
   }
-  onEmitMessage?: (msg: import('@/types/chat').ChatMessage) => void
+  onEmitMessage?: (msg: import('@/src/core/types/chat').ChatMessage) => void
 }
 
 export interface ROICalculatorModalProps {

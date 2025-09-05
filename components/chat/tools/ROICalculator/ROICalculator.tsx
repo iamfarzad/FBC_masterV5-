@@ -129,7 +129,7 @@ export function ROICalculator({
           inputs: { ...formData, ...companyInfo },
           calculatedAt: data.output.calculatedAt,
         }
-        const msg: ChatMessage = { role: 'tool', type: 'roi.result', payload }
+        const msg = { role: 'tool', type: 'roi.result', payload }
         if (typeof (globalThis as any).onEmitMessage === 'function') {
           (globalThis as any).onEmitMessage(msg)
         }
@@ -179,7 +179,7 @@ export function ROICalculator({
   const handleStepBack = () => {
     const currentIndex = WIZARD_STEPS.indexOf(currentStep)
     if (currentIndex > 0) {
-      setCurrentStep(WIZARD_STEPS[currentIndex - 1])
+      setCurrentStep(WIZARD_STEPS[currentIndex - 1]!)
     }
   }
 
@@ -252,7 +252,7 @@ export function ROICalculator({
           onStepBack={handleStepBack}
           onRecalculate={() => handleCalculate(false)}
           onReset={handleReset}
-          onCancel={onCancel}
+          onCancel={onCancel || (() => {})}
         />
       )}
     </div>
@@ -261,7 +261,7 @@ export function ROICalculator({
   // Modal variant
   if (mode === 'modal') {
     return (
-      <Dialog open={true} onOpenChange={onClose}>
+      <Dialog open={true} onOpenChange={(open) => !open && onClose?.()}>
         <DialogContent className="p-0 sm:max-w-2xl md:max-w-3xl">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 px-6 pb-2 pt-6">
             <DialogTitle className="flex items-center gap-2">

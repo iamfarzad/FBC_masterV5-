@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { getMediaService, MediaItem, MediaPlaybackOptions } from '@/src/core/media/MediaService';
+import { getMediaService, MediaItem, MediaPlaybackOptions, MediaService } from '@/src/core/media/MediaService';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -41,7 +41,7 @@ export function useMediaPlayer({
   
   const mediaElementRef = useRef<HTMLMediaElement | null>(null);
   const mediaItemRef = useRef<MediaItem | null>(null);
-  const mediaService = useRef<ReturnType<typeof getMediaService> | null>(null);
+  const mediaService = useRef<MediaService | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [initError, setInitError] = useState<Error | null>(null);
 
@@ -85,7 +85,6 @@ export function useMediaPlayer({
   // Handle media element events
   const setupMediaElement = useCallback((element: HTMLMediaElement) => {
     if (!isBrowser || !element) return undefined;
-    if (!element) return;
     
     mediaElementRef.current = element;
     
@@ -168,8 +167,8 @@ export function useMediaPlayer({
       element.removeEventListener('durationchange', handleDurationChange);
       
       // Clean up media service
-      if (mediaItemRef.current) {
-        mediaService.stopMedia(mediaItemRef.current.id);
+      if (mediaItemRef.current && mediaService.current) {
+        mediaService.current.stopMedia(mediaItemRef.current.id);
         mediaItemRef.current = null;
       }
     };
@@ -185,7 +184,6 @@ export function useMediaPlayer({
     onTimeUpdate, 
     onVolumeChange, 
     onDurationChange,
-    mediaService
   ]);
 
   // Handle source changes
@@ -304,7 +302,7 @@ export function useMediaPlayer({
         mediaItemRef.current = null;
       }
     };
-  }, [src, autoPlay, loop, muted, volume, playbackRate, onEnded, onError, mediaService]);
+  }, [src, autoPlay, loop, muted, volume, playbackRate, onEnded, onError, isInitialized, initError, withMediaService]);
 
   // Control methods
   const play = useCallback(async () => {

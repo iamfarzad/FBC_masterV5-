@@ -47,7 +47,6 @@ export function useScreenShare({
       
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({
         video: {
-          cursor: 'always',
           displaySurface: 'monitor'
         },
         audio: false,
@@ -60,9 +59,11 @@ export function useScreenShare({
       }
 
       // Set up stream ended handler
-      const videoTrack = mediaStream.getVideoTracks()[0]
-      videoTrack.onended = () => {
-        stopScreenShare()
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.onended = () => {
+          stopScreenShare();
+        };
       }
 
       onStream?.(mediaStream)

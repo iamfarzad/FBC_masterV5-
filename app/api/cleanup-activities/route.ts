@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
     
   } catch (error: unknown) {
     console.error('Activity cleanup error', error)
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return NextResponse.json({ 
       error: 'Internal server error',
-      message: error.message || 'An unexpected error occurred'
+      message: errorMessage
     }, { status: 500 })
   }
 }

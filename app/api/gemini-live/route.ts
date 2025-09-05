@@ -82,8 +82,14 @@ export async function POST(req: NextRequest) {
         // Starting Gemini Live API session
 
         try {
+          const sessionLeadContext = {
+            name: leadContext?.name || 'Unknown',
+            email: leadContext?.email || 'unknown@example.com',
+            company: leadContext?.company || 'Unknown',
+            role: leadContext?.role || 'Unknown'
+          };
           // Initialize multimodal context for this session
-          await multimodalContextManager.initializeSession(sessionId || 'anonymous', leadContext)
+          await multimodalContextManager.initializeSession(sessionId || 'anonymous', sessionLeadContext)
 
           // 🚀 GOOGLE LIVE API BEST PRACTICES - Following official documentation
           const session: LiveSessionLike = asLiveSessionLike(await genAI.live.connect({
@@ -354,7 +360,7 @@ export async function POST(req: NextRequest) {
               await multimodalContextManager.addVisualAnalysis(
                 sessionId,
                 `[Live API image analysis - ${base64.length} bytes, ${mime}]`,
-                'live_upload',
+                'upload',
                 base64.length,
                 imageData
               )

@@ -109,8 +109,8 @@ export class TokenUsageLogger {
         .eq('user_id', userId)
         .gte('created_at', startOfMonth.toISOString())
 
-      const currentDailyUsage = dailyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
-      const currentMonthlyUsage = monthlyUsage?.reduce((sum, log) => sum + log.total_tokens, 0) || 0
+      const currentDailyUsage = dailyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
+      const currentMonthlyUsage = monthlyUsage?.reduce<number>((sum, log) => sum + (log.total_tokens ?? 0), 0) || 0
 
       // Count requests
       const { count: dailyRequests } = await supabase

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-const EventTypes = ['session_start', 'tool_used', 'intent_detected', 'suggestion_clicked', 'conversation_end'] as const;
+const EventTypes = ['session_start', 'tool_used', 'intent_detected', 'suggestion_clicked', 'conversation_end'];
 
 const EventSchema = z.object({
   sessionId: z.string().optional(),

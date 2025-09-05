@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
         {
           ok: false,
           error: 'Invalid request',
-          details: validation.errors
         } satisfies ToolRunResult,
         { status: 400 }
       )
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
     const { sessionId, email, name, companyUrl, provider } = validation.data
 
     // Use the business logic handler
-    const result = await handleIntelligence({
+    const result: any = await handleIntelligence({
       action: 'research-lead',
       data: { email, name, companyUrl, sessionId, provider }
     })

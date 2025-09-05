@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       modality: string,
       sessionId: string,
       processedAt: string,
+      processed?: string,
       aiResponse?: string,
       liveApiSent?: boolean,
       liveApiError?: boolean,
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
         const visionContext = {
           sessionId,
           multimodalData: {
-            imageData: metadata.fileData,
+            imageData: metadata.fileData || '',
             mimeType: metadata.fileType || 'image/jpeg'
           },
           intelligenceContext
@@ -245,13 +246,15 @@ export async function POST(request: NextRequest) {
           }, { status: 400 })
         }
 
-        if (!metadata?.fileData) {
-          return NextResponse.json({ error: 'File data required for upload modality' }, { status: 400 })
-        }
         // Handle file upload through existing upload endpoint
         const uploadFormData = new FormData()
-        const fileBuffer = Buffer.from(metadata.fileData.split(',')[1], 'base64')
-        const file = new File([fileBuffer], metadata.fileName, { type: metadata.fileType })
+        const base64Data = metadata.fileData.split(',')[1]
+        if (!base64Data) {
+          return NextResponse.json({ error: 'Invalid base64 file data' }, { status: 400 })
+        }
+        const fileBuffer = Buffer.from(base64Data, 'base64')
+        const arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength)
+        const file = new File([arrayBuffer], metadata.fileName, { type: metadata.fileType })
         uploadFormData.append('file', file)
 
         const uploadResponse = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/upload`, {

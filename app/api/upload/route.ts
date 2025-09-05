@@ -72,7 +72,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Prepare multimodal integration
-    const multimodalData = {
+    const multimodalData: {
+      fileUrl: string;
+      filename: string;
+      originalName: string;
+      size: number;
+      type: string;
+      uploadedAt: string;
+      modalityType: string;
+      sessionId: string | null;
+      userId: string | null;
+      analysis?: string;
+    } = {
       fileUrl,
       filename,
       originalName: file.name,
@@ -133,6 +144,6 @@ export async function GET() {
   return NextResponse.json({ 
     message: 'Upload endpoint is working',
     maxFileSize: `${MAX_FILE_SIZE / (1024 * 1024)}MB`,
-    allowedTypes: ALLOWED_TYPES
+    allowedTypes: ALLOWED_FILE_TYPES
   })
 }

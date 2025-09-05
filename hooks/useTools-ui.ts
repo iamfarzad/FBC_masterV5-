@@ -69,7 +69,7 @@ export function useTools() {
       setExecutions(prev => prev.map(e => 
         e.id === execution.id ? { 
           ...e, 
-          status: result.ok ? 'completed' as const : 'error' as const,
+          status: result.ok ? 'completed' : 'error',
           output: result.output,
           error: result.error,
           endTime: new Date()
@@ -82,7 +82,7 @@ export function useTools() {
       setExecutions(prev => prev.map(e => 
         e.id === execution.id ? { 
           ...e, 
-          status: 'error' as const,
+          status: 'error',
           error: error instanceof Error ? error.message : 'Unknown error',
           endTime: new Date()
         } : e

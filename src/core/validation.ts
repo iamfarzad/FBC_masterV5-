@@ -1,182 +1,147 @@
-import { z } from 'zod';
-import { chatRequestSchema as chatRequestSchemaV1 } from './validation/index';
+import { z } from 'zod'
+// Enable ZodError.errors -> .issues compatibility shim
+import '../../polyfills/zod-errors-compat'
 
-// Lead capture validation
-export const leadCaptureSchema = z.object({
-  name: z.string()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be less than 100 characters')
-    .regex(/^[a-zA-Z\s\-']+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes'),
-  email: z.string()
-    .email('Invalid email format')
-    .max(255, 'Email must be less than 255 characters'),
-  company_name: z.string()
-    .max(100, 'Company name must be less than 100 characters')
-    .optional(),
-  phone: z.string()
-    .regex(/^[+]?[1-9][\d]{0,15}$/, 'Invalid phone number format')
-    .optional(),
-  message: z.string()
-    .max(1000, 'Message must be less than 1000 characters')
-    .optional(),
-  source: z.string()
-    .max(50, 'Source must be less than 50 characters')
-    .optional(),
-});
+// ============================================================================
+// CHAT VALIDATION
+// ============================================================================
 
-// Chat message validation
 export const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
-  content: z.string()
-    .min(1, 'Message content is required')
-    .max(10000, 'Message content must be less than 10000 characters'),
-});
+  content: z.string().min(1).max(10000),
+  id: z.string().optional(),
+  meta: z.record(z.string(), z.unknown()).optional()
+})
 
-export const chatRequestSchema = chatRequestSchemaV1;
+export const chatRequestSchema = z.object({
+  version: z.literal('v1'),
+  messages: z.array(chatMessageSchema).min(1).max(50),
+  model: z.string().optional(),
+  temperature: z.number().optional(),
+  max_tokens: z.number().optional(),
+  data: z.record(z.string(), z.unknown()).optional()
+})
 
-// Translation validation moved to @/src/core/validation/index.ts
+// ============================================================================
+// INTELLIGENCE VALIDATION  
+// ============================================================================
 
-// File upload validation
-export const fileUploadSchema = z.object({
-  file: z.any(), // File object from FormData
-  description: z.string()
-    .max(500, 'Description must be less than 500 characters')
-    .optional(),
-});
+export const leadCaptureSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100).optional(),
+  company: z.string().max(100).optional(),
+  phone: z.string().max(20).optional(),
+  message: z.string().max(1000).optional(),
+  source: z.string().default('chat'),
+  sessionId: z.string().optional()
+})
 
-// Meeting booking validation
-export const meetingBookingSchema = z.object({
-  name: z.string()
-    .min(1, 'Name is required')
-    .max(100, 'Name must be less than 100 characters'),
-  email: z.string()
-    .email('Invalid email format'),
-  company: z.string()
-    .max(100, 'Company name must be less than 100 characters')
-    .optional(),
-  date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  time: z.string()
-    .regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format'),
-  duration: z.number()
-    .min(15, 'Duration must be at least 15 minutes')
-    .max(480, 'Duration must be less than 8 hours')
-    .optional(),
-  notes: z.string()
-    .max(1000, 'Notes must be less than 1000 characters')
-    .optional(),
-});
-
-// Admin analytics validation
-export const adminAnalyticsSchema = z.object({
-  period: z.enum(['1d', '7d', '30d', '90d'])
-    .default('7d'),
-  start_date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format')
-    .optional(),
-  end_date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format')
-    .optional(),
-});
-
-// Email campaign validation
-export const emailCampaignSchema = z.object({
-  name: z.string()
-    .min(1, 'Campaign name is required')
-    .max(100, 'Campaign name must be less than 100 characters'),
-  subject: z.string()
-    .min(1, 'Subject is required')
-    .max(200, 'Subject must be less than 200 characters'),
-  template: z.string()
-    .min(1, 'Template is required')
-    .max(10000, 'Template must be less than 10000 characters'),
-  target_segment: z.string()
-    .max(100, 'Target segment must be less than 100 characters')
-    .optional(),
-  scheduled_at: z.string()
-    .datetime('Scheduled time must be a valid datetime')
-    .optional(),
-});
-
-// Lead research validation
-export const leadResearchSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  sessionId: z.string().min(1, 'Session ID is required'),
+export const sessionInitSchema = z.object({
+  sessionId: z.string().min(1),
+  email: z.string().email(),
   name: z.string().optional(),
-  company: z.string().optional()
-});
+  companyUrl: z.string().url().optional()
+})
 
-// Token usage validation
-export const tokenUsageSchema = z.object({
-  session_id: z.string()
-    .min(1, 'Session ID is required')
-    .max(100, 'Session ID must be less than 100 characters'),
-  provider: z.string()
-    .min(1, 'Provider is required')
-    .max(50, 'Provider must be less than 50 characters'),
-  model: z.string()
-    .min(1, 'Model is required')
-    .max(50, 'Model must be less than 50 characters'),
-  input_tokens: z.number()
-    .min(0, 'Input tokens must be non-negative'),
-  output_tokens: z.number()
-    .min(0, 'Output tokens must be non-negative'),
-  total_tokens: z.number()
-    .min(0, 'Total tokens must be non-negative'),
-  input_cost: z.number()
-    .min(0, 'Input cost must be non-negative'),
-  output_cost: z.number()
-    .min(0, 'Output cost must be non-negative'),
-  total_cost: z.number()
-    .min(0, 'Total cost must be non-negative'),
-  request_type: z.string()
-    .max(50, 'Request type must be less than 50 characters')
-    .optional(),
-  user_id: z.string()
-    .max(100, 'User ID must be less than 100 characters')
-    .optional(),
-  metadata: z.record(z.string(), z.any())
-    .optional(),
-});
+// ============================================================================
+// TRANSLATION VALIDATION
+// ============================================================================
 
-// Generic validation function
-export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; errors: string[] } {
-  try {
-    const validatedData = schema.parse(data);
-    return { success: true, data: validatedData };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const errors = error.issues.map(err => `${err.path.join('.')}: ${err.message}`);
-      return { success: false, errors };
-    }
-    return { success: false, errors: ['Validation failed'] };
-  }
-}
+export const translationRequestSchema = z.object({
+  text: z.string().min(1).max(5000),
+  targetLang: z.string().min(2).max(10),
+  sourceLang: z.string().min(2).max(10).optional(),
+  sessionId: z.string().optional()
+})
 
-// Sanitization functions
+// ============================================================================
+// LEAD RESEARCH VALIDATION
+// ============================================================================
+
+export const leadResearchSchema = z.object({
+  sessionId: z.string().min(1),
+  email: z.string().email(),
+  name: z.string().optional(),
+  companyUrl: z.string().url().optional(),
+  provider: z.string().default('google')
+})
+
+// ============================================================================
+// ADMIN VALIDATION
+// ============================================================================
+
+export const leadStatusSchema = z.enum(['new', 'contacted', 'qualified', 'converted'])
+
+export const leadUpdateSchema = z.object({
+  status: leadStatusSchema,
+  notes: z.string().optional(),
+  assigned_to: z.string().optional()
+})
+
+export const adminSearchSchema = z.object({
+  query: z.string().min(1),
+  filters: z.record(z.string(), z.any()).optional(),
+  limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().min(0).default(0)
+})
+
+// ============================================================================
+// FILE UPLOAD VALIDATION
+// ============================================================================
+
+export const fileUploadSchema = z.object({
+  file: z.instanceof(File),
+  maxSize: z.number().default(10 * 1024 * 1024), // 10MB
+  allowedTypes: z.array(z.string()).default(['image/*', 'application/pdf', 'text/*'])
+})
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
 export function sanitizeString(input: string): string {
   return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
     .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .replace(/data:/gi, '') // Remove data: protocol
-    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
-    // eslint-disable-next-line no-control-regex
-    .replace(/\x00/g, '') // Remove null bytes
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
-    .replace(/script/gi, '') // Remove script tags
-    .replace(/iframe/gi, '') // Remove iframe tags
-    .replace(/object/gi, '') // Remove object tags
-    .replace(/embed/gi, '') // Remove embed tags
-    .substring(0, 1000); // Limit length
 }
 
 export function sanitizeEmail(email: string): string {
-  return email.toLowerCase().trim();
+  return email.toLowerCase().trim()
 }
 
 export function sanitizePhone(phone: string): string {
-  return phone.replace(/[^\d\+]/g, ''); // Keep only digits and +
+  return phone.replace(/[^\d+()\-\s]/g, '').trim()
 }
+
+export function validateRequest<T extends z.ZodSchema>(
+  schema: T,
+  data: unknown
+): { success: true; data: z.infer<T> } | { success: false; errors: string[] } {
+  try {
+    const result = schema.parse(data)
+    return { success: true, data: result }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        errors: error.issues.map(e => `${e.path.join('.')}: ${e.message}`)
+      }
+    }
+    return { success: false, errors: ['Validation failed'] }
+  }
+}
+
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
+export type ChatMessage = z.infer<typeof chatMessageSchema>
+export type ChatRequest = z.infer<typeof chatRequestSchema>
+export type LeadCaptureInput = z.infer<typeof leadCaptureSchema>
+export type SessionInitInput = z.infer<typeof sessionInitSchema>
+export type TranslationRequest = z.infer<typeof translationRequestSchema>
+export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>
+export type AdminSearchInput = z.infer<typeof adminSearchSchema>
+export type FileUploadInput = z.infer<typeof fileUploadSchema>
+export type LeadResearchInput = z.infer<typeof leadResearchSchema>

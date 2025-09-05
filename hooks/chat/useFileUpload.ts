@@ -47,24 +47,9 @@ export const useFileUpload = () => {
       const data = await response.json();
       setProgress(100);
       
-      // Add activity for successful upload
-      addActivity({
-        type: 'user_action',
-        title: 'File uploaded',
-        description: `Uploaded ${file.name}`,
-      });
-
       return data.url; // Return the uploaded file URL
     } catch (error) {
       console.error('Error uploading file:', error);
-      
-      // Add error activity
-      addActivity({
-        type: 'file_upload', // Use file_upload instead of error
-        title: 'Upload Incomplete',
-        description: `Could not upload ${file.name}`,
-        status: 'completed', // Use completed instead of failed
-      })
       
       return null;
     } finally {
@@ -72,7 +57,7 @@ export const useFileUpload = () => {
       // Reset progress after a delay
       setTimeout(() => setProgress(0), 1000);
     }
-  }, [addActivity]);
+  }, []);
 
   return { uploadFile, isUploading, progress };
 };

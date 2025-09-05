@@ -22,10 +22,10 @@ export function normalizePerson(p: {
 }): NormalizedPerson {
   return {
     fullName: p.fullName ?? '',
-    ...(typeof p.role === 'string' ? { role: p.role } : {}),
-    seniority: p.seniority ?? null,
-    profileUrl: p.profileUrl ?? null,
-    ...(typeof p.company === 'string' ? { company: p.company } : {})
+    role: p.role,
+    seniority: p.seniority ?? undefined,
+    profileUrl: p.profileUrl ?? undefined,
+    company: p.company
   }
 }
 

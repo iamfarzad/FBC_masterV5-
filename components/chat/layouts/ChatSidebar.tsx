@@ -190,13 +190,13 @@ type Stage = { id:string; label:string; done?:boolean; current?:boolean }
 
 export function ChatSidebar({
   context,
-  // Removed activityLog - using ai-elements instead
+  activities = [],
   stages = [],
   stageProgress,
   className
 }:{
-  context?: Record<string,unknown>
-  // Removed activityLog prop - using ai-elements instead
+  context?: Record<string,unknown>,
+  activities?: ActivityItem[],
   stages?: Stage[]
   stageProgress?: number
   className?: string
@@ -232,7 +232,7 @@ export function ChatSidebar({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {(activityLog.slice(-5)).map(a=>(
+          {(activities.slice(-5)).map((a: ActivityItem)=>(
             <div key={a.id} className="flex items-center gap-2 text-xs">
               <div className={cn(
                 'w-2 h-2 rounded-full',
@@ -244,7 +244,7 @@ export function ChatSidebar({
               <span className="truncate text-muted">{a.title}</span>
             </div>
           ))}
-          {activityLog.length===0 && (
+          {activities.length===0 && (
             <div className="py-2 text-center text-xs text-muted">No recent activity</div>
           )}
         </CardContent>

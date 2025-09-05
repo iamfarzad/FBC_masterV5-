@@ -52,7 +52,7 @@ export default function ModulesPage() {
               <div className="relative">
                 <div className="absolute inset-y-0 left-6 w-0.5 bg-border" />
                 <div className="space-y-6">
-                  {phaseModules.map((module, index) => {
+                  {phaseModules && phaseModules.map((module, index) => {
                     const isCompleted = completedModules.includes(module.slug)
                     const isAvailable = isPrevDone && (index === 0 || completedModules.includes(phaseModules[index - 1].slug))
                     return (

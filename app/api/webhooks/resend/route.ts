@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleEmailSent(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailSent(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -145,7 +145,7 @@ async function handleEmailSent(supabase: SupabaseClient<Database>, data: ResendW
   }
 }
 
-async function handleEmailDelivered(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailDelivered(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -179,7 +179,7 @@ async function handleEmailDelivered(supabase: SupabaseClient<Database>, data: Re
   }
 }
 
-async function handleEmailBounced(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailBounced(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -225,7 +225,7 @@ async function handleEmailBounced(supabase: SupabaseClient<Database>, data: Rese
   }
 }
 
-async function handleEmailComplained(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailComplained(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -271,7 +271,7 @@ async function handleEmailComplained(supabase: SupabaseClient<Database>, data: R
   }
 }
 
-async function handleEmailOpened(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailOpened(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,
@@ -324,7 +324,7 @@ async function handleEmailOpened(supabase: SupabaseClient<Database>, data: Resen
   }
 }
 
-async function handleEmailClicked(supabase: SupabaseClient<Database>, data: ResendWebhookData) {
+async function handleEmailClicked(supabase: any, data: ResendWebhookData) {
   try {
     await supabase.from("email_events").insert({
       email_id: data.email_id,

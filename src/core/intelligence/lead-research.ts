@@ -3,7 +3,7 @@ import { GoogleGroundingProvider, GroundedAnswer } from './providers/search/goog
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { supabaseService, createLeadSummary } from '@/src/core/supabase/client'
 import { finalizeLeadSession } from '../workflows/finalizeLeadSession'
-import type { LeadContext } from '../types/conversations'
+import type { LeadContext, CompanyContext, PersonContext } from '../context/context-types'
 
 export interface ResearchResult {
   company: CompanyContext
@@ -15,24 +15,6 @@ export interface ResearchResult {
     title?: string
     description?: string
   }>
-}
-
-export interface CompanyContext {
-  name: string
-  domain: string
-  industry?: string
-  size?: string
-  summary?: string
-  website?: string
-  linkedin?: string
-}
-
-export interface PersonContext {
-  fullName: string
-  role?: string
-  seniority?: string
-  profileUrl?: string
-  company?: string
 }
 
 export class LeadResearchService {
@@ -139,7 +121,8 @@ Key findings: ${company.summary || 'Analysis completed'}
 Citations: ${research.citations?.length || 0} sources reviewed`
   }
 
-  async researchLead(email: string, name?: string, companyUrl?: string, sessionId?: string): Promise<ResearchResult> {
+  async researchLead(params: { email: string; name?: string; companyUrl?: string; sessionId?: string }): Promise<ResearchResult> {
+    const { email, name, companyUrl, sessionId } = params
     const cacheKey = this.generateCacheKey(email, name, companyUrl)
 
     // Check cache first
@@ -155,7 +138,7 @@ Citations: ${research.citations?.length || 0} sources reviewed`
       const domain = email.split('@')[1]
 
       // Known profile fallback for Farzad Bayat
-      if (email === 'farzad@talktoeve.com' && (name?.toLowerCase().includes('farzad') || !name)) {
+      if (email === 'farzad@talktoeve.com' && ((name ?? '').toLowerCase().includes('farzad') || !name)) {
         // Action logged
         
         // Record capability usage for search
@@ -342,7 +325,7 @@ Be thorough and accurate. If information is not available, use null for that fie
       try {
         const { normalizeCompany } = await import('./providers/enrich/company-normalizer')
         const { normalizePerson } = await import('./providers/enrich/person-normalizer')
-        const nc = normalizeCompany({ text: companyResult?.text || '', url: companyUrl ?? '' }, domain)
+        const nc = normalizeCompany({ text: companyResult?.text || '', url: String(companyUrl ?? '') }, domain)
         const np = normalizePerson({ text: personResult?.text || '', name: researchData?.person?.fullName, company: nc.name })
         return {
           company: { ...nc, ...researchData.company },

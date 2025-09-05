@@ -25,7 +25,11 @@ export const POST = withApiGuard({
       const existing = await storage.get(sessionId)
       const prev = (existing?.tool_outputs?.education as any) || { completed: [], xp: 0, badges: [] }
       const completed = Array.isArray(prev.completed) ? prev.completed : []
-      if (!completed.some((x: unknown) => x.moduleId === body.moduleId && x.stepId === body.stepId)) {
+      interface CompletedStep {
+        moduleId: string;
+        stepId: string;
+      }
+      if (!completed.some((x: unknown) => (x as CompletedStep).moduleId === body.moduleId && (x as CompletedStep).stepId === body.stepId)) {
         completed.push({ moduleId: body.moduleId, stepId: body.stepId })
       }
       const xp = (typeof prev.xp === 'number' ? prev.xp : 0) + body.xp
@@ -36,7 +40,7 @@ export const POST = withApiGuard({
       await storage.update(sessionId, { tool_outputs, last_user_message })
       return NextResponse.json({ ok: true, output: { xp: education.xp, completed: education.completed } } satisfies ToolRunResult)
     } catch (e: unknown) {
-      return NextResponse.json({ ok: false, error: 'server_error', details: e?.message || 'unknown' } satisfies ToolRunResult, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'server_error' } satisfies ToolRunResult, { status: 500 })
     }
   }
 })

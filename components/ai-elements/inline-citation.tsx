@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import type { ComponentProps } from 'react';
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   HoverCard,
@@ -95,6 +95,7 @@ export const InlineCitationCardBody = ({
 );
 
 export type InlineCitationSourceProps = ComponentProps<'div'> & {
+  key?: React.Key;
   title?: string;
   url?: string;
   description?: string;
@@ -164,9 +165,9 @@ export const GroundedCitation = ({ citations, className }: GroundedCitationProps
           {citations.map((citation, index) => (
             <InlineCitationSource
               key={index}
-              title={citation.title}
+              {...(citation.title && { title: citation.title })}
               url={citation.uri}
-              description={citation.description}
+              {...(citation.description && { description: citation.description })}
             />
           ))}
         </div>

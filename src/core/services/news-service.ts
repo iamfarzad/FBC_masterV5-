@@ -58,7 +58,7 @@ function mapResponse(resp: GoogleSearchResponse, category: NewsItem['category'])
     title: it.title,
     url: it.link,
     source: it.displayLink || (new URL(it.link).hostname.replace('www.', '')),
-    publishedAt: (it as any).publishedAt ?? '', // some providers lack this
+    publishedAt: (it as any).publishedAt ?? new Date().toISOString(), // some providers lack this
     category,
     keyFindings: extractFindings(it.snippet)
   }))
@@ -68,9 +68,9 @@ function dedupe(items: NewsItem[]): NewsItem[] {
   const seen = new Set<string>()
   const out: NewsItem[] = []
   for (const it of items) {
-    const key = it.url.split('?')[0]
-    if (seen.has(key ?? '')) continue
-    seen.add(key ?? '')
+    const key = it.url.split('?')[0] || ''
+    if (seen.has(key)) continue
+    seen.add(key)
     out.push(it)
   }
   return out

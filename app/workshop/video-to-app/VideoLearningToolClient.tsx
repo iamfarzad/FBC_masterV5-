@@ -64,7 +64,8 @@ export function VideoLearningToolClient({
     }
   }
 
-  const handleAppGenerated = (appUrl: string, videoUrl: string) => {
+  const handleAppGenerated = (result: { appUrl: string, videoUrl: string }) => {
+    const { appUrl, videoUrl } = result;
     const newApp = {
       id: Math.random().toString(36).substring(7),
       url: appUrl,

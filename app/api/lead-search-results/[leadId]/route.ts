@@ -39,8 +39,9 @@ export async function GET(
 
   } catch (error: unknown) {
     console.error('Search results fetch error', error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to fetch search results";
     return NextResponse.json({ 
-      error: error.message || "Failed to fetch search results"
+      error: errorMessage
     }, { status: 500 })
   }
 }
@@ -93,8 +94,9 @@ export async function POST(
 
   } catch (error: unknown) {
     console.error('Search results generation error', error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate search results";
     return NextResponse.json({ 
-      error: error.message || "Failed to generate search results"
+      error: errorMessage
     }, { status: 500 })
   }
 }

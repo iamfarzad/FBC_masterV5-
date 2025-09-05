@@ -4,13 +4,17 @@ import { WebcamCaptureSchema } from '@/src/core/services/tool-service'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { GoogleGenAI } from '@google/genai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { selectModelForFeature } from '@/src/core/model-selector'
+import { estimateTokens } from '@/src/core/models'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
 import { APIErrorHandler, rateLimiter, performanceMonitor } from '@/src/core/api/error-handler'
 
 export async function POST(req: NextRequest) {
+  let operationId: string | undefined;
+  let estimatedTokens: number | undefined;
+  let modelName: string | undefined;
   try {
     // 🚀 Rate Limiting: 30 requests per minute for webcam analysis
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
@@ -27,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 📊 Performance Monitoring: Start tracking
-    const operationId = `webcam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    operationId = `webcam-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const metrics = performanceMonitor.startOperation(operationId)
 
     const body = await req.json()
@@ -49,14 +53,14 @@ export async function POST(req: NextRequest) {
     const base64Data = isDataUrl ? image.split(',')[1] : image
 
     // Budget and access checks
-    const estimatedTokens = estimateTokens('image analysis') + 1500
-    const modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
-    const modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
+    estimatedTokens = 3000 // Fixed value for image analysis
+    const modelSelection = selectModelForFeature('image_analysis', {})
+    modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
 
 
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'image_analysis', modelName, estimatedTokens)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'image_analysis', modelName, estimatedTokens, estimatedTokens * 0.5, true)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
@@ -119,12 +123,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(response, { status: 200 })
   } catch (error: unknown) {
     // 📊 Performance Monitoring: Complete failed operation
-    performanceMonitor.endOperation(operationId, {
-      success: false,
-      tokensUsed: estimatedTokens,
-      model: modelName,
-      errorCode: (error as any)?.code || 'UNKNOWN_ERROR'
-    })
+    if (operationId) {
+      performanceMonitor.endOperation(operationId, {
+        success: false,
+        tokensUsed: estimatedTokens,
+        model: modelName,
+        errorCode: (error as any)?.code || 'UNKNOWN_ERROR'
+      })
+    }
 
     // 🚨 Enhanced Error Handling
     return APIErrorHandler.createErrorResponse(error)

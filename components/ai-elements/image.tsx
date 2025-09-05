@@ -1,7 +1,7 @@
-import { cn } from '@/src/core/utils';
+import { cn } from '@/lib/utils';
 import type { Experimental_GeneratedImage } from 'ai';
 
-export type ImageProps = (Experimental_GeneratedImage | {
+export type ImageProps = ((Experimental_GeneratedImage & { alt?: string }) | {
   src: string;
   alt?: string;
 }) & {

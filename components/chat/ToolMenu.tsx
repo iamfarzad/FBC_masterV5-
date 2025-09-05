@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { Plus, FileText, ImageIcon, Camera, Monitor, Calculator, Video } from "@/src/core/icon-mapping"
-import { cn } from '@/src/core/utils'
+import { cn } from '@/lib/utils'
 
 export interface ToolMenuProps {
   onUploadDocument?: () => void
@@ -40,7 +40,7 @@ export function ToolMenu({
             <Button
               type="button"
               variant="ghost"
-              size="touch"
+              size="icon"
               disabled={disabled}
               className={cn(
                 "h-8 w-8 rounded-full border border-border/30 bg-muted/40",

@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws'
+import { WebSocketServer, WebSocket } from 'ws'
 import { GoogleGenAI } from '@google/genai'
 
 const PORT = parseInt(process.env.LIVE_SERVER_PORT || '3001')
@@ -11,13 +11,29 @@ const genAI = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || ''
 })
 
-wss.on('connection', (ws) => {
+interface StartMessage {
+  type: 'start';
+  languageCode: string;
+}
+
+interface AudioMessage {
+  type: 'audio';
+  data: string; // Assuming audio data is sent as a base64 string
+}
+
+interface StopMessage {
+  type: 'stop';
+}
+
+type WebSocketMessage = StartMessage | AudioMessage | StopMessage;
+
+wss.on('connection', (ws: WebSocket) => {
   const connectionId = Math.random().toString(36).substring(7)
   console.log(`✅ New WebSocket connection: ${connectionId}`)
 
   ws.on('message', async (data) => {
     try {
-      const message = JSON.parse(data.toString())
+      const message: WebSocketMessage = JSON.parse(data.toString())
       console.log(`📨 Received message type: ${message.type}`, { connectionId })
 
       switch (message.type) {
@@ -31,7 +47,7 @@ wss.on('connection', (ws) => {
           handleStopSession(ws, connectionId)
           break
         default:
-          console.warn(`❓ Unknown message type: ${message.type}`)
+          console.warn(`❓ Unknown message type: ${(message as any).type}`)
       }
     } catch (error) {
       console.error(`❌ Error processing message:`, error)
@@ -51,7 +67,7 @@ wss.on('connection', (ws) => {
   })
 })
 
-async function handleStartSession(ws: unknown, message: unknown, connectionId: string) {
+async function handleStartSession(ws: WebSocket, message: StartMessage, connectionId: string) {
   try {
     console.log(`🎯 Starting session:`, { languageCode: message.languageCode })
     
@@ -73,7 +89,7 @@ async function handleStartSession(ws: unknown, message: unknown, connectionId: s
   }
 }
 
-async function handleAudioData(ws: unknown, message: unknown, connectionId: string) {
+async function handleAudioData(ws: WebSocket, message: AudioMessage, connectionId: string) {
   try {
     // For now, just echo back that we received audio
     // In a full implementation, you'd process the audio with Gemini Live API
@@ -86,7 +102,7 @@ async function handleAudioData(ws: unknown, message: unknown, connectionId: stri
   }
 }
 
-function handleStopSession(ws: unknown, connectionId: string) {
+function handleStopSession(ws: WebSocket, connectionId: string) {
   console.log(`🛑 Stopping session: ${connectionId}`)
   ws.send(JSON.stringify({
     type: 'session_stopped'

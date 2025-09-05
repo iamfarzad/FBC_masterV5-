@@ -259,7 +259,6 @@ export class StreamingOptimizer {
                 this.processStreamChunk(
                   controller as unknown as ReadableStreamDefaultController,
                   nextStreamIndex,
-                  controller as unknown as ReadableStreamDefaultController,
                   activeStreams
                 )
               }
@@ -392,17 +391,31 @@ export class StreamingOptimizer {
   }
 
   private async processStreamChunk(
-    reader: ReadableStreamDefaultReader,
+    controllerOrReader: ReadableStreamDefaultController | ReadableStreamDefaultReader,
     streamIndex: number,
-    controller: ReadableStreamDefaultController,
     activeStreams: Set<number>
   ): Promise<void> {
     try {
+      // Handle controller case (enqueue directly)
+      if (typeof (controllerOrReader as ReadableStreamDefaultController).enqueue === 'function') {
+        const controller = controllerOrReader as ReadableStreamDefaultController;
+        // In controller mode, we don't read from a stream, we just manage the stream lifecycle
+        return;
+      }
+
+      // Handle reader case (read and process)
+      const reader = controllerOrReader as ReadableStreamDefaultReader;
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        controller.enqueue(value)
+        // Find the controller for this stream index to enqueue
+        const controller = Array.from(this.streamControllers.entries())
+          .find(([_, ctrl]) => ctrl === controllerOrReader)?.[1] as ReadableStreamDefaultController;
+
+        if (controller) {
+          controller.enqueue(value)
+        }
       }
     } finally {
       activeStreams.delete(streamIndex)

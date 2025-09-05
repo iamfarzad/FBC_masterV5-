@@ -7,7 +7,8 @@ import { parseJSON, parseHTML } from "@/src/core/parse-utils"
 import { SPEC_FROM_VIDEO_PROMPT, CODE_REGION_OPENER, CODE_REGION_CLOSER, SPEC_ADDENDUM } from "@/src/core/ai-prompts"
 import { getYouTubeVideoId } from "@/src/core/youtube"
 import { getYouTubeTranscript, summarizeTranscript, extractKeyTopics } from "@/src/core/youtube-transcript"
-import { selectModelForFeature, estimateTokens } from "@/src/core/model-selector"
+import { selectModelForFeature } from '@/src/core/model-selector'
+import { estimateTokens } from '@/src/core/models'
 import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
 import { enforceBudgetAndLog } from "@/src/core/monitoring"
@@ -87,7 +88,7 @@ async function generateText(options: {
           // Store metadata
           const metadata = {
             videoTitle: transcriptData.title,
-            correlationId: req.headers.get('x-request-id') || crypto.randomUUID()
+            correlationId: correlationId || crypto.randomUUID()
           }
           
           // Enhanced prompt with actual video content
@@ -247,7 +248,7 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
         const parsed = parseJSON(specResponse)
         parsedSpec = parsed.spec
       } catch (parseError) {
-    console.error('Failed to parse spec JSON', error)
+    console.error('Failed to parse spec JSON', parseError)
         // Fallback: try to extract spec from the response
         parsedSpec = specResponse
       }
@@ -349,7 +350,7 @@ export const POST = withFullSecurity(async (request: NextRequest) => {
       try {
         code = parseHTML(codeResponse, CODE_REGION_OPENER, CODE_REGION_CLOSER)
       } catch (parseError) {
-    console.error('Failed to parse HTML code', error)
+    console.error('Failed to parse HTML code', parseError)
         // Fallback: return the raw response
         code = codeResponse
       }

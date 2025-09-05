@@ -40,13 +40,14 @@ export function withAPISecurity(handler: (req: NextRequest) => Promise<Response 
 function asErr(e: unknown): e is { message?: string } { return typeof e === "object" && e !== null; }
 
 // 2) Payload size limit middleware
-export function withPayloadLimit(handler: (req: NextRequest) => Promise<Response | NextResponse>, limit: string = '100kb') {
+export function withPayloadLimit(handler: (req: NextRequest) => Promise<Response | NextResponse>, limit?: string) {
   return async (req: NextRequest) => {
     try {
       const contentLength = req.headers.get('content-length')
       if (contentLength) {
         const sizeInBytes = parseInt(contentLength, 10)
-        const limitInBytes = parseSizeLimit(limit)
+        const sizeLimit = limit || '100kb';
+        const limitInBytes = parseSizeLimit(sizeLimit)
         
         if (sizeInBytes > limitInBytes) {
           return new NextResponse(
@@ -160,8 +161,15 @@ export function withFullSecurity(
 ) {
   return async (req: NextRequest) => {
     // Apply webhook signature validation if required
-    if (options.requireWebhookSignature && options.webhookSecret) {
-      const signatureResult = await verifyWebhookSignature(options.webhookSecret)(req)
+    if (options.requireWebhookSignature) {
+      const { webhookSecret } = options
+      if (!webhookSecret) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Webhook secret not configured' }),
+          { status: 500 }
+        )
+      }
+      const signatureResult = await verifyWebhookSignature(webhookSecret)(req)
       if (signatureResult) {
         return signatureResult
       }

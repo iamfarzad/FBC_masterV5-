@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
       .order('created_at', { ascending: true });
 
     const conversationHistory = activities?.map(activity => ({
-      role: (activity.type === 'ai_request' ? 'assistant' : 'user'),
+      role: (activity.type === 'ai_request' ? 'assistant' : 'user') as 'user' | 'assistant',
       content: String(activity.description || activity.title),
       timestamp: String(activity.created_at)
     })) || [];
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     const summaryData: SummaryData = {
       leadInfo,
       conversationHistory,
-      leadResearch: leadResearch || undefined,
+      ...(leadResearch && { leadResearch }),
       sessionId
     };
 

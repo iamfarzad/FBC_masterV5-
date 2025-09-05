@@ -4,7 +4,8 @@ import { join } from 'path'
 import { GoogleGenAI } from '@google/genai'
 // Mock functionality removed for production
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens, UseCase } from '@/src/core/model-selector'
+import { selectModelForFeature } from '@/src/core/model-selector'
+import { estimateTokens, UseCase } from '@/src/core/models'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
       // Client provided base64
       const commaIdx = dataUrl.indexOf(',')
       const header = dataUrl.substring(5, commaIdx)
-      mimeType = header.split(';')[0] || mimeType
+      mimeType = (header.split(';')[0] || mimeType) as SupportedDocType
       base64Data = dataUrl.substring(commaIdx + 1)
       documentSource = 'base64'
     } else if (typeof filename === 'string' && filename.length) {
@@ -65,13 +66,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Budget and access checks
-    const estimatedTokens = estimateTokens(UseCase.DOCUMENT_ANALYSIS) + 2500
-    const modelSelection = selectModelForFeature(UseCase.DOCUMENT_ANALYSIS, estimatedTokens)
+    const textContent = Buffer.from(base64Data, 'base64').toString('utf-8');
+    const estimatedTokens = estimateTokens(textContent) + 2500
+    const modelSelection = selectModelForFeature('research', {})
 
 
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, UseCase.DOCUMENT_ANALYSIS, typeof modelSelection === 'string' ? modelSelection : modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'research', typeof modelSelection === 'string' ? modelSelection : modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 

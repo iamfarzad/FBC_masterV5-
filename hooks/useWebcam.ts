@@ -63,7 +63,7 @@ export function useWebcam({
         const frontCamera = videoDevices.find(device => 
           device.label.toLowerCase().includes('front')
         )
-        setSelectedDeviceId(frontCamera?.deviceId || videoDevices[0].deviceId)
+        setSelectedDeviceId(frontCamera?.deviceId || videoDevices[0]?.deviceId || '')
         return videoDevices
       }
       

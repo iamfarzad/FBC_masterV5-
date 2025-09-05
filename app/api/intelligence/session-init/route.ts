@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ContextStorage } from '@/src/core/context/context-storage'
-import { LeadResearchService } from '@/src/core/intelligence/lead-research'
+import { LeadResearchService, ResearchResult } from '@/src/core/intelligence/lead-research'
 import { getSupabase } from '@/src/core/supabase/server'
 
 const contextStorage = new ContextStorage()
@@ -93,14 +93,14 @@ export async function POST(req: NextRequest) {
 
     // Start lead research (async; but do not duplicate if already have research)
     let contextReady = false
-    let researchResult: unknown = null
+    let researchResult: ResearchResult | null = null
 
     try {
       if (!hasResearch(existing)) {
         // Action logged
         if (!researchInFlight.has(sessionId)) {
           const p = leadResearchService
-            .researchLead(email, name, companyUrl, sessionId)
+            .researchLead({ email, name, companyUrl, sessionId })
             .finally(() => researchInFlight.delete(sessionId))
           researchInFlight.set(sessionId, p)
         }

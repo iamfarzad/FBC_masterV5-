@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data || [])
   } catch (error: unknown) {
     console.error('Meetings fetch error', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }

@@ -72,7 +72,7 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI ? undefined : [
+  webServer: process.env.CI ? [] : [
     {
       command: 'pnpm dev',
       port: 3000,

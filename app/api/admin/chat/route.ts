@@ -3,7 +3,7 @@ import { unifiedChatProvider } from '@/src/core/chat/unified-provider'
 import { unifiedStreamingService } from '@/src/core/streaming/unified-stream'
 import { validateRequest, chatRequestSchema } from '@/src/core/validation'
 import { unifiedErrorHandler } from '@/src/core/chat/unified-error-handler'
-import type { UnifiedMessage } from '@/src/core/chat/unified-types'
+import type { UnifiedMessage, UnifiedContext } from '@/src/core/chat/unified-types'
 
 // Edge Function Configuration for optimal performance
 export const runtime = 'edge'
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare base context for admin mode
-    const context: UnifiedContext = {
+    let context: UnifiedContext = {
       sessionId,
       adminId,
       conversationIds,

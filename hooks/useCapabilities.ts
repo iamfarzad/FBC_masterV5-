@@ -125,19 +125,23 @@ export function useCapabilities(options: UseCapabilitiesOptions = {}) {
   // Format capabilities for display
   const formatForDisplay = useCallback((): Record<string, AICapability[]> => {
     return state.available.reduce((acc, cap) => {
-      if (!acc[cap.category]) acc[cap.category] = []
-      acc[cap.category].push(cap)
-      return acc
+      const category = cap.category as keyof typeof CAPABILITY_CATEGORIES;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category]!.push(cap);
+      return acc;
     }, {} as Record<string, AICapability[]>)
   }, [state.available])
 
   // Get capability status text for AI responses
   const getCapabilityStatusText = useCallback((): string => {
     const total = state.available.length
-    const categories = Object.keys(formatForDisplay()).length
+    const formattedDisplay = formatForDisplay()
+    const categories = Object.keys(formattedDisplay).length
     
     return `I have ${total} capabilities across ${categories} categories: ${
-      Object.entries(formatForDisplay())
+      Object.entries(formattedDisplay)
         .map(([cat, caps]) => `${CAPABILITY_CATEGORIES[cat as keyof typeof CAPABILITY_CATEGORIES].name} (${caps.length})`)
         .join(', ')
     }. Ask me about any of these or say "what can you do" for details.`

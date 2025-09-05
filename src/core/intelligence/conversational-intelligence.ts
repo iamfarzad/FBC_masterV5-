@@ -14,8 +14,14 @@ export class ConversationalIntelligence {
     const { sessionId, email, name, companyUrl } = input
     const researchResult = await this.research.researchLead(email, name, companyUrl, sessionId)
     const role = await detectRole({
-      company: { summary: researchResult.company?.summary, industry: researchResult.company?.industry },
-      person: { role: researchResult.person?.role, seniority: researchResult.person?.seniority },
+      company: {
+        summary: researchResult.company?.summary,
+        industry: researchResult.company?.industry
+      },
+      person: {
+        role: researchResult.person?.role,
+        seniority: researchResult.person?.seniority
+      },
       role: researchResult.role,
     })
     await updateContext(sessionId, {
@@ -23,7 +29,7 @@ export class ConversationalIntelligence {
       person: researchResult.person,
       role: role.role,
       roleConfidence: role.confidence,
-    })
+    } as any)
     return await getContextSnapshot(sessionId)
   }
 

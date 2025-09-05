@@ -23,54 +23,6 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
 
-  // 🔑 Accessibility: Keyboard Navigation Support
-  useEffect(() => {
-    const handleKeyboard = (e: KeyboardEvent) => {
-      // Escape key to close
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      }
-      // Space/Enter for manual analysis
-      else if ((e.key === ' ' || e.key === 'Enter') && !isAnalyzing && stream) {
-        e.preventDefault()
-        triggerManualAnalysis()
-      }
-      // 'A' key to toggle auto-analysis
-      else if (e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault()
-        setIsAnalyzing(!isAnalyzing)
-      }
-      // 'S' key to stop sharing
-      else if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault()
-        stopScreenShare()
-      }
-    }
-
-    // 📢 Screen reader announcements
-    const announceToScreenReader = (message: string) => {
-      const announcement = document.createElement('div')
-      announcement.setAttribute('aria-live', 'polite')
-      announcement.setAttribute('aria-atomic', 'true')
-      announcement.className = 'sr-only'
-      announcement.textContent = message
-      document.body.appendChild(announcement)
-      setTimeout(() => document.body.removeChild(announcement), 1000)
-    }
-
-    document.addEventListener('keydown', handleKeyboard)
-    
-    // Announce screen share state changes
-    if (stream && !isConnecting) {
-      announceToScreenReader('Screen sharing active. AI analysis available.')
-    } else if (isConnecting) {
-      announceToScreenReader('Connecting to screen share...')
-    }
-
-    return () => document.removeEventListener('keydown', handleKeyboard)
-  }, [onClose, isAnalyzing, stream, isConnecting, triggerManualAnalysis, stopScreenShare])
-
   // Intelligence context integration
   const sessionId = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
 
@@ -89,16 +41,16 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         const isHighBandwidth = (navigator as any).connection?.downlink > 10 || true // Default to high
         
         return {
-          video: { 
-            width: { 
-              ideal: isHighPerformance ? 1920 : 1280, 
-              max: 1920 
-            }, 
-            height: { 
-              ideal: isHighPerformance ? 1080 : 720,
-              max: 1080 
+          video: {
+            width: {
+              ideal: isHighPerformance ? 1920 : 1280,
+              max: 1920
             },
-            frameRate: { 
+            height: {
+              ideal: isHighPerformance ? 1080 : 720,
+              max: 1080
+            },
+            frameRate: {
               ideal: isHighBandwidth ? 30 : 15,
               max: isHighPerformance ? 60 : 30
             },
@@ -119,7 +71,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         // 📊 ADVANCED PERFORMANCE MONITORING
         videoRef.current.onloadeddata = () => {
           const video = videoRef.current!
-          const quality = video.videoWidth >= 1920 ? 'excellent' : 
+          const quality = video.videoWidth >= 1920 ? 'excellent' :
                          video.videoWidth >= 1280 ? 'good' : 'poor'
           setConnectionQuality(quality)
           
@@ -188,8 +140,8 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
           "Content-Type": "application/json",
           ...(sessionId ? { 'x-intelligence-session-id': sessionId } : {})
         },
-        body: JSON.stringify({ 
-          image: imageData, 
+        body: JSON.stringify({
+          image: imageData,
           type: "screen",
           context: {
             prompt: contextPrompt,
@@ -261,7 +213,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       // 📊 Adaptive interval based on performance and activity
       const getAdaptiveInterval = () => {
         const baseInterval = 15000 // 15s base
-        const performanceFactor = connectionQuality === 'excellent' ? 1 : 
+        const performanceFactor = connectionQuality === 'excellent' ? 1 :
                                 connectionQuality === 'good' ? 1.2 : 1.5
         return Math.round(baseInterval * performanceFactor)
       }
@@ -291,7 +243,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
             ctx.drawImage(video, 0, 0, targetWidth, targetHeight)
             
             // 📈 ADAPTIVE COMPRESSION - Lower quality for auto, higher for manual
-            const compressionQuality = connectionQuality === 'excellent' ? 0.8 : 
+            const compressionQuality = connectionQuality === 'excellent' ? 0.8 :
                                      connectionQuality === 'good' ? 0.7 : 0.6
             
             const data = canvas.toDataURL("image/jpeg", compressionQuality)
@@ -347,6 +299,54 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       }
     }
   }, [stream, sendFrame, isAnalyzing])
+
+  // 🔑 Accessibility: Keyboard Navigation Support
+  useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      // Escape key to close
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+      // Space/Enter for manual analysis
+      else if ((e.key === ' ' || e.key === 'Enter') && !isAnalyzing && stream) {
+        e.preventDefault()
+        triggerManualAnalysis()
+      }
+      // 'A' key to toggle auto-analysis
+      else if (e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault()
+        setIsAnalyzing(!isAnalyzing)
+      }
+      // 'S' key to stop sharing
+      else if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault()
+        stopScreenShare()
+      }
+    }
+
+    // 📢 Screen reader announcements
+    const announceToScreenReader = (message: string) => {
+      const announcement = document.createElement('div')
+      announcement.setAttribute('aria-live', 'polite')
+      announcement.setAttribute('aria-atomic', 'true')
+      announcement.className = 'sr-only'
+      announcement.textContent = message
+      document.body.appendChild(announcement)
+      setTimeout(() => document.body.removeChild(announcement), 1000)
+    }
+
+    document.addEventListener('keydown', handleKeyboard)
+    
+    // Announce screen share state changes
+    if (stream && !isConnecting) {
+      announceToScreenReader('Screen sharing active. AI analysis available.')
+    } else if (isConnecting) {
+      announceToScreenReader('Connecting to screen share...')
+    }
+
+    return () => document.removeEventListener('keydown', handleKeyboard)
+  }, [onClose, isAnalyzing, stream, isConnecting, triggerManualAnalysis, stopScreenShare])
 
   // Start on mount
   useEffect(() => {
@@ -410,7 +410,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
                   <>
                     <div className="h-4 w-px bg-border" />
                     <div className="flex items-center gap-2">
-                      <div className={`size-2 rounded-full ${
+                      <div className={`size-2 rounded-full ${ 
                         connectionQuality === 'excellent' ? 'bg-green-500' :
                         connectionQuality === 'good' ? 'bg-yellow-500' : 'bg-red-500'
                       }`} />
@@ -505,7 +505,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
                   <div className="space-y-1 px-3 py-2 md:space-y-2 md:px-4">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-text-muted">Quality</span>
-                      <span className={`font-medium ${
+                      <span className={`font-medium ${ 
                         connectionQuality === 'excellent' ? 'text-green-600' :
                         connectionQuality === 'good' ? 'text-yellow-600' : 'text-red-600'
                       }`}>
@@ -673,7 +673,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
             <Button
                   variant={isAnalyzing ? "default" : "outline"}
               onClick={() => setIsAnalyzing(!isAnalyzing)}
-                  className={`rounded-lg px-3 py-2 transition-all duration-200 sm:px-4 md:rounded-xl md:px-5 md:py-3 ${
+                  className={`rounded-lg px-3 py-2 transition-all duration-200 sm:px-4 md:rounded-xl md:px-5 md:py-3 ${ 
                     isAnalyzing 
                       ? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
                       : 'border-border hover:bg-surface-elevated'

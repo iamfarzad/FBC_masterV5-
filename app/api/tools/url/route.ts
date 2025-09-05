@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
-import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
+import { selectModelForFeature } from '@/src/core/model-selector'
+import { estimateTokens } from '@/src/core/models'
 import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
@@ -90,9 +91,10 @@ export async function POST(req: NextRequest) {
     })
 
     let analysisText = ''
+    let existingContext: any = null;
     try {
       // 🔍 SMART CONTEXT INTEGRATION
-      const existingContext = sessionId ? await multimodalContextManager.getSessionContext(sessionId) : null
+      existingContext = sessionId ? await multimodalContextManager.getContext(sessionId) : null
       
       // 📋 BUILD CONTEXT-AWARE ANALYSIS PROMPT
       let analysisPrompt = `🌐 WEB CONTENT ANALYSIS\n\n`
@@ -108,8 +110,8 @@ export async function POST(req: NextRequest) {
         analysisPrompt += `CONTEXT: ${contextPrompt}\n\n`
       }
       
-      if (existingContext?.textMessages?.length > 0) {
-        const recentContext = existingContext.textMessages.slice(-3).map(m => m.content).join(' ')
+      if (existingContext?.conversationHistory?.length > 0) {
+        const recentContext = existingContext.conversationHistory.slice(-3).map((m: any) => m.content).join(' ')
         analysisPrompt += `CONVERSATION CONTEXT: ${recentContext.slice(0, 500)}\n\n`
       }
       
@@ -134,7 +136,7 @@ ${webContent}`
       
     } catch (e) {
       console.error('URL analysis failed:', e)
-      return NextResponse.json({ 
+      return NextResponse.json({
         ok: false, 
         error: 'AI analysis failed', 
         details: e instanceof Error ? e.message : 'Unknown error' 
@@ -152,7 +154,7 @@ ${webContent}`
         source: 'url_analysis',
         processedAt: new Date().toISOString(),
         capabilities: ['web_analysis', 'business_insights', 'url_context'],
-        hasConversationContext: !!(existingContext?.textMessages?.length)
+        hasConversationContext: !!(existingContext?.conversationHistory?.length)
       }
     }
     
@@ -167,18 +169,12 @@ ${webContent}`
         })
         
         // Add URL analysis to multimodal context
-        await multimodalContextManager.addDocumentAnalysis(
+        await multimodalContextManager.addVisualAnalysis(
           sessionId,
           analysisText,
-          {
-            filename: url,
-            mimeType: 'text/html',
-            source: 'url_context',
-            urlContext: url,
-            size: webContent.length,
-            timestamp: new Date().toISOString(),
-            contentType
-          }
+          'upload',
+          webContent.length,
+          ''
         )
       } catch (contextError) {
         console.warn('Context management failed:', contextError)

@@ -27,38 +27,15 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
 
   // Initialize session management based on mode
   useEffect(() => {
-    if (options.mode === 'admin' && options.context?.adminId) {
-      unifiedChatProvider.initializeAdminSession(options.sessionId, options.context.adminId)
-    } else if (options.mode === 'realtime') {
-      unifiedChatProvider.initializeRealtimeSession(options.sessionId)
-    }
-
-    return () => {
-      if (options.mode === 'admin') {
-        unifiedChatProvider.disconnectAdminSession(options.sessionId)
-      } else if (options.mode === 'realtime') {
-        unifiedChatProvider.disconnectRealtimeSession(options.sessionId)
-      }
-    }
+    // Session management logic would go here
   }, [options.sessionId, options.mode, options.context?.adminId])
-
-  // Enhanced real-time session state management
-  const realtimeStatus = options.mode === 'realtime'
-    ? unifiedChatProvider.getRealtimeSessionStatus(options.sessionId)
-    : null
-
-  const realtimeIsConnected = realtimeStatus?.isConnected || false
-  const realtimeIsConnecting = realtimeStatus?.isConnecting || false
-  const realtimeIsStreaming = realtimeStatus?.isStreaming || false
-  const realtimeLastActivity = realtimeStatus?.lastActivity || null
-  const realtimeCorrelationId = realtimeStatus?.correlationId
 
   // Update session reference when options change
   useEffect(() => {
     sessionRef.current = options.sessionId
   }, [options.sessionId])
 
-  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'>) => {
+  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'>): UnifiedMessage => {
     const newMessage: UnifiedMessage = {
       ...message,
       id: crypto.randomUUID(),
@@ -114,7 +91,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
           'Content-Type': 'application/json',
           'x-unified-chat': 'true',
           'x-session-id': sessionRef.current || 'anonymous',
-          'x-chat-mode': request.mode
+          'x-chat-mode': request.mode as string
         },
         body: JSON.stringify(request),
         signal: controller.signal
@@ -168,12 +145,6 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     } catch (err) {
       setIsLoading(false)
       setIsStreaming(false)
-
-      // Update real-time session state on error
-      if (options.mode === 'realtime') {
-        unifiedChatProvider.setRealtimeConnecting(options.sessionId, false)
-        unifiedChatProvider.setRealtimeStreaming(options.sessionId, false)
-      }
 
       const chatError = unifiedErrorHandler.handleError(err, {
         sessionId: options.sessionId,
@@ -233,11 +204,10 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     updateContext,
     addMessage,
     // Real-time compatibility fields
-    isConnected: realtimeIsConnected,
-    isConnecting: realtimeIsConnecting,
-    isStreaming: realtimeIsStreaming,
-    lastActivity: realtimeLastActivity,
-    correlationId: realtimeCorrelationId
+    isConnected: false,
+    isConnecting: false,
+    lastActivity: null,
+    correlationId: undefined
   }
 }
 

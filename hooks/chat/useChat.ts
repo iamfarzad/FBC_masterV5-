@@ -40,7 +40,7 @@ function debounce<T extends (...args: any[]) => any>(
   }
 }
 
-export function useChat({ 
+export function useChat({
   initialMessages = [],
   data = {},
   onFinish,
@@ -69,7 +69,7 @@ export function useChat({
     }
   }, [data.sessionId])
 
-  const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
+  const addMessage = useCallback((message: Omit<Message, 'timestamp' | 'id'>) => {
     const newMessage: Message = {
       ...message,
       id: uuidv4(),

@@ -1,5 +1,6 @@
 // Simplified Intelligence Service - Single Source of Truth
-import type { ContextSnapshot, IntentResult } from '../types/intelligence'
+import type { ContextSnapshot, IntentResult, ResearchResult } from '../types/intelligence'
+import type { CompanyContext, PersonContext } from '../context/context-types'
 
 /**
  * Clean, simplified intelligence service that integrates with existing systems
@@ -7,25 +8,47 @@ import type { ContextSnapshot, IntentResult } from '../types/intelligence'
  */
 export class SimpleIntelligenceService {
   
-  async initSession(input: { 
+  async initSession(input: {
     sessionId: string
     email?: string
-    name?: string 
+    name?: string
   }): Promise<ContextSnapshot> {
     const { sessionId, email, name } = input
-    
+
     // Build basic context - can be enhanced later
     const context: ContextSnapshot = {
-      lead: { 
-        email: email || '', 
-        name: name || email?.split('@')[0] || '' 
+      lead: {
+        email: email || '',
+        name: name || email?.split('@')[0] || ''
       },
-      capabilities: ['search', 'roi', 'webcam', 'screen'], 
-      role: 'prospect',
-      roleConfidence: 0.7
+      capabilities: ['search', 'roi', 'webcam', 'screen'],
+      role: 'prospect'
     }
 
     return context
+  }
+
+  async researchLead(input: {
+    sessionId: string
+    email: string
+    name?: string
+  }): Promise<ResearchResult> {
+    // Simple mock research result - can be enhanced with actual research
+    const company: CompanyContext = {
+      name: 'Unknown Company',
+      domain: input.email.split('@')[1] || 'unknown.com'
+    }
+
+    const person: PersonContext = {
+      fullName: input.name || input.email.split('@')[0] || 'Unknown Person'
+    }
+
+    return {
+      company,
+      person,
+      role: 'Business Professional',
+      confidence: 0.5
+    }
   }
 
   async analyzeMessage(message: string): Promise<IntentResult> {
