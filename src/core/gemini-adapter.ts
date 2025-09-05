@@ -34,29 +34,27 @@ export class GeminiAdapter {
   }
 
   async streamWithHistory(history: any[], prompt: string, model: GeminiModel = "gemini-2.5-flash", systemInstruction?: string) {
-    const contents = [
-      ...history,
-      { role: "user", parts: [{ text: prompt }] }
-    ]
+    const contents = systemInstruction
+      ? [
+          { role: "user", parts: [{ text: systemInstruction }] },
+          { role: "model", parts: [{ text: "I understand my role and will follow these instructions throughout our conversation." }] },
+          ...history,
+          { role: "user", parts: [{ text: prompt }] }
+        ]
+      : [
+          ...history,
+          { role: "user", parts: [{ text: prompt }] }
+        ]
 
-    const config: any = {
+    return this.client.models.generateContentStream({
       model,
       contents
-    }
-
-    // Add system instruction if provided
-    if (systemInstruction) {
-      config.systemInstruction = {
-        parts: [{ text: systemInstruction }]
-      }
-    }
-
-    return this.client.models.generateContentStream(config)
+    })
   }
 
   async streamWithContext(history: any[], prompt: string, sessionId?: string, model: GeminiModel = "gemini-2.5-flash") {
-    // Generate context-aware system prompt using F.B/c personality
-    let userContext = null;
+    // Generate context-aware system prompt inline
+    let userContext = '';
 
     if (sessionId) {
       try {
@@ -65,16 +63,19 @@ export class GeminiAdapter {
         const ctx = await contextStorage.get(sessionId);
 
         if (ctx) {
-          userContext = {
-            lead: {
-              email: ctx.email,
-              name: ctx.name
-            },
-            company: ctx.company_context,
-            person: ctx.person_context,
-            role: ctx.role,
-            roleConfidence: ctx.role_confidence
-          };
+          userContext = `
+  Context about this user:
+  ${JSON.stringify({
+    lead: {
+      email: ctx.email,
+      name: ctx.name
+    },
+    company: ctx.company_context,
+    person: ctx.person_context,
+    role: ctx.role,
+    roleConfidence: ctx.role_confidence
+  }, null, 2)}
+          `;
         }
       } catch (error) {
         console.warn('Failed to load user context for system prompt:', error);
@@ -83,7 +84,17 @@ export class GeminiAdapter {
 
     // Import and use the F.B/c personality model
     const { generateFBCPersonalityPrompt } = await import('./personality/fbc-persona');
-    const personalityPrompt = generateFBCPersonalityPrompt(sessionId, userContext);
+
+    const personalityPrompt = generateFBCPersonalityPrompt(sessionId, userContext ? {
+      lead: {
+        email: 'unknown',
+        name: 'unknown'
+      },
+      company: null,
+      person: null,
+      role: null,
+      roleConfidence: 0
+    } : undefined);
 
     return this.streamWithHistory(history, prompt, model, personalityPrompt);
   }

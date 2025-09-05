@@ -88,12 +88,19 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       const controller = new AbortController()
       abortControllerRef.current = controller
 
-      // Add user message
+      // Add user message with session data for personality model
       const userMessage = addMessage({
         role: 'user',
         content: content.trim(),
         timestamp: new Date(),
-        type: 'text'
+        type: 'text',
+        metadata: {
+          sessionData: {
+            sessionId: sessionRef.current,
+            leadContext: options.context?.leadContext,
+            timestamp: new Date().toISOString()
+          }
+        }
       })
 
       // Prepare unified request

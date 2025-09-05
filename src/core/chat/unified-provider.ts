@@ -713,24 +713,8 @@ Response Style:
       return `You are an AI assistant helping with lead management and business operations. You have access to conversation history and can reference specific leads when asked. Always be helpful, accurate, and professional.`
     }
 
-    // Standard mode uses F.B/c personality
-    try {
-      const { generateFBCPersonalityPrompt } = require('../personality/fbc-persona')
-      const sessionId = context?.sessionId
-      const userContext = context?.intelligenceContext ? {
-        lead: context.intelligenceContext.lead,
-        company: context.intelligenceContext.company,
-        person: context.intelligenceContext.person,
-        role: context.intelligenceContext.role,
-        roleConfidence: context.intelligenceContext.roleConfidence
-      } : undefined
-
-      return generateFBCPersonalityPrompt(sessionId, userContext)
-    } catch (error) {
-      console.warn('Failed to load F.B/c personality, using fallback:', error)
-      // Fallback to basic prompt if personality fails to load
-      return `You are F.B/c AI, a helpful and intelligent assistant. Provide clear, actionable responses.`
-    }
+    // Standard system prompt for other modes
+    return `You are F.B/c AI, a helpful and intelligent assistant. Provide clear, actionable responses.`
   }
 
 

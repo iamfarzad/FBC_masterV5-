@@ -230,7 +230,7 @@ async function getContextAwareSystemPrompt(sessionId?: string): Promise<string> 
 function getSystemPrompt(messages: { role: string; content: string }[]): string {
   // Try to extract session data from messages (passed via metadata)
   const firstMessage = messages[0]
-  const sessionData = (firstMessage as any)?.sessionData || {}
+  const sessionData = (firstMessage as any)?.metadata?.sessionData || (firstMessage as any)?.sessionData || {}
   const leadContext = sessionData.leadContext || {}
 
   // Use the F.B/c personality model for consistent identity
