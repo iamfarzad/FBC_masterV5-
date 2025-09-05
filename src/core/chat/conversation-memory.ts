@@ -152,7 +152,8 @@ export class ConversationMemory {
     return recentMessages.map(msg => ({
       role: msg.role,
       content: msg.content,
-      id: msg.id
+      id: msg.id,
+      timestamp: new Date()
     }))
   }
 

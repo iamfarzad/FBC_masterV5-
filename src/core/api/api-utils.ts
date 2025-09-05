@@ -28,14 +28,14 @@ export interface ApiSuccess<T = unknown> {
 export const api = {
   success: <T>(data: T, message?: string, status = 200): NextResponse<ApiSuccess<T>> => {
     return NextResponse.json(
-      { success: true, data, message },
+      { success: true, data, message: message ?? '' } satisfies ApiSuccess<T>,
       { status }
     )
   },
 
   error: (error: string, status = 500, code?: string, details?: unknown): NextResponse<ApiError> => {
     return NextResponse.json(
-      { success: false, error, code, details },
+      { success: false, error, code: code ?? '', details } satisfies ApiError,
       { status }
     )
   },

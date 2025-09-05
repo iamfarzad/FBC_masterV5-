@@ -218,9 +218,9 @@ export class PerformanceMonitor {
     metrics.endTime = Date.now()
     metrics.duration = metrics.endTime - metrics.startTime
     metrics.success = result.success
-    metrics.tokensUsed = result.tokensUsed
-    metrics.model = result.model
-    metrics.errorCode = result.errorCode
+    metrics.tokensUsed = result.tokensUsed ?? 0
+    metrics.model = result.model ?? ''
+    metrics.errorCode = result.errorCode ?? ''
     
     // Log performance metrics
     console.log(`📊 Performance [${operationId}]:`, {

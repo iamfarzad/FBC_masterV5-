@@ -456,7 +456,7 @@ export class BrowserFeatureDetector {
   private getBrowserVersion(): string {
     const ua = navigator.userAgent
     const match = ua.match(/(Chrome|Firefox|Safari|Edge|Opera)\/(\d+)/)
-    return match ? match[2] : 'Unknown'
+    return typeof match?.[2] === 'string' ? match[2] : 'Unknown'
   }
 
   private isOutdatedBrowser(): boolean {

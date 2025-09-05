@@ -158,12 +158,12 @@ export class AdminChatService {
       embeddings: msg.embeddings
     })).reverse() // Reverse to chronological order
 
-    const relevantHistory: AdminMessage[] = (similarMessages || []).map(msg => ({
+    const relevantHistory: AdminMessage[] = (similarMessages || []).map((msg: any) => ({
       id: msg.id,
       sessionId: msg.session_id,
       conversationId: msg.conversation_id,
       type: msg.message_type as AdminMessageType,
-      content: msg.message_content,
+      content: String(msg.message_content ?? ''),
       contextLeads: msg.context_leads
     }))
 
@@ -226,9 +226,10 @@ export class AdminChatService {
     // Add lead context if specific conversations requested
     if (conversationIds && conversationIds.length > 0) {
       const leadContext = await this.loadLeadContext(conversationIds)
-      if (leadContext.length > 0) {
+      const list = Array.isArray(leadContext) ? leadContext : [];
+      if (list.length > 0) {
         contextString += `## Lead Context\n`
-        leadContext.forEach(lead => {
+        list.forEach(lead => {
           contextString += `### Lead: ${lead.name} (${lead.email})\n`
           contextString += `**Lead Score:** ${lead.leadScore}/100\n`
           contextString += `**Summary:** ${lead.summary}\n\n`

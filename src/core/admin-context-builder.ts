@@ -369,21 +369,27 @@ async function fetchActivityData(supabase: unknown, since: Date) {
 
   if (error) throw error
 
+  function isActivity(x: unknown): x is { type?: string } {
+    return typeof x === 'object' && x !== null && 'type' in x;
+  }
+
+  const safeActs = Array.isArray(activities) ? activities : [];
   return {
-    recentActivities: activities?.slice(0, 20) || [],
-    systemAlerts: activities?.filter((a: unknown) => a.type === 'alert').slice(0, 10) || [],
-    userActions: activities?.filter((a: unknown) => a.type === 'user_action').slice(0, 10) || [],
-    errorLogs: activities?.filter((a: unknown) => a.type === 'error').slice(0, 10) || []
+    recentActivities: safeActs.slice(0, 20),
+    systemAlerts: safeActs.filter((a): a is { type: string } => isActivity(a) && a.type === 'alert').slice(0, 10),
+    userActions: safeActs.filter((a): a is { type: string } => isActivity(a) && a.type === 'user_action').slice(0, 10),
+    errorLogs: safeActs.filter((a): a is { type: string } => isActivity(a) && a.type === 'error').slice(0, 10)
   }
 }
 
 function determineSystemHealth(leadsData: unknown, meetingsData: unknown, costsData: unknown): 'healthy' | 'warning' | 'error' {
   // Simple health check based on data availability and basic metrics
-  if (!leadsData || !meetingsData || !costsData) return 'error'
-  
-  const hasRecentLeads = leadsData.recentLeads?.length > 0
-  const hasUpcomingMeetings = meetingsData.upcomingMeetings?.length > 0
-  const costsUnderControl = costsData.costStats?.totalCost < 500
+  const leads = (leadsData as any) ?? {};
+  const meetings = (meetingsData as any) ?? {};
+  const costs = (costsData as any) ?? {};
+  const hasRecentLeads = Array.isArray(leads.recentLeads) && leads.recentLeads.length > 0;
+  const hasUpcomingMeetings = Array.isArray(meetings.upcomingMeetings) && meetings.upcomingMeetings.length > 0;
+  const costsUnderControl = !!costs.costStats && typeof costs.costStats.totalCost === 'number' ? costs.costStats.totalCost < 500 : true;
 
   if (hasRecentLeads && hasUpcomingMeetings && costsUnderControl) return 'healthy'
   if (hasRecentLeads || hasUpcomingMeetings) return 'warning'

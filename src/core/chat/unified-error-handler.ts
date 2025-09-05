@@ -57,6 +57,7 @@ export class UnifiedErrorHandler {
     const timestamp = new Date()
 
     // Handle different error types
+    const ctx = context ? { ...context } : {};
     if (error instanceof Error) {
       return {
         code: this.getErrorCode(error),
@@ -64,7 +65,7 @@ export class UnifiedErrorHandler {
         details: error,
         recoverable: this.isRecoverableError(error),
         timestamp,
-        context
+        context: ctx
       }
     }
 
@@ -76,7 +77,7 @@ export class UnifiedErrorHandler {
         details: { originalError: error },
         recoverable: false,
         timestamp,
-        context
+        context: ctx
       }
     }
 
@@ -89,7 +90,7 @@ export class UnifiedErrorHandler {
         details: error,
         recoverable: err.recoverable !== false,
         timestamp,
-        context
+        context: ctx
       }
     }
 
@@ -100,7 +101,7 @@ export class UnifiedErrorHandler {
       details: { originalError: error },
       recoverable: false,
       timestamp,
-      context
+      context: ctx
     }
   }
 
