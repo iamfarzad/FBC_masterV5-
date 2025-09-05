@@ -62,7 +62,7 @@ export function useRealtimeChat(options: RealtimeChatOptions): RealtimeChatRetur
       const controller = new AbortController()
       abortControllerRef.current = controller
 
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/chat/unified?mode=realtime', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

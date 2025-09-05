@@ -87,18 +87,15 @@ export function useWebcam({
         stream.getTracks().forEach(track => track.stop())
       }
       
-      const constraints: MediaStreamConstraints = {
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          deviceId: deviceId ? { exact: deviceId } : undefined,
-          facingMode: deviceId ? undefined : facingMode
-        },
-        audio: false
-      }
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-      
+      const video: MediaTrackConstraints = {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+        ...(facingMode ? { facingMode } : {})
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video });
+
       setStream(mediaStream)
       
       if (videoRef.current) {

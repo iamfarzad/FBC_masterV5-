@@ -50,7 +50,7 @@ export function middleware(req: NextRequest) {
 
   // Define Gemini routes that should be mocked
   const geminiRoutes = [
-    '/api/chat',
+    '/api/chat/unified',
     '/api/gemini-live',
     // Canonicalized routes under /api/tools/*
     '/api/tools/translate',
@@ -73,7 +73,7 @@ export function middleware(req: NextRequest) {
     const mockUrl = req.nextUrl.clone()
     
     // Map specific routes to existing mock endpoints
-    if (req.nextUrl.pathname.startsWith('/api/chat')) {
+    if (req.nextUrl.pathname.startsWith('/api/chat/unified')) {
       mockUrl.pathname = '/api/mock/chat'
     } else if (req.nextUrl.pathname.startsWith('/api/export-summary')) {
       mockUrl.pathname = '/api/mock/export-summary'
@@ -95,12 +95,32 @@ export function middleware(req: NextRequest) {
   return response
 }
 
+// Legacy route redirects (optional safety net)
+export function legacyMiddleware(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+
+  if (pathname === '/api/chat') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/api/chat/unified';
+    return NextResponse.rewrite(url);
+  }
+
+  if (pathname === '/api/admin/chat') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/api/chat/unified';
+    url.search = search ? `${search}&mode=admin` : '?mode=admin';
+    return NextResponse.rewrite(url);
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
   matcher: [
     // Apply security headers to all routes
     '/((?!_next/static|_next/image|favicon.ico).*)',
     // Specific API routes for mocking
-    '/api/chat/:path*',
+    '/api/chat/unified/:path*',
     '/api/gemini-live/:path*',
     '/api/realtime-chat/:path*', // New Edge Function route
     // legacy analysis endpoints are redirected above

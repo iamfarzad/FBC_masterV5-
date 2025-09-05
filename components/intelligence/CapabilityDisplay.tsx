@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,10 @@ export function CapabilityDisplay({
     formatForDisplay,
     getCapabilityStatusText,
     stats
-  } = useCapabilities({ sessionId, userEmail })
+  } = useCapabilities({
+    sessionId: sessionId ?? null,
+    userEmail: userEmail ?? null
+  })
 
   if (isLoading) {
     return (
@@ -235,12 +238,14 @@ export function CapabilityDisplay({
 
 // Hook for getting capability suggestions based on user input
 export function useCapabilitySuggestions(userMessage: string, sessionId?: string | null) {
-  const { available, getSuggestedCapabilities } = useCapabilities({ sessionId })
-  
+  const { available, getSuggestedCapabilities } = useCapabilities({
+    sessionId: sessionId ?? null
+  })
+
   const suggestions = useMemo(() => {
     if (!userMessage.trim()) return []
     return getSuggestedCapabilities?.(userMessage) || []
-  }, [userMessage, getSuggestedCapabilities])
+  }, [userMessage, getSuggestedCapabilities, available])
 
   return {
     suggestions,
@@ -251,7 +256,9 @@ export function useCapabilitySuggestions(userMessage: string, sessionId?: string
 
 // Hook for capability status and availability
 export function useCapabilityStatus(capabilityId: string, sessionId?: string | null) {
-  const { hasCapability, getCapability, isLoading } = useCapabilities({ sessionId })
+  const { hasCapability, getCapability, isLoading } = useCapabilities({
+    sessionId: sessionId ?? null
+  })
   
   return {
     isAvailable: hasCapability(capabilityId),

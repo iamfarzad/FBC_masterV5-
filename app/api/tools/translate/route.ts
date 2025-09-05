@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
 
 import type { NextRequest } from 'next/server'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
@@ -43,8 +43,9 @@ export async function POST(req: NextRequest) {
       metadata: { correlationId, length: cleanText.length }
     })
 
-    const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+    // Note: Using gemini-2.5-flash instead of 2.0-flash for better performance
+    const modelName = 'gemini-2.5-flash'
 
     const getLanguageName = (code: string): string => {
       const languages: Record<string, string> = {
@@ -80,12 +81,13 @@ ${cleanText}
 
 TRANSLATED TEXT:`
 
-    const result = await model.generateContent({
-      contents: [ { role: 'user', parts: [{ text: prompt }] } ],
-      generationConfig: { maxOutputTokens: Math.min(4096, Math.ceil(cleanText.length * 1.2)) }
+    const result = await client.models.generateContent({
+      model: modelName,
+      contents: prompt,
+      config: { maxOutputTokens: Math.min(4096, Math.ceil(cleanText.length * 1.2)) }
     })
 
-    const translated = result.response?.text() || ''
+    const translated = result.text ?? ''
 
     if (sessionId) {
       try { await recordCapabilityUsed(String(sessionId), 'translate', { targetLang, sourceLang, inputLength: cleanText.length, outputLength: translated.length }) } catch {}

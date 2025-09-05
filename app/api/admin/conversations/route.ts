@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data for frontend consumption
-    const transformedConversations = (conversations || []).map(conv => ({
+    const transformedConversations = (conversations || []).map((conv: any) => ({
       id: conv.id,
       name: conv.name,
       email: conv.email,

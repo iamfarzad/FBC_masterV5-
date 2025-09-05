@@ -21,7 +21,7 @@ export function CanvasProvider({ children }: { children: React.ReactNode }) {
   const [canvas, setCanvas] = useState<CanvasState>({ type: null })
 
   const openCanvas = useCallback((type: CanvasType, props?: Record<string, unknown>) => {
-    setCanvas({ type, props })
+    setCanvas({ type, props: props ?? {} })
   }, [])
 
   const closeCanvas = useCallback(() => {

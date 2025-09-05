@@ -53,11 +53,13 @@ export function VoiceOverlay({
     hasPermission,
     requestPermission,
   } = useVoiceRecorder({
-    onAudioChunk: (audioData: string) => {
+    onAudioChunk: (chunk: ArrayBuffer) => {
+      // Convert ArrayBuffer to string for collection
+      const audioData = btoa(String.fromCharCode(...new Uint8Array(chunk)))
       // Collect audio chunks for real-time voice
       setCollectedAudioData(prev => [...prev, audioData])
       // Also send to WebSocket for live processing
-      onAudioChunk(audioData)
+      onAudioChunk(chunk)
     },
     onTurnComplete
   })

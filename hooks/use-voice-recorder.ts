@@ -124,7 +124,7 @@ export function useVoiceRecorder({
       const frac = srcIdx - idx;
       const sample1 = input[idx];
       const sample2 = input[idx + 1] || 0;
-      output[i] = sample1 * (1 - frac) + sample2 * frac;
+      output[i] = (sample1 ?? 0) * (1 - frac) + (sample2 ?? 0) * frac;
     }
     
     return output;
@@ -135,7 +135,7 @@ export function useVoiceRecorder({
     const view = new DataView(buffer);
     
     for (let i = 0; i < input.length; i++) {
-      const s = Math.max(-1, Math.min(1, input[i]));
+      const s = Math.max(-1, Math.min(1, input[i] ?? 0));
       view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
     }
     

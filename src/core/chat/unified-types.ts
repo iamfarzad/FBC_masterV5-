@@ -80,6 +80,7 @@ export interface UnifiedChatReturn {
   sendMessage: (content: string) => Promise<void>
   clearMessages: () => void
   updateContext: (context: Partial<UnifiedContext>) => void
+  addMessage: (message: Omit<UnifiedMessage, 'id'>) => UnifiedMessage
 }
 
 // API request/response types

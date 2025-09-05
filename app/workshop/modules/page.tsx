@@ -54,7 +54,7 @@ export default function ModulesPage() {
                 <div className="space-y-6">
                   {phaseModules && phaseModules.map((module, index) => {
                     const isCompleted = completedModules.includes(module.slug)
-                    const isAvailable = isPrevDone && (index === 0 || completedModules.includes(phaseModules[index - 1].slug))
+                    const isAvailable = isPrevDone && (index === 0 || (phaseModules[index - 1]?.slug ? completedModules.includes(phaseModules[index - 1]!.slug) : false))
                     return (
                       <motion.div key={module.slug} className={`relative pl-12 ${!isAvailable ? 'opacity-60' : ''}`}
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: isAvailable ? 1 : 0.6, y: 0 }} transition={{ duration: 0.4 }}>

@@ -173,7 +173,10 @@ export function VoiceInput({
   // Modal variant
   if (mode === 'modal') {
     return (
-      <Dialog open={true} onOpenChange={onClose}>
+      <Dialog
+        open={true}
+        onOpenChange={(open) => { if (!open) onClose?.(); }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold">Voice Input</DialogTitle>

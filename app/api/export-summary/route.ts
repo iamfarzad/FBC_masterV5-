@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
       .eq('metadata->sessionId', sessionId)
       .order('created_at', { ascending: true });
 
-    const conversationHistory = activities?.map(activity => ({
+    const conversationHistory = activities?.map((activity: any) => ({
       role: (activity.type === 'ai_request' ? 'assistant' : 'user') as 'user' | 'assistant',
       content: String(activity.description || activity.title),
       timestamp: String(activity.created_at)

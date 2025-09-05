@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     // Budget and access checks
     estimatedTokens = 3000 // Fixed value for image analysis
-    const modelSelection = selectModelForFeature('image_analysis', {})
+    const modelSelection = selectModelForFeature('image_analysis', 0)
     modelName = typeof modelSelection === 'string' ? modelSelection : modelSelection.model;
 
 
@@ -124,12 +124,15 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     // 📊 Performance Monitoring: Complete failed operation
     if (operationId) {
-      performanceMonitor.endOperation(operationId, {
+      const payload: { success: boolean; tokensUsed?: number; model?: string; errorCode?: string } = {
         success: false,
-        tokensUsed: estimatedTokens,
-        model: modelName,
-        errorCode: (error as any)?.code || 'UNKNOWN_ERROR'
-      })
+        // only include when defined
+        ...(estimatedTokens !== undefined ? { tokensUsed: estimatedTokens } : {}),
+        ...(modelName ? { model: modelName } : {}),
+        errorCode: String((error as any)?.code ?? 'UNKNOWN_ERROR'),
+      };
+
+      performanceMonitor.endOperation(operationId, payload);
     }
 
     // 🚨 Enhanced Error Handling

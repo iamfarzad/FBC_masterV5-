@@ -272,7 +272,7 @@ pnpm test:e2e
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | Health check |
-| `/api/chat` | POST | AI chat interface |
+| `/api/chat/unified` | POST | Unified AI chat interface |
 | `/api/tools/*` | POST | Business tools |
 | `/api/intelligence/*` | POST | AI intelligence features |
 | `/api/meetings` | GET/POST | Meeting management |
@@ -282,7 +282,7 @@ pnpm test:e2e
 
 ```typescript
 // Chat API
-const response = await fetch('/api/chat', {
+const response = await fetch('/api/chat/unified', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({

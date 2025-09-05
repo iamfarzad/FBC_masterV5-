@@ -66,15 +66,20 @@ export function useTools() {
       const result: ToolResult = await response.json()
 
       // Update with result
-      setExecutions(prev => prev.map(e => 
-        e.id === execution.id ? { 
-          ...e, 
-          status: result.ok ? 'completed' : 'error',
-          output: result.output,
-          error: result.error,
-          endTime: new Date()
-        } : e
-      ))
+      setExecutions(prev =>
+        prev.map(e =>
+          e.id === execution.id
+            ? {
+                ...e,
+                status: result.ok ? 'completed' : 'error',
+                // keep prior output if new output is undefined (exactOptionalPropertyTypes)
+                output: result.output ?? e.output,
+                error: result.error,
+                endTime: new Date()
+              }
+            : e
+        )
+      )
 
       return result
     } catch (error) {

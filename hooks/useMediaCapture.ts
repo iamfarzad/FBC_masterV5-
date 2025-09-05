@@ -24,8 +24,8 @@ export function useMediaCapture({
   const [mediaItem, setMediaItem] = useState<MediaItem | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const timerRef = useRef<number>();
-  const startTimeRef = useRef<number>();
+  const timerRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
   const mediaService = useRef<MediaService | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [initError, setInitError] = useState<Error | null>(null);
@@ -85,9 +85,9 @@ export function useMediaCapture({
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
-      timerRef.current = undefined;
+      timerRef.current = null;
     }
-    startTimeRef.current = undefined;
+    startTimeRef.current = null;
   }, []);
 
   // Clean up timer on unmount
@@ -228,7 +228,9 @@ export function useMediaCapture({
           console.warn('Failed to clean up media item:', err);
         }
       }
-      clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     };
   }, [mediaItem?.id, withMediaService]);
 

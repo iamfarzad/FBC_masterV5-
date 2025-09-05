@@ -4,7 +4,7 @@
  * Includes error handling, token estimation, and budget enforcement
  */
 
-import { GoogleGenerativeAI, type GenerateContentRequest, type GenerateContentResponse } from '@google/generative-ai'
+import { gemini, type GeminiModel } from '@/src/core/gemini-adapter'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { selectModelForFeature, estimateTokens } from '@/src/core/model-selector'
 import { estimateTokensForMessages } from '@/src/core/models/gemini'
@@ -35,14 +35,9 @@ export interface GeminiResponse {
 }
 
 class GeminiService {
-  private client: GoogleGenerativeAI
   private supabase: ReturnType<typeof getSupabaseServer> | null
 
   constructor() {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable is not set')
-    }
-    this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
     this.supabase = getSupabaseServer()
   }
 
@@ -94,14 +89,8 @@ class GeminiService {
       })
       
       // Generate content
-      const model = this.client.getGenerativeModel({ model: modelSelection.model })
-      const result = await model.generateContent({
-        contents: [
-          { role: 'user', parts: [{ text: prompt }] }
-        ],
-        generationConfig: config
-      })
-      const text = result.response?.text() || ''
+      const result = await gemini.generateText(prompt, modelSelection.model as GeminiModel)
+      const text = result.text ?? ''
       
       // Record usage if demo session
       if (sessionId) {
@@ -175,20 +164,8 @@ class GeminiService {
       })
       
       // Generate analysis
-      const model = this.client.getGenerativeModel({ model: modelSelection.model })
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: base64Data } }
-            ]
-          }
-        ],
-        generationConfig: config
-      })
-      const analysis = result.response?.text() || 'No analysis available'
+      const result = await gemini.analyzeImage(base64Data, prompt, mimeType, modelSelection.model as GeminiModel)
+      const analysis = result.text ?? 'No analysis available'
       
       // Record usage
       if (sessionId) {
@@ -260,20 +237,8 @@ class GeminiService {
       })
       
       // Generate analysis
-      const model = this.client.getGenerativeModel({ model: modelSelection.model })
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: analysisPrompt },
-              { inlineData: { mimeType, data: documentData } }
-            ]
-          }
-        ],
-        generationConfig: config
-      })
-      const analysis = result.response?.text() || 'No analysis available'
+      const result = await gemini.analyzeImage(documentData, analysisPrompt, mimeType, modelSelection.model as GeminiModel)
+      const analysis = result.text ?? 'No analysis available'
       
       // Record usage
       if (sessionId) {
@@ -411,14 +376,7 @@ class GeminiService {
       })
       
       // Generate streaming response
-      const model = this.client.getGenerativeModel({ model: modelSelection.model })
-      const stream = await model.generateContentStream({
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: prompt }] }
-        ],
-        generationConfig: config
-      })
+      const stream = await gemini.streamWithHistory(history, prompt, modelSelection.model as GeminiModel)
       for await (const chunk of stream.stream) {
         const text = chunk.text()
         if (text) yield text

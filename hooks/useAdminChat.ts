@@ -50,7 +50,7 @@ export function useAdminChat({
     initialMessages: initialMessages as UnifiedMessage[],
     context: {
       adminId,
-      conversationIds,
+      conversationIds: conversationIds ?? [],
       sessionId
     }
   })
@@ -61,10 +61,17 @@ export function useAdminChat({
       id: crypto.randomUUID(),
       timestamp: new Date(),
       type: message.type || 'text',
-      metadata: message.metadata
+      metadata: message.metadata || {}
     }
 
-    unifiedChat.append(newMessage)
+    // The unified hook returns addMessage/updateMessage APIs, not append()
+    unifiedChat.addMessage({
+      role: newMessage.role,
+      content: newMessage.content,
+      timestamp: newMessage.timestamp,
+      type: 'text',
+      metadata: newMessage.metadata
+    })
     return newMessage
   }, [unifiedChat])
 

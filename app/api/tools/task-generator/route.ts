@@ -9,8 +9,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not set');
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const systemPrompt = `You are a task generation assistant. Based on the user's request, create a structured task list with specific actionable items.
 
@@ -31,9 +34,12 @@ Generate a JSON response with this structure:
 
 Keep tasks specific, actionable, and include relevant file attachments when appropriate.`
 
-    const result = await model.generateContent(systemPrompt)
-    const response = await result.response
-    const text = response.text()
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: systemPrompt,
+    });
+
+    const text = response.text ?? '';
     
     // Try to parse JSON from the response
     let taskData

@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GeminiTranslator } from '../gemini-translator';
 
 export interface Language {

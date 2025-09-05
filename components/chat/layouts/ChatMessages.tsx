@@ -21,12 +21,16 @@ import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ai
 import { Actions, Action, Suggestions, Suggestion } from '@/components/ai-elements/actions'
 // Removed ActivityDisplay - using ai-elements instead
 import { Image } from '@/components/ai-elements/image'
-import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from '@/components/ai-elements/tool'
+import { Tool, ToolHeader, ToolContent, ToolOutput } from '@/components/ai-elements/tool'
 import { Task, TaskTrigger, TaskContent, TaskItem } from '@/components/ai-elements/task'
 import { WebPreview, WebPreviewNavigation, WebPreviewUrl, WebPreviewBody } from '@/components/ai-elements/web-preview'
 import { Loader } from '@/components/ai-elements/loader'
-import { Message as ChatMessage } from '@/src/core/types/chat'
-import { useTools, type ToolInput, type ToolResult } from '@/hooks/useTools-ui'
+import { useTools } from '@/hooks/useTools-ui'; // <-- fixes "Cannot find name 'useTools'"
+import { ToolInput as ToolInputUI } from '@/components/ai-elements/tool'; // <-- value component
+import type { ChatMessageUI, ToolInput, ToolResult } from '@/components/chat/types'; // <-- types only
+
+// Type alias for compatibility
+type ChatMessage = ChatMessageUI;
 
 interface ChatMessagesProps {
   messages: ChatMessage[]
@@ -96,12 +100,12 @@ export function ChatMessages({
             // Messages using proper ai-elements
                          <AnimatePresence mode="popLayout">
                {messages.map((message, index) => (
-                 <MessageComponent 
+                 <MessageComponent
                    key={message.id}
                    message={message}
                    isLast={index === messages.length - 1}
                    isLoading={isLoading}
-                   sessionId={sessionId}
+                   sessionId={sessionId ?? null}
                    onExecuteTool={executeTool}
                  />
                ))}
@@ -176,7 +180,7 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
         parts.push({ type: 'text', value: content.slice(lastIndex, match.index) })
       }
       const dir = match[1] === 'ACTIVITY_IN' ? 'in' : 'out'
-      parts.push({ type: 'activity', value: match[2].trim(), dir })
+      parts.push({ type: 'activity', value: match[2]?.trim() ?? '', dir })
       lastIndex = regex.lastIndex
     }
     if (lastIndex < content.length) {
@@ -196,7 +200,10 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
       {/* Message Content using ai-elements */}
       <MessageContent>
         {/* Reasoning (for assistant messages) */}
-        {message.role === 'assistant' && message.businessContent?.type === 'business_analysis' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return message.role === 'assistant' && bcType === 'business_analysis' && (
           <Reasoning defaultOpen={false} isStreaming={isLast && isLoading}>
             <ReasoningTrigger>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -204,7 +211,8 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
                 <p>AI Analysis Process</p>
               </div>
             </ReasoningTrigger>
-            <ReasoningContent>
+            {/* @ts-ignore - ReasoningContent expects string children but we need JSX */}
+            <ReasoningContent key="business-analysis">
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="size-1 rounded-full bg-success" />
@@ -228,7 +236,8 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               </div>
             </ReasoningContent>
           </Reasoning>
-        )}
+        );
+        })()}
 
         {/* Main content with activity chips */}
         <div className="prose prose-sm max-w-none break-words leading-relaxed dark:prose-invert">
@@ -252,7 +261,10 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
         </div>
 
         {/* Tool Results using ai-elements */}
-        {message.businessContent?.type === 'roi_calculator' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return bcType === 'roi_calculator' && (
           <div className="mt-3">
             <Tool>
               <ToolHeader 
@@ -260,7 +272,7 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
                 state="output-available"
               />
               <ToolContent>
-                <ToolInput 
+                <ToolInputUI 
                   input={{
                     initialInvestment: 10000,
                     monthlyRevenue: 5000,
@@ -290,7 +302,8 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               </ToolContent>
             </Tool>
           </div>
-        )}
+        );
+        })()}
 
         {/* Image using ai-elements */}
         {message.imageUrl && (
@@ -307,7 +320,10 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
         )}
         
         {/* Demo: Show generated image for business analysis */}
-        {message.role === 'assistant' && message.businessContent?.type === 'business_analysis' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return message.role === 'assistant' && bcType === 'business_analysis' && (
           <div className="mt-3">
             <Image 
               src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=450&fit=crop"
@@ -318,12 +334,13 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               AI-generated business visualization • Productivity metrics dashboard
             </div>
           </div>
-        )}
+        );
+        })()}
 
         {/* WebPreview for URLs */}
         {message.videoToAppCard && (
           <div className="mt-3">
-            <WebPreview defaultUrl={message.videoToAppCard.videoUrl}>
+            <WebPreview defaultUrl={message.videoToAppCard.videoUrl ?? ''}>
               <WebPreviewNavigation>
                 <WebPreviewUrl />
                 <div className="ml-auto flex items-center gap-2">
@@ -380,7 +397,7 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
           <Sources>
             <SourcesTrigger count={message.sources.length} />
             <SourcesContent>
-              {message.sources.map((source, i) => (
+              {message.sources!.map((source: { url: string; title?: string }, i: number) => (
                 <Source 
                   key={`${message.id}-src-${i}`} 
                   href={source.url} 
@@ -400,7 +417,10 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
         )}
         
         {/* Demo: Show sources for business analysis */}
-        {message.role === 'assistant' && message.businessContent?.type === 'business_analysis' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return message.role === 'assistant' && bcType === 'business_analysis' && (
           <Sources>
             <SourcesTrigger count={3} />
             <SourcesContent>
@@ -442,7 +462,8 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               />
             </SourcesContent>
           </Sources>
-        )}
+        );
+        })()}
 
         {/* Translation */}
         {translation && (
@@ -461,7 +482,10 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
         )}
 
         {/* Task Management using ai-elements */}
-        {message.businessContent?.type === 'consultation_planner' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return bcType === 'consultation_planner' && (
           <div className="mt-3">
             <Task>
               <TaskTrigger title="Consultation Plan" />
@@ -474,10 +498,14 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               </TaskContent>
             </Task>
           </div>
-        )}
+        );
+        })()}
 
         {/* Suggestions using ai-elements */}
-        {message.role === 'assistant' && message.businessContent?.type === 'proposal_generator' && (
+        {(() => {
+          const bc = message.businessContent;
+          const bcType = typeof bc === 'string' ? 'text' : bc?.type ?? 'text';
+          return message.role === 'assistant' && bcType === 'proposal_generator' && (
           <Suggestions>
             <Suggestion 
               suggestion="Calculate ROI for this proposal" 
@@ -510,7 +538,8 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
               }} 
             />
           </Suggestions>
-        )}
+        );
+        })()}
 
         {/* Message Actions using ai-elements */}
         <Actions className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">

@@ -131,23 +131,22 @@ export function verifyWebhookSignature(secret: string) {
 
 // Helper function to parse size limits
 function parseSizeLimit(limit: string): number {
-  const units: { [key: string]: number } = {
-    'b': 1,
-    'kb': 1024,
-    'mb': 1024 * 1024,
-    'gb': 1024 * 1024 * 1024
-  }
-  
+  const units = { k: 1024, m: 1024 ** 2, g: 1024 ** 3, t: 1024 ** 4 } as const;
+
   const match = limit.toLowerCase().match(/^(\d+)([kmg]?b)$/)
   if (!match) {
     throw new Error(`Invalid size limit format: ${limit}`)
   }
-  
+
   const [, size, unit] = match
+  if (!size) return 0; // guard against undefined
+
   if (unit && unit in units) {
-    return parseInt(size, 10) * (units[unit] || 1)
+    const unitKey = unit.replace('b', '') as keyof typeof units;
+    const multiplier = units[unitKey] ?? 1;
+    return Number.parseInt(size, 10) * multiplier;
   }
-  return parseInt(size, 10)
+  return Number.parseInt(size, 10);
 }
 
 // Combined security middleware

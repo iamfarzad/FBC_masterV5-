@@ -102,17 +102,21 @@ function AnimatedGridPattern({
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
       <svg x={x} y={y} className="overflow-visible">
-        {squares.map(({ pos: [sx, sy], id: sqId }) => (
-          <motion.rect
-            key={`${sx}-${sy}-${sqId}`}
-            width={width - 1}
-            height={height - 1}
-            x={sx * width + 1}
-            y={sy * height + 1}
-            fill="currentColor"
-            strokeWidth="0"
-          />)
-        )}
+        {squares.map(({ pos: [sx, sy], id: sqId }) => {
+          const xVal = (sx ?? 0) * width + 1;
+          const yVal = (sy ?? 0) * height + 1;
+          return (
+            <motion.rect
+              key={`${sx}-${sy}-${sqId}`}
+              width={width - 1}
+              height={height - 1}
+              x={xVal}
+              y={yVal}
+              fill="currentColor"
+              strokeWidth="0"
+            />
+          );
+        })}
       </svg>
     </svg>
   )

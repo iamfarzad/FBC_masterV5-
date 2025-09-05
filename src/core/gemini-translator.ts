@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { gemini, type GeminiModel } from '@/src/core/gemini-adapter';
 
 export interface TranslationOptions {
   context?: string;
@@ -11,7 +11,6 @@ export interface TranslationOptions {
  * COST: $0 additional (reuses existing Gemini API costs)
  */
 export class GeminiTranslator {
-  private genAI: GoogleGenerativeAI | null = null;
   private cache = new Map<string, { translation: string; timestamp: number }>();
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
   private isAvailable: boolean = false;
@@ -26,7 +25,6 @@ export class GeminiTranslator {
     }
 
     try {
-      this.genAI = new GoogleGenerativeAI(key);
       this.isAvailable = true;
       console.log('GeminiTranslator: Initialized successfully');
     } catch (error) {
@@ -94,7 +92,7 @@ export class GeminiTranslator {
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      // Use the new Gemini adapter
 
       const {
         context = 'AI consulting and business development',
@@ -128,8 +126,8 @@ ${text}
 
 TRANSLATED TEXT:`;
 
-      const result = await model.generateContent(prompt);
-      const translation = result.response.text().trim();
+      const result = await gemini.generateText(prompt, 'gemini-2.5-flash');
+      const translation = (result.text ?? '').trim();
 
       // Cache the result
       this.setCachedTranslation(text, targetLang, translation, options);

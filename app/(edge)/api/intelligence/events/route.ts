@@ -6,7 +6,7 @@ const EventTypes = ['session_start', 'tool_used', 'intent_detected', 'suggestion
 const EventSchema = z.object({
   sessionId: z.string().optional(),
   eventType: z.enum(EventTypes),
-  eventData: z.record(z.any()).optional(),
+  eventData: z.record(z.string(), z.any()).optional(),
   timestamp: z.number().optional(),
   userId: z.string().optional()
 })

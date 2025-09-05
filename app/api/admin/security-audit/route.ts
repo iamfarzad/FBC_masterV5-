@@ -43,37 +43,37 @@ export async function GET(request: NextRequest) {
     const securityChecks = [
       {
         check: 'RLS enabled on conversations',
-        status: rlsEnabled?.find(t => t.tablename === 'conversations')?.rowsecurity ? '✅ PASS' : '❌ FAIL',
+        status: rlsEnabled?.find((t: any) => t.tablename === 'conversations')?.rowsecurity ? '✅ PASS' : '❌ FAIL',
         description: 'Row Level Security must be enabled'
       },
       {
         check: 'RLS enabled on failed_emails',
-        status: rlsEnabled?.find(t => t.tablename === 'failed_emails')?.rowsecurity ? '✅ PASS' : '❌ FAIL',
+        status: rlsEnabled?.find((t: any) => t.tablename === 'failed_emails')?.rowsecurity ? '✅ PASS' : '❌ FAIL',
         description: 'Row Level Security must be enabled'
       },
       {
         check: 'Service role has SELECT on conversations',
-        status: tablePermissions?.some(p => p.table_name === 'conversations' && p.grantee === 'service_role' && p.privilege_type === 'SELECT') ? '✅ PASS' : '❌ FAIL',
+        status: tablePermissions?.some((p: any) => p.table_name === 'conversations' && p.grantee === 'service_role' && p.privilege_type === 'SELECT') ? '✅ PASS' : '❌ FAIL',
         description: 'Service role needs SELECT permission'
       },
       {
         check: 'Service role has SELECT on failed_emails',
-        status: tablePermissions?.some(p => p.table_name === 'failed_emails' && p.grantee === 'service_role' && p.privilege_type === 'SELECT') ? '✅ PASS' : '❌ FAIL',
+        status: tablePermissions?.some((p: any) => p.table_name === 'failed_emails' && p.grantee === 'service_role' && p.privilege_type === 'SELECT') ? '✅ PASS' : '❌ FAIL',
         description: 'Service role needs SELECT permission'
       },
       {
         check: 'Public blocked from conversations',
-        status: !tablePermissions?.some(p => p.table_name === 'conversations' && p.grantee === 'public') ? '✅ PASS' : '❌ FAIL',
+        status: !tablePermissions?.some((p: any) => p.table_name === 'conversations' && p.grantee === 'public') ? '✅ PASS' : '❌ FAIL',
         description: 'Public should not have access'
       },
       {
         check: 'Public blocked from failed_emails',
-        status: !tablePermissions?.some(p => p.table_name === 'failed_emails' && p.grantee === 'public') ? '✅ PASS' : '❌ FAIL',
+        status: !tablePermissions?.some((p: any) => p.table_name === 'failed_emails' && p.grantee === 'public') ? '✅ PASS' : '❌ FAIL',
         description: 'Public should not have access'
       },
       {
         check: 'Failed conversations view exists',
-        status: tablePermissions?.some(p => p.table_name === 'failed_conversations') ? '✅ PASS' : '❌ FAIL',
+        status: tablePermissions?.some((p: any) => p.table_name === 'failed_conversations') ? '✅ PASS' : '❌ FAIL',
         description: 'View should be accessible to service role'
       },
       {

@@ -10,13 +10,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { TooltipProvider } from '@/components/ui/tooltip'
 // Removed ActivityDisplay - using ai-elements and StageRail instead
-import type { UnifiedMessage, StructuredChatMessage } from '@/src/core/types/chat'
+import type { UnifiedMessage } from '@/src/core/chat/unified-types'
+import type { StructuredChatMessage } from '@/src/core/chat'
 import { StatusBar } from './StatusBar'
 import { ChatHeader } from './ChatHeader'
 // Temporary fallback imports - using simple components instead of complex ones
 // import { Conversation, ConversationContent, ConversationScrollButton } from '@/components/ai-elements/conversation'
 // import { PromptInputTextarea } from '@/components/ai-elements/prompt-input'
-// import { MessageComponent } from '@/components/chat/layouts/ChatMessages/MessageComponent'
+import { MessageComponent } from '@/components/chat/layouts/ChatMessages/MessageComponent'
 // import { ROICalculator } from '@/components/chat/tools/ROICalculator'
 
 
@@ -419,8 +420,9 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
         id: `msg-${Date.now()}-tool`,
         role: 'assistant',
         content: payload.content,
-        type: payload.type === 'analysis' ? 'analysis' : 'tool',
-        metadata: { timestamp: new Date(), sources: payload.sources as any }
+        type: payload.type === 'analysis' ? 'text' : 'tool',
+        timestamp: new Date(),
+        metadata: { sources: payload.sources as any }
       }
       if (typeof onAssistantInject === 'function') onAssistantInject(msg)
       else setLocalMessages(prev => [...prev, msg])

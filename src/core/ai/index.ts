@@ -320,32 +320,33 @@ function createGeminiProvider(): TextProvider {
 
         // Execute with retry logic
         const result = await errorRecoveryManager.executeWithRetry(async () => {
-          const { GoogleGenerativeAI } = await import('@google/generative-ai')
+          const { gemini } = await import('@/src/core/gemini-adapter')
 
           if (!process.env.GEMINI_API_KEY) {
             throw new Error('GEMINI_API_KEY environment variable is not set')
           }
 
-          const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-          const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
-            systemInstruction: getSystemPrompt(messages)
-          })
+          // Note: System instructions not yet supported in adapter, using basic text generation
+          const systemPrompt = getSystemPrompt(messages)
+          const fullPrompt = `${systemPrompt}\n\n${messages[messages.length - 1]?.content || ''}`
 
-          // Build conversation history
-          const conversationHistory = messages.map(msg => ({
+          // Build conversation history for adapter
+          const conversationHistory = messages.slice(0, -1).map(msg => ({
             role: msg.role === 'user' ? 'user' : 'model',
             parts: [{ text: msg.content }]
           }))
 
-          const chat = model.startChat({
-            history: conversationHistory.slice(0, -1) // Exclude the last message as we'll send it separately
-          })
-
-          // Send the last message
+          // Send the last message with conversation history
           const lastMessage = messages[messages.length - 1]?.content || 'Hello'
-          const result = await chat.sendMessage(lastMessage)
-          return result.response.text()
+          const result = await gemini.streamWithHistory(conversationHistory, lastMessage, 'gemini-2.5-flash')
+
+          // Collect the streaming response
+          let fullResponse = ''
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) fullResponse += text
+          }
+          return fullResponse
         }, 'gemini-api-call')
 
         // Cache successful response

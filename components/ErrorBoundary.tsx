@@ -9,29 +9,18 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { cn } from '@/src/core/utils'
 
-interface Props {
-  children: ReactNode
-  fallback?: ReactNode
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
-}
-
-interface State {
-  hasError: boolean
-  error?: Error
-  errorInfo?: ErrorInfo
-  retryCount: number
-}
+type Props = { children: ReactNode; fallback?: ReactNode; onReset?: () => void };
+type State = {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+  retryCount: number;
+};
 
 export class ErrorBoundary extends Component<Props, State> {
   private maxRetries = 3
 
-  constructor(props: Props) {
-    super(props)
-    this.state = {
-      hasError: false,
-      retryCount: 0
-    }
-  }
+  override state: State = { hasError: false, error: null, errorInfo: null, retryCount: 0 };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI
@@ -41,43 +30,26 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error for debugging
-    console.error('🚨 Error Boundary caught an error:', error, errorInfo)
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.setState({ hasError: true, error, errorInfo });
+  }
 
-    // Call optional error handler
-    this.props.onError?.(error, errorInfo)
-
-    // In production, you might want to send this to an error reporting service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: Send to error reporting service
-      // reportError(error, errorInfo)
-    }
-
+  reset = () => {
+    const newRetryCount = this.state.retryCount + 1;
     this.setState({
-      error,
-      errorInfo
-    })
-  }
-
-  handleRetry = () => {
-    const newRetryCount = this.state.retryCount + 1
-
-    if (newRetryCount <= this.maxRetries) {
-      this.setState({
-        hasError: false,
-        error: undefined,
-        errorInfo: undefined,
-        retryCount: newRetryCount
-      })
-    }
-  }
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      retryCount: newRetryCount
+    });
+    this.props.onReset?.();
+  };
 
   handleGoHome = () => {
     window.location.href = '/'
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {
@@ -109,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {/* Show retry button if under max retries */}
             {this.state.retryCount < this.maxRetries && (
               <Button
-                onClick={this.handleRetry}
+                onClick={this.reset}
                 className="bg-blue-600 text-white hover:bg-blue-700"
                 size="lg"
               >

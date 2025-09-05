@@ -236,9 +236,9 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
       // Create combined buffer
       const totalLength = buffers.reduce((sum, buffer) => sum + buffer.length, 0)
       const combinedBuffer = audioContextRef.current!.createBuffer(
-        buffers[0].numberOfChannels,
+        (buffers[0]?.numberOfChannels ?? 1),
         totalLength,
-        buffers[0].sampleRate
+        (buffers[0]?.sampleRate ?? 44100)
       )
 
       let offset = 0

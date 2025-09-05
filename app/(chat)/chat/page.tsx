@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor, FileText, GraduationCap, Sun, Moon, Sparkles, Plus, Paperclip } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useChat } from "@/hooks/useChat-ui"
+import { useUnifiedChat } from "@/hooks/useUnifiedChat"
 import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence"
 import { generateSecureSessionId } from "@/src/core/security/session"
 import { useCanvas } from "@/components/providers/canvas-provider"
@@ -23,6 +23,7 @@ import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 import { Response } from "@/components/ai-elements/response"
 import { InlineROICalculator } from "@/components/chat/tools/InlineROICalculator"
 import { useMeeting } from "@/components/providers/meeting-provider"
+import { omitUndefined } from '@/src/core/utils/optional'
 
 // 🎯 AI RESPONSE PROCESSOR - Convert button HTML to React buttons
 function renderAIResponse(content: string) {
@@ -241,21 +242,28 @@ export default function ChatPage() {
     }
   }, [context])
 
-  // Chat Hook - Using existing useChat hook
+  // Chat Hook - Using unified chat hook
+  const unifiedContext = (() => {
+    const ctx: any = {};
+    if (leadContextData) ctx.leadContext = leadContextData;
+    if (context ?? undefined) ctx.intelligenceContext = context ?? undefined; // convert null→undefined by not setting it
+    return Object.keys(ctx).length ? ctx : undefined;
+  })();
+
+  const chat = useUnifiedChat({
+    sessionId: sessionId || 'anonymous',
+    mode: 'standard',
+    ...(unifiedContext ? { context: unifiedContext } : {})
+  });
+
   const {
     messages: chatMessages,
     isLoading,
     // error, // Removed as unused
-    send: sendMessage,
-    clear: clearMessages,
+    sendMessage,
+    clearMessages,
     addMessage
-  } = useChat({
-    context: {
-      sessionId: sessionId || null,
-      leadContext: leadContextData,
-      intelligenceContext: context
-    }
-  })
+  } = chat
 
   // Canvas Provider
   const { openCanvas } = useCanvas()
@@ -599,7 +607,8 @@ export default function ChatPage() {
                               // Add result message to chat
                               addMessage({
                                 role: 'assistant',
-                                content: `ROI Analysis Complete: ${result.roi}% return, ${result.paybackPeriod || 'N/A'} month payback, $${result.netProfit?.toLocaleString()} net profit.`
+                                content: `ROI Analysis Complete: ${result.roi}% return, ${result.paybackPeriod || 'N/A'} month payback, $${result.netProfit?.toLocaleString()} net profit.`,
+                                timestamp: new Date()
                               })
                             }}
                           />
@@ -804,7 +813,8 @@ export default function ChatPage() {
                                       if (result.analysis) {
                                         addMessage({
                                           role: 'assistant',
-                                          content: `**📄 File Analysis: ${files[0].name}**\n\n${result.analysis}`
+                                          content: `**📄 File Analysis: ${files[0].name}**\n\n${result.analysis}`,
+                                          timestamp: new Date()
                                         })
                                       }
                                     }
@@ -847,7 +857,8 @@ export default function ChatPage() {
                                     if (result.output?.analysis) {
                                       addMessage({
                                         role: 'assistant',
-                                        content: `**🌐 URL Analysis: ${url}**\n\n${result.output.analysis}`
+                                        content: `**🌐 URL Analysis: ${url}**\n\n${result.output.analysis}`,
+                                        timestamp: new Date()
                                       })
                                     }
                                   }

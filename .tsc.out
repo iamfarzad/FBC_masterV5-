@@ -1,0 +1,426 @@
+components/chat/layouts/ChatLayout.tsx(46,22): error TS2322: Type '({ error, resetError }: { error: unknown; resetError: () => void; }) => React.JSX.Element' is not assignable to type 'ReactNode'.
+components/chat/layouts/ChatLayout.tsx(50,70): error TS18046: 'error' is of type 'unknown'.
+components/chat/layouts/ChatMessages.tsx(24,41): error TS2300: Duplicate identifier 'ToolInput'.
+components/chat/layouts/ChatMessages.tsx(28,10): error TS2305: Module '"@/src/core/types/chat"' has no exported member 'Message'.
+components/chat/layouts/ChatMessages.tsx(29,25): error TS2300: Duplicate identifier 'ToolInput'.
+components/chat/layouts/ChatMessages.tsx(46,41): error TS2749: 'ToolInput' refers to a value, but is being used as a type here. Did you mean 'typeof ToolInput'?
+components/chat/layouts/ChatMessages.tsx(99,19): error TS2375: Type '{ key: any; message: ChatMessage; isLast: boolean; isLoading: boolean; sessionId: string | null | undefined; onExecuteTool: (type: string, input: ToolInput, sessionId?: string | undefined) => Promise<...>; }' is not assignable to type 'MessageComponentProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'sessionId' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+components/chat/layouts/ChatMessages.tsx(179,45): error TS2532: Object is possibly 'undefined'.
+components/chat/layouts/ChatMessages.tsx(207,14): error TS2745: This JSX tag's 'children' prop expects type '(ReactI18NextChildren | Iterable<ReactI18NextChildren>) & string' which requires multiple children, but only a single child was provided.
+components/chat/layouts/ChatMessages.tsx(383,37): error TS7006: Parameter 'source' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages.tsx(383,45): error TS7006: Parameter 'i' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(19,10): error TS2305: Module '"@/src/core/types/chat"' has no exported member 'Message'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(54,11): error TS18046: 'result' is of type 'unknown'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(54,24): error TS18046: 'result' is of type 'unknown'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(55,24): error TS18046: 'result' is of type 'unknown'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(76,45): error TS2532: Object is possibly 'undefined'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(97,12): error TS2375: Type '{ children: Element[]; defaultOpen: false; isStreaming: boolean | undefined; }' is not assignable to type '{ isStreaming?: boolean; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; duration?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'isStreaming' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(104,14): error TS2745: This JSX tag's 'children' prop expects type '(ReactI18NextChildren | Iterable<ReactI18NextChildren>) & string' which requires multiple children, but only a single child was provided.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(156,17): error TS2322: Type '"roi_calculator"' is not assignable to type '`tool-${string}`'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(168,18): error TS2741: Property 'errorText' is missing in type '{ output: Element; }' but required in type '{ output: ReactNode; errorText: string | undefined; }'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(279,37): error TS7006: Parameter 'source' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(279,45): error TS7006: Parameter 'i' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(377,12): error TS2304: Cannot find name 'Suggestions'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(378,14): error TS2304: Cannot find name 'Suggestion'.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(380,31): error TS7006: Parameter 'suggestion' implicitly has an 'any' type.
+components/chat/layouts/ChatMessages/MessageComponent.tsx(391,13): error TS2304: Cannot find name 'Suggestions'.
+components/chat/tools/ROICalculator/ROICalculator.tsx(12,28): error TS2305: Module '"@/src/core/types/chat"' has no exported member 'ROIResultPayload'.
+components/chat/tools/ROICalculator/ROICalculator.tsx(55,57): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+components/chat/unified/UnifiedChatInterface.tsx(13,15): error TS2305: Module '"@/src/core/types/chat"' has no exported member 'UnifiedMessage'.
+components/chat/unified/UnifiedChatInterface.tsx(13,31): error TS2305: Module '"@/src/core/types/chat"' has no exported member 'StructuredChatMessage'.
+components/chat/unified/UnifiedChatInterface.tsx(362,16): error TS2304: Cannot find name 'MessageComponent'.
+components/chat/VoiceInput/VoiceInput.tsx(176,8): error TS2375: Type '{ children: Element; open: true; onOpenChange: (() => void) | undefined; }' is not assignable to type 'DialogProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'onOpenChange' are incompatible.
+    Type '(() => void) | undefined' is not assignable to type '(open: boolean) => void'.
+      Type 'undefined' is not assignable to type '(open: boolean) => void'.
+components/chat/VoiceOverlay.tsx(56,5): error TS2322: Type '(audioData: string) => void' is not assignable to type '(chunk: ArrayBuffer) => void'.
+  Types of parameters 'audioData' and 'chunk' are incompatible.
+    Type 'ArrayBuffer' is not assignable to type 'string'.
+components/chat/VoiceOverlay.tsx(60,20): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ArrayBuffer'.
+components/ErrorBoundary.tsx(44,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+components/ErrorBoundary.tsx(67,21): error TS2345: Argument of type '{ hasError: false; error: undefined; errorInfo: undefined; retryCount: number; }' is not assignable to parameter of type 'State | ((prevState: Readonly<State>, props: Readonly<Props>) => State | Pick<State, "error" | "hasError" | "errorInfo" | "retryCount"> | null) | Pick<...> | null'.
+  Type '{ hasError: false; error: undefined; errorInfo: undefined; retryCount: number; }' is not assignable to type 'Pick<State, "error" | "hasError" | "errorInfo" | "retryCount">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'error' are incompatible.
+      Type 'undefined' is not assignable to type 'Error'.
+components/ErrorBoundary.tsx(80,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+components/intelligence/CapabilityAware.tsx(111,5): error TS2532: Object is possibly 'undefined'.
+components/workshop/modules/attention-mechanism-demo.tsx(29,37): error TS18047: 'activeExample' is possibly 'null'.
+components/workshop/modules/attention-mechanism-demo.tsx(63,47): error TS18048: 'attentionScore' is possibly 'undefined'.
+components/workshop/modules/attention-mechanism-demo.tsx(77,51): error TS18047: 'activeExample' is possibly 'null'.
+contexts/stage-context.tsx(140,5): error TS2322: Type 'StageItem | null | undefined' is not assignable to type 'StageItem | null'.
+  Type 'undefined' is not assignable to type 'StageItem | null'.
+hooks/chat/useChat.ts(108,36): error TS2379: Argument of type '{ role: "user"; content: string; imageUrl: string | undefined; }' is not assignable to parameter of type 'Omit<Message, "timestamp" | "id">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'imageUrl' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+hooks/use-websocket-voice.ts(613,39): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+hooks/useAdminChat.ts(51,5): error TS2375: Type '{ adminId: string | undefined; conversationIds: string[] | undefined; sessionId: string; }' is not assignable to type 'UnifiedContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'conversationIds' are incompatible.
+    Type 'string[] | undefined' is not assignable to type 'string[]'.
+      Type 'undefined' is not assignable to type 'string[]'.
+hooks/useAdminChat.ts(59,11): error TS2375: Type '{ id: string; timestamp: Date; type: "text" | "tool" | "multimodal"; metadata: Record<string, unknown> | undefined; content: string; role: "user" | "assistant" | "system"; }' is not assignable to type 'AdminMessage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'metadata' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+hooks/useAdminChat.ts(67,17): error TS2339: Property 'append' does not exist on type 'UnifiedChatReturn'.
+hooks/useAudioPlayer.ts(239,9): error TS2532: Object is possibly 'undefined'.
+hooks/useAudioPlayer.ts(241,9): error TS2532: Object is possibly 'undefined'.
+hooks/useChat-ui.ts(31,7): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'ChatMessage'.
+hooks/useChat-ui.ts(39,27): error TS2339: Property 'id' does not exist on type 'ChatMessage'.
+hooks/useChat-ui.ts(111,24): error TS2532: Object is possibly 'undefined'.
+hooks/useChat-ui.ts(123,50): error TS2339: Property 'id' does not exist on type 'ChatMessage'.
+hooks/useChat-ui.ts(166,52): error TS2339: Property 'id' does not exist on type 'ChatMessage'.
+hooks/useChat-ui.ts(166,59): error TS18047: 'assistantMessage' is possibly 'null'.
+hooks/useChat-ui.ts(166,76): error TS2339: Property 'id' does not exist on type 'ChatMessage'.
+hooks/useConversationalIntelligence.ts(221,32): error TS2339: Property 'email' does not exist on type '{ name: string; size: string; domain: string; summary: string; website: string; industry: string; linkedin: string; }'.
+hooks/useConversationalIntelligence.ts(222,34): error TS2339: Property 'company' does not exist on type '{ name: string; size: string; domain: string; summary: string; website: string; industry: string; linkedin: string; }'.
+hooks/useConversationalIntelligence.ts(223,31): error TS2339: Property 'role' does not exist on type '{ name: string; size: string; domain: string; summary: string; website: string; industry: string; linkedin: string; }'.
+hooks/useMediaCapture.ts(88,7): error TS2322: Type 'undefined' is not assignable to type 'number | null'.
+hooks/useMediaCapture.ts(90,5): error TS2322: Type 'undefined' is not assignable to type 'number | null'.
+hooks/useMediaCapture.ts(231,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(timeout: string | number | Timeout | undefined): void', gave the following error.
+    Argument of type 'number | null' is not assignable to parameter of type 'string | number | Timeout | undefined'.
+      Type 'null' is not assignable to type 'string | number | Timeout | undefined'.
+  Overload 2 of 2, '(id: number | undefined): void', gave the following error.
+    Argument of type 'number | null' is not assignable to parameter of type 'number | undefined'.
+      Type 'null' is not assignable to type 'number | undefined'.
+hooks/useTools-ui.ts(69,21): error TS2345: Argument of type '(prev: ToolExecution[]) => (ToolExecution | { status: "error" | "completed"; output: ToolOutput | undefined; error: string | undefined; ... 4 more ...; startTime: Date; })[]' is not assignable to parameter of type 'SetStateAction<ToolExecution[]>'.
+  Type '(prev: ToolExecution[]) => (ToolExecution | { status: "error" | "completed"; output: ToolOutput | undefined; error: string | undefined; ... 4 more ...; startTime: Date; })[]' is not assignable to type '(prevState: ToolExecution[]) => ToolExecution[]'.
+    Type '(ToolExecution | { status: "error" | "completed"; output: ToolOutput | undefined; error: string | undefined; endTime: Date; id: string; type: string; input: ToolInput; startTime: Date; })[]' is not assignable to type 'ToolExecution[]'.
+      Type 'ToolExecution | { status: "error" | "completed"; output: ToolOutput | undefined; error: string | undefined; endTime: Date; id: string; type: string; input: ToolInput; startTime: Date; }' is not assignable to type 'ToolExecution' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Type '{ status: "error" | "completed"; output: ToolOutput | undefined; error: string | undefined; endTime: Date; id: string; type: string; input: ToolInput; startTime: Date; }' is not assignable to type 'ToolExecution' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+          Types of property 'output' are incompatible.
+            Type 'ToolOutput | undefined' is not assignable to type 'ToolOutput'.
+              Type 'undefined' is not assignable to type 'ToolOutput'.
+hooks/useUnifiedChat.ts(39,11): error TS2375: Type '{ id: string; timestamp: Date; type: "text" | "tool" | "multimodal"; metadata: Record<string, unknown> | undefined; content: string; role: "user" | "assistant" | "system"; }' is not assignable to type 'UnifiedMessage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'metadata' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+hooks/useUnifiedChat.ts(80,13): error TS2375: Type '{ messages: UnifiedMessage[]; context: UnifiedContext | undefined; mode: ChatMode; stream: true; }' is not assignable to type 'UnifiedChatRequest' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'context' are incompatible.
+    Type 'UnifiedContext | undefined' is not assignable to type 'UnifiedContext'.
+      Type 'undefined' is not assignable to type 'UnifiedContext'.
+hooks/useUnifiedChat.ts(118,43): error TS2379: Argument of type '{ role: "assistant"; content: string; timestamp: Date; type: "text" | "tool" | "multimodal"; metadata: Record<string, unknown> | undefined; }' is not assignable to parameter of type 'Omit<UnifiedMessage, "id">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'metadata' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+hooks/useUnifiedChat.ts(127,48): error TS2379: Argument of type '{ content: string; metadata: Record<string, unknown> | undefined; }' is not assignable to parameter of type 'Partial<UnifiedMessage>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'metadata' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+hooks/useUnifiedChat.ts(149,62): error TS2379: Argument of type '{ sessionId: string | undefined; mode: ChatMode | undefined; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'sessionId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+hooks/useUnifiedChat.ts(155,16): error TS2345: Argument of type 'ChatError' is not assignable to parameter of type 'SetStateAction<Error | null>'.
+  Property 'name' is missing in type 'ChatError' but required in type 'Error'.
+hooks/useUnifiedChat.ts(171,27): error TS2345: Argument of type 'ChatError' is not assignable to parameter of type 'Error'.
+  Property 'name' is missing in type 'ChatError' but required in type 'Error'.
+hooks/useUnifiedChat.ts(205,5): error TS2561: Object literal may only specify known properties, but 'addMessage' does not exist in type 'UnifiedChatReturn'. Did you mean to write 'messages'?
+playwright.config.ts(6,29): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '{ testDir: string; fullyParallel: true; forbidOnly: boolean; retries: number; workers: number | undefined; reporter: "github" | (["html"] | ["list"])[]; use: { baseURL: string; acceptDownloads: true; trace: "retain-on-failure"; screenshot: "only-on-failure"; video: "retain-on-failure"; }; projects: { ...; }[]; webSe...' is not assignable to parameter of type 'PlaywrightTestConfig<unknown, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'workers' are incompatible.
+        Type 'number | undefined' is not assignable to type 'string | number'.
+          Type 'undefined' is not assignable to type 'string | number'.
+src/api/intelligence/handler.ts(1,10): error TS2305: Module '"@/src/core/intelligence"' has no exported member 'intelligenceService'.
+src/api/intelligence/handler.ts(13,25): error TS2304: Cannot find name 'sessionInitSchema'.
+src/api/intelligence/handler.ts(19,73): error TS2304: Cannot find name 'ContextSnapshot'.
+src/api/intelligence/handler.ts(33,49): error TS2307: Cannot find module '@/src/core/context/context-storage' or its corresponding type declarations.
+src/api/intelligence/handler.ts(45,47): error TS2307: Cannot find module '@/src/core/embeddings/gemini' or its corresponding type declarations.
+src/api/intelligence/handler.ts(46,53): error TS2307: Cannot find module '@/src/core/embeddings/query' or its corresponding type declarations.
+src/core/admin-context-builder.ts(141,31): error TS2339: Property 'total' does not exist on type '{ recentLeads: any; leadStats: { total: any; new: any; engaged: any; converted: any; averageScore: number; }; topLeads: any; leadTrends: never[]; }'.
+src/core/admin-context-builder.ts(142,38): error TS2339: Property 'scheduled' does not exist on type '{ upcomingMeetings: any; completedMeetings: any; meetingStats: { total: any; scheduled: any; completed: any; cancelled: any; }; calendarAvailability: never[]; }'.
+src/core/admin-context-builder.ts(144,31): error TS2339: Property 'totalCost' does not exist on type '{ tokenUsage: { total: any; byModel: Record<string, number>; byFeature: Record<string, number>; costBreakdown: any; }; costStats: { totalCost: any; monthlyCost: any; averageCostPerRequest: number; budgetStatus: string; }; providerCosts: { ...; }; }'.
+src/core/admin-context-builder.ts(150,7): error TS2322: Type '{ tokenUsage: { total: any; byModel: Record<string, number>; byFeature: Record<string, number>; costBreakdown: any; }; costStats: { totalCost: any; monthlyCost: any; averageCostPerRequest: number; budgetStatus: string; }; providerCosts: { ...; }; }' is not assignable to type '{ tokenUsage: { total: number; byModel: Record<string, number>; byFeature: Record<string, number>; costBreakdown: unknown[]; }; costStats: { totalCost: number; monthlyCost: number; averageCostPerRequest: number; budgetStatus: "at" | ... 1 more ... | "over"; }; providerCosts: Record<...>; }'.
+  The types of 'costStats.budgetStatus' are incompatible between these types.
+    Type 'string' is not assignable to type '"at" | "under" | "over"'.
+src/core/admin-context-builder.ts(170,40): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(179,50): error TS18046: 'l' is of type 'unknown'.
+src/core/admin-context-builder.ts(180,54): error TS18046: 'l' is of type 'unknown'.
+src/core/admin-context-builder.ts(181,56): error TS18046: 'l' is of type 'unknown'.
+src/core/admin-context-builder.ts(184,56): error TS18046: 'l' is of type 'unknown'.
+src/core/admin-context-builder.ts(196,45): error TS18046: 'l' is of type 'unknown'.
+src/core/admin-context-builder.ts(202,43): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(211,70): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(212,62): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(221,51): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(228,41): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(236,58): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(237,53): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(243,69): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(244,70): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(245,70): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(247,66): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(250,66): error TS18046: 'e' is of type 'unknown'.
+src/core/admin-context-builder.ts(259,45): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(267,78): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(268,76): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(275,13): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(275,46): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(275,77): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(276,15): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(276,52): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(276,85): error TS18046: 't' is of type 'unknown'.
+src/core/admin-context-builder.ts(300,47): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(310,63): error TS18046: 'i' is of type 'unknown'.
+src/core/admin-context-builder.ts(334,44): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin-context-builder.ts(349,47): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(350,56): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(351,59): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(352,58): error TS18046: 'm' is of type 'unknown'.
+src/core/admin-context-builder.ts(363,45): error TS18046: 'supabase' is of type 'unknown'.
+src/core/admin/admin-chat-service.ts(5,55): error TS2339: Property 'admin_conversations' does not exist on type '{ activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { created_at?: string | null; ... 5 more ...; type: string; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }'.
+src/core/admin/admin-chat-service.ts(6,50): error TS2339: Property 'admin_sessions' does not exist on type '{ activities: { Row: { created_at: string | null; description: string | null; id: string; metadata: Json; status: string; title: string; type: string; }; Insert: { created_at?: string | null; ... 5 more ...; type: string; }; Update: { ...; }; Relationships: []; }; ... 18 more ...; voice_sessions: { ...; }; }'.
+src/core/admin/admin-chat-service.ts(104,31): error TS2339: Property 'role' does not exist on type 'AdminMessage'.
+src/core/admin/admin-chat-service.ts(149,65): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/core/admin/admin-chat-service.ts(188,38): error TS7006: Parameter 'conv' implicitly has an 'any' type.
+src/core/admin/admin-chat-service.ts(261,42): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean '../embeddings/gemini.js'?
+src/core/admin/admin-chat-service.ts(293,29): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/core/ai/index.ts(323,43): error TS2307: Cannot find module '@/src/core/gemini-adapter' or its corresponding type declarations.
+src/core/chat/conversation-memory.ts(152,5): error TS2322: Type '{ role: "user" | "assistant" | "system"; content: string; id: string | undefined; timestamp: Date; }[]' is not assignable to type 'ConversationMessage[]'.
+  Type '{ role: "user" | "assistant" | "system"; content: string; id: string | undefined; timestamp: Date; }' is not assignable to type 'ConversationMessage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'id' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+src/core/chat/service.ts(1,28): error TS2305: Module '"../types/chat"' has no exported member 'ChatChunk'.
+src/core/chat/unified-provider.ts(102,13): error TS18004: No value exists in scope for the shorthand property 'sessionId'. Either declare one or provide an initializer.
+src/core/chat/unified-provider.ts(104,17): error TS2304: Cannot find name 'adminId'.
+src/core/chat/unified-provider.ts(104,37): error TS2304: Cannot find name 'adminId'.
+src/core/chat/unified-provider.ts(197,39): error TS2379: Argument of type '{ isConnected: true; lastActivity: Date; messageCount: number; adminId: string | undefined; }' is not assignable to parameter of type '{ isConnected: boolean; lastActivity: Date; messageCount: number; adminId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'adminId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(213,3): error TS2416: Property 'getAdminSessionStatus' in type 'UnifiedChatProviderImpl' is not assignable to the same property in base type 'UnifiedChatProvider'.
+  Type '(sessionId: string) => { isConnected: boolean; lastActivity: Date | null; messageCount: number; } | null' is not assignable to type '(sessionId: string) => Promise<{ isActive: boolean; lastActivity: Date; } | null>'.
+    Type '{ isConnected: boolean; lastActivity: Date | null; messageCount: number; } | null' is not assignable to type 'Promise<{ isActive: boolean; lastActivity: Date; } | null>'.
+      Type 'null' is not assignable to type 'Promise<{ isActive: boolean; lastActivity: Date; } | null>'.
+src/core/chat/unified-provider.ts(226,3): error TS2416: Property 'disconnectAdminSession' in type 'UnifiedChatProviderImpl' is not assignable to the same property in base type 'UnifiedChatProvider'.
+  Type '(sessionId: string) => void' is not assignable to type '(sessionId: string) => Promise<void>'.
+    Type 'void' is not assignable to type 'Promise<void>'.
+src/core/chat/unified-provider.ts(259,22): error TS2375: Type '{ isConnected: boolean; isConnecting: boolean; isStreaming: boolean; lastActivity: Date; messageCount: number; correlationId: string | undefined; }' is not assignable to type '{ isConnected: boolean; isConnecting: boolean; isStreaming: boolean; lastActivity: Date | null; messageCount: number; correlationId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'correlationId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(346,44): error TS2379: Argument of type '{ sessionId: string; adminId: string | undefined; type: "user" | "assistant" | "system"; content: string; contextLeads: string[] | undefined; metadata: { mode: string; timestamp: string; unifiedMessageId: string; }; }' is not assignable to parameter of type 'AdminMessage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'adminId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(462,44): error TS2379: Argument of type '{ sessionId: string; adminId: string | undefined; type: "assistant"; content: string; contextLeads: string[] | undefined; metadata: { mode: string; contextUsed: boolean; leadsReferenced: number; intelligenceIntegrated: boolean; }; }' is not assignable to parameter of type 'AdminMessage' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'adminId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(498,64): error TS2379: Argument of type '{ sessionId: string; mode: string; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(568,15): error TS2345: Argument of type 'string | Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'string | undefined'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(573,74): error TS2379: Argument of type '{ sessionId: string; mode: ChatMode; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/chat/unified-provider.ts(609,64): error TS2379: Argument of type '{ sessionId: string | undefined; mode: ChatMode; userId: string | undefined; }' is not assignable to parameter of type '{ sessionId?: string; mode?: string; userId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'sessionId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/config.ts(61,7): error TS2353: Object literal may only specify known properties, and 'caching' does not exist in type '{ apiKey?: string; model: string; models: { default: string; fastResponse: string; analysis: string; research: string; }; }'.
+src/core/context/context-manager.ts(34,5): error TS2322: Type '{ email: any; name: any; } | undefined' is not assignable to type '{ email: string; name: string; }'.
+  Type 'undefined' is not assignable to type '{ email: string; name: string; }'.
+src/core/context/context-storage.ts(2,31): error TS2305: Module '"@supabase/supabase-js"' has no exported member 'Database'.
+src/core/context/context-storage.ts(4,10): error TS2305: Module '"./context-types"' has no exported member 'ConversationContext'.
+src/core/context/context-storage.ts(16,21): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/context-storage.ts(51,53): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/context-storage.ts(59,69): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/context-storage.ts(89,59): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/context-storage.ts(133,53): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/context-storage.ts(190,53): error TS2314: Generic type 'SupabaseClient<Database, SchemaNameOrClientOptions, SchemaName, Schema, ClientOptions, any>' requires 6 type argument(s).
+src/core/context/multimodal-context.ts(101,5): error TS2322: Type 'string[]' is not assignable to type '("video" | "text" | "image" | "audio")[]'.
+  Type 'string' is not assignable to type '"video" | "text" | "image" | "audio"'.
+src/core/context/multimodal-context.ts(110,104): error TS2304: Cannot find name 'AudioEntry'.
+src/core/context/multimodal-context.ts(125,23): error TS2304: Cannot find name 'AudioEntry'.
+src/core/context/multimodal-context.ts(139,5): error TS2322: Type 'string[]' is not assignable to type '("video" | "text" | "image" | "audio")[]'.
+  Type 'string' is not assignable to type '"video" | "text" | "image" | "audio"'.
+src/core/context/multimodal-context.ts(178,5): error TS2322: Type 'string[]' is not assignable to type '("video" | "text" | "image" | "audio")[]'.
+  Type 'string' is not assignable to type '"video" | "text" | "image" | "audio"'.
+src/core/context/multimodal-context.ts(218,78): error TS2304: Cannot find name 'AudioEntry'.
+src/core/educational-gemini-service.ts(246,19): error TS2532: Object is possibly 'undefined'.
+src/core/email-service.ts(24,56): error TS2379: Argument of type '{ from: string; to: string[]; subject: string; html: string; text: string; tags: { name: string; value: string; }[] | undefined; attachments: { filename: string; content: any; contentType: string; }[] | undefined; }' is not assignable to parameter of type 'CreateEmailOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ from: string; to: string[]; subject: string; html: string; text: string; tags: { name: string; value: string; }[] | undefined; attachments: { filename: string; content: any; contentType: string; }[] | undefined; }' is not assignable to type 'Required<Pick<EmailRenderOptions$1, "react">> & Partial<Pick<EmailRenderOptions$1, "html" | "text">> & CreateEmailBaseOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Property 'react' is missing in type '{ from: string; to: string[]; subject: string; html: string; text: string; tags: { name: string; value: string; }[] | undefined; attachments: { filename: string; content: any; contentType: string; }[] | undefined; }' but required in type 'Required<Pick<EmailRenderOptions$1, "react">>'.
+src/core/gemini-adapter.ts(21,31): error TS2339: Property 'generativeModel' does not exist on type 'Models'.
+src/core/gemini-translator.ts(83,36): error TS2339: Property 'genAI' does not exist on type 'GeminiTranslator'.
+src/core/grounded-search-service.ts(95,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/core/icon-mapping.ts(7,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Copy'.
+src/core/icon-mapping.ts(8,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Check'.
+src/core/icon-mapping.ts(9,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Download'.
+src/core/icon-mapping.ts(10,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Play'.
+src/core/icon-mapping.ts(11,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Pause'.
+src/core/icon-mapping.ts(12,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Square'.
+src/core/icon-mapping.ts(13,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowCounterClockwise'.
+src/core/icon-mapping.ts(14,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'FileText'.
+src/core/icon-mapping.ts(15,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Image'.
+src/core/icon-mapping.ts(16,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'VideoCamera'.
+src/core/icon-mapping.ts(17,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Microphone'.
+src/core/icon-mapping.ts(18,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'MicrophoneSlash'.
+src/core/icon-mapping.ts(19,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Calculator'.
+src/core/icon-mapping.ts(20,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Monitor'.
+src/core/icon-mapping.ts(21,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Sparkle'.
+src/core/icon-mapping.ts(22,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Lightning'.
+src/core/icon-mapping.ts(23,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ChatCircle'.
+src/core/icon-mapping.ts(24,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'TrendUp'.
+src/core/icon-mapping.ts(25,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'MagnifyingGlass'.
+src/core/icon-mapping.ts(26,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Brain'.
+src/core/icon-mapping.ts(27,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'CircleNotch'.
+src/core/icon-mapping.ts(28,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'User'.
+src/core/icon-mapping.ts(29,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Warning'.
+src/core/icon-mapping.ts(30,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Info'.
+src/core/icon-mapping.ts(31,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Clock'.
+src/core/icon-mapping.ts(32,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Target'.
+src/core/icon-mapping.ts(33,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'PencilSimple'.
+src/core/icon-mapping.ts(36,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'PaperPlaneTilt'.
+src/core/icon-mapping.ts(37,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Camera'.
+src/core/icon-mapping.ts(38,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Paperclip'.
+src/core/icon-mapping.ts(39,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Plus'.
+src/core/icon-mapping.ts(40,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'X'.
+src/core/icon-mapping.ts(41,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'CaretDown'.
+src/core/icon-mapping.ts(44,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowRight'.
+src/core/icon-mapping.ts(45,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowLeft'.
+src/core/icon-mapping.ts(46,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowsOut'.
+src/core/icon-mapping.ts(47,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowsIn'.
+src/core/icon-mapping.ts(48,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Upload'.
+src/core/icon-mapping.ts(49,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Eye'.
+src/core/icon-mapping.ts(50,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'EyeSlash'.
+src/core/icon-mapping.ts(51,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'VideoCameraSlash'.
+src/core/icon-mapping.ts(52,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Link'.
+src/core/icon-mapping.ts(53,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Translate'.
+src/core/icon-mapping.ts(54,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'List'.
+src/core/icon-mapping.ts(57,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ChartBar'.
+src/core/icon-mapping.ts(58,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Star'.
+src/core/icon-mapping.ts(59,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'CircleNotch'.
+src/core/icon-mapping.ts(60,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Wrench'.
+src/core/icon-mapping.ts(62,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'House'.
+src/core/icon-mapping.ts(63,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Users'.
+src/core/icon-mapping.ts(64,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Calendar'.
+src/core/icon-mapping.ts(65,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'CurrencyDollar'.
+src/core/icon-mapping.ts(66,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'CheckCircle'.
+src/core/icon-mapping.ts(67,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'XCircle'.
+src/core/icon-mapping.ts(68,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ArrowCircleDown'.
+src/core/icon-mapping.ts(69,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ShareNetwork'.
+src/core/icon-mapping.ts(70,3): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'ChatCircle'.
+src/core/intelligence/admin-integration.ts(58,15): error TS18048: 'researchResult.citations.length' is possibly 'undefined'.
+src/core/intelligence/admin-integration.ts(59,43): error TS18048: 'researchResult.citations' is possibly 'undefined'.
+src/core/intelligence/admin-integration.ts(79,47): error TS2379: Argument of type '{ sessionId: string; email: string; name: string | undefined; }' is not assignable to parameter of type '{ sessionId: string; email: string; name?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/admin-integration.ts(86,44): error TS2379: Argument of type '{ sessionId: string; email: string; name: string | undefined; }' is not assignable to parameter of type '{ sessionId: string; email?: string; name?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/capability-registry.ts(326,5): error TS2532: Object is possibly 'undefined'.
+src/core/intelligence/conversational-intelligence.ts(15,68): error TS2554: Expected 1 arguments, but got 4.
+src/core/intelligence/conversational-intelligence.ts(17,7): error TS2375: Type '{ summary: string | undefined; industry: string | undefined; }' is not assignable to type '{ summary?: string; industry?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'summary' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/conversational-intelligence.ts(21,7): error TS2375: Type '{ role: string | undefined; seniority: string | undefined; }' is not assignable to type '{ fullName?: string; role?: string; seniority?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'role' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/conversational-intelligence.ts(37,52): error TS2554: Expected 1 arguments, but got 4.
+src/core/intelligence/conversational-intelligence.ts(41,23): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'ResearchResultLike'.
+src/core/intelligence/conversational-intelligence.ts(46,43): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './intent-detector.js'?
+src/core/intelligence/conversational-intelligence.ts(51,25): error TS2379: Argument of type '{ lead: { email: string; name: string; }; capabilities: string[]; company?: { name: string; domain: string; industry?: string | undefined; size?: string | undefined; summary?: string | undefined; website?: string | undefined; linkedin?: string | undefined; } | undefined; person?: { ...; } | undefined; role?: string ...' is not assignable to parameter of type 'ContextSnapshot' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'role' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(76,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(97,48): error TS2345: Argument of type 'import("/Users/farzad/FBC_masterV5/src/core/context/context-types").LeadContext' is not assignable to parameter of type 'import("/Users/farzad/FBC_masterV5/src/core/types/conversations").LeadContext'.
+  Type 'LeadContext' is missing the following properties from type 'LeadContext': summary, leadScore, researchJson
+src/core/intelligence/lead-research.ts(179,101): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(231,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(252,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(253,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/lead-research.ts(326,51): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './providers/enrich/company-normalizer.js'?
+src/core/intelligence/lead-research.ts(327,50): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './providers/enrich/person-normalizer.js'?
+src/core/intelligence/lead-research.ts(357,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/providers/enrich/company-normalizer.ts(19,3): error TS2375: Type '{ name: string; domain: string; industry: undefined; size: undefined; summary: undefined; website: undefined; linkedin: undefined; }' is not assignable to type 'NormalizedCompany' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'industry' are incompatible.
+    Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/providers/enrich/person-normalizer.ts(23,3): error TS2375: Type '{ fullName: string; role: string | undefined; seniority: string | undefined; profileUrl: string | undefined; company: string | undefined; }' is not assignable to type 'NormalizedPerson' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'role' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/core/intelligence/providers/enrich/person-normalizer.ts(35,14): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/core/intelligence/providers/enrich/person-normalizer.ts(40,14): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/core/intelligence/simple-service.ts(48,7): error TS2375: Type 'import("/Users/farzad/FBC_masterV5/src/core/context/context-types").PersonContext' is not assignable to type 'import("/Users/farzad/FBC_masterV5/src/core/types/intelligence").PersonContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'profileUrl' are incompatible.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+src/core/meeting-scheduler.ts(88,20): error TS7006: Parameter 'x' implicitly has an 'any' type.
+src/core/monitoring/index.ts(125,61): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/core/monitoring/index.ts(125,66): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/monitoring/index.ts(126,65): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/core/monitoring/index.ts(126,70): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/monitoring/index.ts(300,20): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/pdf-generator-puppeteer.ts(106,32): error TS2379: Argument of type '{ x: number; y: number; size: number; color: Color | undefined; font: PDFFont; }' is not assignable to parameter of type 'PDFPageDrawTextOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'color' are incompatible.
+    Type 'Color | undefined' is not assignable to type 'Color'.
+      Type 'undefined' is not assignable to type 'Color'.
+src/core/security/url-guards.ts(38,22): error TS2532: Object is possibly 'undefined'.
+src/core/services/gemini-service.ts(9,33): error TS2305: Module '"@/src/core/model-selector"' has no exported member 'estimateTokens'.
+src/core/services/gemini-service.ts(70,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(131,11): error TS2532: Object is possibly 'undefined'.
+src/core/services/gemini-service.ts(147,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(220,35): error TS2554: Expected 6-9 arguments, but got 5.
+src/core/services/gemini-service.ts(431,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/core/streaming/streaming-optimizer.ts(413,28): error TS7053: Element implicitly has an 'any' type because expression of type '1' can't be used to index type '{}'.
+  Property '1' does not exist on type '{}'.
+src/core/streaming/streaming-optimizer.ts(413,44): error TS2339: Property 'streamControllers' does not exist on type 'StreamingOptimizer'.
+src/core/streaming/streaming-optimizer.ts(414,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: unknown, index: number, obj: unknown[]) => value is unknown, thisArg?: any): unknown', gave the following error.
+    Argument of type '([_, ctrl]: [any, any]) => boolean' is not assignable to parameter of type '(value: unknown, index: number, obj: unknown[]) => value is unknown'.
+      Types of parameters '__0' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '[any, any]'.
+  Overload 2 of 2, '(predicate: (value: unknown, index: number, obj: unknown[]) => unknown, thisArg?: any): unknown', gave the following error.
+    Argument of type '([_, ctrl]: [any, any]) => boolean' is not assignable to parameter of type '(value: unknown, index: number, obj: unknown[]) => unknown'.
+      Types of parameters '__0' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '[any, any]'.
+src/core/token-usage-logger.ts(112,61): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/core/token-usage-logger.ts(112,66): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/token-usage-logger.ts(113,65): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/core/token-usage-logger.ts(113,70): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/token-usage-logger.ts(288,20): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/core/webrtc-audio-processor.ts(189,26): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/core/webrtc-audio-processor.ts(196,28): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/core/webrtc-audio-processor.ts(197,41): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/core/webrtc-audio-processor.ts(200,19): error TS18048: 'sample' is possibly 'undefined'.
+src/core/webrtc-audio-processor.ts(203,15): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/core/youtube-transcript.ts(23,46): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './youtube.js'?
+src/core/youtube-transcript.ts(49,53): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './youtube.js'?
+src/lib/supabase.ts(3,43): error TS2307: Cannot find module '@/src/types/supabase-compat' or its corresponding type declarations.
+src/lib/supabase.ts(10,23): error TS2558: Expected 0-3 type arguments, but got 6.
+src/lib/supabase.ts(16,23): error TS2558: Expected 0-3 type arguments, but got 6.
+src/services/email/resend.ts(34,29): error TS2339: Property 'text' does not exist on type 'EmailTemplate'.

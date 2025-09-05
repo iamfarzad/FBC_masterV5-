@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // Perform new grounded search
-    const { GroundedSearchService } = await import('@/src/core/grounded-search-service')
+    const { GroundedSearchService } = await import('../../../../src/core/grounded-search-service.js')
     const groundedSearchService = new GroundedSearchService()
     
     const searchResults = await groundedSearchService.searchLead({

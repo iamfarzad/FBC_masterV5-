@@ -1,7 +1,26 @@
 import { getSupabaseService } from '@/src/lib/supabase'
-import type { SupabaseClient, Database } from '@supabase/supabase-js'
 import { logger } from '@/src/lib/logger'
-import { ConversationContext, MultimodalContext } from './context-types'
+import { ConversationContext } from '../chat/conversation-memory'
+import { MultimodalContext } from './context-types'
+
+// Database-compatible interface for conversation contexts
+interface DatabaseConversationContext {
+  session_id: string
+  email: string
+  name?: string | null
+  company_url?: string | null
+  role?: string | null
+  role_confidence?: number | null
+  ai_capabilities_shown?: string[] | null
+  company_context?: any
+  person_context?: any
+  intent_data?: any
+  last_user_message?: string | null
+  multimodal_context?: string | MultimodalContext
+  tool_outputs?: any
+  created_at?: string | null
+  updated_at?: string | null
+}
 
 // Type-safe conversion for multimodal context storage
 type StorableMultimodal = string | MultimodalContext;
@@ -13,8 +32,9 @@ function toStorable(ctx: MultimodalContext): StorableMultimodal {
 }
 
 export class ContextStorage {
-  private supabase: SupabaseClient<Database> | null
-  private inMemoryStorage = new Map<string, ConversationContext>()
+  // Use the service client type to avoid Database generic issues.
+  private supabase: ReturnType<typeof getSupabaseService> | null
+  private inMemoryStorage = new Map<string, DatabaseConversationContext>()
 
   constructor() {
     // Try to create Supabase client, fallback to in-memory if unavailable
@@ -31,13 +51,14 @@ export class ContextStorage {
     }
   }
 
-  async store(sessionId: string, payload: Partial<ConversationContext>): Promise<void> {
+  async store(sessionId: string, payload: Partial<DatabaseConversationContext>): Promise<void> {
     try {
-      const dataToStore: ConversationContext = {
+      const dataToStore: DatabaseConversationContext = {
         session_id: sessionId,
+        email: payload.email || 'unknown@example.com', // Required field
         ...payload,
         updated_at: new Date().toISOString()
-      } as ConversationContext
+      }
 
       // Handle multimodal context
       if (dataToStore.multimodal_context) {
@@ -48,7 +69,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient<Database>)
+          const { error } = await this.supabase
             .from('conversation_contexts')
             .upsert(dataToStore)
 
@@ -56,9 +77,9 @@ export class ContextStorage {
             // If the column doesn't exist, try without multimodal_context
             if (error.message?.includes('multimodal_context') || error.message?.includes('tool_outputs')) {
               const { multimodal_context, tool_outputs, ...dataWithoutExtras } = dataToStore
-              const { error: retryError } = await (this.supabase as SupabaseClient)
+              const { error: retryError } = await this.supabase
                 .from('conversation_contexts')
-                .upsert(dataWithoutExtras)
+                .upsert(dataWithoutExtras as any)
 
               if (retryError) {
                 throw retryError
@@ -81,12 +102,12 @@ export class ContextStorage {
     }
   }
 
-  async get(sessionId: string): Promise<ConversationContext | null> {
+  async get(sessionId: string): Promise<DatabaseConversationContext | null> {
     try {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { data, error } = await (this.supabase as SupabaseClient<Database>)
+          const { data, error } = await this.supabase
             .from('conversation_contexts')
             .select('*')
             .eq('session_id', sessionId)
@@ -125,12 +146,12 @@ export class ContextStorage {
     }
   }
 
-  async update(sessionId: string, patch: Partial<ConversationContext>): Promise<void> {
+  async update(sessionId: string, patch: Partial<DatabaseConversationContext>): Promise<void> {
     try {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient<Database>)
+          const { error } = await this.supabase
             .from('conversation_contexts')
             .update({
               ...patch,
@@ -145,35 +166,37 @@ export class ContextStorage {
           // Also update in-memory cache if it exists
           const existing = this.inMemoryStorage.get(sessionId)
           if (existing) {
-            this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() })
+            this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
           }
         } catch (supabaseError) {
           logger.warn('Supabase update failed, falling back to in-memory:', supabaseError)
           // Update in-memory storage
           const existing = this.inMemoryStorage.get(sessionId)
           if (existing) {
-            this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() })
+            this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
           } else {
             // Create new entry if it doesn't exist
             this.inMemoryStorage.set(sessionId, {
               session_id: sessionId,
+              email: 'unknown@example.com', // Required field
               ...patch,
               updated_at: new Date().toISOString()
-            } as ConversationContext)
+            } as DatabaseConversationContext)
           }
         }
       } else {
         // Use in-memory storage only
         const existing = this.inMemoryStorage.get(sessionId)
         if (existing) {
-          this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() })
+          this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
         } else {
           // Create new entry if it doesn't exist
           this.inMemoryStorage.set(sessionId, {
             session_id: sessionId,
+            email: 'unknown@example.com', // Required field
             ...patch,
             updated_at: new Date().toISOString()
-          } as ConversationContext)
+          } as DatabaseConversationContext)
         }
       }
     } catch (error) {
@@ -187,7 +210,7 @@ export class ContextStorage {
       // Try Supabase first, then in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient<Database>)
+          const { error } = await this.supabase
             .from('conversation_contexts')
             .delete()
             .eq('session_id', sessionId)

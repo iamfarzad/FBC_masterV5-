@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatChunk } from '../types/chat'
+import type { UnifiedMessage } from './unified-types'
 import { getProvider } from '../ai'
 import { ContextStorage } from '../context/context-storage'
 

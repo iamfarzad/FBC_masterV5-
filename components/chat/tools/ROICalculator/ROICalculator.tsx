@@ -9,7 +9,12 @@ import { useToast } from "@/hooks/use-toast"
 import { markCapabilityUsed } from "@/components/experience/progress-tracker"
 
 import type { ROICalculatorProps, ROICalculationResult, WizardStep } from "./ROICalculator.types"
-import type { ChatMessage, ROIResultPayload } from '@/src/core/types/chat'
+import type { ROIResultPayload } from "@/src/core/chat"
+// Import types from correct location
+import type { UnifiedMessage } from '@/src/core/chat/unified-types.js'
+type ChatMessage = UnifiedMessage;
+
+// Using ROIResultPayload from @/src/core/chat
 
 // Import extracted components
 import {
@@ -52,7 +57,7 @@ export function ROICalculator({
   const [result, setResult] = useState<ROICalculationAPIResponse | null>(null)
 
   // Generate cache key
-  const cacheKey = React.useMemo(() => generateCacheKey(sessionId, formData), [sessionId, formData])
+  const cacheKey = React.useMemo(() => generateCacheKey(sessionId ?? undefined, formData), [sessionId, formData])
 
   // Load cached result on mount
   useEffect(() => {
@@ -121,7 +126,7 @@ export function ROICalculator({
       try {
         const payload: ROIResultPayload = {
           roi: data.output.roi,
-          paybackMonths: data.output.paybackPeriod,
+          paybackPeriod: data.output.paybackPeriod,
           netProfit: data.output.netProfit,
           monthlyProfit: data.output.monthlyProfit,
           totalRevenue: data.output.totalRevenue,

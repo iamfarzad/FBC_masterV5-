@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { useMeeting } from '@/components/providers/meeting-provider'
+import { omitUndefined } from '@/src/core/utils/optional'
 
 interface BookCallButtonProps extends React.ComponentProps<typeof Button> {
   username?: string
@@ -23,7 +24,9 @@ export function BookCallButton({
   const meeting = useMeeting()
 
   function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
-    try { meeting.open({ username, event, title, description }) } catch {}
+    try {
+      meeting.open(omitUndefined({ username, event, title, description }))
+    } catch {}
     onClick?.(e)
   }
 

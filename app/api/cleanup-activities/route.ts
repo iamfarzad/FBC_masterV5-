@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to get activity counts' }, { status: 500 })
     }
     
-    const statusCounts = activities?.reduce((acc, activity) => {
+    const statusCounts = activities?.reduce((acc: any, activity: any) => {
       acc[activity.status] = (acc[activity.status] || 0) + 1
       return acc
     }, {} as Record<string, number>) || {}

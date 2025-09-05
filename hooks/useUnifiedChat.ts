@@ -41,7 +41,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       id: crypto.randomUUID(),
       timestamp: message.timestamp || new Date(),
       type: message.type || 'text',
-      metadata: message.metadata
+      metadata: message.metadata || {}
     }
     setMessages(prev => [...prev, newMessage])
     return newMessage
@@ -77,12 +77,10 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       })
 
       // Prepare unified request
-      const request: UnifiedChatRequest = {
-        messages: [...messages, userMessage],
-        context: options.context,
-        mode: options.mode || 'standard',
-        stream: true
-      }
+      const request: UnifiedChatRequest =
+        options.context
+          ? { messages: [...messages, userMessage], context: options.context, mode: options.mode || 'standard', stream: true }
+          : { messages: [...messages, userMessage], context: {} as UnifiedContext, mode: options.mode || 'standard', stream: true }
 
       // Make request to unified API
       const response = await fetch('/api/chat/unified', {
@@ -120,13 +118,13 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
               content: message.content,
               timestamp: new Date(),
               type: message.type || 'text',
-              metadata: message.metadata
+              metadata: message.metadata || {}
             })
           } else {
             // Update existing assistant message
             updateMessage(assistantMessage.id, {
               content: message.content,
-              metadata: message.metadata
+              metadata: message.metadata || {}
             })
           }
 
@@ -152,7 +150,10 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
         userId: options.context?.adminId
       }, 'unified_chat_hook')
 
-      setError(chatError)
+      const errObj = new Error(chatError.message)
+      // if your ChatError has code, attach it for consumers
+      ;(errObj as any).code = (chatError as any).code
+      setError(errObj)
 
       if (err instanceof Error && err.name !== 'AbortError') {
         // Add standardized error message to chat

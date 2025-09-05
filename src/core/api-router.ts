@@ -13,7 +13,7 @@ export interface ApiRouteConfig {
 // Define API route mappings
 export const API_ROUTES: Record<string, ApiRouteConfig> = {
   chat: {
-    realEndpoint: '/api/chat',
+    realEndpoint: '/api/chat/unified',
     mockEndpoint: '/api/mock/chat',
     requiresApiKey: true
   },

@@ -1,6 +1,6 @@
 import { getSupabaseService } from "@/src/lib/supabase";
 import { getSupabaseStorage } from '@/src/services/storage/supabase'
-import { EmailService } from '@/src/core/email-service'
+import { EmailService } from '@/src/core/email-service.js'
 import { MeetingScheduler } from "@/src/core/meeting-scheduler"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"

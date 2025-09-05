@@ -137,7 +137,7 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
 
   const value: StageContextType = {
     stages,
-    currentStage,
+    currentStage: currentStage ?? null,
     currentStageIndex,
     nextStage,
     previousStage,

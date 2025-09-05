@@ -33,8 +33,8 @@ export default function WorkshopModulePage() {
     setIsCompleted(completedModules.includes(slug))
     const modules = getAllModules()
     const idx = modules.findIndex(m => m.slug === slug)
-    if (idx >= 0 && idx < modules.length - 1 && modules[idx + 1]) {
-      setNextModule(modules[idx + 1].slug)
+    if (idx >= 0 && idx < modules.length - 1) {
+      setNextModule(modules[idx + 1]?.slug ?? null)
     } else {
       setNextModule(null)
     }

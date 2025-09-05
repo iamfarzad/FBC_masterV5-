@@ -42,23 +42,21 @@ export function ChatLayout({
         {/* Chat Messages */}
         <div className="flex min-h-0 flex-1 flex-col">
           <ErrorBoundary
-            variant="inline"
-            fallback={({ error, resetError }: { error: unknown; resetError: () => void }) => (
+            fallback={
               <div className="mx-auto max-w-2xl p-6">
                 <div className="border-destructive/20 bg-destructive/5 rounded-xl border p-6 text-center">
                   <p className="mb-2 font-medium text-destructive">Chat Error</p>
-                  <p className="mb-4 text-sm text-muted-foreground">{error.message}</p>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    An unexpected error occurred. Please try again.
+                  </p>
                   <div className="flex justify-center gap-2">
-                    <Button variant="outline" onClick={resetError} size="sm">
-                      Retry
-                    </Button>
                     <Button variant="outline" onClick={() => window.location.reload()} size="sm">
-                      Refresh
+                      Reload
                     </Button>
                   </div>
                 </div>
               </div>
-            )}
+            }
           >
             {children}
           </ErrorBoundary>

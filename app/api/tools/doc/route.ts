@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     // Budget and access checks
     const textContent = Buffer.from(base64Data, 'base64').toString('utf-8');
     const estimatedTokens = estimateTokens(textContent) + 2500
-    const modelSelection = selectModelForFeature('research', {})
+    const modelSelection = selectModelForFeature('research', 0)
 
 
 
