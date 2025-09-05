@@ -89,25 +89,21 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
             multimodalContent += `[Image input received - ${context.multimodalData.imageData.length} bytes]`
           }
           {
-            const v = (context.multimodalData as any)?.videoData as Uint8Array | string | undefined
-            if (v) {
-              const len = typeof v === 'string' ? v.length : (typeof (v as any).byteLength === 'number' ? (v as any).byteLength : (v as any).length ?? 0)
-              // Add visual analysis for video to multimodal context
-              await multimodalContextManager.addVisualAnalysis(
-                context.sessionId,
-                `Video input: ${len} bytes`,
-                'screen', // default type for video
-                len,
-                v
-              )
-              multimodalContent += `[Video input received - ${len} bytes]`
+            const vd = context?.multimodalData?.videoData;
+            const videoNote = typeof vd === 'string'
+              ? vd
+              : (vd instanceof Uint8Array ? `[Video input received - ${vd.length} bytes]` : undefined);
+            if (videoNote) {
+              multimodalContent += videoNote;
             }
           }
         } catch (multimodalError) {
-          const meta1: { sessionId?: string; mode?: string; userId?: string } = { mode }
-          if (context?.sessionId) meta1.sessionId = context.sessionId
-          if (context?.adminId) meta1.userId = context.adminId
-          const error = unifiedErrorHandler.handleError(multimodalError, meta1, 'multimodal_processing')
+          const meta = {
+            sessionId,
+            mode,
+            ...(adminId ? { userId: adminId } : {}) // omit when undefined
+          };
+          const error = unifiedErrorHandler.handleError(multimodalError, meta, 'multimodal_processing')
           // Continue without multimodal processing
         }
       }

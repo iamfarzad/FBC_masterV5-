@@ -1,5 +1,5 @@
 import { getSupabaseService } from '@/src/lib/supabase'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient, Database } from '@supabase/supabase-js'
 import { logger } from '@/src/lib/logger'
 import { ConversationContext, MultimodalContext } from './context-types'
 
@@ -13,7 +13,7 @@ function toStorable(ctx: MultimodalContext): StorableMultimodal {
 }
 
 export class ContextStorage {
-  private supabase: SupabaseClient | null
+  private supabase: SupabaseClient<Database> | null
   private inMemoryStorage = new Map<string, ConversationContext>()
 
   constructor() {
@@ -48,7 +48,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient)
+          const { error } = await (this.supabase as SupabaseClient<Database>)
             .from('conversation_contexts')
             .upsert(dataToStore)
 
@@ -86,7 +86,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { data, error } = await (this.supabase as SupabaseClient)
+          const { data, error } = await (this.supabase as SupabaseClient<Database>)
             .from('conversation_contexts')
             .select('*')
             .eq('session_id', sessionId)
@@ -130,7 +130,7 @@ export class ContextStorage {
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient)
+          const { error } = await (this.supabase as SupabaseClient<Database>)
             .from('conversation_contexts')
             .update({
               ...patch,
@@ -187,7 +187,7 @@ export class ContextStorage {
       // Try Supabase first, then in-memory
       if (this.supabase) {
         try {
-          const { error } = await (this.supabase as SupabaseClient)
+          const { error } = await (this.supabase as SupabaseClient<Database>)
             .from('conversation_contexts')
             .delete()
             .eq('session_id', sessionId)
