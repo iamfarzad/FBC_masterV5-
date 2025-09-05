@@ -31,20 +31,19 @@ export class EmailService {
       const { Resend } = await import('resend')
       const resend = new Resend(this.apiKey)
 
-      const text = template.text ?? template.html.replace(/<[^>]+>/g, ' ')
-      const result = await resend.emails.send({
+      const text = template.text ?? template.html.replace(/<[^>]+>/g, ' ');
+      const baseOpts: any = {
         from: template.from || 'F.B/c <noreply@yourdomain.com>',
         to: template.to,
         subject: template.subject,
         html: template.html,
         text,
-        replyTo: template.replyTo,
-        attachments: template.attachments?.map(a => ({
-          filename: a.filename,
-          content: a.content.toString('base64'),
-          contentType: a.contentType ?? 'application/octet-stream'
-        }))
-      })
+        ...(template.replyTo ? { replyTo: template.replyTo } : {})
+      };
+      const sendOpts = template.attachments
+        ? { ...baseOpts, attachments: template.attachments.map(a => ({ filename: a.filename, content: a.content, contentType: a.contentType ?? 'application/octet-stream' })) }
+        : baseOpts;
+      const result = await resend.emails.send(sendOpts);
 
       if (result.error) {
         // Email send error occurred

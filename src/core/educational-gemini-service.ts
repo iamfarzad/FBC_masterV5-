@@ -242,7 +242,7 @@ export function extractKeyTopics(videoSpec: string): string[] {
   const words = videoSpec.split(/\s+/)
   const capitalizedWords = words.filter(
     (word) =>
-      word.length > 3 &&
+      word && typeof word === 'string' && word.length > 3 &&
       word[0] === word[0].toUpperCase() &&
       !word.match(/^[A-Z]+$/) && // Not all caps
       !["The", "This", "That", "When", "Where", "What", "How", "Why"].includes(word),
