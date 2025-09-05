@@ -9,7 +9,7 @@ import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor,
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUnifiedChat } from "@/hooks/useUnifiedChat"
-import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence"
+// import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence" // DEPRECATED - now uses unified chat internally
 import { generateSecureSessionId } from "@/src/core/security/session"
 import { useCanvas } from "@/components/providers/canvas-provider"
 import { useTheme } from "next-themes"
@@ -138,6 +138,13 @@ export default function ChatPage() {
     }
   }, [])
 
+  // Fetch intelligence context when session is available
+  useEffect(() => {
+    if (sessionId && sessionId !== 'anonymous') {
+      fetchContextFromLocalSession()
+    }
+  }, [sessionId, fetchContextFromLocalSession])
+
   // Handle consent submission
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
     try {
@@ -156,6 +163,18 @@ export default function ChatPage() {
       if (response.ok) {
         setHasConsent(true)
         setShowConsentOverlay(false)
+
+        // Add personalized welcome message
+        const welcomeMessage = `Hi ${data.name}, welcome to F.B/c! How can I help you today?`
+
+        // Add welcome message to chat
+        addMessage({
+          role: 'assistant',
+          content: welcomeMessage,
+          timestamp: new Date(),
+          type: 'text'
+        })
+
       } else {
         console.error('Failed to submit consent')
       }
@@ -224,7 +243,7 @@ export default function ChatPage() {
   const {
     context,
     // isLoading: contextLoading, // Removed as unused
-    // fetchContextFromLocalSession, // Removed as unused
+    fetchContextFromLocalSession,
     clearContextCache,
     // generatePersonalizedGreeting, // Removed as unused
     // sendRealtimeVoice // Removed as unused

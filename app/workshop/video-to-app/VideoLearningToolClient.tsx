@@ -12,22 +12,20 @@ import { VideoToApp } from '@/components/workshop/VideoToApp'
 import { cn } from '@/src/core/utils'
 
 interface VideoLearningToolClientProps {
-  initialVideoUrl: string
-  sessionId: string
-  fromChat: boolean
+  searchParams: Promise<Record<string, string>>
   mode?: 'workshop' | 'standalone'
 }
 
 export function VideoLearningToolClient({
-  initialVideoUrl,
-  sessionId,
-  fromChat,
+  searchParams,
   mode = 'workshop',
 }: VideoLearningToolClientProps) {
   const router = useRouter()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
-  const [currentVideoUrl, setCurrentVideoUrl] = useState(initialVideoUrl)
+  const [currentVideoUrl, setCurrentVideoUrl] = useState('')
+  const [sessionId, setSessionId] = useState('')
+  const [fromChat, setFromChat] = useState(false)
   const [generatedApps, setGeneratedApps] = useState<Array<{
     id: string
     url: string
@@ -36,21 +34,32 @@ export function VideoLearningToolClient({
   }>>([])
 
   useEffect(() => {
-    // Load any saved state from session storage if coming from chat
-    if (fromChat && sessionId) {
-      const savedState = sessionStorage.getItem(`video2app_${sessionId}`)
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState)
-          if (parsed.generatedApps) {
-            setGeneratedApps(parsed.generatedApps)
+    // Extract search params
+    searchParams.then((params) => {
+      const initialVideoUrl = params.url || ''
+      const sessionId = params.sessionId || ''
+      const fromChat = params.from === 'chat'
+
+      setCurrentVideoUrl(initialVideoUrl)
+      setSessionId(sessionId)
+      setFromChat(fromChat)
+
+      // Load any saved state from session storage if coming from chat
+      if (fromChat && sessionId) {
+        const savedState = sessionStorage.getItem(`video2app_${sessionId}`)
+        if (savedState) {
+          try {
+            const parsed = JSON.parse(savedState)
+            if (parsed.generatedApps) {
+              setGeneratedApps(parsed.generatedApps)
+            }
+          } catch (e) {
+            console.warn('Failed to parse saved state:', e)
           }
-        } catch (e) {
-          console.warn('Failed to parse saved state:', e)
         }
       }
-    }
-  }, [fromChat, sessionId])
+    })
+  }, [searchParams])
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)

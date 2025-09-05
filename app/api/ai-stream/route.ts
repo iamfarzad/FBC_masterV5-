@@ -1,256 +1,84 @@
-import { GoogleGenAI } from "@google/genai"
-import { createOptimizedConfig } from "@/src/core/gemini-config-enhanced"
-import { getSupabaseStorage } from '@/src/services/storage/supabase'
-import type { NextRequest } from "next/server"
-import { NextResponse } from "next/server"
-import { SupabaseClient } from '@supabase/supabase-js'
+/**
+ * 🚨 DEPRECATED API ENDPOINT
+ * This endpoint is deprecated and will be removed after the deprecation window.
+ * Use /api/chat/unified instead.
+ *
+ * This proxy forwards requests to the unified chat system while logging deprecation warnings.
+ */
 
-interface StreamRequestBody {
-  prompt?: string
-  conversationHistory?: unknown[]
-  enableStreaming?: boolean
-  enableTools?: boolean
-  sessionId?: string
-}
+import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
+  // 🚨 DEPRECATION WARNING
+  console.warn('⚠️ DEPRECATED API CALL: /api/ai-stream - Use /api/chat/unified instead')
+
+  // Log deprecation telemetry
+  const callerInfo = {
+    endpoint: '/api/ai-stream',
+    timestamp: new Date().toISOString(),
+    userAgent: req.headers.get('user-agent'),
+    sessionId: req.headers.get('x-intelligence-session-id'),
+    referrer: req.headers.get('referer')
+  }
+
+  console.log('📊 Deprecation telemetry:', callerInfo)
+
   try {
-    const body: StreamRequestBody = await req.json()
-    const { prompt, conversationHistory, enableStreaming = true, sessionId } = body
+    const body = await req.json()
 
-    // Validate input
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Valid prompt is required",
-        },
-        { status: 400 },
-      )
+    // Transform legacy format to unified format
+    const unifiedRequest = {
+      messages: [{
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: body.prompt || 'Hello',
+        timestamp: new Date(),
+        type: 'text'
+      }],
+      context: {
+        sessionId: body.sessionId,
+        // Add conversation history if provided
+        ...(body.conversationHistory && {
+          conversationHistory: body.conversationHistory
+        })
+      },
+      mode: 'standard',
+      stream: body.enableStreaming !== false
     }
 
-    const trimmedPrompt = prompt.trim()
-    if (!trimmedPrompt) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Prompt cannot be empty",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Initialize Gemini AI
-    const geminiApiKey = process.env.GEMINI_API_KEY
-    if (!geminiApiKey) {
-      throw new Error("GEMINI_API_KEY is not set.")
-    }
-    const genAI = new GoogleGenAI({
-      apiKey: geminiApiKey,
+    // Forward to unified chat endpoint
+    const response = await fetch(new URL("/api/chat/unified", req.url), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-deprecated": "true",
+        "x-deprecation-source": "/api/ai-stream"
+      },
+      body: JSON.stringify(unifiedRequest),
     })
 
-    // Convert conversation history to the correct format
-    const history = Array.isArray(conversationHistory)
-      ? conversationHistory.map((msg: any) => ({
-          role: msg.role === "assistant" ? "model" : "user",
-          parts: [{ text: String(msg.content || msg.parts?.[0]?.text || "") }],
-        }))
-      : []
+    // Return response with deprecation headers
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers: new Headers({
+        ...Object.fromEntries(response.headers.entries()),
+        "x-deprecated": "true",
+        "x-deprecation-note": "Use /api/chat/unified - this endpoint will be removed",
+        "x-deprecation-deadline": new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days
+      }) as any,
+    })
 
-    // Use optimized configuration with token limits
-    const optimizedConfig = createOptimizedConfig('chat', {
-      maxOutputTokens: 2048, // Reasonable limit for streaming
-      temperature: 0.7,
-    });
-
-    const response = await genAI.models.generateContentStream({
-      model: "gemini-2.5-flash",
-      config: optimizedConfig,
-      contents: [
-        ...history,
-        {
-          role: "user",
-          parts: [{ text: trimmedPrompt }],
-        },
-      ],
-    });
-    const supabase = getSupabaseStorage().getClient()
-
-    if (enableStreaming) {
-      // Streaming response
-      const encoder = new TextEncoder()
-
-      const stream = new ReadableStream({
-        async start(controller) {
-          try {
-            // Log AI request start
-            const channel = supabase.channel(`ai-stream-${sessionId || "default"}`)
-
-            await channel.send({
-              type: "broadcast",
-              event: "activity-update",
-              payload: {
-                id: `ai_request_${Date.now()}`,
-                type: "ai_request",
-                title: "Processing AI Request",
-                description: "Sending request to Gemini AI",
-                status: "in_progress",
-                timestamp: new Date().toISOString(),
-                details: [
-                  `Model: Gemini 2.5 Flash`,
-                  `Input length: ${trimmedPrompt.length} characters`,
-                  `History: ${history.length} messages`,
-                ],
-              },
-            })
-
-            let fullText = ""
-            let chunkCount = 0
-
-            for await (const chunk of response) {
-              const text = chunk.text
-              if (text) {
-                fullText += text
-                chunkCount++
-
-                // Log streaming chunk
-                await channel.send({
-                  type: "broadcast",
-                  event: "activity-update",
-                  payload: {
-                    id: `stream_chunk_${Date.now()}_${chunkCount}`,
-                    type: "stream_chunk",
-                    title: "AI Response Chunk",
-                    description: `Chunk ${chunkCount}: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`,
-                    status: "completed",
-                    timestamp: new Date().toISOString(),
-                    details: [`Chunk size: ${text.length} characters`, `Total so far: ${fullText.length} characters`],
-                  },
-                })
-
-                controller.enqueue(encoder.encode(`data: ${text}\n\n`))
-              }
-            }
-
-            // Broadcast final response
-            await channel.send({
-              type: "broadcast",
-              event: "ai-response",
-              payload: {
-                id: `msg-${Date.now()}`,
-                role: "assistant",
-                content: fullText,
-                timestamp: new Date().toISOString(),
-                sources: [],
-                audioData: null,
-              },
-            })
-
-            // Log completion
-            await channel.send({
-              type: "broadcast",
-              event: "activity-update",
-              payload: {
-                id: `ai_complete_${Date.now()}`,
-                type: "ai_stream",
-                title: "AI Response Complete",
-                description: `Generated ${fullText.length} characters in ${chunkCount} chunks`,
-                status: "completed",
-                timestamp: new Date().toISOString(),
-                details: [
-                  `Total length: ${fullText.length} characters`,
-                  `Chunks: ${chunkCount}`,
-                  `Model: Gemini 2.5 Flash`,
-                ],
-              },
-            })
-
-            controller.enqueue(encoder.encode("event: done\ndata: [DONE]\n\n"))
-            controller.close()
-          } catch (error) {
-    console.error('Streaming error', error)
-
-            // Log error
-            const channel = supabase.channel(`ai-stream-${sessionId || "default"}`)
-            await channel.send({
-              type: "broadcast",
-              event: "activity-update",
-              payload: {
-                id: `ai_stream_${Date.now()}`,
-                type: "ai_stream", // Use ai_stream instead of error
-                title: "AI Response Incomplete",
-                description: "Response could not be completed",
-                status: "completed", // Use completed instead of failed
-                timestamp: new Date().toISOString(),
-                details: [
-                  `Prompt length: ${trimmedPrompt.length}`,
-                  `History length: ${history.length}`,
-                ],
-              },
-            })
-
-            controller.error(error)
-          }
-        },
-      })
-
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      })
-    } else {
-      // Standard response
-      let fullText = ""
-      for await (const chunk of response) {
-        const text = chunk.text
-        if (text) {
-          fullText += text
-        }
+  } catch (error) {
+    console.error('Error in deprecated ai-stream proxy:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error in deprecated endpoint',
+      deprecation: {
+        message: 'This endpoint is deprecated',
+        replacement: '/api/chat/unified',
+        deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
       }
-
-      const channel = supabase.channel(`ai-standard-${sessionId || "default"}`)
-
-      const aiResponsePayload = {
-        id: `msg-${Date.now()}`,
-        role: "assistant",
-        content: fullText,
-        timestamp: new Date().toISOString(),
-        sources: [],
-        audioData: null,
-      }
-
-      await channel.send({
-        type: "broadcast",
-        event: "ai-response",
-        payload: aiResponsePayload,
-      })
-
-      return NextResponse.json({
-        success: true,
-        content: fullText,
-        length: fullText.length,
-        model: "gemini-2.5-flash",
-      })
-    }
-  } catch (error: unknown) {
-    console.error('Error in AI stream handler', error)
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? errorStack : undefined,
-      },
-      { status: 500 },
-    )
+    }, { status: 500 })
   }
 }
 
@@ -262,6 +90,8 @@ export async function OPTIONS() {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
+      "x-deprecated": "true",
+      "x-deprecation-note": "Use /api/chat/unified - this endpoint will be removed"
     },
   })
 }

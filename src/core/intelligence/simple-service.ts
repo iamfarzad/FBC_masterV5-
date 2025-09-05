@@ -34,13 +34,14 @@ export class SimpleIntelligenceService {
     name?: string
   }): Promise<ResearchResult> {
     // Simple mock research result - can be enhanced with actual research
+    const email = input.email || '';
     const company: CompanyContext = {
       name: 'Unknown Company',
-      domain: input.email.split('@')[1] || 'unknown.com'
+      domain: email.split('@')[1] || 'unknown.com'
     }
 
     const person: PersonContext = {
-      fullName: input.name || input.email.split('@')[0] || 'Unknown Person'
+      fullName: input.name || email.split('@')[0] || 'Unknown Person'
     }
 
     return {

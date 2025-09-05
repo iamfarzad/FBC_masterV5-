@@ -103,24 +103,57 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
               <DropdownMenuItem
                 onClick={async () => {
                   try {
-                    const res = await fetch('/api/export-summary', {
+                    const res = await fetch('/api/chat/unified', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ sessionId })
+                      body: JSON.stringify({
+                        messages: [{ role: 'user', content: 'Generate PDF summary', id: 'pdf_request', timestamp: new Date().toISOString(), type: 'text' }],
+                        context: { sessionId, capability: 'exportPdf', deliveryMethod: 'download' },
+                        mode: 'automation'
+                      })
                     })
+
                     if (!res.ok) throw new Error(String(res.status))
-                    const blob = await res.blob()
-                    const url = window.URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    const cd = res.headers.get('Content-Disposition') || ''
-                    const match = cd.match(/filename="?([^";]+)"?/i)
-                    a.href = url
-                    a.download = match?.[1] || 'FB-c_Summary.pdf'
-                    document.body.appendChild(a)
-                    a.click()
-                    a.remove()
-                    window.URL.revokeObjectURL(url)
-                    toast({ title: 'PDF ready', description: 'Summary downloaded.' })
+
+                    const reader = res.body?.getReader()
+                    if (!reader) throw new Error('No response stream')
+
+                    let accumulatedContent = ''
+                    const decoder = new TextDecoder()
+
+                    while (true) {
+                      const { done, value } = await reader.read()
+                      if (done) break
+
+                      const chunk = decoder.decode(value, { stream: true })
+                      const lines = chunk.split('\n')
+
+                      for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                          try {
+                            const data = JSON.parse(line.slice(6))
+                            if (data.metadata?.pdfData) {
+                              // Handle PDF download
+                              const pdfData = data.metadata.pdfData
+                              const filename = data.metadata.filename
+                              const blob = new Blob([Uint8Array.from(atob(pdfData), c => c.charCodeAt(0))], { type: 'application/pdf' })
+                              const url = window.URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = filename
+                              document.body.appendChild(a)
+                              a.click()
+                              a.remove()
+                              window.URL.revokeObjectURL(url)
+                              toast({ title: 'PDF ready', description: 'Summary downloaded.' })
+                              return
+                            }
+                          } catch (e) {
+                            // Continue processing
+                          }
+                        }
+                      }
+                    }
                   } catch (e) {
                     console.error('Export summary failed', e)
                     toast({ title: 'PDF failed', description: 'Could not generate the PDF.', variant: 'destructive' })
@@ -158,25 +191,58 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
               <DropdownMenuItem
                 onClick={async () => {
                   try {
-                    const res = await fetch('/api/export-summary', {
+                    const res = await fetch('/api/chat/unified', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ sessionId })
+                      body: JSON.stringify({
+                        messages: [{ role: 'user', content: 'Generate PDF summary', id: 'pdf_request', timestamp: new Date().toISOString(), type: 'text' }],
+                        context: { sessionId, capability: 'exportPdf', deliveryMethod: 'download' },
+                        mode: 'automation'
+                      })
                     })
+
                     if (!res.ok) throw new Error(String(res.status))
-                    const blob = await res.blob()
-                    const url = window.URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    const cd = res.headers.get('Content-Disposition') || ''
-                    const match = cd.match(/filename="?([^";]+)"?/i)
-                    a.href = url
-                    a.download = match?.[1] || 'FB-c_Summary.pdf'
-                    document.body.appendChild(a)
-                    a.click()
-                    a.remove()
-                    window.URL.revokeObjectURL(url)
+
+                    const reader = res.body?.getReader()
+                    if (!reader) throw new Error('No response stream')
+
+                    const decoder = new TextDecoder()
+
+                    while (true) {
+                      const { done, value } = await reader.read()
+                      if (done) break
+
+                      const chunk = decoder.decode(value, { stream: true })
+                      const lines = chunk.split('\n')
+
+                      for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                          try {
+                            const data = JSON.parse(line.slice(6))
+                            if (data.metadata?.pdfData) {
+                              const pdfData = data.metadata.pdfData
+                              const filename = data.metadata.filename
+                              const blob = new Blob([Uint8Array.from(atob(pdfData), c => c.charCodeAt(0))], { type: 'application/pdf' })
+                              const url = window.URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = filename
+                              document.body.appendChild(a)
+                              a.click()
+                              a.remove()
+                              window.URL.revokeObjectURL(url)
+                              toast({ title: 'PDF ready', description: 'Summary downloaded.' })
+                              return
+                            }
+                          } catch (e) {
+                            // Continue processing
+                          }
+                        }
+                      }
+                    }
                   } catch (e) {
                     console.error('Export summary failed', e)
+                    toast({ title: 'PDF failed', description: 'Could not generate the PDF.', variant: 'destructive' })
                   }
                 }}
                 className="gap-2"
@@ -207,20 +273,45 @@ export function SuggestedActions({ sessionId, stage = 'BACKGROUND_RESEARCH', onR
                 const toEmail = finishEmail.trim()
                 if (!toEmail) return
                 try {
-                  const gen = await fetch('/api/export-summary', {
+                  const res = await fetch('/api/chat/unified', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId })
+                    body: JSON.stringify({
+                      messages: [{ role: 'user', content: 'Send PDF summary via email', id: 'pdf_email_request', timestamp: new Date().toISOString(), type: 'text' }],
+                      context: { sessionId, capability: 'exportPdf', deliveryMethod: 'email', recipientEmail: toEmail },
+                      mode: 'automation'
+                    })
                   })
-                  if (!gen.ok) throw new Error(`export failed: ${gen.status}`)
-                  const res = await fetch('/api/send-pdf-summary', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, toEmail })
-                  })
-                  if (!res.ok) throw new Error(`send failed: ${res.status}`)
-                  setFinishOpen(false)
-                  toast({ title: 'Email sent', description: 'Summary was emailed to the recipient.' })
+
+                  if (!res.ok) throw new Error(`email failed: ${res.status}`)
+
+                  const reader = res.body?.getReader()
+                  if (!reader) throw new Error('No response stream')
+
+                  const decoder = new TextDecoder()
+
+                  while (true) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+
+                    const chunk = decoder.decode(value, { stream: true })
+                    const lines = chunk.split('\n')
+
+                    for (const line of lines) {
+                      if (line.startsWith('data: ')) {
+                        try {
+                          const data = JSON.parse(line.slice(6))
+                          if (data.id === 'pdf_email_sent') {
+                            setFinishOpen(false)
+                            toast({ title: 'Email sent', description: 'Summary was emailed to the recipient.' })
+                            return
+                          }
+                        } catch (e) {
+                          // Continue processing
+                        }
+                      }
+                    }
+                  }
                 } catch (e) {
     console.error('Email error', e)
                   toast({ title: 'Email failed', description: 'Could not send the email.', variant: 'destructive' })

@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { PDFDocument, StandardFonts, rgb, Color } from 'pdf-lib';
 import { GeminiTranslator } from './gemini-translator';
 

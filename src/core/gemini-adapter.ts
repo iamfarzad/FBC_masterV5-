@@ -33,14 +33,70 @@ export class GeminiAdapter {
     })
   }
 
-  async streamWithHistory(history: any[], prompt: string, model: GeminiModel = "gemini-2.5-flash") {
+  async streamWithHistory(history: any[], prompt: string, model: GeminiModel = "gemini-2.5-flash", systemInstruction?: string) {
+    const contents = systemInstruction
+      ? [
+          { role: "user", parts: [{ text: systemInstruction }] },
+          { role: "model", parts: [{ text: "I understand my role and will follow these instructions throughout our conversation." }] },
+          ...history,
+          { role: "user", parts: [{ text: prompt }] }
+        ]
+      : [
+          ...history,
+          { role: "user", parts: [{ text: prompt }] }
+        ]
+
     return this.client.models.generateContentStream({
       model,
-      contents: [
-        ...history,
-        { role: "user", parts: [{ text: prompt }] }
-      ]
+      contents
     })
+  }
+
+  async streamWithContext(history: any[], prompt: string, sessionId?: string, model: GeminiModel = "gemini-2.5-flash") {
+    // Generate context-aware system prompt inline
+    let userContext = '';
+
+    if (sessionId) {
+      try {
+        const { ContextStorage } = await import('./context/context-storage');
+        const contextStorage = new ContextStorage();
+        const ctx = await contextStorage.get(sessionId);
+
+        if (ctx) {
+          userContext = `
+  Context about this user:
+  ${JSON.stringify({
+    lead: {
+      email: ctx.email,
+      name: ctx.name
+    },
+    company: ctx.company_context,
+    person: ctx.person_context,
+    role: ctx.role,
+    roleConfidence: ctx.role_confidence
+  }, null, 2)}
+          `;
+        }
+      } catch (error) {
+        console.warn('Failed to load user context for system prompt:', error);
+      }
+    }
+
+    // Import and use the F.B/c personality model
+    const { generateFBCPersonalityPrompt } = await import('./personality/fbc-persona');
+
+    const personalityPrompt = generateFBCPersonalityPrompt(sessionId, userContext ? {
+      lead: {
+        email: userContext.email,
+        name: userContext.name
+      },
+      company: userContext.company_context,
+      person: userContext.person_context,
+      role: userContext.role,
+      roleConfidence: userContext.role_confidence
+    } : undefined);
+
+    return this.streamWithHistory(history, prompt, model, personalityPrompt);
   }
 
   async analyzeImage(base64: string, prompt: string, mimeType = 'image/jpeg', model: GeminiModel = 'gemini-2.5-flash') {

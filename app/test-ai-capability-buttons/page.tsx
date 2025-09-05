@@ -36,6 +36,60 @@ Try clicking any button to test the tool launching system!`
 
 export default function TestAICapabilityButtons() {
   const [lastTriggeredTool, setLastTriggeredTool] = useState<string | null>(null)
+  const [wsStatus, setWsStatus] = useState<string>('Not tested')
+  const [wsTestResult, setWsTestResult] = useState<string>('')
+
+  // WebSocket test function
+  const testWebSocket = () => {
+    setWsStatus('Testing...')
+    setWsTestResult('')
+
+    try {
+      const ws = new WebSocket('wss://fb-consulting-websocket.fly.dev')
+
+      ws.onopen = () => {
+        setWsStatus('✅ Connected')
+        console.log('✅ WebSocket connected to fly.io')
+
+        // Send test message
+        const testMessage = {
+          type: 'start',
+          payload: { languageCode: 'en-US', voiceName: 'Puck' }
+        }
+        ws.send(JSON.stringify(testMessage))
+        setWsTestResult('📤 Sent start message...')
+      }
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        console.log('📨 Received:', data)
+        setWsTestResult(`📨 Response: ${JSON.stringify(data, null, 2)}`)
+      }
+
+      ws.onerror = (error) => {
+        setWsStatus('❌ Error')
+        setWsTestResult(`❌ WebSocket error: ${error}`)
+        console.error('WebSocket error:', error)
+      }
+
+      ws.onclose = (event) => {
+        setWsStatus(`🔌 Closed (${event.code})`)
+        console.log('WebSocket closed:', event.code, event.reason)
+      }
+
+      // Auto-close after 10 seconds
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+      }, 10000)
+
+    } catch (error) {
+      setWsStatus('❌ Failed to create WebSocket')
+      setWsTestResult(`❌ Error: ${error}`)
+      console.error('WebSocket creation error:', error)
+    }
+  }
 
   // Test handler to see if buttons are working
   React.useEffect(() => {
@@ -101,7 +155,7 @@ export default function TestAICapabilityButtons() {
             </div>
 
             <div className="border-t pt-4">
-              <Button 
+              <Button
                 onClick={() => setLastTriggeredTool(null)}
                 variant="outline"
                 size="sm"
@@ -111,6 +165,41 @@ export default function TestAICapabilityButtons() {
               <span className="ml-4 text-sm text-muted-foreground">
                 Click any AI tool button above to test
               </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* WebSocket Connection Test */}
+        <Card>
+          <CardHeader>
+            <CardTitle>🔌 WebSocket Connection Test</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Test the WebSocket connection to your fly.io server. This verifies that V5 can connect to the V2 WebSocket server.
+            </p>
+
+            <div className="flex items-center gap-4">
+              <Button onClick={testWebSocket} variant="default">
+                Test WebSocket Connection
+              </Button>
+              <Badge variant={wsStatus.includes('✅') ? 'default' : wsStatus.includes('❌') ? 'destructive' : 'secondary'}>
+                {wsStatus}
+              </Badge>
+            </div>
+
+            {wsTestResult && (
+              <div className="rounded-lg border p-3 bg-muted/20">
+                <pre className="text-sm whitespace-pre-wrap font-mono">
+                  {wsTestResult}
+                </pre>
+              </div>
+            )}
+
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><strong>Testing:</strong> wss://fb-consulting-websocket.fly.dev</p>
+              <p><strong>Expected:</strong> Connection success + session_started response</p>
+              <p><strong>If failing:</strong> Check Vercel environment variables</p>
             </div>
           </CardContent>
         </Card>

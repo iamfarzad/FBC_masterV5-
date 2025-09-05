@@ -49,6 +49,232 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
     this.contextStorage = new ContextStorage()
   }
 
+  private async *handlePdfCapability(messages: UnifiedMessage[], context: UnifiedContext): AsyncIterable<UnifiedMessage> {
+    const sessionId = context.sessionId
+    const deliveryMethod = (context as any).deliveryMethod || 'download'
+    const recipientEmail = (context as any).recipientEmail
+
+    if (!sessionId) {
+      yield {
+        id: 'pdf_error',
+        role: 'assistant',
+        content: 'Session ID is required to generate PDF summary.',
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { mode: 'automation', capability: 'exportPdf', error: true }
+      }
+      return
+    }
+
+    try {
+      // Check consent/GDPR compliance
+      if (deliveryMethod === 'email') {
+        if (!recipientEmail) {
+          yield {
+            id: 'pdf_consent_required',
+            role: 'assistant',
+            content: 'Email delivery requires explicit consent and a recipient email address.',
+            timestamp: new Date(),
+            type: 'text',
+            metadata: { mode: 'automation', capability: 'exportPdf', requiresConsent: true }
+          }
+          return
+        }
+
+        // Check if user has consented to email communications
+        try {
+          const { data: consentData } = await supabase
+            .from('consent_records')
+            .select('consent_given, consent_type')
+            .eq('email', recipientEmail)
+            .eq('consent_type', 'email_communications')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
+          if (!consentData?.consent_given) {
+            yield {
+              id: 'pdf_gdpr_required',
+              role: 'assistant',
+              content: '⚠️ GDPR Compliance: I need your explicit consent to send emails containing personal data. Would you like me to request consent first?',
+              timestamp: new Date(),
+              type: 'text',
+              metadata: {
+                mode: 'automation',
+                capability: 'exportPdf',
+                requiresGDPRConsent: true,
+                recipientEmail
+              }
+            }
+            return
+          }
+        } catch (error) {
+          console.warn('Failed to check GDPR consent:', error)
+          // Continue with generation but log the issue
+        }
+      }
+
+      // Generate PDF using existing logic - server-side only
+      const { generatePdfWithPuppeteer, generatePdfPath } = await import('../pdf-generator-puppeteer')
+      const { getSupabaseService } = await import('../lib/supabase')
+
+      const supabase = getSupabaseService()
+
+      // Get lead information
+      let leadInfo = { name: 'Unknown', email: recipientEmail || 'unknown@example.com' }
+      let leadResearch = null
+
+      if (recipientEmail) {
+        const { data: leadData } = await supabase
+          .from('leads')
+          .select('name, email, company, role')
+          .eq('email', recipientEmail)
+          .single()
+
+        if (leadData) {
+          leadInfo = leadData
+        }
+
+        // Get lead research data
+        const { data: researchData } = await supabase
+          .from('lead_summaries')
+          .select('conversation_summary, consultant_brief, lead_score, ai_capabilities_shown')
+          .eq('email', recipientEmail)
+          .single()
+
+        if (researchData) {
+          leadResearch = researchData
+        }
+      }
+
+      // Get conversation history
+      const { data: activities } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('metadata->sessionId', sessionId)
+        .order('created_at', { ascending: true })
+
+      const conversationHistory = activities?.map((activity: any) => ({
+        role: (activity.type === 'ai_request' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: String(activity.description || activity.title),
+        timestamp: String(activity.created_at)
+      })) || []
+
+      const summaryData = {
+        leadInfo,
+        conversationHistory,
+        leadResearch: leadResearch || undefined,
+        sessionId
+      }
+
+      // Generate PDF
+      const pdfPath = generatePdfPath(sessionId, leadInfo.name)
+      await generatePdfWithPuppeteer(summaryData as any, pdfPath, 'client', 'en')
+      const fs = await import('fs')
+      const pdfBuffer = fs.readFileSync(pdfPath)
+      fs.unlinkSync(pdfPath)
+
+      if (deliveryMethod === 'email' && process.env.RESEND_API_KEY) {
+        // Email delivery
+        const { Resend } = await import('resend')
+        const resend = new Resend(process.env.RESEND_API_KEY)
+        const from = process.env.RESEND_FROM_EMAIL || 'F.B/c <noreply@fbclab.ai>'
+
+        await resend.emails.send({
+          from,
+          to: [recipientEmail],
+          subject: 'Your F.B/c AI Summary',
+          html: `<p>Hi ${leadInfo.name || ''},</p><p>Your session summary is attached. If you'd like, book a workshop or a consulting call and we'll turn this into a concrete plan.</p>`,
+          attachments: [{
+            filename: `FB-c_Summary_${leadInfo.name.replace(/\s+/g, '_')}.pdf`,
+            content: pdfBuffer.toString('base64'),
+            contentType: 'application/pdf'
+          }]
+        })
+
+        yield {
+          id: 'pdf_email_sent',
+          role: 'assistant',
+          content: `📧 I've sent you a professional PDF summary to ${recipientEmail}. The email includes your conversation highlights, lead research insights, and recommended next steps.\n\nWould you like me to also prepare an ROI projection or schedule a discovery call?`,
+          timestamp: new Date(),
+          type: 'text',
+          metadata: {
+            mode: 'automation',
+            capability: 'exportPdf',
+            deliveryMethod: 'email',
+            success: true,
+            followUpSuggestions: [
+              { id: 'roi_calculation', label: 'Calculate ROI Projection', capability: 'roi' },
+              { id: 'schedule_call', label: 'Book Discovery Call', capability: 'meeting' },
+              { id: 'workshop_booking', label: 'Schedule Workshop', capability: 'meeting' }
+            ]
+          }
+        }
+      } else {
+        // Direct download
+        yield {
+          id: 'pdf_download_ready',
+          role: 'assistant',
+          content: `📄 Your professional PDF summary is ready! I've generated a comprehensive document including:\n\n• Conversation highlights\n• Lead research insights\n• Consultant recommendations\n• Next steps\n\nThe download should start automatically. Would you like me to help with any of the recommended next steps?`,
+          timestamp: new Date(),
+          type: 'text',
+          metadata: {
+            mode: 'automation',
+            capability: 'exportPdf',
+            deliveryMethod: 'download',
+            pdfData: pdfBuffer.toString('base64'),
+            filename: `FB-c_Summary_${leadInfo.name.replace(/\s+/g, '_')}.pdf`,
+            success: true,
+            followUpSuggestions: [
+              { id: 'roi_calculation', label: 'Calculate ROI Projection', capability: 'roi' },
+              { id: 'schedule_call', label: 'Book Discovery Call', capability: 'meeting' },
+              { id: 'workshop_booking', label: 'Schedule Workshop', capability: 'meeting' }
+            ]
+          }
+        }
+      }
+
+      // Record capability usage
+      const { recordCapabilityUsed } = await import('../context/capabilities')
+      try {
+        await recordCapabilityUsed(sessionId, 'exportPdf', { fileSize: pdfBuffer.length, deliveryMethod })
+      } catch (error) {
+        console.warn('Failed to record PDF capability usage:', error)
+      }
+
+      // Log activity
+      const { logServerActivity } = await import('../server-activity-logger')
+      try {
+        await logServerActivity({
+          type: 'export_summary',
+          title: 'PDF Summary Generated via Unified Pipeline',
+          description: `Generated PDF summary for ${leadInfo.name} via unified chat pipeline`,
+          status: 'completed',
+          metadata: {
+            sessionId,
+            deliveryMethod,
+            recipientEmail,
+            fileSize: pdfBuffer.length,
+            format: 'pdf'
+          }
+        })
+      } catch (error) {
+        console.warn('Failed to log PDF generation activity:', error)
+      }
+
+    } catch (error) {
+      console.error('PDF generation error:', error)
+      yield {
+        id: 'pdf_error',
+        role: 'assistant',
+        content: `❌ I encountered an error while generating your PDF summary: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact support.`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { mode: 'automation', capability: 'exportPdf', error: true }
+      }
+    }
+  }
+
   async *generate(input: {
     messages: UnifiedMessage[]
     context?: UnifiedContext
@@ -115,6 +341,12 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
       // INTEGRATE INTELLIGENCE CONTEXT: Add intelligence data to multimodal content
       if (context?.intelligenceContext) {
         multimodalContent += `\n\nINTELLIGENCE CONTEXT:\n${context.intelligenceContext}`
+      }
+
+      // Handle PDF capability if requested (server-side only)
+      if (context?.capability === 'exportPdf' && typeof window === 'undefined') {
+        yield* this.handlePdfCapability(messages, context)
+        return
       }
 
       // Enhance messages with context for system prompt

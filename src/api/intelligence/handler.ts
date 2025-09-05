@@ -40,11 +40,13 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
       // Action logged
 
-      const result = await intelligenceService.researchLead(email, name, companyUrl)
+      // Use the actual LeadResearchService instead of the simple mock
+      const { LeadResearchService } = await import('../../core/intelligence/lead-research')
+      const leadResearchService = new LeadResearchService()
+      const result = await leadResearchService.researchLead({ email, name, companyUrl, sessionId })
 
       // Store in context if sessionId provided
       if (sessionId) {
-        // From src/api/intelligence/handler.ts to src/core/** is TWO levels up
         const { ContextStorage } = await import('../../core/context/context-storage')
         const contextStorage = new ContextStorage()
 

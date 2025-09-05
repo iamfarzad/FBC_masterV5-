@@ -220,7 +220,7 @@ export const AI_CAPABILITIES: Record<string, AICapability> = {
       'Export our conversation',
       'Create a report'
     ],
-    apiEndpoint: '/api/export-summary',
+    apiEndpoint: '/api/chat/unified',
     requirements: { sessionId: true }
   },
 

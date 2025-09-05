@@ -27,8 +27,17 @@ export function createMockProvider(): TextProvider {
       const lastMessage = messages[messages.length - 1]?.content || 'Hello'
       // Action logged
 
-      // Simulate realistic streaming response
-      const response = `Thank you for your message: "${lastMessage}". This is a mock response for development. I'm here to help you with your business analysis and automation strategies.`
+      // Use F.B/c system prompt for mock responses
+      const systemPrompt = getSystemPrompt(messages)
+      const isQuestionAboutIdentity = lastMessage.toLowerCase().includes('who are you') ||
+                                      lastMessage.toLowerCase().includes('what are you') ||
+                                      lastMessage.toLowerCase().includes('f.b/c') ||
+                                      lastMessage.toLowerCase().includes('farzad')
+
+      // Simulate realistic streaming response with F.B/c identity
+      const response = isQuestionAboutIdentity
+        ? `I am F.B/c, an advanced AI business consultant and automation specialist. I help entrepreneurs and businesses optimize their operations and increase profitability through data-driven strategies and intelligent automation. I have expertise in business analysis, financial modeling, process automation, and AI implementation.`
+        : `Thank you for your message: "${lastMessage}". As F.B/c, I'm here to help you with your business analysis and automation strategies.`
       // Action logged
 
       const words = response.split(' ')
@@ -172,6 +181,50 @@ class ErrorRecoveryManager {
 }
 
 const errorRecoveryManager = new ErrorRecoveryManager()
+
+// F.B/c AI Identity Prompt
+export const FBC_AI_IDENTITY = `
+You are F.B/c AI, a business conversational system created by Farzad Bayat.
+
+Your role is to unify text, voice, webcam, and screen into one context-aware assistant.
+`;
+
+// Context-aware system prompt generator
+async function getContextAwareSystemPrompt(sessionId?: string): Promise<string> {
+  let userContext = '';
+
+  if (sessionId) {
+    try {
+      const { ContextStorage } = await import('../../core/context/context-storage');
+      const contextStorage = new ContextStorage();
+      const ctx = await contextStorage.get(sessionId);
+
+      if (ctx) {
+        userContext = `
+  Context about this user:
+  ${JSON.stringify({
+    lead: {
+      email: ctx.email,
+      name: ctx.name
+    },
+    company: ctx.company_context,
+    person: ctx.person_context,
+    role: ctx.role,
+    roleConfidence: ctx.role_confidence
+  }, null, 2)}
+        `;
+      }
+    } catch (error) {
+      console.warn('Failed to load user context for system prompt:', error);
+    }
+  }
+
+  return `
+  You are F.B/c AI, created by Farzad Bayat.
+  Always answer as a business conversational partner.
+  ${userContext}
+  `;
+}
 
 // F.B/c System Prompt Generator
 function getSystemPrompt(messages: { role: string; content: string }[]): string {
@@ -326,19 +379,30 @@ function createGeminiProvider(): TextProvider {
             throw new Error('GEMINI_API_KEY environment variable is not set')
           }
 
-          // Note: System instructions not yet supported in adapter, using basic text generation
+          // Extract session data from messages
+          const firstMessage = messages[0]
+          const sessionData = (firstMessage as any)?.sessionData || {}
+          const sessionId = sessionData.sessionId || (firstMessage as any)?.sessionId
+
+          // Generate system prompt for F.B/c identity and capabilities
           const systemPrompt = getSystemPrompt(messages)
-          const fullPrompt = `${systemPrompt}\n\n${messages[messages.length - 1]?.content || ''}`
 
-          // Build conversation history for adapter
-          const conversationHistory = messages.slice(0, -1).map(msg => ({
-            role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
-          }))
+          // Build conversation history for adapter (excluding system messages)
+          const conversationHistory = messages
+            .filter(msg => msg.role !== 'system') // Filter out system messages
+            .slice(0, -1) // Exclude the last message
+            .map(msg => ({
+              role: msg.role === 'user' ? 'user' : 'model',
+              parts: [{ text: msg.content }]
+            }))
 
-          // Send the last message with conversation history
+          // Send the last message with conversation history and system instruction
           const lastMessage = messages[messages.length - 1]?.content || 'Hello'
-          const result = await gemini.streamWithHistory(conversationHistory, lastMessage, 'gemini-2.5-flash')
+
+          // Use context-aware streaming if session ID is available
+          const result = sessionId
+            ? await gemini.streamWithContext(conversationHistory, lastMessage, sessionId, 'gemini-2.5-flash')
+            : await gemini.streamWithHistory(conversationHistory, lastMessage, 'gemini-2.5-flash', systemPrompt)
 
           // Collect the streaming response
           let fullResponse = ''
