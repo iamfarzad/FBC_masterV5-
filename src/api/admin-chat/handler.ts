@@ -2,7 +2,7 @@ import { handleChat } from '../chat/handler'
 import type { UnifiedMessage, UnifiedChatRequest } from '@/src/core/chat/unified-types'
 
 // ⬇️ imports at top (NodeNext)
-import type { ChatRequest, ChatMessage } from '@/src/core/types/chat.js';
+// Restricted imports removed - using unified types instead
 
 // ⬇️ if there's a random global `socket`, guard it or remove:
 const socket: unknown = (globalThis as any)?.socket ?? undefined;

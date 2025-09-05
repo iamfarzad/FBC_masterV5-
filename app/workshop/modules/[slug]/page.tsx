@@ -17,7 +17,7 @@ export default function WorkshopModulePage() {
   const params = useParams()
   const slug = params?.slug as string
   const router = useRouter()
-  const module = useMemo(() => getModuleBySlug(slug), [slug])
+  const selectedModule = useMemo(() => getModuleBySlug(slug), [slug])
   const { completedModules, completeModule } = useModuleProgress()
 
   const [redirect, setRedirect] = useState(false)
@@ -29,7 +29,7 @@ export default function WorkshopModulePage() {
   const [quizSubmitted, setQuizSubmitted] = useState(false)
 
   useEffect(() => {
-    if (!module) { setRedirect(true); return }
+    if (!selectedModule) { setRedirect(true); return }
     setIsCompleted(completedModules.includes(slug))
     const modules = getAllModules()
     const idx = modules.findIndex(m => m.slug === slug)
@@ -38,11 +38,11 @@ export default function WorkshopModulePage() {
     } else {
       setNextModule(null)
     }
-  }, [module, slug, completedModules])
+  }, [selectedModule, slug, completedModules])
 
   useEffect(() => { if (redirect) router.push('/workshop/modules') }, [redirect, router])
 
-  if (!module || redirect) return null
+  if (!selectedModule || redirect) return null
 
   const handleComplete = () => {
     if (isCompleted) return
@@ -56,12 +56,12 @@ export default function WorkshopModulePage() {
       }
     }
     // setShowConfetti(true) // Confetti removed
-    completeModule(slug, { title: module.title, phase: module.phase })
+    completeModule(slug, { title: selectedModule.title, phase: selectedModule.phase })
     try {
       fetch('/api/intelligence/education', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ moduleId: slug, stepId: 'quiz', xp: 30, moduleTitle: module.title })
+        body: JSON.stringify({ moduleId: slug, stepId: 'quiz', xp: 30, moduleTitle: selectedModule.title })
       }).catch(() => {})
     } catch {}
     setIsCompleted(true)
@@ -80,8 +80,8 @@ export default function WorkshopModulePage() {
               </Link>
             </Button>
             <div>
-              <h1 className="text-lg font-medium">{module.title}</h1>
-              <p className="text-xs text-muted-foreground">Phase {module.phase}</p>
+              <h1 className="text-lg font-medium">{selectedModule.title}</h1>
+              <p className="text-xs text-muted-foreground">Phase {selectedModule.phase}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function WorkshopModulePage() {
       </div>
 
       <div className="pt-16">
-        <ModuleRenderer module={module} />
+        <ModuleRenderer module={selectedModule} />
       </div>
 
       {hasQuizFor(slug) && (
@@ -142,13 +142,13 @@ export default function WorkshopModulePage() {
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">🎉 Module Completed! 🎉</DialogTitle>
             <DialogDescription className="text-center">
-              Great work. You completed {module.title}.
+              Great work. You completed {selectedModule.title}.
             </DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <div className="bg-primary/5 mb-4 rounded-lg border p-4">
               <p className="mb-2 text-center font-medium">Achievement Unlocked</p>
-              <p className="text-center text-sm text-muted-foreground">{module.title} Master</p>
+              <p className="text-center text-sm text-muted-foreground">{selectedModule.title} Master</p>
             </div>
           </div>
           <DialogFooter className="flex justify-center gap-2 sm:justify-center">

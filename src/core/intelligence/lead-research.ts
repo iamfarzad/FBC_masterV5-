@@ -308,8 +308,8 @@ Be thorough and accurate. If information is not available, use null for that fie
     if (jsonMatch) {
       const researchData = JSON.parse(jsonMatch[0])
       try {
-        const { normalizeCompany } = await import('./providers/enrich/company-normalizer.js')
-        const { normalizePerson } = await import('./providers/enrich/person-normalizer.js')
+        const { normalizeCompany } = await import('./providers/enrich/company-normalizer')
+        const { normalizePerson } = await import('./providers/enrich/person-normalizer')
         const nc = normalizeCompany({ name: domain.split('.')[0] ?? '', domain })
         const np = normalizePerson({ fullName: researchData?.person?.fullName, company: nc.name })
         return {

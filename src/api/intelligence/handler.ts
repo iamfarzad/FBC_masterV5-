@@ -1,6 +1,6 @@
 import { z } from 'zod';
 // REMOVE broken named import; use namespace with .js
-import * as Intelligence from '@/src/core/intelligence/index.js';
+import * as Intelligence from '@/src/core/intelligence/index';
 
 export const sessionInitSchema = z.object({
   sessionId: z.string().optional(),
@@ -9,7 +9,6 @@ export const sessionInitSchema = z.object({
 });
 
 // tolerate both shapes at runtime without typing explosions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const intelligenceService: any =
   (Intelligence as any).intelligenceService ??
   (Intelligence as any).service ??
@@ -46,7 +45,7 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
       // Store in context if sessionId provided
       if (sessionId) {
         // From src/api/intelligence/handler.ts to src/core/** is TWO levels up
-        const { ContextStorage } = await import('../../core/context/context-storage.js')
+        const { ContextStorage } = await import('../../core/context/context-storage')
         const contextStorage = new ContextStorage()
 
         await contextStorage.update(sessionId, {
@@ -58,8 +57,8 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
         // Optional: store embeddings for memory when enabled
         if (process.env.EMBEDDINGS_ENABLED === 'true') {
-          const { embedTexts } = await import('../../core/embeddings/gemini.js')
-          const { upsertEmbeddings } = await import('../../core/embeddings/query.js')
+          const { embedTexts } = await import('../../core/embeddings/gemini')
+          const { upsertEmbeddings } = await import('../../core/embeddings/query')
 
           const texts: string[] = []
           if (result.company?.summary) texts.push(String(result.company.summary))

@@ -320,7 +320,7 @@ function createGeminiProvider(): TextProvider {
 
         // Execute with retry logic
         const result = await errorRecoveryManager.executeWithRetry(async () => {
-          const { gemini } = await import('@/src/core/gemini-adapter.js')
+          const { gemini } = await import('@/src/core/gemini-adapter')
 
           if (!process.env.GEMINI_API_KEY) {
             throw new Error('GEMINI_API_KEY environment variable is not set')

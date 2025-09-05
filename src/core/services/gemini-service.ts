@@ -12,7 +12,7 @@ import { enforceBudgetAndLog } from '@/src/core/token-usage-logger'
 import { checkDemoAccess, recordDemoUsage, DemoFeature } from '@/src/core/monitoring/budget'
 import { getSupabaseServer, getSupabaseService } from '@/src/lib/supabase'
 import { logger } from '@/src/lib/logger'
-import { omitUndefined } from '../utils/safe.js'
+import { omitUndefined } from '../utils/safe'
 
 export interface GeminiServiceOptions {
   sessionId?: string

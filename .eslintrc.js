@@ -3,7 +3,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-explicit-any': 'off', // Allow explicit any types where needed
     '@typescript-eslint/no-empty-interface': 'off', // Allow empty interfaces for future extension
-    'react/no-unescaped-entities': 'off' // Temporarily allow unescaped entities
+    'react/no-unescaped-entities': 'off', // Temporarily allow unescaped entities
     'no-restricted-imports': [
       'error',
       {

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 // Enable ZodError.errors -> .issues compatibility shim
-import '../../polyfills/zod-errors-compat'
+import '../polyfills/zod-errors-compat'
 
 // ============================================================================
 // CHAT VALIDATION

@@ -326,8 +326,8 @@ export function WorkshopPanel() {
 
   function Modules() {
     if (activeModuleSlug) {
-      const module = getModuleBySlug(activeModuleSlug)
-      if (!module) return <div className="text-muted-foreground">Module not found.</div>
+      const selectedModule = getModuleBySlug(activeModuleSlug)
+      if (!selectedModule) return <div className="text-muted-foreground">Module not found.</div>
       const questions: QuizQuestion[] = MODULE_QUIZZES[activeModuleSlug] || []
       const allCorrect = questions.length === 0 || questions.every(q => quizAnswers[q.id] === q.correctKey)
       const isCompleted = completedModules.includes(activeModuleSlug)
@@ -335,8 +335,8 @@ export function WorkshopPanel() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-semibold">{module.title}</h2>
-              <div className="text-sm text-muted-foreground">Phase {module.phase}</div>
+              <h2 className="text-2xl font-semibold">{selectedModule.title}</h2>
+              <div className="text-sm text-muted-foreground">Phase {selectedModule.phase}</div>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={closeModule}>Back</Button>
@@ -349,14 +349,14 @@ export function WorkshopPanel() {
                   try {
                     fetch('/api/intelligence/education', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ moduleId: activeModuleSlug, stepId: 'quiz', xp: 30, moduleTitle: module.title })
+                      body: JSON.stringify({ moduleId: activeModuleSlug, stepId: 'quiz', xp: 30, moduleTitle: selectedModule.title })
                     }).catch(() => {})
                   } catch {}
                 }}
               >{isCompleted ? 'Completed' : 'Mark as Complete'}</Button>
             </div>
           </div>
-          <ModuleRenderer module={module} />
+          <ModuleRenderer module={selectedModule} />
           {hasQuizFor(activeModuleSlug) && (
             <Card>
               <CardHeader><CardTitle className="text-lg">Quick Check</CardTitle></CardHeader>

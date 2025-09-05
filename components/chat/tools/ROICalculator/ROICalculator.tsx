@@ -11,7 +11,7 @@ import { markCapabilityUsed } from "@/components/experience/progress-tracker"
 import type { ROICalculatorProps, ROICalculationResult, WizardStep } from "./ROICalculator.types"
 import type { ROIResultPayload } from "@/src/core/chat"
 // Import types from correct location
-import type { UnifiedMessage } from '@/src/core/chat/unified-types.js'
+import type { UnifiedMessage } from '@/src/core/chat/unified-types'
 type ChatMessage = UnifiedMessage;
 
 // Using ROIResultPayload from @/src/core/chat

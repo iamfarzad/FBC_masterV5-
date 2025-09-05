@@ -54,7 +54,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Mark session as inactive (soft delete)
-    const { getSupabaseService } = await import('@/src/lib/supabase.js')
+    const { getSupabaseService } = await import('@/src/lib/supabase')
     const supabase = getSupabaseService()
     await supabase
       .schema('admin')

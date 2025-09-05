@@ -1,5 +1,5 @@
 // components/chat/types.ts
-import type { UnifiedMessage } from '@/src/core/chat/unified-types.js';
+import type { UnifiedMessage } from '@/src/core/chat/unified-types';
 
 // business content in messages can be a plain string or a structured block
 export type BusinessContent =

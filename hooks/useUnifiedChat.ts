@@ -15,7 +15,7 @@ import {
 } from '@/src/core/chat/unified-types'
 import { unifiedStreamingService } from '@/src/core/streaming/unified-stream'
 import { unifiedErrorHandler } from '@/src/core/chat/unified-error-handler'
-import { asString } from '@/src/core/utils/safe.js'
+import { asString } from '@/src/core/utils/safe'
 
 // helper
 function toError(e: unknown): Error {
