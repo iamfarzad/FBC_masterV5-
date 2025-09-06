@@ -10,7 +10,7 @@ export interface UnifiedMessage {
   content: string
   timestamp: Date
   metadata?: Record<string, unknown>
-  type?: 'text' | 'tool' | 'multimodal'
+  type?: 'text' | 'tool' | 'multimodal' | 'meta'
 }
 
 // Chat session types

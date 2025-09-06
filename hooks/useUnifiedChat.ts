@@ -156,11 +156,19 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       // Parse streaming response
       let assistantMessage: UnifiedMessage | null = null
       let chunkCount = 0
+      let metaReqId: string | undefined
+
       for await (const message of unifiedStreamingService.parseSSEStream(response)) {
         chunkCount++
-        if (chunkCount === 1) {
-          console.log('[UNIFIED]['+reqId+'] first-chunk')
+
+        // Handle meta event for reqId (works around Vercel header stripping)
+        if (message.type === 'meta' && message.metadata?.reqId && !metaReqId) {
+          metaReqId = String(message.metadata.reqId)
+          console.log('[UNIFIED]['+metaReqId+'] first-chunk')
         }
+
+        // Skip meta events in normal processing
+        if (message.type === 'meta') continue
         if (message.role === 'assistant') {
           if (!assistantMessage) {
             // Create new assistant message

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     // Request correlation for debugging
     const reqId = req.headers.get('x-request-id') || (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
     const startTime = Date.now()
+    console.log('[UNIFIED_ROUTE] Called with reqId:', reqId)
 
     const body = await req.json()
 
@@ -106,7 +107,13 @@ export async function POST(req: NextRequest) {
       // Log completion for streaming
       console.log('[UNIFIED]', { reqId, phase: 'end', tokensOut: 'streaming', ms: Date.now() - startTime })
 
-      // Return streaming response
+      // Return streaming response with meta event for reqId
+      console.log('[UNIFIED_ROUTE] Returning streaming response with reqId in payload:', reqId)
+      console.log('[UNIFIED_ROUTE] Headers being sent:', {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'x-fbc-endpoint': 'unified',
+        'x-request-id': reqId
+      })
       return unifiedStreamingService.streamToSSE(messageStream, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -115,7 +122,8 @@ export async function POST(req: NextRequest) {
           'X-Unified-Chat': 'true',
           'X-Chat-Mode': chatMode,
           'X-Session-Id': chatContext?.sessionId || 'anonymous'
-        }
+        },
+        reqId // Pass reqId to streaming service for meta event
       })
     } else {
       // Collect all messages for non-streaming response

@@ -7,6 +7,7 @@ import { UnifiedMessage } from '../chat/unified-types'
 
 export interface StreamingOptions {
   headers?: Record<string, string>
+  reqId?: string
   onError?: (error: Error) => void
   onComplete?: () => void
 }
@@ -25,6 +26,13 @@ export class UnifiedStreamingService {
       async start(controller) {
         try {
           let messageCount = 0
+
+          // Send meta event with reqId first (works around Vercel header stripping)
+          if (options.reqId) {
+            const metaEvent = `event: meta\ndata: ${JSON.stringify({ reqId: options.reqId, endpoint: 'unified' })}\n\n`
+            console.log('[STREAMING_SERVICE] Sending meta event:', metaEvent.trim())
+            controller.enqueue(encoder.encode(metaEvent))
+          }
 
           for await (const message of messageStream) {
             messageCount++

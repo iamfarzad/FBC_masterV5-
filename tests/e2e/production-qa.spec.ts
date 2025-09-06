@@ -17,6 +17,17 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const unifiedHits: string[] = [];
     const legacyHits: string[] = [];
     let unifiedRequestId: string = '';
+    const consoleLogs: string[] = [];
+
+    // Listen for console logs to capture first-chunk
+    page.on('console', msg => {
+      const text = msg.text();
+      consoleLogs.push(text);
+      if (text.includes('[UNIFIED]') && text.includes('first-chunk')) {
+        const match = text.match(/\[UNIFIED\]\[([^\]]+)\] first-chunk/);
+        if (match && match[1]) unifiedRequestId = match[1];
+      }
+    });
 
     await context.route('**/*', async route => {
       const url = route.request().url();
@@ -30,15 +41,11 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
         // Assert server behavior
         expect(response.status()).toBe(200);
-        expect(responseHeaders['x-fbc-endpoint']).toBe('unified');
-        expect(responseHeaders['x-request-id']).toBeDefined();
 
-        // Capture the request ID from response headers
-        unifiedRequestId = responseHeaders['x-request-id'] || 'no-request-id';
-
-        // For streaming, check for data chunks
+        // For streaming, check for data chunks and meta event
         if (responseHeaders['content-type']?.includes('text/event-stream')) {
           expect(responseBody.length).toBeGreaterThan(0);
+          expect(responseBody).toContain('event: meta');
         }
 
         route.fulfill({
@@ -58,8 +65,8 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await prompt.fill('who are you?');
     await page.keyboard.press('Enter');
 
-    // Wait for the AI message to render - look for any element containing F.B/c
-    const aiMsg = page.locator('[data-testid*="message"], .message, .chat-message').filter({ hasText: /F\.B\/c|Farzad Bayat/ }).first();
+    // Wait for the AI message to render - use specific data-testid
+    const aiMsg = page.locator('[data-testid^="message-"]').filter({ hasText: /F\.B\/c|Farzad Bayat/ }).first();
     await expect(aiMsg).toBeVisible({ timeout: 30000 });
 
     const text = (await aiMsg.textContent()) || '';
@@ -72,12 +79,16 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     // Make sure no legacy endpoints were hit
     expect(legacyHits.length).toBe(0);
 
+    // Wait for first-chunk log to capture reqId
+    await expect.poll(() => consoleLogs.find(x => x.includes('[UNIFIED]') && x.includes('first-chunk')), { timeout: 15000 }).not.toBeUndefined();
+    console.log('UNIFIED_REQID=' + unifiedRequestId);
+
     // Test intelligence context
     await prompt.fill('who is Farzad Bayat?');
     await page.keyboard.press('Enter');
 
     // Wait for context response
-    const contextMsg = page.locator('[data-testid*="message"], .message, .chat-message').filter({ hasText: /Farzad|created/i }).last();
+    const contextMsg = page.locator('[data-testid^="message-"]').filter({ hasText: /Farzad|created/i }).last();
     await expect(contextMsg).toBeVisible({ timeout: 30000 });
 
     // Final guards - these will fail the test if there were errors
@@ -110,7 +121,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await page.keyboard.press('Enter');
 
     // Wait for response - look for ROI-related content or tool activation
-    const response = page.locator('[data-testid*="message"], .message, .chat-message').filter({
+    const response = page.locator('[data-testid^="message-"]').filter({
       hasText: /ROI|calculator|efficiency|cost/i
     }).first();
 
@@ -194,7 +205,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
       await page.keyboard.press('Enter');
 
       // Wait for analysis response
-      const response = page.locator('[data-testid*="message"], .message, .chat-message').filter({
+      const response = page.locator('[data-testid^="message-"]').filter({
         hasText: /image|analyze|picture/i
       }).first();
 
@@ -222,13 +233,13 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await page.keyboard.press('Enter');
 
     // Wait for first response
-    await expect(page.locator('[data-testid*="message"], .message, .chat-message').filter({ hasText: /automation/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /automation/i })).toBeVisible({ timeout: 30000 });
 
     await prompt.fill('Can you help me calculate ROI for my project?');
     await page.keyboard.press('Enter');
 
     // Wait for second response
-    await expect(page.locator('[data-testid*="message"], .message, .chat-message').filter({ hasText: /ROI|calculate/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /ROI|calculate/i })).toBeVisible({ timeout: 30000 });
 
     // Look for PDF export button
     const pdfButton = page.getByRole('button', { name: /export|summary|pdf|download/i }).first();
@@ -269,7 +280,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await page.keyboard.press('Enter');
 
     // Wait for response - should handle gracefully
-    const response = page.locator('[data-testid*="message"], .message, .chat-message').last();
+    const response = page.locator('[data-testid^="message-"]').last();
     await expect(response).toBeVisible({ timeout: 30000 });
 
     const text = (await response.textContent()) || '';
