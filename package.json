@@ -164,9 +164,6 @@
     "youtube-transcript": "^1.2.1",
     "zod": "^4.1.5"
   },
-  "jest": {
-    "testPathIgnorePatterns": ["<rootDir>/tests/e2e/"]
-  },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
     "@testing-library/jest-dom": "^6.6.3",
