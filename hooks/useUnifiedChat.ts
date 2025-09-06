@@ -77,8 +77,8 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     if (!content.trim() || isLoading || isStreaming) return
 
     // Request correlation for debugging
-    const requestId = crypto.randomUUID()
-    console.log('[UNIFIED][reqId]', requestId, 'sending')
+    const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+    console.log('[UNIFIED]['+reqId+'] sending')
 
     let timeoutId: NodeJS.Timeout | undefined
 
@@ -97,7 +97,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       // Timeout guard (30s)
       timeoutId = setTimeout(() => {
         controller.abort()
-        console.log('[UNIFIED][reqId]', requestId, 'timeout after 30s')
+        console.log('[UNIFIED]['+reqId+'] timeout after 30s')
         setLastError(new Error('Request timeout after 30 seconds'))
         setIsLoading(false)
         setIsStreaming(false)
@@ -129,7 +129,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-request-id': requestId,
+          'x-request-id': reqId,
           'x-unified-chat': 'true',
           'x-session-id': sessionRef.current || 'anonymous',
           'x-chat-mode': request.mode as string
@@ -149,7 +149,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
         throw new Error('No response body')
       }
 
-      console.log('[UNIFIED][reqId]', requestId, 'received')
+      console.log('[UNIFIED]['+reqId+'] received')
       setIsLoading(false)
       setIsStreaming(true)
 
@@ -159,7 +159,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       for await (const message of unifiedStreamingService.parseSSEStream(response)) {
         chunkCount++
         if (chunkCount === 1) {
-          console.log('[UNIFIED][reqId]', requestId, 'first-chunk')
+          console.log('[UNIFIED]['+reqId+'] first-chunk')
         }
         if (message.role === 'assistant') {
           if (!assistantMessage) {

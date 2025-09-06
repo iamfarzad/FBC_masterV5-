@@ -25,7 +25,7 @@ export const fetchCache = 'force-no-store'
 export async function POST(req: NextRequest) {
   try {
     // Request correlation for debugging
-    const requestId = req.headers.get('x-request-id') || crypto.randomUUID()
+    const reqId = req.headers.get('x-request-id') || (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
     const startTime = Date.now()
 
     const body = await req.json()
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     let chatContext = context || { sessionId: 'anonymous' };
 
     // Log request start
-    console.log('[UNIFIED]', { reqId: requestId, phase: 'start', mode: chatMode, hasContext: !!chatContext.intelligenceContext })
+    console.log('[UNIFIED]', { reqId, phase: 'start', mode: chatMode, hasContext: !!chatContext.intelligenceContext })
 
     // 🔧 MASTER FLOW: Server-side safety net - lazy-load intelligence context if missing
     if (!chatContext.intelligenceContext && chatContext.sessionId && chatContext.sessionId !== 'anonymous') {
@@ -104,14 +104,14 @@ export async function POST(req: NextRequest) {
     // Handle streaming vs non-streaming responses
     if (stream !== false) {
       // Log completion for streaming
-      console.log('[UNIFIED]', { reqId: requestId, phase: 'end', tokensOut: 'streaming', ms: Date.now() - startTime })
+      console.log('[UNIFIED]', { reqId, phase: 'end', tokensOut: 'streaming', ms: Date.now() - startTime })
 
       // Return streaming response
-      return unifiedStreamingService.createChatStream(messageStream, {
+      return unifiedStreamingService.streamToSSE(messageStream, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           'x-fbc-endpoint': 'unified',
-          'x-request-id': requestId,
+          'x-request-id': reqId,
           'X-Unified-Chat': 'true',
           'X-Chat-Mode': chatMode,
           'X-Session-Id': chatContext?.sessionId || 'anonymous'
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Log completion for non-streaming
-      console.log('[UNIFIED]', { reqId: requestId, phase: 'end', tokensOut: tokenCount, ms: Date.now() - startTime })
+      console.log('[UNIFIED]', { reqId, phase: 'end', tokensOut: tokenCount, ms: Date.now() - startTime })
 
       return NextResponse.json({
         messages: responseMessages,
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           'x-fbc-endpoint': 'unified',
-          'x-request-id': requestId
+          'x-request-id': reqId
         }
       })
     }

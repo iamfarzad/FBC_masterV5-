@@ -24,6 +24,8 @@ import { Response } from "@/components/ai-elements/response"
 import { InlineROICalculator } from "@/components/chat/tools/InlineROICalculator"
 import { useMeeting } from "@/components/providers/meeting-provider"
 import { omitUndefined } from '@/src/core/utils/optional'
+import { ChatMessages } from "@/components/chat/layouts/ChatMessages"
+import type { ChatMessageUI } from "@/components/chat/types"
 
 // 🎯 AI RESPONSE PROCESSOR - Convert button HTML to React buttons
 function renderAIResponse(content: string) {
@@ -320,13 +322,20 @@ export default function ChatPage() {
   });
 
   const {
-    messages: chatMessages,
+    messages: rawMessages,
     isLoading,
     // error, // Removed as unused
     sendMessage,
     clearMessages,
     addMessage
   } = chat
+
+  // Convert UnifiedMessage[] to ChatMessageUI[] for UI compatibility
+  const chatMessages: ChatMessageUI[] = rawMessages.map(msg => ({
+    ...msg,
+    imageUrl: null,
+    videoToAppCard: null
+  }))
 
   // Canvas Provider
   const { openCanvas } = useCanvas()
@@ -687,120 +696,42 @@ export default function ChatPage() {
                         </div>
                       )}
                       
-                      {chatMessages.length === 0 && !isLoading ? (
-                        <div className="animate-smooth-fade-in space-y-8 py-16 text-center">
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <div className="mx-auto mb-6 flex size-16 animate-modern-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-orange-accent to-orange-accent-hover">
-                                <Sparkles className="size-8 text-white" />
-                              </div>
-                              <div className="absolute -inset-2 animate-modern-pulse rounded-3xl bg-orange-accent/20 opacity-50 blur-xl"></div>
-                            </div>
-                            <h1 className="text-gradient mb-2 text-3xl font-bold">What can we build together?</h1>
-                            <p className="mx-auto max-w-md text-lg text-muted-foreground">
-                              Select a tool to start collaborating or describe your project vision
-                            </p>
-                            {/* 🔧 MASTER FLOW: Intelligence Status Indicator */}
-                            {contextLoading && (
-                              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                <div className="size-4 animate-spin rounded-full border-2 border-orange-accent border-t-transparent"></div>
-                                Analyzing your background for personalized assistance...
-                              </div>
-                            )}
-                            {intelligenceContext && (
-                              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
-                                <div className="size-2 rounded-full bg-green-500"></div>
-                                Ready with personalized insights
-                                {intelligenceContext.company?.name && ` for ${intelligenceContext.company.name}`}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {chatMessages.map((message, index) => (
-                            <div
-                              key={index}
-                              className="animate-smooth-fade-in message"
-                              data-testid={`message-${message.role}-${index}`}
-                              style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                              {message.role === 'user' ? (
-                                // User message - Original design with modern styling
-                                <div className="flex justify-end">
-                                  <div className="flex max-w-2xl gap-4">
-                                    <div className="flex flex-1 flex-col items-end">
-                                      <div className="mb-2 text-right text-sm text-muted-foreground">
-                                        You
-                                      </div>
-                                      <div className="modern-button max-w-full rounded-2xl rounded-tr-md bg-gradient-to-r from-orange-accent to-orange-accent-hover px-6 py-4 text-white shadow-lg shadow-orange-accent/20">
-                                        <p className="text-sm font-medium leading-relaxed">
-                                          {message.content}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="modern-hover mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gunmetal to-gunmetal-lighter shadow-lg">
-                                      <User className="size-5 text-white" />
-                                    </div>
-                                  </div>
+                      {/* Use ChatMessages component with proper ai-elements integration */}
+                      <ChatMessages
+                        messages={chatMessages}
+                        isLoading={isLoading}
+                        sessionId={sessionId}
+                        emptyState={
+                          <div className="animate-smooth-fade-in space-y-8 py-16 text-center">
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <div className="mx-auto mb-6 flex size-16 animate-modern-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-orange-accent to-orange-accent-hover">
+                                  <Sparkles className="size-8 text-white" />
                                 </div>
-                              ) : (
-                                // AI message - Original design with modern styling
-                                <div className="flex justify-start">
-                                  <div className="flex max-w-3xl gap-4">
-                                    <div className="modern-hover mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-lg">
-                                      <Zap className="size-5 text-white" />
-                                    </div>
-                                    <div className="flex flex-1 flex-col">
-                                      <div className="mb-2 text-sm text-muted-foreground">
-                                        F.B/c AI {message.role === 'system' && <Badge variant="secondary" className="ml-2 text-xs">System</Badge>}
-                                      </div>
-                                      <div className="modern-card rounded-2xl rounded-tl-md bg-white px-6 py-4 shadow-lg dark:bg-gunmetal-lighter">
-                                        {message.content && message.content.trim() ? (
-                                          renderAIResponse(message.content)
-                                        ) : (
-                                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                                            <div className="flex items-center gap-2">
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent"></div>
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.2s]"></div>
-                                              <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.4s]"></div>
-                                              <span className="ml-2 text-sm text-muted-foreground">Thinking...</span>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
+                                <div className="absolute -inset-2 animate-modern-pulse rounded-3xl bg-orange-accent/20 opacity-50 blur-xl"></div>
+                              </div>
+                              <h1 className="text-gradient mb-2 text-3xl font-bold">What can we build together?</h1>
+                              <p className="mx-auto max-w-md text-lg text-muted-foreground">
+                                Select a tool to start collaborating or describe your project vision
+                              </p>
+                              {/* 🔧 MASTER FLOW: Intelligence Status Indicator */}
+                              {contextLoading && (
+                                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                  <div className="size-4 animate-spin rounded-full border-2 border-orange-accent border-t-transparent"></div>
+                                  Analyzing your background for personalized assistance...
+                                </div>
+                              )}
+                              {intelligenceContext && (
+                                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
+                                  <div className="size-2 rounded-full bg-green-500"></div>
+                                  Ready with personalized insights
+                                  {intelligenceContext.company?.name && ` for ${intelligenceContext.company.name}`}
                                 </div>
                               )}
                             </div>
-                          ))}
-
-                          {isLoading && (
-                            <div className="animate-smooth-fade-in">
-                              <div className="flex justify-start">
-                                <div className="flex max-w-3xl gap-4">
-                                  <div className="mt-8 flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-lg">
-                                    <Zap className="size-5 text-white" />
-                                  </div>
-                                  <div className="flex flex-1 flex-col">
-                                    <div className="mb-2 text-sm text-muted-foreground">
-                                      F.B/c AI
-                                    </div>
-                                    <div className="modern-card rounded-2xl rounded-tl-md bg-white px-6 py-4 shadow-lg dark:bg-gunmetal-lighter">
-                                      <div className="flex items-center gap-2">
-                                        <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent"></div>
-                                        <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.2s]"></div>
-                                        <div className="size-2 animate-modern-bounce rounded-full bg-orange-accent [animation-delay:0.4s]"></div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                )}
+                          </div>
+                        }
+                      />
               </div>
             </div>
 

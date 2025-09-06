@@ -16,37 +16,34 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     // Intercept network to ensure unified endpoint is called and legacy isn't
     const unifiedHits: string[] = [];
     const legacyHits: string[] = [];
-    let unifiedResponse: any = null;
     let unifiedRequestId: string = '';
 
     await context.route('**/*', async route => {
       const url = route.request().url();
       if (url.includes('/api/chat/unified')) {
         unifiedHits.push(url);
-        const request = route.request();
-        unifiedRequestId = request.headers()['x-request-id'] || 'no-request-id';
 
         // Continue the request and capture response
         const response = await route.fetch();
-        unifiedResponse = {
-          status: response.status(),
-          headers: response.headers(),
-          body: await response.text()
-        };
+        const responseHeaders = response.headers();
+        const responseBody = await response.text();
 
         // Assert server behavior
         expect(response.status()).toBe(200);
-        expect(unifiedResponse.headers['x-fbc-endpoint']).toBe('unified');
-        expect(unifiedResponse.headers['x-request-id']).toBeDefined();
+        expect(responseHeaders['x-fbc-endpoint']).toBe('unified');
+        expect(responseHeaders['x-request-id']).toBeDefined();
+
+        // Capture the request ID from response headers
+        unifiedRequestId = responseHeaders['x-request-id'] || 'no-request-id';
 
         // For streaming, check for data chunks
-        if (response.headers()['content-type']?.includes('text/event-stream')) {
-          expect(unifiedResponse.body.length).toBeGreaterThan(0);
+        if (responseHeaders['content-type']?.includes('text/event-stream')) {
+          expect(responseBody.length).toBeGreaterThan(0);
         }
 
         route.fulfill({
           response,
-          body: unifiedResponse.body
+          body: responseBody
         });
         return;
       }

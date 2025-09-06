@@ -81,9 +81,16 @@ export function useConversationalIntelligence() {
 
       try {
         // Use unified chat to get intelligence context
+        const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+        console.log('[UNIFIED]['+reqId+'] sending');
         const response = await fetch('/api/chat/unified', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-request-id': reqId
+          },
+          cache: 'no-store',
+          next: { revalidate: 0 },
           body: JSON.stringify({
             messages: [{
               id: crypto.randomUUID(),
@@ -142,9 +149,16 @@ export function useConversationalIntelligence() {
     async (sessionId: string, capabilities: string[]): Promise<void> => {
       try {
         // Use unified chat to update capabilities
+        const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+        console.log('[UNIFIED]['+reqId+'] sending');
         await fetch('/api/chat/unified', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-request-id': reqId
+          },
+          cache: 'no-store',
+          next: { revalidate: 0 },
           body: JSON.stringify({
             messages: [{
               id: crypto.randomUUID(),
@@ -179,9 +193,16 @@ export function useConversationalIntelligence() {
   // Real-time voice integration using unified chat
   const sendRealtimeVoice = useCallback(async (audioData: string, sessionId: string) => {
     try {
+      const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+      console.log('[UNIFIED]['+reqId+'] sending');
       const response = await fetch('/api/chat/unified', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-request-id': reqId
+        },
+        cache: 'no-store',
+        next: { revalidate: 0 },
         body: JSON.stringify({
           messages: [{
             id: crypto.randomUUID(),
@@ -209,9 +230,16 @@ export function useConversationalIntelligence() {
 
   const initializeRealtimeVoice = useCallback(async (sessionId: string) => {
     try {
+      const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+      console.log('[UNIFIED]['+reqId+'] sending');
       const response = await fetch('/api/chat/unified', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-request-id': reqId
+        },
+        cache: 'no-store',
+        next: { revalidate: 0 },
         body: JSON.stringify({
           messages: [{
             id: crypto.randomUUID(),

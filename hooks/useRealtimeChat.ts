@@ -62,13 +62,17 @@ export function useRealtimeChat(options: RealtimeChatOptions): RealtimeChatRetur
       const controller = new AbortController()
       abortControllerRef.current = controller
 
+      const reqId = (self.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+      console.log('[UNIFIED]['+reqId+'] sending');
       const response = await fetch('/api/chat/unified?mode=realtime', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-intelligence-session-id': sessionRef.current,
-          'x-correlation-id': `realtime_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          'x-request-id': reqId,
+          'x-intelligence-session-id': sessionRef.current
         },
+        cache: 'no-store',
+        next: { revalidate: 0 },
         body: JSON.stringify({
           messages: [{ role: 'user', content: message }],
           context: options.context,

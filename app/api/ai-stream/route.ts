@@ -47,10 +47,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Forward to unified chat endpoint
+    const reqId = req.headers.get('x-request-id') || (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+    console.log('[UNIFIED]['+reqId+'] sending');
     const response = await fetch(new URL("/api/chat/unified", req.url), {
       method: "POST",
       headers: {
         "content-type": "application/json",
+        "x-request-id": reqId,
         "x-deprecated": "true",
         "x-deprecation-source": "/api/ai-stream"
       },
