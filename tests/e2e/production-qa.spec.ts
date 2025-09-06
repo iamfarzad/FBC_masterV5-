@@ -10,7 +10,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
     // Make sure the chat input exists and is ready
-    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i));
+    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
     // Intercept network to ensure unified endpoint is called and legacy isn't
@@ -94,7 +94,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
-    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i));
+    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
     // Intercept to ensure no legacy endpoints
@@ -225,7 +225,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
-    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i));
+    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
     // Create a short conversation
@@ -288,7 +288,7 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
-    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i));
+    const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
     // Test invalid input
