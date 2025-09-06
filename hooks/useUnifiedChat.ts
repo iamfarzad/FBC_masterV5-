@@ -76,6 +76,12 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
   const sendMessage = useCallback(async (content: string): Promise<void> => {
     if (!content.trim() || isLoading || isStreaming) return
 
+    // Request correlation for debugging
+    const requestId = crypto.randomUUID()
+    console.log('[UNIFIED][reqId]', requestId, 'sending')
+
+    let timeoutId: NodeJS.Timeout | undefined
+
     try {
       setIsLoading(true)
       setLastError(null)
@@ -87,6 +93,15 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
 
       const controller = new AbortController()
       abortControllerRef.current = controller
+
+      // Timeout guard (30s)
+      timeoutId = setTimeout(() => {
+        controller.abort()
+        console.log('[UNIFIED][reqId]', requestId, 'timeout after 30s')
+        setLastError(new Error('Request timeout after 30 seconds'))
+        setIsLoading(false)
+        setIsStreaming(false)
+      }, 30000)
 
       // Add user message with session data for personality model
       const userMessage = addMessage({
@@ -109,17 +124,20 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
           ? { messages: [...messages, userMessage], context: options.context, mode: options.mode || 'standard', stream: true }
           : { messages: [...messages, userMessage], context: {} as UnifiedContext, mode: options.mode || 'standard', stream: true }
 
-      // Make request to unified API
+      // Make request to unified API with correlation
       const response = await fetch('/api/chat/unified', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-request-id': requestId,
           'x-unified-chat': 'true',
           'x-session-id': sessionRef.current || 'anonymous',
           'x-chat-mode': request.mode as string
         },
         body: JSON.stringify(request),
-        signal: controller.signal
+        signal: controller.signal,
+        cache: 'no-store',
+        next: { revalidate: 0 }
       })
 
       if (!response.ok) {
@@ -131,12 +149,18 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
         throw new Error('No response body')
       }
 
+      console.log('[UNIFIED][reqId]', requestId, 'received')
       setIsLoading(false)
       setIsStreaming(true)
 
       // Parse streaming response
       let assistantMessage: UnifiedMessage | null = null
+      let chunkCount = 0
       for await (const message of unifiedStreamingService.parseSSEStream(response)) {
+        chunkCount++
+        if (chunkCount === 1) {
+          console.log('[UNIFIED][reqId]', requestId, 'first-chunk')
+        }
         if (message.role === 'assistant') {
           if (!assistantMessage) {
             // Create new assistant message
@@ -200,6 +224,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       }
     } finally {
       abortControllerRef.current = null
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [messages, isLoading, isStreaming, options, addMessage, updateMessage])
 

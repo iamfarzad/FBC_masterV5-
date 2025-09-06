@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminChatService } from '@/src/core/admin/admin-chat-service'
 
 export async function GET(request: NextRequest) {
+  // Soft-gate: Require Supabase env vars for admin access
+  const hasAdminEnv = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!hasAdminEnv) {
+    return NextResponse.json({ disabled: true, message: "Admin features require Supabase configuration" })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const adminId = searchParams.get('adminId')
