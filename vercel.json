@@ -1,5 +1,6 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "node scripts/ci-env-check.js && pnpm build",
+  "ignoreCommand": "bash -c 'if [[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" && \"$VERCEL_GIT_COMMIT_REF\" != \"staging\" ]] ; then exit 0 ; else exit 1; fi'",
   "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "nextjs",

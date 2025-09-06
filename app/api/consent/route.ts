@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       })
 
       if (initResponse.ok) {
-        console.log(`✅ Intelligence initialized for session: ${finalSessionId}`)
+        console.log(`🧠 Intelligence initialized for session: ${finalSessionId}`)
         // Include sessionId in response for client to use
         const responseData = await res.json()
         return NextResponse.json({ 

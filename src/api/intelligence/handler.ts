@@ -1,18 +1,12 @@
 import { z } from 'zod';
-// REMOVE broken named import; use namespace with .js
-import * as Intelligence from '@/src/core/intelligence/index';
+// 🔧 MASTER FLOW: Fixed intelligence service import
+import { intelligenceService } from '@/src/core/intelligence';
 
 export const sessionInitSchema = z.object({
   sessionId: z.string().optional(),
   userId: z.string().optional(),
   mode: z.string().optional(),
 });
-
-// tolerate both shapes at runtime without typing explosions
-const intelligenceService: any =
-  (Intelligence as any).intelligenceService ??
-  (Intelligence as any).service ??
-  null;
 
 export interface IntelligenceRequest {
   action: 'init-session' | 'analyze-message' | 'research-lead'
@@ -25,13 +19,20 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
   switch (action) {
     case 'init-session': {
       const validated = sessionInitSchema.parse(data)
-      const context = await intelligenceService.initSession(validated)
+      if (!validated.sessionId) {
+        throw new Error('Session ID required for init-session')
+      }
+      const context = await intelligenceService.initSession({
+        sessionId: validated.sessionId,
+        email: (data as any).email,
+        name: (data as any).name
+      })
       return { success: true, context }
     }
 
     case 'analyze-message': {
-      const { message, context } = data as { message: string; context?: any }
-      const intent = await intelligenceService.analyzeMessage(message, context)
+      const { message } = data as { message: string; context?: any }
+      const intent = await intelligenceService.analyzeMessage(message)
       return { success: true, intent }
     }
 

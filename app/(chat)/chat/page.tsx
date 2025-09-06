@@ -158,7 +158,17 @@ export default function ChatPage() {
         const data = await response.json()
         const context = data.ok ? (data.output || data) : null
         setIntelligenceContext(context)
-        console.log('🧠 Intelligence context loaded:', context)
+        if (context) {
+          console.log('🧠 Intelligence context loaded:', {
+            hasLead: !!context.lead,
+            hasCompany: !!context.company,
+            hasPerson: !!context.person,
+            role: context.role,
+            confidence: context.roleConfidence
+          })
+        } else {
+          console.log('⚠️ No intelligence context available')
+        }
       } else {
         console.warn('⚠️ Intelligence context fetch failed:', response.status)
       }

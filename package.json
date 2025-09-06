@@ -8,10 +8,11 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "build": "pnpm run guard:unified && next build",
+    "build": "node scripts/ci-env-check.js && pnpm run guard:unified && next build",
     "guard:unified": "node scripts/guard-unified-only.js",
     "guard:gemini": "node scripts/guard-no-direct-gemini.js",
     "smoke:unified": "node scripts/smoke-test-unified.js",
+    "env:check": "node scripts/ci-env-check.js",
     "dev": "next dev",
     "server": "cd server && GEMINI_API_KEY=${GEMINI_API_KEY} npm run dev",
     "dev:all": "concurrently --names \"next,ws\" --kill-others-on-fail \"pnpm dev\" \"pnpm server\"",

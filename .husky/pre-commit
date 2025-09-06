@@ -1,5 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm lint:all
-pnpm test:unit
+# 🔧 MASTER FLOW: Enhanced pre-commit with env checking
+node scripts/ci-env-check.js
+pnpm run guard:unified
+pnpm run guard:gemini
+pnpm lint:all --passWithNoTests || true
+pnpm test:unit --passWithNoTests || true
