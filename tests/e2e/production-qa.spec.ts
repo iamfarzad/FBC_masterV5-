@@ -13,15 +13,23 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const consentButton = page.getByTestId('consent-allow');
     if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Fill required consent fields if they exist
-      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
-      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"], input[placeholder*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"], input[placeholder*="email"]').first();
+      const websiteInput = page.locator('input[placeholder*="Website"], input[name*="website"], input[placeholder*="Company"]').first();
 
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test User');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await emailInput.fill('test@example.com');
+        await page.waitForTimeout(500); // Wait for validation
+      }
+
+      if (await websiteInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await websiteInput.fill('https://example.com');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       // Check any required checkboxes
@@ -152,15 +160,23 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const consentButton = page.getByTestId('consent-allow');
     if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Fill required consent fields if they exist
-      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
-      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"], input[placeholder*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"], input[placeholder*="email"]').first();
+      const websiteInput = page.locator('input[placeholder*="Website"], input[name*="website"], input[placeholder*="Company"]').first();
 
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test User');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await emailInput.fill('test@example.com');
+        await page.waitForTimeout(500); // Wait for validation
+      }
+
+      if (await websiteInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await websiteInput.fill('https://example.com');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       // Check any required checkboxes
@@ -327,15 +343,23 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const consentButton = page.getByTestId('consent-allow');
     if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Fill required consent fields if they exist
-      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
-      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"], input[placeholder*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"], input[placeholder*="email"]').first();
+      const websiteInput = page.locator('input[placeholder*="Website"], input[name*="website"], input[placeholder*="Company"]').first();
 
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test User');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await emailInput.fill('test@example.com');
+        await page.waitForTimeout(500); // Wait for validation
+      }
+
+      if (await websiteInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await websiteInput.fill('https://example.com');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       // Check any required checkboxes
@@ -434,15 +458,23 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const consentButton = page.getByTestId('consent-allow');
     if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Fill required consent fields if they exist
-      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
-      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"], input[placeholder*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"], input[placeholder*="email"]').first();
+      const websiteInput = page.locator('input[placeholder*="Website"], input[name*="website"], input[placeholder*="Company"]').first();
 
       if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await nameInput.fill('Test User');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
         await emailInput.fill('test@example.com');
+        await page.waitForTimeout(500); // Wait for validation
+      }
+
+      if (await websiteInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await websiteInput.fill('https://example.com');
+        await page.waitForTimeout(500); // Wait for validation
       }
 
       // Check any required checkboxes
