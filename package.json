@@ -8,7 +8,7 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "preflight": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && pnpm exec tsc --noEmit && E2E_BASE_URL=https://www.farzadbayat.com pnpm test:production-qa --reporter=line",
+    "preflight": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && pnpm exec tsc --noEmit && E2E_BASE_URL=https://fbc-master-v5.vercel.app pnpm test:production-qa --reporter=line",
     "build": "node scripts/ci-env-check.js && pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && next build",
     "guard:unified": "node scripts/guard-unified-only.js",
     "guard:gemini": "node scripts/guard-no-direct-gemini.js",
