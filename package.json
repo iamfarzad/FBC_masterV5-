@@ -8,7 +8,7 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "preflight": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && pnpm exec tsc --noEmit && E2E_BASE_URL=https://fbc-master-v5.vercel.app pnpm test:production-qa --reporter=line",
+    "preflight": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && pnpm exec tsc --noEmit && pnpm test:production-qa --reporter=line",
     "build": "node scripts/ci-env-check.js && pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && next build",
     "guard:unified": "node scripts/guard-unified-only.js",
     "guard:gemini": "node scripts/guard-no-direct-gemini.js",
@@ -59,7 +59,7 @@
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
     "test:e2e": "playwright test",
-    "test:production-qa": "E2E_BASE_URL=https://fbc-master-v5.vercel.app playwright test production-qa.spec.ts --project=chromium",
+    "test:production-qa": "playwright test production-qa.spec.ts --project=chromium",
     "test:preview-e2e": "node scripts/setup-preview-e2e.js && playwright test",
     "test:branch-e2e": "BRANCH_NAME=$(git branch --show-current) && CLEAN_BRANCH=$(echo \"$BRANCH_NAME\" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//') && export E2E_BASE_URL=\"https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/\" && playwright test",
     "test:visual": "playwright test --grep 'visual'",
