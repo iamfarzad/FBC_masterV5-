@@ -13,6 +13,17 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
+    // Clear any existing messages to start fresh
+    const existingMessages = page.locator('[data-testid^="message-"]');
+    if (await existingMessages.count() > 0) {
+      // Try to find and click a clear/reset button if it exists
+      const clearButton = page.getByRole('button', { name: /clear|reset|new chat/i }).first();
+      if (await clearButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await clearButton.click();
+        await page.waitForTimeout(1000);
+      }
+    }
+
     // Intercept network to ensure unified endpoint is called and legacy isn't
     const unifiedHits: string[] = [];
     const legacyHits: string[] = [];
@@ -41,7 +52,14 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     });
 
     await prompt.fill('who are you?');
-    await page.keyboard.press('Enter');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for the unified API call to complete (don't consume the stream)
     const unifiedResponse = await page.waitForResponse(r =>
@@ -116,7 +134,14 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     });
 
     await prompt.fill('calculate ROI for $10k monthly cost, 30% efficiency gain over 2 years');
-    await page.keyboard.press('Enter');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for the unified API call
     await page.waitForResponse(r =>
@@ -207,8 +232,15 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
       await fileInput.setInputFiles(testImagePath);
 
       const prompt = page.getByPlaceholder(/ask anything/i).or(page.locator('textarea')).or(page.locator('input[type="text"]'));
-      await prompt.fill('Analyze this image');
+    await prompt.fill('Analyze this image');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton.click();
+    } else {
       await page.keyboard.press('Enter');
+    }
 
       // Wait for analysis response
       const response = page.locator('[data-testid^="message-"]').filter({
@@ -236,7 +268,14 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     // Create a short conversation
     await prompt.fill('Hello, I need help with business automation');
-    await page.keyboard.press('Enter');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for first unified API call
     await page.waitForResponse(r =>
@@ -250,7 +289,14 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     ).filter({ hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation/i })).toBeVisible({ timeout: 30000 });
 
     await prompt.fill('Can you help me calculate ROI for my project?');
-    await page.keyboard.press('Enter');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton2 = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton2.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton2.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for second unified API call
     await page.waitForResponse(r =>
@@ -299,7 +345,14 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     // Test invalid input
     await prompt.fill('INVALID_COMMAND_THAT_SHOULD_FAIL');
-    await page.keyboard.press('Enter');
+
+    // Try to find and click send button, fallback to Enter key
+    const sendButton = page.locator('button[type="submit"], [aria-label*="send"], [data-testid*="send"]').first();
+    if (await sendButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await sendButton.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for the unified API call
     await page.waitForResponse(r =>
