@@ -29,32 +29,9 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
       }
     });
 
+    // Only intercept legacy endpoints to block them
     await context.route('**/*', async route => {
       const url = route.request().url();
-      if (url.includes('/api/chat/unified')) {
-        unifiedHits.push(url);
-
-        // Continue the request and capture response
-        const response = await route.fetch();
-        const responseHeaders = response.headers();
-        const responseBody = await response.text();
-
-        // Assert server behavior
-        expect(response.status()).toBe(200);
-
-        // For streaming, check for data chunks and meta event
-        if (responseHeaders['content-type']?.includes('text/event-stream')) {
-          expect(responseBody.length).toBeGreaterThan(0);
-          console.log('SSE Response Body (first 500 chars):', responseBody.substring(0, 500));
-          // expect(responseBody).toContain('event: meta'); // Temporarily disabled
-        }
-
-        route.fulfill({
-          response,
-          body: responseBody
-        });
-        return;
-      }
       if (url.includes('/api/ai-stream')) {
         legacyHits.push(url);
         route.abort();
@@ -66,7 +43,26 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await prompt.fill('who are you?');
     await page.keyboard.press('Enter');
 
-    // Wait for the AI message to render - use specific data-testid
+    // Wait for the unified API call to complete (don't consume the stream)
+    const unifiedResponse = await page.waitForResponse(r =>
+      r.url().includes('/api/chat/unified') && r.status() === 200,
+      { timeout: 10000 }
+    );
+
+    // Verify response headers (without consuming stream)
+    expect(unifiedResponse.status()).toBe(200);
+    const responseHeaders = unifiedResponse.headers();
+    expect(responseHeaders['content-type']).toContain('text/event-stream');
+
+    // Wait for first-chunk log to prove streaming is working
+    await expect.poll(() =>
+      consoleLogs.find(x => x.includes('[UNIFIED]') && x.includes('first-chunk')),
+      { timeout: 15000 }
+    ).not.toBeUndefined();
+
+    console.log('UNIFIED_REQID=' + unifiedRequestId);
+
+    // Now wait for the UI to update with the message (real streaming should work)
     const aiMsg = page.locator('[data-testid^="message-"]').filter({ hasText: /F\.B\/c|Farzad Bayat/ }).first();
     await expect(aiMsg).toBeVisible({ timeout: 30000 });
 
@@ -74,15 +70,8 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     expect(text).toMatch(/F\.B\/c|Farzad Bayat/i);
     expect(text).not.toMatch(/trained by google|large language model/i);
 
-    // Make sure unified endpoint was indeed hit
-    await expect.poll(() => unifiedHits.length, { timeout: 10000 }).toBeGreaterThan(0);
-
     // Make sure no legacy endpoints were hit
     expect(legacyHits.length).toBe(0);
-
-    // Wait for first-chunk log to capture reqId
-    await expect.poll(() => consoleLogs.find(x => x.includes('[UNIFIED]') && x.includes('first-chunk')), { timeout: 15000 }).not.toBeUndefined();
-    console.log('UNIFIED_REQID=' + unifiedRequestId);
 
     // Test intelligence context
     await prompt.fill('who is Farzad Bayat?');
@@ -120,6 +109,12 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await prompt.fill('calculate ROI for $10k monthly cost, 30% efficiency gain over 2 years');
     await page.keyboard.press('Enter');
+
+    // Wait for the unified API call
+    await page.waitForResponse(r =>
+      r.url().includes('/api/chat/unified') && r.status() === 200,
+      { timeout: 10000 }
+    );
 
     // Wait for response - look for ROI-related content or tool activation
     const response = page.locator('[data-testid^="message-"]').filter({
@@ -233,11 +228,23 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     await prompt.fill('Hello, I need help with business automation');
     await page.keyboard.press('Enter');
 
+    // Wait for first unified API call
+    await page.waitForResponse(r =>
+      r.url().includes('/api/chat/unified') && r.status() === 200,
+      { timeout: 10000 }
+    );
+
     // Wait for first response
     await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /automation/i })).toBeVisible({ timeout: 30000 });
 
     await prompt.fill('Can you help me calculate ROI for my project?');
     await page.keyboard.press('Enter');
+
+    // Wait for second unified API call
+    await page.waitForResponse(r =>
+      r.url().includes('/api/chat/unified') && r.status() === 200,
+      { timeout: 10000 }
+    );
 
     // Wait for second response
     await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /ROI|calculate/i })).toBeVisible({ timeout: 30000 });
@@ -279,6 +286,12 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     // Test invalid input
     await prompt.fill('INVALID_COMMAND_THAT_SHOULD_FAIL');
     await page.keyboard.press('Enter');
+
+    // Wait for the unified API call
+    await page.waitForResponse(r =>
+      r.url().includes('/api/chat/unified') && r.status() === 200,
+      { timeout: 10000 }
+    );
 
     // Wait for response - should handle gracefully
     const response = page.locator('[data-testid^="message-"]').last();

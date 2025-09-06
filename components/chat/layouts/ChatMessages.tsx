@@ -190,7 +190,11 @@ function MessageComponent({ message, isLast, isLoading = false, sessionId, onExe
   }, [message.content])
 
   return (
-    <Message from={message.role}>
+    <Message
+      from={message.role}
+      data-testid={`message-${message.id}`}
+      data-role={message.role}
+    >
       {/* Avatar using ai-elements */}
       <MessageAvatar
         src={message.role === 'assistant' ? "/api/placeholder-avatar" : "/api/user-avatar"}

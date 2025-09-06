@@ -1,0 +1,157 @@
+---
+description: Generate Vercel preview deployment URLs for E2E testing on feature branches
+globs: playwright.config.ts,package.json,scripts/*.js,scripts/*.ts
+---
+
+# Vercel Preview E2E Deployment Rule
+
+## Overview
+When working on feature branches, automatically generate the correct Vercel preview deployment URL for E2E testing.
+
+## URL Pattern
+For branch `cursor/analyze-chat-flow-and-ai-functions-6c91`:
+```
+https://fbc-master-v5-git-cursor-analyze-chat-flow-and-ai-functions-6c91.vercel.app/
+```
+
+## Implementation Steps
+
+### 1. Get Current Branch Name
+```bash
+BRANCH_NAME=$(git branch --show-current)
+```
+
+### 2. Generate Preview URL
+```bash
+# Remove slashes and special chars, replace with hyphens
+CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//')
+PREVIEW_URL="https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/"
+```
+
+### 3. Update E2E Configuration
+```bash
+# Set environment variable for Playwright
+export E2E_BASE_URL="$PREVIEW_URL"
+
+# Or update package.json script
+sed -i "s|E2E_BASE_URL=.*|E2E_BASE_URL=${PREVIEW_URL}|g" package.json
+```
+
+## Automation Script
+Create `scripts/setup-preview-e2e.sh`:
+
+```bash
+#!/bin/bash
+# setup-preview-e2e.sh - Generate Vercel preview URL for E2E testing
+
+BRANCH_NAME=$(git branch --show-current)
+if [ "$BRANCH_NAME" = "main" ]; then
+  echo "On main branch, using production URL"
+  export E2E_BASE_URL="https://www.farzadbayat.com"
+  exit 0
+fi
+
+# Clean branch name for URL
+CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//')
+PREVIEW_URL="https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/"
+
+echo "Branch: $BRANCH_NAME"
+echo "Preview URL: $PREVIEW_URL"
+echo "Setting E2E_BASE_URL=$PREVIEW_URL"
+
+export E2E_BASE_URL="$PREVIEW_URL"
+echo "export E2E_BASE_URL=\"$PREVIEW_URL\"" >> ~/.bashrc
+```
+
+## Usage
+```bash
+# Before running E2E tests on a feature branch
+source scripts/setup-preview-e2e.sh
+pnpm test:e2e
+
+# Or run directly
+BRANCH_NAME=$(git branch --show-current) && \
+CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//') && \
+export E2E_BASE_URL="https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/" && \
+pnpm test:e2e
+```
+
+## Package.json Script Addition
+Add to scripts section:
+```json
+{
+  "test:preview-e2e": "node scripts/setup-preview-e2e.js && playwright test",
+  "test:branch-e2e": "BRANCH_NAME=$(git branch --show-current) && CLEAN_BRANCH=$(echo \"$BRANCH_NAME\" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//') && export E2E_BASE_URL=\"https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/\" && playwright test"
+}
+```
+
+## Node.js Implementation
+Create `scripts/setup-preview-e2e.js`:
+
+```javascript
+const { execSync } = require('child_process');
+
+function getCurrentBranch() {
+  try {
+    return execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+  } catch (error) {
+    console.error('Failed to get current branch:', error);
+    process.exit(1);
+  }
+}
+
+function generatePreviewUrl(branchName) {
+  if (branchName === 'main') {
+    return 'https://www.farzadbayat.com';
+  }
+
+  const cleanBranch = branchName
+    .replace(/[^a-zA-Z0-9]/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `https://fbc-master-v5-git-${cleanBranch}.vercel.app/`;
+}
+
+function main() {
+  const branchName = getCurrentBranch();
+  const previewUrl = generatePreviewUrl(branchName);
+
+  console.log(`Branch: ${branchName}`);
+  console.log(`Preview URL: ${previewUrl}`);
+  console.log(`Setting E2E_BASE_URL=${previewUrl}`);
+
+  // Set environment variable for current process
+  process.env.E2E_BASE_URL = previewUrl;
+
+  // Output for shell sourcing
+  console.log(`export E2E_BASE_URL="${previewUrl}"`);
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { generatePreviewUrl, getCurrentBranch };
+```
+
+## GitHub Actions Integration
+Add to your workflow:
+
+```yaml
+- name: Setup E2E Preview URL
+  run: |
+    BRANCH_NAME=${{ github.head_ref || github.ref_name }}
+    if [ "$BRANCH_NAME" = "main" ]; then
+      echo "E2E_BASE_URL=https://www.farzadbayat.com" >> $GITHUB_ENV
+    else
+      CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//')
+      echo "E2E_BASE_URL=https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/" >> $GITHUB_ENV
+    fi
+```
+
+## Testing Checklist
+- [ ] Branch name extraction works
+- [ ] URL generation handles special characters
+- [ ] E2E_BASE_URL is correctly set
+- [ ] Playwright tests run against preview URL
+- [ ] Fallback to production URL on main branch

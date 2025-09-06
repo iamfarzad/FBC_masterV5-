@@ -1,0 +1,123 @@
+name: E2E Preview Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Branch name to test (optional, defaults to current branch)'
+        required: false
+
+jobs:
+  e2e-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup E2E Preview URL
+        id: preview-url
+        run: |
+          # Get branch name (use input if provided, otherwise use current branch)
+          BRANCH_NAME="${{ github.event.inputs.branch_name || github.head_ref || github.ref_name }}"
+
+          echo "🌿 Testing branch: $BRANCH_NAME"
+
+          if [ "$BRANCH_NAME" = "main" ]; then
+            echo "E2E_BASE_URL=https://www.farzadbayat.com" >> $GITHUB_ENV
+            echo "preview_url=https://www.farzadbayat.com" >> $GITHUB_OUTPUT
+          else
+            # Clean branch name for URL generation
+            CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | sed 's/^-*//' | sed 's/-*$//')
+            PREVIEW_URL="https://fbc-master-v5-git-${CLEAN_BRANCH}.vercel.app/"
+
+            echo "E2E_BASE_URL=$PREVIEW_URL" >> $GITHUB_ENV
+            echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Wait for Vercel deployment
+        if: github.ref_name != 'main'
+        run: |
+          echo "⏳ Waiting for Vercel deployment to be ready..."
+          PREVIEW_URL="${{ steps.preview-url.outputs.preview_url }}"
+
+          # Wait up to 5 minutes for deployment
+          for i in {1..30}; do
+            if curl -s --head --fail "$PREVIEW_URL" > /dev/null 2>&1; then
+              echo "✅ Vercel deployment is ready: $PREVIEW_URL"
+              break
+            fi
+            echo "⏳ Waiting for deployment... (attempt $i/30)"
+            sleep 10
+          done
+
+          # Final check
+          if ! curl -s --head --fail "$PREVIEW_URL" > /dev/null 2>&1; then
+            echo "❌ Vercel deployment failed or timed out"
+            exit 1
+          fi
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          E2E_BASE_URL: ${{ env.E2E_BASE_URL }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+
+      - name: Comment on PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            const previewUrl = '${{ steps.preview-url.outputs.preview_url }}';
+            const branchName = '${{ github.head_ref || github.ref_name }}';
+
+            const body = `
+            ## 🔍 E2E Preview Test Results
+
+            **Branch:** \`${branchName}\`
+            **Preview URL:** ${previewUrl}
+            **Status:** ${status === 'success' ? '✅ Passed' : '❌ Failed'}
+
+            ### Test Details
+            - Tests run against Vercel preview deployment
+            - Branch-specific URL generation: ✅ Automated
+            - Deployment wait time: ⏳ Up to 5 minutes
+
+            ${status === 'failure' ? '### Next Steps\n- Check test artifacts for detailed error logs\n- Verify preview deployment is working\n- Fix any failing tests' : '### ✅ Ready for Review\nAll E2E tests passed against the preview deployment!'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
