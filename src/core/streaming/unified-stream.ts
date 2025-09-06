@@ -115,6 +115,7 @@ export class UnifiedStreamingService {
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
+    let currentEvent: string | null = null
 
     try {
       while (true) {
@@ -136,11 +137,29 @@ export class UnifiedStreamingService {
           if (!trimmedLine) continue
 
           // Parse SSE format
-          if (trimmedLine.startsWith('data: ')) {
+          if (trimmedLine.startsWith('event: ')) {
+            const eventType = trimmedLine.slice(7).trim()
+            currentEvent = eventType
+          } else if (trimmedLine.startsWith('data: ')) {
             try {
               const data = JSON.parse(trimmedLine.slice(6))
 
-              // Convert back to UnifiedMessage format
+              // Handle meta events specially
+              if (currentEvent === 'meta') {
+                const metaMessage: UnifiedMessage = {
+                  id: `meta-${Date.now()}`,
+                  role: 'system',
+                  content: '',
+                  timestamp: new Date(),
+                  type: 'meta',
+                  metadata: data
+                }
+                yield metaMessage
+                currentEvent = null
+                continue
+              }
+
+              // Convert back to UnifiedMessage format for regular events
               const message: UnifiedMessage = {
                 id: data.id,
                 role: data.role,
@@ -157,8 +176,12 @@ export class UnifiedStreamingService {
                 return
               }
 
+              // Reset event type after processing
+              currentEvent = null
+
             } catch (parseError) {
               // Failed to parse SSE data - continue with next line
+              currentEvent = null
             }
           } else if (trimmedLine.startsWith('event: error')) {
             // Handle error event
