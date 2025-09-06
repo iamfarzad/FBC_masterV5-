@@ -117,11 +117,40 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseService();
 
-    // Get lead information
+    // 🔧 MASTER FLOW: Get lead information from intelligence context
     let leadInfo = { name: 'Unknown', email: leadEmail || 'unknown@example.com' };
     let leadResearch = null;
 
-    if (leadEmail) {
+    // First try to get from intelligence context
+    try {
+      const { ContextStorage } = await import('@/src/core/context/context-storage')
+      const contextStorage = new ContextStorage()
+      const context = await contextStorage.get(sessionId)
+      
+      if (context) {
+        leadInfo = {
+          name: context.name || 'Unknown',
+          email: context.email || leadEmail || 'unknown@example.com',
+          ...(context.company_context?.name ? { company: context.company_context.name } : {}),
+          ...(context.role ? { role: context.role } : {})
+        }
+        
+        // Create research summary from intelligence context
+        if (context.company_context || context.person_context) {
+          leadResearch = {
+            conversation_summary: context.company_context?.summary || 'Intelligence research completed',
+            consultant_brief: `Lead: ${context.name} (${context.role || 'Unknown role'}) at ${context.company_context?.name || 'Unknown company'}. Confidence: ${Math.round((context.role_confidence || 0) * 100)}%`,
+            lead_score: Math.round((context.role_confidence || 0) * 100),
+            ai_capabilities_shown: (context.ai_capabilities_shown || []).join(', ')
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load intelligence context for PDF, trying legacy sources:', error)
+    }
+
+    // Fallback to legacy lead data if intelligence context not available
+    if (!leadResearch && leadEmail) {
       const { data: leadData } = await supabase
         .from('leads')
         .select('name, email, company, role')
@@ -129,7 +158,7 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (leadData) {
-        leadInfo = leadData;
+        leadInfo = { ...leadInfo, ...leadData };
       }
 
       // Get lead research data

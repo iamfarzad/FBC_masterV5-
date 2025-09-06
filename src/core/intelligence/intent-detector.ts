@@ -1,4 +1,4 @@
-import type { IntentResult } from '../types/intelligence'
+import type { IntentResult } from '../types'
 
 const INTENT_KEYWORDS: Record<IntentResult['type'], string[]> = {
   consulting: ['consult', 'audit', 'integration', 'prototype', 'roi', 'estimate', 'plan'],

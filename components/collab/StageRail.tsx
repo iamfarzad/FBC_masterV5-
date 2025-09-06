@@ -8,19 +8,30 @@ import { ChevronDown, TrendingUp } from "lucide-react"
 import { cn } from "@/src/core/utils"
 import { useStage } from "@/contexts/stage-context"
 
-type Context = { stage?: number; exploredCount?: number; total?: number }
+type Context = { stage?: number; exploredCount?: number; total?: number; intelligenceReady?: boolean }
 
 // Import proper stage instructions from src/core
 import { StageInstructions } from '@/src/core/conversation/stages'
 
+// 🔧 MASTER FLOW: Intelligence-aware stage descriptions
 const STAGE_DESCRIPTIONS = {
-  1: "Discovery & Setup",
+  1: "Initial Contact",
   2: "Identity Collection", 
-  3: "Consent & Context",
-  4: "Research & Analysis",
+  3: "Consent & Research",
+  4: "Background Analysis",
   5: "Requirements Discovery",
   6: "Solution Presentation",
   7: "Next Steps & Action"
+}
+
+const INTELLIGENCE_STAGE_MAP = {
+  'GREETING': 1,
+  'NAME_COLLECTION': 2,
+  'EMAIL_CAPTURE': 2,
+  'BACKGROUND_RESEARCH': 3,
+  'PROBLEM_DISCOVERY': 5,
+  'SOLUTION_PRESENTATION': 6,
+  'CALL_TO_ACTION': 7
 }
 
 export function StageRail({ sessionId }: { sessionId?: string }) {
@@ -29,7 +40,7 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
   const [ctx, setCtx] = useState<Context>({ stage: 1, exploredCount: 0, total: 16 })
   const [isLoading, setIsLoading] = useState(false)
 
-  // Memoized context fetching to prevent unnecessary re-renders
+  // 🔧 MASTER FLOW: Intelligence-aware context fetching
   const fetchContext = useMemo(() => async () => {
     const id = sessionId || (typeof window !== 'undefined' ? (localStorage.getItem('intelligence-session-id') || undefined) : undefined)
     if (!id) return
@@ -38,16 +49,45 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
     try {
       const res = await fetch(`/api/intelligence/context?sessionId=${id}`, { 
         cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: { 
+          'Cache-Control': 'no-cache',
+          'x-intelligence-session-id': id
+        }
       })
       if (!res.ok) return
       const j = await res.json()
       const out = j?.output || j
-      const stage = Number(out?.stage || 1)
+      
+      // Calculate stage based on intelligence context
+      let stage = 1 // Default to initial contact
+      
+      if (out?.lead?.email) {
+        stage = Math.max(stage, 3) // Has consent & research
+      }
+      
+      if (out?.company || out?.person || out?.role) {
+        stage = Math.max(stage, 4) // Background analysis complete
+      }
+      
+      if (out?.capabilities && out.capabilities.length > 5) {
+        stage = Math.max(stage, 5) // Requirements discovery
+      }
+      
+      // Use explicit stage if provided, otherwise use calculated
+      const finalStage = Number(out?.stage || stage)
       const explored = Number(out?.exploredCount || out?.capabilities?.length || 0)
-      setCtx({ stage, exploredCount: explored, total: 16 })
+      const hasIntelligence = !!(out?.company || out?.person || out?.role)
+      
+      setCtx({ 
+        stage: finalStage, 
+        exploredCount: explored, 
+        total: 16,
+        intelligenceReady: hasIntelligence
+      })
+      
+      console.log('🎯 Stage updated:', { stage: finalStage, explored, hasIntelligence })
     } catch (error) {
-      // Warning log removed - could add proper error handling here
+      console.warn('Stage context fetch failed:', error)
     } finally {
       setIsLoading(false)
     }

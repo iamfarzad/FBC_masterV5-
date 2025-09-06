@@ -126,27 +126,34 @@ export async function POST(req: NextRequest) {
       contextReady = false
     }
 
-    // Return session info
+    // 🔧 MASTER FLOW: Return session info with proper context structure
     // Build snapshot from research result if present; otherwise from stored context (if any)
     const afterContext = await contextStorage.get(sessionId)
+    const contextSnapshot = researchResult
+      ? {
+          lead: { email, name: name || email.split('@')[0] || 'Unknown' },
+          company: researchResult.company,
+          person: researchResult.person,
+          role: researchResult.role,
+          roleConfidence: researchResult.confidence,
+          capabilities: []
+        }
+      : afterContext && hasResearch(afterContext)
+      ? {
+          lead: { email: afterContext.email || email, name: afterContext.name || name || 'Unknown' },
+          company: afterContext?.company_context ?? null,
+          person: afterContext?.person_context ?? null,
+          role: afterContext?.role ?? null,
+          roleConfidence: afterContext?.role_confidence ?? null,
+          capabilities: afterContext?.ai_capabilities_shown || []
+        }
+      : null
+
     const response = {
       sessionId,
       contextReady,
-      snapshot: researchResult
-        ? {
-            company: researchResult.company,
-            person: researchResult.person,
-            role: researchResult.role,
-            roleConfidence: researchResult.confidence,
-          }
-        : afterContext && hasResearch(afterContext)
-        ? {
-            company: afterContext?.company_context ?? null,
-            person: afterContext?.person_context ?? null,
-            role: afterContext?.role ?? null,
-            roleConfidence: afterContext?.role_confidence ?? null,
-          }
-        : null,
+      context: contextSnapshot, // Use 'context' key for consistency
+      snapshot: contextSnapshot, // Keep 'snapshot' for backward compatibility
     }
 
     // Action logged

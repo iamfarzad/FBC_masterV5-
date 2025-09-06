@@ -45,7 +45,33 @@ export async function POST(req: NextRequest) {
     const { messages, context, mode, stream } = validation.data
 
     const chatMode = mode || 'standard';
-    const chatContext = context || { sessionId: 'anonymous' };
+    let chatContext = context || { sessionId: 'anonymous' };
+
+    // 🔧 MASTER FLOW: Server-side safety net - lazy-load intelligence context if missing
+    if (!chatContext.intelligenceContext && chatContext.sessionId && chatContext.sessionId !== 'anonymous') {
+      try {
+        const { ContextStorage } = await import('@/src/core/context/context-storage')
+        const contextStorage = new ContextStorage()
+        const storedContext = await contextStorage.get(chatContext.sessionId)
+        
+        if (storedContext && (storedContext.company_context || storedContext.person_context || storedContext.role)) {
+          chatContext.intelligenceContext = {
+            lead: { 
+              email: storedContext.email || '', 
+              name: storedContext.name || 'Unknown' 
+            },
+            ...(storedContext.company_context ? { company: storedContext.company_context } : {}),
+            ...(storedContext.person_context ? { person: storedContext.person_context } : {}),
+            ...(storedContext.role ? { role: storedContext.role } : {}),
+            ...(storedContext.role_confidence !== null ? { roleConfidence: storedContext.role_confidence } : {}),
+            capabilities: storedContext.ai_capabilities_shown || []
+          }
+          console.log('🔧 Server-side intelligence context loaded for session:', chatContext.sessionId)
+        }
+      } catch (error) {
+        console.warn('Failed to lazy-load intelligence context:', error)
+      }
+    }
 
     // Check if the provider supports the requested mode
     if (!unifiedChatProvider.supportsMode(chatMode)) {

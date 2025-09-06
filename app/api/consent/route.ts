@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, companyUrl, policyVersion, name } = await req.json()
+    const { email, companyUrl, policyVersion, name, sessionId } = await req.json()
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
@@ -50,6 +50,46 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ ok: true, allowedDomains })
     const isProd = process.env.NODE_ENV === 'production';
     res.cookies.set('fbc-consent', JSON.stringify(value), { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 60 * 60 * 24 * 30 })
+
+    // 🔧 MASTER FLOW: Wire consent → session-init (idempotent)
+    // Immediately trigger intelligence initialization after consent
+    const finalSessionId = sessionId || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                     (req.headers.get('x-forwarded-proto') || 'http') + '://' + 
+                     (req.headers.get('x-forwarded-host') || req.headers.get('host') || 'localhost:3000')
+      
+      const initResponse = await fetch(`${baseUrl}/api/intelligence/session-init`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-intelligence-session-id': finalSessionId
+        },
+        body: JSON.stringify({
+          sessionId: finalSessionId,
+          email,
+          name,
+          companyUrl
+        })
+      })
+
+      if (initResponse.ok) {
+        console.log(`✅ Intelligence initialized for session: ${finalSessionId}`)
+        // Include sessionId in response for client to use
+        const responseData = await res.json()
+        return NextResponse.json({ 
+          ...responseData, 
+          sessionId: finalSessionId,
+          intelligenceReady: true 
+        })
+      } else {
+        console.warn(`⚠️ Intelligence init failed (non-fatal): ${initResponse.status}`)
+      }
+    } catch (e) {
+      console.warn('[consent] session-init failed (non-fatal)', e)
+    }
+
     return res
   } catch (e: unknown) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 })

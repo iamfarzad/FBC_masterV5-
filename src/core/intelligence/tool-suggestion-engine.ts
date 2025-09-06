@@ -1,4 +1,4 @@
-import type { ContextSnapshot, Suggestion, IntentResult } from '../types/intelligence'
+import type { ContextSnapshot, Suggestion, IntentResult } from '../types'
 
 const CAPABILITY_BY_INTENT: Record<IntentResult['type'], Array<{ id: string; label: string; capability: string }>> = {
   consulting: [

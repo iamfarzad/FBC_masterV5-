@@ -113,9 +113,32 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
         }
       }
 
-      // INTEGRATE INTELLIGENCE CONTEXT: Add intelligence data to multimodal content
+      // 🔧 MASTER FLOW: Integrate Intelligence Context into System Prompt
       if (context?.intelligenceContext) {
-        multimodalContent += `\n\nINTELLIGENCE CONTEXT:\n${context.intelligenceContext}`
+        const intCtx = context.intelligenceContext
+        let intelligenceData = '\n\nPERSONALIZED CONTEXT:\n'
+        
+        if (intCtx.lead) {
+          intelligenceData += `User: ${intCtx.lead.name} (${intCtx.lead.email})\n`
+        }
+        
+        if (intCtx.company) {
+          intelligenceData += `Company: ${intCtx.company.name || 'Unknown'}\n`
+          if (intCtx.company.industry) intelligenceData += `Industry: ${intCtx.company.industry}\n`
+          if (intCtx.company.size) intelligenceData += `Size: ${intCtx.company.size}\n`
+          if (intCtx.company.summary) intelligenceData += `Background: ${intCtx.company.summary}\n`
+        }
+        
+        if (intCtx.person) {
+          if (intCtx.person.role) intelligenceData += `Role: ${intCtx.person.role}\n`
+          if (intCtx.person.seniority) intelligenceData += `Seniority: ${intCtx.person.seniority}\n`
+        }
+        
+        if (intCtx.role && intCtx.roleConfidence) {
+          intelligenceData += `Detected Role: ${intCtx.role} (${Math.round(intCtx.roleConfidence * 100)}% confidence)\n`
+        }
+
+        multimodalContent += intelligenceData
       }
 
       // PDF generation is handled by dedicated API route due to Puppeteer dependencies

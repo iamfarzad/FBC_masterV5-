@@ -79,7 +79,7 @@ function renderAIResponse(content: string) {
 }
 
 export default function ChatPage() {
-  // Session Management
+  // 🔧 MASTER FLOW: Session Management with Intelligence Integration
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const existingId = window.localStorage.getItem('intelligence-session-id')
@@ -138,37 +138,49 @@ export default function ChatPage() {
     }
   }, [])
 
-  // Conversational Intelligence Context - using unified chat
-  const [context, setContext] = useState<any>(null)
+  // 🔧 MASTER FLOW: Intelligence Context Integration
+  const [intelligenceContext, setIntelligenceContext] = useState<any>(null)
+  const [contextLoading, setContextLoading] = useState(false)
 
-  const fetchContextFromLocalSession = useCallback(async () => {
+  const refreshIntelligenceContext = useCallback(async () => {
     if (!sessionId || sessionId === 'anonymous') return
-
+    
+    setContextLoading(true)
     try {
-      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`)
+      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`, { 
+        cache: 'no-store',
+        headers: {
+          'x-intelligence-session-id': sessionId
+        }
+      })
+      
       if (response.ok) {
         const data = await response.json()
-        if (data.ok && data.output) {
-          setContext(data.output)
-        }
+        const context = data.ok ? (data.output || data) : null
+        setIntelligenceContext(context)
+        console.log('🧠 Intelligence context loaded:', context)
+      } else {
+        console.warn('⚠️ Intelligence context fetch failed:', response.status)
       }
     } catch (error) {
       console.warn('Failed to fetch intelligence context:', error)
+    } finally {
+      setContextLoading(false)
     }
   }, [sessionId])
 
   const clearContextCache = useCallback(() => {
-    setContext(null)
+    setIntelligenceContext(null)
   }, [])
 
   // Fetch intelligence context when session is available
   useEffect(() => {
     if (sessionId && sessionId !== 'anonymous') {
-      fetchContextFromLocalSession()
+      refreshIntelligenceContext()
     }
-  }, [sessionId, fetchContextFromLocalSession])
+  }, [sessionId, refreshIntelligenceContext])
 
-  // Handle consent submission
+  // 🔧 MASTER FLOW: Handle consent submission with intelligence trigger
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
     try {
       const response = await fetch('/api/consent', {
@@ -180,15 +192,23 @@ export default function ChatPage() {
           email: data.email,
           companyUrl: data.companyUrl,
           name: data.name,
+          sessionId: sessionId // Pass sessionId to trigger intelligence
         }),
       })
 
       if (response.ok) {
+        const result = await response.json()
         setHasConsent(true)
         setShowConsentOverlay(false)
 
+        // If intelligence was initialized, refresh context immediately
+        if (result.intelligenceReady) {
+          console.log('🚀 Intelligence ready, refreshing context...')
+          setTimeout(() => refreshIntelligenceContext(), 1000) // Small delay for processing
+        }
+
         // Add personalized welcome message
-        const welcomeMessage = `Hi ${data.name}, welcome to F.B/c! How can I help you today?`
+        const welcomeMessage = `Hi ${data.name}, welcome to F.B/c! I'm analyzing your background to provide personalized assistance. How can I help you today?`
 
         // Add welcome message to chat
         addMessage({
@@ -262,25 +282,26 @@ export default function ChatPage() {
 
 
 
-  // Lead Context Data
+  // 🔧 MASTER FLOW: Lead Context Data from Intelligence
   const leadContextData = useMemo(() => {
-    if (!context) return undefined
+    if (!intelligenceContext) return undefined
     return {
-      name: context?.person?.fullName || context?.lead?.name,
-      email: context?.lead?.email,
-      company: context?.company?.name,
-      role: context?.role,
-      industry: context?.company?.industry,
+      name: intelligenceContext?.person?.fullName || intelligenceContext?.lead?.name,
+      email: intelligenceContext?.lead?.email,
+      company: intelligenceContext?.company?.name,
+      role: intelligenceContext?.role,
+      industry: intelligenceContext?.company?.industry,
     }
-  }, [context])
+  }, [intelligenceContext])
 
-  // Chat Hook - Using unified chat hook
-  const unifiedContext = (() => {
+  // Chat Hook - Using unified chat hook with intelligence context
+  const unifiedContext = useMemo(() => {
     const ctx: any = {};
     if (leadContextData) ctx.leadContext = leadContextData;
-    if (context) ctx.intelligenceContext = context; // Include intelligence context when available
+    if (intelligenceContext) ctx.intelligenceContext = intelligenceContext; // Pass full intelligence context
+    if (sessionId) ctx.sessionId = sessionId; // Always pass sessionId
     return Object.keys(ctx).length ? ctx : undefined;
-  })();
+  }, [leadContextData, intelligenceContext, sessionId]);
 
   const chat = useUnifiedChat({
     sessionId: sessionId || 'anonymous',
@@ -669,6 +690,20 @@ export default function ChatPage() {
                             <p className="mx-auto max-w-md text-lg text-muted-foreground">
                               Select a tool to start collaborating or describe your project vision
                             </p>
+                            {/* 🔧 MASTER FLOW: Intelligence Status Indicator */}
+                            {contextLoading && (
+                              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                                <div className="size-4 animate-spin rounded-full border-2 border-orange-accent border-t-transparent"></div>
+                                Analyzing your background for personalized assistance...
+                              </div>
+                            )}
+                            {intelligenceContext && (
+                              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
+                                <div className="size-2 rounded-full bg-green-500"></div>
+                                Ready with personalized insights
+                                {intelligenceContext.company?.name && ` for ${intelligenceContext.company.name}`}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ) : (

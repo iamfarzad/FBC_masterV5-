@@ -107,9 +107,37 @@ export interface LeadContext {
 }
 
 export interface IntelligenceContext {
-  userType: string
-  intelligenceEnabled: boolean
-  conversationHistory?: UnifiedMessage[]
+  lead: {
+    email: string
+    name: string
+  }
+  company?: {
+    name: string
+    domain: string
+    industry?: string
+    size?: string
+    summary?: string
+    website?: string
+    linkedin?: string
+  }
+  person?: {
+    fullName: string
+    role?: string
+    seniority?: string
+    profileUrl?: string
+    company?: string
+  }
+  role?: string
+  roleConfidence?: number
+  capabilities: string[]
+  stage?: number
+  exploredCount?: number
+  total?: number
+  intent?: {
+    type: 'consulting' | 'workshop' | 'other'
+    confidence: number
+    slots: Record<string, string | number | boolean>
+  }
 }
 
 export interface MultimodalData {
