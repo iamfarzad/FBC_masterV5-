@@ -1,0 +1,142 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e10]: C
+          - navigation [ref=e12]:
+            - button [ref=e13] [cursor=pointer]:
+              - img
+            - button [ref=e15] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button [ref=e17] [cursor=pointer]:
+              - img
+            - button [ref=e18] [cursor=pointer]:
+              - img
+          - generic [ref=e19]:
+            - button [ref=e20] [cursor=pointer]:
+              - img
+            - button [ref=e21] [cursor=pointer]:
+              - img
+        - generic [ref=e22]:
+          - main [ref=e24]:
+            - generic [ref=e26]:
+              - generic [ref=e29]:
+                - generic [ref=e32]:
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: You
+                    - paragraph [ref=e36]: INVALID_COMMAND_THAT_SHOULD_FAIL
+                  - img [ref=e38]
+                - generic [ref=e43]:
+                  - img [ref=e45]
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: F.B/c AI
+                    - generic [ref=e50]:
+                      - generic [ref=e51]:
+                        - paragraph [ref=e52]: "\"INVALID_COMMAND_THAT_SHOULD_FAIL\" is not a recognized command."
+                        - paragraph [ref=e53]: "I have access to these business tools:"
+                        - paragraph [ref=e54]:
+                          - generic [ref=e55]: ROI Calculator
+                          - text: "- Calculate investment returns with detailed projections"
+                      - button "Calculate ROI" [ref=e57] [cursor=pointer]
+                      - paragraph [ref=e59]:
+                        - generic [ref=e60]: Voice Chat
+                        - text: "- Real-time voice conversations"
+                      - button "Start Voice Chat" [ref=e62] [cursor=pointer]
+                      - paragraph [ref=e64]:
+                        - generic [ref=e65]: Screen Analysis
+                        - text: "- Share your screen for workflow optimization"
+                      - button "Share Screen" [ref=e67] [cursor=pointer]
+                      - paragraph [ref=e69]:
+                        - generic [ref=e70]: Webcam Analysis
+                        - text: "- Real-time image capture and analysis"
+                      - button "Activate Webcam" [ref=e72] [cursor=pointer]
+                      - paragraph [ref=e74]:
+                        - generic [ref=e75]: Document Analysis
+                        - text: "- Process PDFs and documents for insights"
+                      - button "Analyze Document" [ref=e77] [cursor=pointer]
+                      - paragraph [ref=e79]:
+                        - generic [ref=e80]: Web Research
+                        - text: "- Search current information with citations"
+                      - button "Search Web" [ref=e82] [cursor=pointer]
+                      - paragraph [ref=e84]:
+                        - generic [ref=e85]: Video to App
+                        - text: "- Convert YouTube videos to app blueprints"
+                      - button "Video to App" [ref=e87] [cursor=pointer]
+                      - paragraph [ref=e89]:
+                        - generic [ref=e90]: Schedule Consultation
+                        - text: "- Book a call to discuss your needs"
+                      - button "Book Call" [ref=e92] [cursor=pointer]
+                      - paragraph [ref=e94]: What would you like to work on?
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - generic [ref=e98]:
+                    - button "Share Summary" [ref=e99] [cursor=pointer]:
+                      - img
+                      - text: Share Summary
+                    - button "Book a Call" [ref=e100] [cursor=pointer]:
+                      - img
+                      - text: Book a Call
+                  - generic [ref=e101]:
+                    - textbox "Ask anything..." [ref=e102]
+                    - button [ref=e104] [cursor=pointer]:
+                      - img
+                    - button [ref=e106] [cursor=pointer]:
+                      - img
+                - paragraph [ref=e108]: F.B-c AI can make mistakes. Please verify important information.
+          - complementary "Session progress and stage information" [ref=e109]:
+            - generic [ref=e110]: Stage 1 of 7
+            - list [ref=e111]:
+              - listitem [ref=e112]:
+                - 'button "Stage 1: Discovery & Setup (current)" [ref=e114] [cursor=pointer]':
+                  - generic [ref=e115] [cursor=pointer]: "1"
+              - listitem [ref=e116]:
+                - 'button "Stage 2: Identity Collection" [disabled] [ref=e118]':
+                  - generic [ref=e119]: "2"
+              - listitem [ref=e120]:
+                - 'button "Stage 3: Consent & Context" [disabled] [ref=e122]':
+                  - generic [ref=e123]: "3"
+              - listitem [ref=e124]:
+                - 'button "Stage 4: Research & Analysis" [disabled] [ref=e126]':
+                  - generic [ref=e127]: "4"
+              - listitem [ref=e128]:
+                - 'button "Stage 5: Requirements Discovery" [disabled] [ref=e130]':
+                  - generic [ref=e131]: "5"
+              - listitem [ref=e132]:
+                - 'button "Stage 6: Solution Presentation" [disabled] [ref=e134]':
+                  - generic [ref=e135]: "6"
+              - listitem [ref=e136]:
+                - 'button "Stage 7: Next Steps & Action" [disabled] [ref=e138]':
+                  - generic [ref=e139]: "7"
+            - generic [ref=e140]:
+              - generic [ref=e141]: Exploration
+              - generic [ref=e142]:
+                - generic [ref=e143]: "0"
+                - generic [ref=e144]: of
+                - generic [ref=e145]: "16"
+              - progressbar "Exploration progress" [ref=e146]
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - heading "Help us personalize your experience" [level=3] [ref=e150]
+              - paragraph [ref=e151]: Share your contact details to get a personalized AI consultation experience.
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - generic [ref=e155]: Full Name
+                - textbox "Full Name" [ref=e156]
+              - generic [ref=e157]:
+                - generic [ref=e158]: Work Email
+                - textbox "Work Email" [ref=e159]
+              - generic [ref=e160]:
+                - generic [ref=e161]: Company Website (Optional)
+                - textbox "Company Website (Optional)" [ref=e162]
+              - generic [ref=e163]:
+                - button "Continue" [disabled]
+    - region "Notifications (F8)":
+      - list
+  - alert [ref=e164]
+```

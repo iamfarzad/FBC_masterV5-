@@ -1,0 +1,106 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e10]: C
+          - navigation [ref=e12]:
+            - button [ref=e13] [cursor=pointer]:
+              - img
+            - button [ref=e15] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button [ref=e17] [cursor=pointer]:
+              - img
+            - button [ref=e18] [cursor=pointer]:
+              - img
+          - generic [ref=e19]:
+            - button [ref=e20] [cursor=pointer]:
+              - img
+            - button [ref=e21] [cursor=pointer]:
+              - img
+        - generic [ref=e22]:
+          - main [ref=e24]:
+            - generic [ref=e26]:
+              - generic [ref=e29]:
+                - generic [ref=e32]:
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: You
+                    - paragraph [ref=e36]: who are you?
+                  - img [ref=e38]
+                - generic [ref=e43]:
+                  - img [ref=e45]
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: F.B/c AI
+                    - paragraph [ref=e52]: I am F.B/c, an AI Systems Consultant. F.B/c was created by Farzad Bayat to help businesses with automation and ROI analysis.
+              - generic [ref=e53]:
+                - generic [ref=e54]:
+                  - generic [ref=e56]:
+                    - button "Share Summary" [ref=e57] [cursor=pointer]:
+                      - img
+                      - text: Share Summary
+                    - button "Book a Call" [ref=e58] [cursor=pointer]:
+                      - img
+                      - text: Book a Call
+                  - generic [ref=e59]:
+                    - textbox "Ask anything..." [ref=e60]
+                    - button [ref=e62] [cursor=pointer]:
+                      - img
+                    - button [ref=e64] [cursor=pointer]:
+                      - img
+                - paragraph [ref=e66]: F.B-c AI can make mistakes. Please verify important information.
+          - complementary "Session progress and stage information" [ref=e67]:
+            - generic [ref=e68]: Stage 1 of 7
+            - list [ref=e69]:
+              - listitem [ref=e70]:
+                - 'button "Stage 1: Discovery & Setup (current)" [ref=e72] [cursor=pointer]':
+                  - generic [ref=e73] [cursor=pointer]: "1"
+              - listitem [ref=e74]:
+                - 'button "Stage 2: Identity Collection" [disabled] [ref=e76]':
+                  - generic [ref=e77]: "2"
+              - listitem [ref=e78]:
+                - 'button "Stage 3: Consent & Context" [disabled] [ref=e80]':
+                  - generic [ref=e81]: "3"
+              - listitem [ref=e82]:
+                - 'button "Stage 4: Research & Analysis" [disabled] [ref=e84]':
+                  - generic [ref=e85]: "4"
+              - listitem [ref=e86]:
+                - 'button "Stage 5: Requirements Discovery" [disabled] [ref=e88]':
+                  - generic [ref=e89]: "5"
+              - listitem [ref=e90]:
+                - 'button "Stage 6: Solution Presentation" [disabled] [ref=e92]':
+                  - generic [ref=e93]: "6"
+              - listitem [ref=e94]:
+                - 'button "Stage 7: Next Steps & Action" [disabled] [ref=e96]':
+                  - generic [ref=e97]: "7"
+            - generic [ref=e98]:
+              - generic [ref=e99]: Exploration
+              - generic [ref=e100]:
+                - generic [ref=e101]: "0"
+                - generic [ref=e102]: of
+                - generic [ref=e103]: "16"
+              - progressbar "Exploration progress" [ref=e104]
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - heading "Help us personalize your experience" [level=3] [ref=e108]
+              - paragraph [ref=e109]: Share your contact details to get a personalized AI consultation experience.
+            - generic [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: Full Name
+                - textbox "Full Name" [ref=e114]
+              - generic [ref=e115]:
+                - generic [ref=e116]: Work Email
+                - textbox "Work Email" [ref=e117]
+              - generic [ref=e118]:
+                - generic [ref=e119]: Company Website (Optional)
+                - textbox "Company Website (Optional)" [ref=e120]
+              - generic [ref=e121]:
+                - button "Continue" [disabled]
+    - region "Notifications (F8)":
+      - list
+  - alert [ref=e122]
+```

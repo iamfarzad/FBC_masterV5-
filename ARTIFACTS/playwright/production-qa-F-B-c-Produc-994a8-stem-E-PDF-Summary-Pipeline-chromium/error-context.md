@@ -1,0 +1,118 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e10]: C
+          - navigation [ref=e12]:
+            - button [ref=e13] [cursor=pointer]:
+              - img
+            - button [ref=e15] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button [ref=e17] [cursor=pointer]:
+              - img
+            - button [ref=e18] [cursor=pointer]:
+              - img
+          - generic [ref=e19]:
+            - button [ref=e20] [cursor=pointer]:
+              - img
+            - button [ref=e21] [cursor=pointer]:
+              - img
+        - generic [ref=e22]:
+          - main [ref=e24]:
+            - generic [ref=e26]:
+              - generic [ref=e29]:
+                - generic [ref=e32]:
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: You
+                    - paragraph [ref=e36]: Hello, I need help with business automation
+                  - img [ref=e38]
+                - generic [ref=e43]:
+                  - img [ref=e45]
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: F.B/c AI
+                    - generic [ref=e50]:
+                      - generic [ref=e51]:
+                        - paragraph [ref=e52]: What aspect of business automation requires assistance? We can analyze current workflows, calculate potential ROI, or discuss strategic implementation.
+                        - paragraph [ref=e53]: "Here are some tools that might help:"
+                        - list [ref=e54]:
+                          - listitem [ref=e55]: "Share your screen for workflow optimization:"
+                      - button "Share Screen" [ref=e57] [cursor=pointer]
+                      - list [ref=e59]:
+                        - listitem [ref=e60]: "Calculate potential return on investment:"
+                      - button "Calculate ROI" [ref=e62] [cursor=pointer]
+                      - list [ref=e64]:
+                        - listitem [ref=e65]: "Book a consultation to discuss your needs:"
+                      - button "Book Call" [ref=e67] [cursor=pointer]
+              - generic [ref=e68]:
+                - generic [ref=e69]:
+                  - generic [ref=e71]:
+                    - button "Share Summary" [ref=e72] [cursor=pointer]:
+                      - img
+                      - text: Share Summary
+                    - button "Book a Call" [ref=e73] [cursor=pointer]:
+                      - img
+                      - text: Book a Call
+                  - generic [ref=e74]:
+                    - textbox "Ask anything..." [ref=e75]
+                    - button [ref=e77] [cursor=pointer]:
+                      - img
+                    - button [ref=e79] [cursor=pointer]:
+                      - img
+                - paragraph [ref=e81]: F.B-c AI can make mistakes. Please verify important information.
+          - complementary "Session progress and stage information" [ref=e82]:
+            - generic [ref=e83]: Stage 1 of 7
+            - list [ref=e84]:
+              - listitem [ref=e85]:
+                - 'button "Stage 1: Discovery & Setup (current)" [ref=e87] [cursor=pointer]':
+                  - generic [ref=e88] [cursor=pointer]: "1"
+              - listitem [ref=e89]:
+                - 'button "Stage 2: Identity Collection" [disabled] [ref=e91]':
+                  - generic [ref=e92]: "2"
+              - listitem [ref=e93]:
+                - 'button "Stage 3: Consent & Context" [disabled] [ref=e95]':
+                  - generic [ref=e96]: "3"
+              - listitem [ref=e97]:
+                - 'button "Stage 4: Research & Analysis" [disabled] [ref=e99]':
+                  - generic [ref=e100]: "4"
+              - listitem [ref=e101]:
+                - 'button "Stage 5: Requirements Discovery" [disabled] [ref=e103]':
+                  - generic [ref=e104]: "5"
+              - listitem [ref=e105]:
+                - 'button "Stage 6: Solution Presentation" [disabled] [ref=e107]':
+                  - generic [ref=e108]: "6"
+              - listitem [ref=e109]:
+                - 'button "Stage 7: Next Steps & Action" [disabled] [ref=e111]':
+                  - generic [ref=e112]: "7"
+            - generic [ref=e113]:
+              - generic [ref=e114]: Exploration
+              - generic [ref=e115]:
+                - generic [ref=e116]: "0"
+                - generic [ref=e117]: of
+                - generic [ref=e118]: "16"
+              - progressbar "Exploration progress" [ref=e119]
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - heading "Help us personalize your experience" [level=3] [ref=e123]
+              - paragraph [ref=e124]: Share your contact details to get a personalized AI consultation experience.
+            - generic [ref=e126]:
+              - generic [ref=e127]:
+                - generic [ref=e128]: Full Name
+                - textbox "Full Name" [ref=e129]
+              - generic [ref=e130]:
+                - generic [ref=e131]: Work Email
+                - textbox "Work Email" [ref=e132]
+              - generic [ref=e133]:
+                - generic [ref=e134]: Company Website (Optional)
+                - textbox "Company Website (Optional)" [ref=e135]
+              - generic [ref=e136]:
+                - button "Continue" [disabled]
+    - region "Notifications (F8)":
+      - list
+  - alert [ref=e137]
+```

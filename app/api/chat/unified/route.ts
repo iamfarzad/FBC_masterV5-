@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
         },
         reqId // Pass reqId to streaming service for meta event
       })
+      console.log('[UNIFIED_ROUTE] Called streaming service with reqId:', reqId)
     } else {
       // Collect all messages for non-streaming response
       const responseMessages: any[] = []

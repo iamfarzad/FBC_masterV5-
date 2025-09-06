@@ -1,0 +1,113 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e10]: C
+          - navigation [ref=e12]:
+            - button [ref=e13] [cursor=pointer]:
+              - img
+            - button [ref=e15] [cursor=pointer]:
+              - img
+            - button [ref=e16] [cursor=pointer]:
+              - img
+            - button [ref=e17] [cursor=pointer]:
+              - img
+            - button [ref=e18] [cursor=pointer]:
+              - img
+          - generic [ref=e19]:
+            - button [ref=e20] [cursor=pointer]:
+              - img
+            - button [ref=e21] [cursor=pointer]:
+              - img
+        - generic [ref=e22]:
+          - main [ref=e24]:
+            - generic [ref=e26]:
+              - generic [ref=e29]:
+                - generic [ref=e32]:
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: You
+                    - paragraph [ref=e36]: calculate ROI for $10k monthly cost, 30% efficiency gain over 2 years
+                  - img [ref=e38]
+                - generic [ref=e43]:
+                  - img [ref=e45]
+                  - generic [ref=e47]:
+                    - generic [ref=e48]: F.B/c AI
+                    - generic [ref=e50]:
+                      - generic [ref=e51]:
+                        - paragraph [ref=e52]: Not enough context.
+                        - list [ref=e53]:
+                          - listitem [ref=e54]: Is $10k the project cost or an existing operational cost?
+                          - listitem [ref=e55]: How does the 30% efficiency gain translate to monetary savings or revenue increase?
+                        - paragraph [ref=e56]: Provide these details to calculate ROI.
+                      - button "Calculate ROI" [ref=e58] [cursor=pointer]
+              - generic [ref=e59]:
+                - generic [ref=e60]:
+                  - generic [ref=e62]:
+                    - button "Share Summary" [ref=e63] [cursor=pointer]:
+                      - img
+                      - text: Share Summary
+                    - button "Book a Call" [ref=e64] [cursor=pointer]:
+                      - img
+                      - text: Book a Call
+                  - generic [ref=e65]:
+                    - textbox "Ask anything..." [ref=e66]
+                    - button [ref=e68] [cursor=pointer]:
+                      - img
+                    - button [ref=e70] [cursor=pointer]:
+                      - img
+                - paragraph [ref=e72]: F.B-c AI can make mistakes. Please verify important information.
+          - complementary "Session progress and stage information" [ref=e73]:
+            - generic [ref=e74]: Stage 1 of 7
+            - list [ref=e75]:
+              - listitem [ref=e76]:
+                - 'button "Stage 1: Discovery & Setup (current)" [ref=e78] [cursor=pointer]':
+                  - generic [ref=e79] [cursor=pointer]: "1"
+              - listitem [ref=e80]:
+                - 'button "Stage 2: Identity Collection" [disabled] [ref=e82]':
+                  - generic [ref=e83]: "2"
+              - listitem [ref=e84]:
+                - 'button "Stage 3: Consent & Context" [disabled] [ref=e86]':
+                  - generic [ref=e87]: "3"
+              - listitem [ref=e88]:
+                - 'button "Stage 4: Research & Analysis" [disabled] [ref=e90]':
+                  - generic [ref=e91]: "4"
+              - listitem [ref=e92]:
+                - 'button "Stage 5: Requirements Discovery" [disabled] [ref=e94]':
+                  - generic [ref=e95]: "5"
+              - listitem [ref=e96]:
+                - 'button "Stage 6: Solution Presentation" [disabled] [ref=e98]':
+                  - generic [ref=e99]: "6"
+              - listitem [ref=e100]:
+                - 'button "Stage 7: Next Steps & Action" [disabled] [ref=e102]':
+                  - generic [ref=e103]: "7"
+            - generic [ref=e104]:
+              - generic [ref=e105]: Exploration
+              - generic [ref=e106]:
+                - generic [ref=e107]: "0"
+                - generic [ref=e108]: of
+                - generic [ref=e109]: "16"
+              - progressbar "Exploration progress" [ref=e110]
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - heading "Help us personalize your experience" [level=3] [ref=e114]
+              - paragraph [ref=e115]: Share your contact details to get a personalized AI consultation experience.
+            - generic [ref=e117]:
+              - generic [ref=e118]:
+                - generic [ref=e119]: Full Name
+                - textbox "Full Name" [ref=e120]
+              - generic [ref=e121]:
+                - generic [ref=e122]: Work Email
+                - textbox "Work Email" [ref=e123]
+              - generic [ref=e124]:
+                - generic [ref=e125]: Company Website (Optional)
+                - textbox "Company Website (Optional)" [ref=e126]
+              - generic [ref=e127]:
+                - button "Continue" [disabled]
+    - region "Notifications (F8)":
+      - list
+  - alert [ref=e128]
+```

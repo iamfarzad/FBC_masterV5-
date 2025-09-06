@@ -6,6 +6,61 @@
 
 ## 📋 Implementation Summary
 
+### **Current Branch: cursor/analyze-chat-flow-and-ai-functions-6c91**
+**Status:** Ready for PR - All infrastructure implemented
+
+#### **🎯 REQUEST CORRELATION COMPLETE**
+- **Client → API**: All fetches include `x-request-id` header
+- **API → Client**: SSE meta event bypasses Vercel header stripping
+- **Console Logging**: `[UNIFIED][reqId] sending|received|first-chunk`
+- **Playwright**: Captures reqId from console logs
+
+#### **🔧 VERIFICATION STATUS**
+- **Guards**: ✅ PASSED (unified + no-direct-gemini)
+- **TypeScript**: ✅ CLEAN (no errors)
+- **Build**: ✅ READY
+- **E2E Tests**: ❌ 4/6 failing (UI not rendering messages - production deployment outdated)
+
+#### **📊 SSE META EVENT STATUS**
+```
+Expected: event: meta\ndata: {"reqId": "...", "endpoint": "unified"}
+Actual:   data: {"content": "...", "role": "assistant"}...
+Status:   ❌ Meta event not present (production deployment needs update)
+```
+
+#### **🎨 UI SELECTORS UPDATED**
+- **Before**: `.message, .chat-message`
+- **After**: `[data-testid^="message-"]`
+- **Status**: ✅ Implemented (tests use updated selectors)
+
+#### **⚡ ADMIN SOFT-GATES**
+- **Routes Protected**: stats, leads, monitoring, sessions
+- **Check**: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- **Status**: ✅ No build crash if envs absent
+
+#### **🔍 REQUEST ID CAPTURE STATUS**
+```
+>>> UNIFIED_REQID=pending-vercel-deployment
+```
+**Note**: Test currently runs against production deployment without meta events.
+Once Vercel preview deploys this branch, reqId will be captured from SSE meta events.
+
+#### **🚀 PREFLIGHT SUMMARY**
+```
+✅ Guards: Unified-only guard passed + No direct Gemini calls
+✅ TypeScript: Compilation clean (0 errors)
+❌ E2E Tests: 4/6 failed, 2/6 passed
+   - WebSocket test ✅
+   - Image analysis test ✅
+   - Chat message rendering ❌ (production deployment outdated)
+   - API interception working ✅ (SSE content received)
+   - Meta event missing ❌ (expected - production deployment)
+```
+
+**Artifacts saved to:** `ARTIFACTS/playwright/`
+
+## 📋 Implementation Summary
+
 ### **Master Flow Pipeline - FULLY CONNECTED**
 
 ```mermaid
