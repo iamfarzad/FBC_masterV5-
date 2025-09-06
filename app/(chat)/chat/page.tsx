@@ -721,7 +721,8 @@ export default function ChatPage() {
                           {chatMessages.map((message, index) => (
                             <div
                               key={index}
-                              className="animate-smooth-fade-in"
+                              className="animate-smooth-fade-in message"
+                              data-testid={`message-${message.role}-${index}`}
                               style={{ animationDelay: `${index * 50}ms` }}
                             >
                               {message.role === 'user' ? (
@@ -818,6 +819,7 @@ export default function ChatPage() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything..."
+                    data-testid="chat-input"
                     className="resize-none rounded-3xl border-none bg-transparent py-6 pl-16 pr-20 text-base text-gunmetal placeholder:text-muted-foreground focus:outline-none focus:ring-0 dark:text-gunmetal"
                                               disabled={isLoading}
                   />

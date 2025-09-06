@@ -8,7 +8,8 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "build": "node scripts/ci-env-check.js && pnpm run guard:unified && next build",
+    "preflight": "pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && pnpm exec tsc --noEmit && E2E_BASE_URL=https://www.farzadbayat.com pnpm test:production-qa --reporter=line",
+    "build": "node scripts/ci-env-check.js && pnpm run guard:unified && node scripts/guard-no-direct-gemini.js && next build",
     "guard:unified": "node scripts/guard-unified-only.js",
     "guard:gemini": "node scripts/guard-no-direct-gemini.js",
     "smoke:unified": "node scripts/smoke-test-unified.js",
@@ -58,6 +59,7 @@
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
     "test:e2e": "playwright test",
+    "test:production-qa": "E2E_BASE_URL=https://www.farzadbayat.com playwright test production-qa.spec.ts --project=chromium",
     "test:visual": "playwright test --grep 'visual'",
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:integration:coverage": "jest --testPathPattern=tests/integration --coverage",

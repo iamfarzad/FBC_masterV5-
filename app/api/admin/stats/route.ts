@@ -5,6 +5,12 @@ import { adminAuthMiddleware } from '@/app/api-utils/auth'
 import { adminRateLimit } from "@/app/api-utils/rate-limiting"
 
 export async function GET(req: NextRequest) {
+  // Soft-gate: Require Supabase env vars for admin access
+  const hasAdminEnv = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!hasAdminEnv) {
+    return NextResponse.json({ disabled: true, message: "Admin features require Supabase configuration" })
+  }
+
   // Check rate limiting
   const rateLimitResult = adminRateLimit(req);
   if (rateLimitResult) {

@@ -14,23 +14,24 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? 'github' : [['html'], ['list']],
+  reporter: process.env.CI ? 'github' : [['html', { outputFolder: 'test-results/playwright-report' }], ['list']],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    baseURL: process.env.E2E_BASE_URL || 'https://www.farzadbayat.com',
 
     /* Enable downloads for PDF testing */
     acceptDownloads: true,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'retain-on-failure',
+    trace: 'on-first-retry',
 
     /* Take screenshot only when test fails */
     screenshot: 'only-on-failure',
 
     /* Record video only when test fails */
     video: 'retain-on-failure',
+
   },
 
   /* Configure projects for major browsers - optimized for CI */

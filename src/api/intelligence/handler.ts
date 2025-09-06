@@ -1,6 +1,6 @@
 import { z } from 'zod';
 // 🔧 MASTER FLOW: Fixed intelligence service import
-import { intelligenceService } from '@/src/core/intelligence';
+import { intelligenceService } from '@/src/core/intelligence/index';
 
 export const sessionInitSchema = z.object({
   sessionId: z.string().optional(),
