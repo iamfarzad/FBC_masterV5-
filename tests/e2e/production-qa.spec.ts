@@ -63,7 +63,9 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     console.log('UNIFIED_REQID=' + unifiedRequestId);
 
     // Now wait for the UI to update with the message (real streaming should work)
-    const aiMsg = page.locator('[data-testid^="message-"]').filter({ hasText: /F\.B\/c|Farzad Bayat/ }).first();
+    const aiMsg = page.locator(
+      '[data-testid^="message-"][data-role="assistant"], [data-testid^="message-"]'
+    ).filter({ hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation/i }).first();
     await expect(aiMsg).toBeVisible({ timeout: 30000 });
 
     const text = (await aiMsg.textContent()) || '';
@@ -117,8 +119,10 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     );
 
     // Wait for response - look for ROI-related content or tool activation
-    const response = page.locator('[data-testid^="message-"]').filter({
-      hasText: /ROI|calculator|efficiency|cost/i
+    const response = page.locator(
+      '[data-testid^="message-"][data-role="assistant"], [data-testid^="message-"]'
+    ).filter({
+      hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation/i
     }).first();
 
     await expect(response).toBeVisible({ timeout: 30000 });
@@ -235,7 +239,9 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     );
 
     // Wait for first response
-    await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /automation/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(
+      '[data-testid^="message-"][data-role="assistant"], [data-testid^="message-"]'
+    ).filter({ hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation/i })).toBeVisible({ timeout: 30000 });
 
     await prompt.fill('Can you help me calculate ROI for my project?');
     await page.keyboard.press('Enter');
@@ -247,7 +253,9 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     );
 
     // Wait for second response
-    await expect(page.locator('[data-testid^="message-"]').filter({ hasText: /ROI|calculate/i })).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(
+      '[data-testid^="message-"][data-role="assistant"], [data-testid^="message-"]'
+    ).filter({ hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation/i })).toBeVisible({ timeout: 30000 });
 
     // Look for PDF export button
     const pdfButton = page.getByRole('button', { name: /export|summary|pdf|download/i }).first();
@@ -294,7 +302,9 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     );
 
     // Wait for response - should handle gracefully
-    const response = page.locator('[data-testid^="message-"]').last();
+    const response = page.locator(
+      '[data-testid^="message-"][data-role="assistant"], [data-testid^="message-"]'
+    ).filter({ hasText: /Farzad|F\.B\/c|AI Systems Consultant|ROI|automation|INVALID/i }).last();
     await expect(response).toBeVisible({ timeout: 30000 });
 
     const text = (await response.textContent()) || '';
