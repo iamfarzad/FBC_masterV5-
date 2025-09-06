@@ -9,6 +9,36 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
+    // Handle consent modal if it appears
+    const consentButton = page.getByTestId('consent-allow');
+    if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Fill required consent fields if they exist
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+
+      if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await nameInput.fill('Test User');
+      }
+
+      if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await emailInput.fill('test@example.com');
+      }
+
+      // Check any required checkboxes
+      const checkboxes = page.locator('input[type="checkbox"]');
+      const count = await checkboxes.count();
+      for (let i = 0; i < count; i++) {
+        await checkboxes.nth(i).check();
+      }
+
+      // Wait for consent button to become enabled and click it
+      await expect(consentButton).toBeEnabled({ timeout: 5000 });
+      await consentButton.click();
+
+      // Wait for consent modal to disappear
+      await expect(consentButton).not.toBeVisible({ timeout: 5000 });
+    }
+
     // Make sure the chat input exists and is ready
     const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
@@ -117,6 +147,36 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const finishHttp = attachHttpFail(context);
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
+
+    // Handle consent modal if it appears
+    const consentButton = page.getByTestId('consent-allow');
+    if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Fill required consent fields if they exist
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+
+      if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await nameInput.fill('Test User');
+      }
+
+      if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await emailInput.fill('test@example.com');
+      }
+
+      // Check any required checkboxes
+      const checkboxes = page.locator('input[type="checkbox"]');
+      const count = await checkboxes.count();
+      for (let i = 0; i < count; i++) {
+        await checkboxes.nth(i).check();
+      }
+
+      // Wait for consent button to become enabled and click it
+      await expect(consentButton).toBeEnabled({ timeout: 5000 });
+      await consentButton.click();
+
+      // Wait for consent modal to disappear
+      await expect(consentButton).not.toBeVisible({ timeout: 5000 });
+    }
 
     const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
@@ -263,6 +323,36 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
+    // Handle consent modal if it appears
+    const consentButton = page.getByTestId('consent-allow');
+    if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Fill required consent fields if they exist
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+
+      if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await nameInput.fill('Test User');
+      }
+
+      if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await emailInput.fill('test@example.com');
+      }
+
+      // Check any required checkboxes
+      const checkboxes = page.locator('input[type="checkbox"]');
+      const count = await checkboxes.count();
+      for (let i = 0; i < count; i++) {
+        await checkboxes.nth(i).check();
+      }
+
+      // Wait for consent button to become enabled and click it
+      await expect(consentButton).toBeEnabled({ timeout: 5000 });
+      await consentButton.click();
+
+      // Wait for consent modal to disappear
+      await expect(consentButton).not.toBeVisible({ timeout: 5000 });
+    }
+
     const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
 
@@ -339,6 +429,36 @@ test.describe('F.B/c Production QA - Unified Chat System', () => {
     const finishHttp = attachHttpFail(context);
 
     await page.goto('/chat', { waitUntil: 'networkidle' });
+
+    // Handle consent modal if it appears
+    const consentButton = page.getByTestId('consent-allow');
+    if (await consentButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Fill required consent fields if they exist
+      const nameInput = page.locator('input[placeholder*="Full Name"], input[name*="name"]').first();
+      const emailInput = page.locator('input[placeholder*="Email"], input[name*="email"], input[type="email"]').first();
+
+      if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await nameInput.fill('Test User');
+      }
+
+      if (await emailInput.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await emailInput.fill('test@example.com');
+      }
+
+      // Check any required checkboxes
+      const checkboxes = page.locator('input[type="checkbox"]');
+      const count = await checkboxes.count();
+      for (let i = 0; i < count; i++) {
+        await checkboxes.nth(i).check();
+      }
+
+      // Wait for consent button to become enabled and click it
+      await expect(consentButton).toBeEnabled({ timeout: 5000 });
+      await consentButton.click();
+
+      // Wait for consent modal to disappear
+      await expect(consentButton).not.toBeVisible({ timeout: 5000 });
+    }
 
     const prompt = page.getByTestId('chat-input').or(page.getByPlaceholder(/ask anything/i)).or(page.locator('textarea[placeholder*="Ask anything"]'));
     await expect(prompt).toBeVisible();
