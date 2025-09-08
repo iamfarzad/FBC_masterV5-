@@ -507,8 +507,8 @@ export default function ChatPage() {
         <DemoSessionProvider>
         {/* MODERN BLUEPRINT-COMPLIANT LAYOUT - Following Inspiration Files */}
         <div className="flex h-screen w-full overflow-hidden bg-background">
-          {/* Slim Left Sidebar - Modern Design with Gradients */}
-          <div className="relative flex w-16 flex-col border-r border-gunmetal-lighter bg-gunmetal py-4">
+          {/* Slim Left Sidebar - Modern Design with F.B/c Brand Colors */}
+          <div className="relative flex w-16 flex-col border-r border-border bg-surface-elevated py-4">
             {/* Logo/Brand with glow effect */}
             <div className="mb-6 px-3">
               <div className="relative">
@@ -529,7 +529,7 @@ export default function ChatPage() {
                   className={`modern-button relative size-12 rounded-xl p-0 transition-all duration-300 ${
                     feature === 'chat'
                       ? 'bg-gradient-to-br from-orange-accent to-orange-accent-hover text-white shadow-lg shadow-orange-accent/30'
-                      : 'text-light-silver hover:bg-gunmetal-lighter hover:text-white'
+                      : 'text-text-muted hover:bg-surface hover:text-text'
                   }`}
                   onClick={() => {
                     setFeature('chat');
@@ -545,7 +545,7 @@ export default function ChatPage() {
               <TooltipContent side="right">
                 <div className="flex items-center gap-2">
                   <span>Chat</span>
-                  <kbd className="rounded bg-light-silver-darker px-2 py-1 font-mono text-xs dark:bg-gunmetal">C</kbd>
+                  <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">C</kbd>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -562,7 +562,7 @@ export default function ChatPage() {
                       className={`modern-button relative size-12 rounded-xl p-0 transition-all duration-300 ${
                         isActive
                           ? 'bg-gradient-to-br from-orange-accent to-orange-accent-hover text-white shadow-lg shadow-orange-accent/30'
-                          : 'text-light-silver hover:bg-gunmetal-lighter hover:text-white'
+                          : 'text-text-muted hover:bg-surface hover:text-text'
                       }`}
                       onClick={() => handleToolSelect(tool.id)}
                     >
@@ -575,7 +575,7 @@ export default function ChatPage() {
                   <TooltipContent side="right">
                     <div className="flex items-center gap-2">
                       <span>{tool.label}</span>
-                      <kbd className="rounded bg-light-silver-darker px-2 py-1 font-mono text-xs dark:bg-gunmetal">
+                      <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">
                         {tool.shortcut}
                       </kbd>
                     </div>
@@ -592,7 +592,7 @@ export default function ChatPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="modern-button size-12 rounded-xl p-0 text-light-silver hover:bg-gunmetal-lighter hover:text-white"
+                  className="modern-button size-12 rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
                   onClick={() => setShowCanvasOverlay(!showCanvasOverlay)}
                 >
                   <Layers className="size-5" />
@@ -611,7 +611,7 @@ export default function ChatPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="modern-button size-12 rounded-xl p-0 text-light-silver hover:bg-gunmetal-lighter hover:text-white"
+                  className="modern-button size-12 rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                   {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -629,14 +629,14 @@ export default function ChatPage() {
           <div className="flex-1 bg-background">
             {/* Enhanced Header for Tools */}
             {feature !== 'chat' && (
-              <header className="flex h-16 items-center justify-between border-b border-light-silver-darker bg-white/95 px-8 backdrop-blur-lg dark:border-gunmetal-lighter dark:bg-gunmetal/95">
+              <header className="flex h-16 items-center justify-between border-b border-border bg-surface/95 px-8 backdrop-blur-lg">
                 <div className="flex items-center gap-4">
                   <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-md">
                     {React.createElement(toolItems.find(t => t.id === feature)?.icon || MessageCircle, {
                       className: "h-4 w-4 text-white"
                     })}
                   </div>
-                  <h1 className="text-xl font-semibold text-gunmetal dark:text-light-silver">
+                  <h1 className="text-xl font-semibold text-text">
                     {toolItems.find(t => t.id === feature)?.label || feature}
                   </h1>
                   <Badge
@@ -650,7 +650,7 @@ export default function ChatPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="modern-button border-light-silver-darker text-gunmetal hover:border-orange-accent hover:bg-orange-accent hover:text-white dark:border-gunmetal-lighter dark:text-light-silver"
+                  className="modern-button border-border text-text hover:border-brand hover:bg-brand hover:text-surface"
                   onClick={() => setFeature('chat')}
                 >
                   Back to Chat
@@ -665,7 +665,7 @@ export default function ChatPage() {
               {/* Chat Interface Content - Following Blueprint Pattern */}
               <div className="flex h-full">
                 {/* Main Chat Area - Takes full width */}
-                <div className="flex flex-1 flex-col bg-gradient-to-br from-white via-gray-50/50 to-light-silver/30 dark:from-gunmetal dark:via-gunmetal dark:to-gunmetal-lighter">
+                <div className="flex flex-1 flex-col bg-gradient-to-br from-surface via-bg/50 to-bg/30">
                   {/* Messages Area */}
                   <div className="scrollbar-modern flex-1 overflow-y-auto px-6 py-8">
                     <div className="mx-auto max-w-4xl space-y-8">
@@ -736,7 +736,7 @@ export default function ChatPage() {
             </div>
 
             {/* Clean Input Area - No Redundant Tools */}
-            <div className="border-t border-light-silver-darker bg-light-silver/90 p-6 backdrop-blur-lg dark:border-gunmetal-lighter dark:bg-gunmetal">
+            <div className="border-t border-border bg-bg/90 p-6 backdrop-blur-lg">
               <div className="mx-auto max-w-4xl">
                 {/* SuggestedActions Component - Connected to Composer Top Slot */}
                 <SuggestedActions
@@ -744,14 +744,14 @@ export default function ChatPage() {
                   stage="BACKGROUND_RESEARCH"
                   mode="static"
                 />
-                <div className="modern-input-focus relative overflow-hidden rounded-3xl border border-light-silver-darker bg-light-silver shadow-lg dark:border-light-silver dark:bg-light-silver">
+                <div className="modern-input-focus relative overflow-hidden rounded-3xl border border-border bg-surface shadow-lg">
                   <PromptInputTextarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything..."
                     data-testid="chat-input"
-                    className="resize-none rounded-3xl border-none bg-transparent py-6 pl-16 pr-20 text-base text-gunmetal placeholder:text-muted-foreground focus:outline-none focus:ring-0 dark:text-gunmetal"
+                    className="resize-none rounded-3xl border-none bg-transparent py-6 pl-16 pr-20 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-0"
                                               disabled={isLoading}
                   />
 
@@ -762,7 +762,7 @@ export default function ChatPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="modern-button size-10 rounded-full p-0 text-muted-foreground hover:text-orange-accent dark:text-muted-foreground dark:hover:text-orange-accent"
+                          className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
                         >
                           <Plus className="size-5" />
                         </Button>
@@ -922,7 +922,7 @@ export default function ChatPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="modern-button size-10 rounded-full p-0 text-muted-foreground hover:text-orange-accent dark:text-muted-foreground dark:hover:text-orange-accent"
+                        className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
                       onClick={() => setShowVoiceOverlay(true)}
                     >
                       <Mic className="size-5" />
@@ -931,7 +931,7 @@ export default function ChatPage() {
                       <Button
                         onClick={() => handleSendMessage(input)}
                         size="sm"
-                        className="modern-button size-10 rounded-full bg-gradient-to-r from-orange-accent to-orange-accent-hover p-0 text-white shadow-lg shadow-orange-accent/30 hover:from-orange-accent-hover hover:to-orange-accent"
+                        className="modern-button size-10 rounded-full bg-gradient-to-r from-brand to-brand-hover p-0 text-surface shadow-lg shadow-brand/30 hover:from-brand-hover hover:to-brand"
                                                   disabled={isLoading}
                       >
                         <Send className="size-4" />

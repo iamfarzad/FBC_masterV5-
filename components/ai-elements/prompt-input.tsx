@@ -124,7 +124,7 @@ export const PromptInputTextarea = ({
     <Textarea
       className={cn(
         'w-full resize-none rounded-none border-none p-4 shadow-none outline-none ring-0',
-        'bg-transparent dark:bg-white text-gunmetal dark:text-gunmetal',
+        'bg-transparent text-text',
         'focus-visible:ring-0 placeholder:text-muted-foreground/70 dark:placeholder:text-muted-foreground/50',
         className,
       )}

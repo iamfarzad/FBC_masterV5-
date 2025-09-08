@@ -5,13 +5,13 @@ import { Home, ArrowLeft, Search } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-gray-50/50 to-light-silver/30 p-4 dark:from-gunmetal dark:via-gunmetal dark:to-gunmetal-lighter">
-      <Card className="w-full max-w-md border border-light-silver-darker bg-white/95 shadow-xl backdrop-blur-lg dark:border-gunmetal-lighter dark:bg-gunmetal/95">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-surface via-bg/50 to-bg/30 p-4">
+      <Card className="w-full max-w-md border border-border bg-surface/95 shadow-xl backdrop-blur-lg">
         <CardHeader className="pb-4 text-center">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-accent to-orange-accent-hover">
             <Search className="size-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gunmetal dark:text-light-silver">
+          <CardTitle className="text-2xl font-bold text-text">
             Page Not Found
           </CardTitle>
           <p className="mt-2 text-muted-foreground">
@@ -36,7 +36,7 @@ export default function NotFound() {
               </Link>
             </Button>
           </div>
-          <div className="border-t border-light-silver-darker pt-4 text-center text-xs text-muted-foreground dark:border-gunmetal-lighter">
+          <div className="border-t border-border pt-4 text-center text-xs text-text-muted">
             Error 404
           </div>
         </CardContent>
