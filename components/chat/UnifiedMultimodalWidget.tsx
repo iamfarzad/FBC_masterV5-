@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { 
   Mic, 
   MicOff,

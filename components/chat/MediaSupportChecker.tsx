@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Badge } from './ui/badge';
+import { Badge } from '../ui/badge';
 import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 interface MediaSupport {

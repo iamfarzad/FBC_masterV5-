@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { 
   User, 
   Zap, 
@@ -15,13 +15,13 @@ import {
 } from 'lucide-react';
 
 // Import AI Elements
-import { Response } from './ai-elements/response';
-import { Suggestion } from './ai-elements/suggestion';
-import { Source } from './ai-elements/source';
-import { Task } from './ai-elements/task';
-import { Tool } from './ai-elements/tool';
-import { Actions } from './ai-elements/actions';
-import { Loader } from './ai-elements/loader';
+import { Response } from '../ai-elements/response';
+import { Suggestion } from '../ai-elements/suggestion';
+import { Source } from '../ai-elements/source';
+import { Task } from '../ai-elements/task';
+import { Tool } from '../ai-elements/tool';
+import { Actions } from '../ai-elements/actions';
+import { Loader } from '../ai-elements/loader';
 import { PDFGenerator } from './PDFGenerator';
 
 export interface MessageData {

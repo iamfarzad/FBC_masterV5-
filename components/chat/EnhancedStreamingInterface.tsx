@@ -2,9 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { 
   Mic, 
   MicOff, 
