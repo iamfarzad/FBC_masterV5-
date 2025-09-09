@@ -1,285 +1,465 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { UnifiedChatInterface } from '@/components/chat/UnifiedChatInterface'
-import { UnifiedChatLayout } from '@/components/chat/UnifiedChatLayout'
-import { MessageData } from '@/components/chat/UnifiedMessage'
-import '@/styles/figma-design.css'
+import React, { useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface ConversationState {
-  stage: string
-  name?: string
-  email?: string
-  companyInfo?: {
-    name: string
-    domain: string
-    industry: string
-    insights: string[]
-    challenges: string[]
-  }
-  discoveredChallenges?: string[]
-  preferredSolution?: 'training' | 'consulting' | 'both'
-  leadScore?: number
-}
+// Import AI Elements system
+import { useAIElementsSystem } from '@/components/ai-elements/ai-system';
 
-interface StreamingState {
-  isConnected: boolean
-  isListening: boolean
-  isSpeaking: boolean
-  audioLevel: number
-}
+// Import extracted components
+import { UnifiedControlPanel } from '@/components/UnifiedControlPanel';
+import { WelcomeScreen } from '@/components/screens/WelcomeScreen';
+import { LoadingIndicator } from '@/components/indicators/LoadingIndicator';
+import { CleanInputField } from '@/components/input/CleanInputField';
 
+// Import overlays
+import { SettingsOverlay } from '@/components/overlays/SettingsOverlay';
+import { FileUploadOverlay } from '@/components/overlays/FileUploadOverlay';
+import { UnifiedCanvasSystem } from '@/components/UnifiedCanvasSystem';
+
+// Import existing components
+import { CalendarBookingOverlay } from '@/components/chat/CalendarBookingOverlay';
+import { UnifiedMessage, MessageData } from '@/components/chat/UnifiedMessage';
+import { SpeechToSpeechPopover } from '@/components/SpeechToSpeechPopover';
+import { WebcamInterface } from '@/components/chat/WebcamInterface';
+import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
+import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
+import { StageRail } from '@/components/chat/StageRail';
+
+// Import hooks and utilities
+import { useAppState } from '@/hooks/useAppState';
+import { AI_RESPONSES, generateMessageId } from '@/constants/appConstants';
+
+// Import styles
+import '@/styles/figma-design.css';
+
+// Main Chat Page Component
 export default function ChatPage() {
-  const [messages, setMessages] = useState<MessageData[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [sessionId, setSessionId] = useState('')
-  const [activeInputMode, setActiveInputMode] = useState<'text' | 'voice' | 'video' | 'screen'>('text')
-  const [streamingState, setStreamingState] = useState<StreamingState>({
-    isConnected: false,
-    isListening: false,
-    isSpeaking: false,
-    audioLevel: 0
-  })
-  const [conversationState, setConversationState] = useState<ConversationState>({
-    stage: 'greeting'
-  })
-  const [partialTranscript, setPartialTranscript] = useState('')
-  const [permissionError, setPermissionError] = useState<string | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
+  // Use centralized state management
+  const {
+    state,
+    updateState,
+    messagesEndRef,
+    messagesContainerRef,
+    scrollToBottom,
+    handleScroll,
+    handleSendMessage
+  } = useAppState();
 
-  // Generate session ID on mount
-  useEffect(() => {
-    const id = Math.random().toString(36).substring(2) + Date.now().toString(36)
-    setSessionId(id)
-  }, [])
+  // AI Elements system hook
+  const {
+    systemState,
+    updateSystem,
+    activateCapability,
+    advanceStage
+  } = useAIElementsSystem();
 
-  // Send message to backend
-  const handleSendMessage = useCallback(async (content?: string) => {
-    const messageContent = content || input
-    if (!messageContent.trim() && activeInputMode === 'text') return
+  // Update AI system when messages change
+  React.useEffect(() => {
+    updateSystem(state.messages);
+  }, [state.messages, updateSystem]);
+
+  // Multimodal widgets management
+  const multimodalWidgets = React.useMemo(() => {
+    const widgets = [];
     
-    const newMessage: MessageData = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: messageContent,
-      timestamp: new Date()
-    }
-    
-    setMessages(prev => [...prev, newMessage])
-    setInput('')
-    setIsLoading(true)
-    
-    try {
-      // Check if we should use streaming
-      const useStreaming = activeInputMode !== 'text'
-      
-      if (useStreaming) {
-        // Use SSE for streaming responses
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close()
+    if (state.showVoiceOverlay && state.isVoiceMinimized) {
+      widgets.push({
+        id: 'voice',
+        type: 'voice' as const,
+        title: 'Voice AI',
+        status: state.voiceMode ? 'Active' : 'Ready',
+        isActive: state.voiceMode,
+        data: {
+          isRecording: false,
+          transcript: '',
+          audioLevel: 0
         }
-        
-        const params = new URLSearchParams({
-          messages: JSON.stringify([...messages, newMessage]),
-          sessionId,
-          stream: 'true'
-        })
-        
-        const eventSource = new EventSource(`/api/chat/stream?${params}`)
-        eventSourceRef.current = eventSource
-        
-        let accumulatedText = ''
-        const aiMessageId = Date.now().toString()
-        
-        eventSource.onmessage = (event) => {
-          const data = JSON.parse(event.data)
-          if (data.type === 'text') {
-            accumulatedText += data.data
-            setMessages(prev => {
-              const updated = [...prev]
-              const lastIndex = updated.length - 1
-              if (lastIndex >= 0 && updated[lastIndex].id === aiMessageId) {
-                updated[lastIndex] = {
-                  ...updated[lastIndex],
-                  content: accumulatedText
-                }
-              } else {
-                updated.push({
-                  id: aiMessageId,
-                  role: 'assistant',
-                  content: accumulatedText,
-                  timestamp: new Date()
-                })
-              }
-              return updated
-            })
-          } else if (data.type === 'done') {
-            setIsLoading(false)
-            eventSource.close()
-          }
+      });
+    }
+    
+    if (state.showWebcamInterface && state.isWebcamMinimized) {
+      widgets.push({
+        id: 'webcam',
+        type: 'video' as const,
+        title: 'Video Call',
+        status: 'Streaming',
+        isActive: true,
+        data: {
+          resolution: '1920x1080',
+          frameRate: 30
         }
-        
-        eventSource.onerror = () => {
-          setIsLoading(false)
-          eventSource.close()
+      });
+    }
+    
+    if (state.showScreenShareInterface && state.isScreenShareMinimized) {
+      widgets.push({
+        id: 'screen',
+        type: 'screen' as const,
+        title: 'Screen Share',
+        status: 'Active',
+        isActive: true,
+        data: {
+          displayName: 'Main Display',
+          resolution: '2560x1440'
         }
-      } else {
-        // Use regular POST for non-streaming
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [...messages, newMessage],
-            sessionId,
-            stream: false,
-            context: {
-              multimodal: {
-                voice: activeInputMode === 'voice',
-                webcam: activeInputMode === 'video',
-                screen: activeInputMode === 'screen'
-              }
-            }
-          })
-        })
-        
-        const data = await response.json()
-        
-        const aiMessage: MessageData = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: data.message || data.error || 'No response',
-          timestamp: new Date(),
-          metadata: data.metadata
-        }
-        
-        setMessages(prev => [...prev, aiMessage])
-      }
-    } catch (error) {
-      const errorMessage: MessageData = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `Error: ${error}`,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
+      });
     }
-  }, [input, messages, sessionId, activeInputMode])
+    
+    return widgets;
+  }, [
+    state.showVoiceOverlay,
+    state.isVoiceMinimized,
+    state.voiceMode,
+    state.showWebcamInterface,
+    state.isWebcamMinimized,
+    state.showScreenShareInterface,
+    state.isScreenShareMinimized
+  ]);
 
-  // Handle WebSocket connection for real-time features
-  const connectWebSocket = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.close()
-      setStreamingState(prev => ({ ...prev, isConnected: false }))
-      return
-    }
-    
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws/chat?sessionId=${sessionId}`)
-    wsRef.current = ws
-    
-    ws.onopen = () => {
-      setStreamingState(prev => ({ ...prev, isConnected: true }))
-    }
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'audio_level') {
-        setStreamingState(prev => ({ ...prev, audioLevel: data.level }))
-      } else if (data.type === 'transcript') {
-        setPartialTranscript(data.text)
-      }
-    }
-    
-    ws.onclose = () => {
-      setStreamingState(prev => ({ ...prev, isConnected: false }))
-    }
-  }, [sessionId])
-
-  // Handle mode change
-  const handleModeChange = useCallback((mode: 'text' | 'voice' | 'video' | 'screen') => {
-    setActiveInputMode(mode)
-    
-    // Connect WebSocket for real-time modes
-    if (mode !== 'text' && !wsRef.current) {
-      connectWebSocket()
-    } else if (mode === 'text' && wsRef.current) {
-      wsRef.current.close()
-    }
-  }, [connectWebSocket])
-
-  // Handle suggestion clicks
+  // Event Handlers
   const handleSuggestionClick = useCallback((suggestion: string) => {
-    setInput(suggestion)
-    handleSendMessage(suggestion)
-  }, [handleSendMessage])
+    updateState({ input: suggestion });
+    handleSendMessage();
+  }, [updateState, handleSendMessage]);
 
-  // Handle message actions
-  const handleMessageAction = useCallback((action: string, messageId: string) => {
-    console.log('Message action:', action, messageId)
-    // Implement specific actions based on your needs
-  }, [])
+  const handleVoiceComplete = useCallback((transcript: string) => {
+    updateState({ input: transcript });
+    handleSendMessage();
+  }, [updateState, handleSendMessage]);
 
-  // Handle file upload
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      // Handle file upload logic here
-      console.log('File uploaded:', file.name)
+  const handleToolSelect = useCallback((toolId: string) => {
+    switch (toolId) {
+      case 'docs':
+        updateState({ showFileUpload: true });
+        break;
+      case 'voice':
+        updateState({ showVoiceOverlay: true, isVoiceMinimized: false });
+        break;
+      case 'webcam':
+        updateState({ showWebcamInterface: true, isWebcamMinimized: false });
+        break;
+      case 'screen':
+        updateState({ showScreenShareInterface: true, isScreenShareMinimized: false });
+        break;
+      case 'settings':
+        updateState({ showSettingsOverlay: true });
+        break;
+      default:
+        break;
     }
-  }, [])
+  }, [updateState]);
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close()
-      }
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-      }
+  const handleFilesUploaded = useCallback((files: File[]) => {
+    const fileNames = files.map(f => f.name).join(', ');
+    const message: MessageData = {
+      id: generateMessageId(),
+      content: `Uploaded files: ${fileNames}`,
+      sender: 'user',
+      timestamp: new Date(),
+      metadata: { type: 'file_upload', files: fileNames }
+    };
+    updateState({ 
+      messages: [...state.messages, message],
+      showFileUpload: false 
+    });
+    activateCapability('document-analysis');
+  }, [state.messages, updateState, activateCapability]);
+
+  const handleWidgetExpand = useCallback((widgetId: string) => {
+    switch (widgetId) {
+      case 'voice':
+        updateState({ isVoiceMinimized: false });
+        break;
+      case 'webcam':
+        updateState({ isWebcamMinimized: false });
+        break;
+      case 'screen':
+        updateState({ isScreenShareMinimized: false });
+        break;
     }
-  }, [])
+  }, [updateState]);
+
+  const handleWidgetClose = useCallback((widgetId: string) => {
+    switch (widgetId) {
+      case 'voice':
+        updateState({ showVoiceOverlay: false, isVoiceMinimized: false });
+        break;
+      case 'webcam':
+        updateState({ showWebcamInterface: false, isWebcamMinimized: false });
+        break;
+      case 'screen':
+        updateState({ showScreenShareInterface: false, isScreenShareMinimized: false });
+        break;
+    }
+  }, [updateState]);
+
+  const handleBookingComplete = useCallback((bookingData: any) => {
+    const message: MessageData = {
+      id: generateMessageId(),
+      content: `Meeting scheduled for ${bookingData.selectedDate} at ${bookingData.selectedTime}`,
+      sender: 'system',
+      timestamp: new Date(),
+      metadata: { type: 'booking', data: bookingData }
+    };
+    updateState({ 
+      messages: [...state.messages, message],
+      showBookingOverlay: false 
+    });
+    advanceStage();
+  }, [state.messages, updateState, advanceStage]);
+
+  const handleGeneratePDF = useCallback(() => {
+    activateCapability('pdf-generation');
+    // PDF generation logic here
+  }, [activateCapability]);
 
   return (
-    <UnifiedChatLayout
-      header={
-        <div className="glass-card border-b backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <a href="/" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Back
-              </a>
-              <h1 className="text-lg font-semibold">AI Chat Assistant</h1>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Session: {sessionId.slice(0, 8)}...
+    <DndProvider backend={HTML5Backend}>
+      <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+        {/* Main Layout Structure */}
+        <div className="flex flex-col h-screen">
+          {/* Fixed Header - UnifiedControlPanel */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-b"
+          >
+            <UnifiedControlPanel
+              leadScore={state.conversationState.leadScore}
+              systemState={systemState}
+              currentStageIndex={systemState.currentStageIndex}
+              onGeneratePDF={handleGeneratePDF}
+              onOpenBooking={() => updateState({ showBookingOverlay: true })}
+              onOpenSettings={() => updateState({ showSettingsOverlay: true })}
+            />
+          </motion.div>
+
+          {/* Main Chat Area - Scrollable Center */}
+          <div 
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto px-4 pt-20 pb-24 scroll-smooth"
+          >
+            <div className="max-w-4xl mx-auto">
+              {state.messages.length === 0 ? (
+                <WelcomeScreen />
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {state.messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <UnifiedMessage
+                        message={message}
+                        onSuggestionClick={handleSuggestionClick}
+                        onActionClick={(action) => {
+                          if (action === 'book') {
+                            updateState({ showBookingOverlay: true });
+                          }
+                        }}
+                        isLatest={index === state.messages.length - 1}
+                      />
+                    </motion.div>
+                  ))}
+                  {state.isLoading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                    >
+                      <LoadingIndicator />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+              {/* Auto-scroll target */}
+              <div ref={messagesEndRef} />
             </div>
           </div>
+
+          {/* Fixed Bottom - CleanInputField */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-t p-4"
+          >
+            <div className="max-w-4xl mx-auto">
+              <CleanInputField
+                value={state.input}
+                onChange={(value) => updateState({ input: value })}
+                onSend={handleSendMessage}
+                onToolSelect={handleToolSelect}
+                isLoading={state.isLoading}
+                voiceMode={state.voiceMode}
+                suggestions={[
+                  "Tell me about AI solutions",
+                  "How can AI help my business?",
+                  "What's your pricing?",
+                  "Schedule a consultation"
+                ]}
+                onSuggestionClick={handleSuggestionClick}
+              />
+            </div>
+          </motion.div>
         </div>
-      }
-    >
-      <UnifiedChatInterface
-        messages={messages}
-        conversationState={conversationState}
-        completedBooking={null}
-        input={input}
-        setInput={setInput}
-        isLoading={isLoading}
-        activeInputMode={activeInputMode}
-        streamingState={streamingState}
-        partialTranscript={partialTranscript}
-        permissionError={permissionError}
-        onSendMessage={handleSendMessage}
-        onSuggestionClick={handleSuggestionClick}
-        onMessageAction={handleMessageAction}
-        onModeChange={handleModeChange}
-        onFileUpload={handleFileUpload}
-        onDismissError={() => setPermissionError(null)}
-      />
-    </UnifiedChatLayout>
-  )
+
+        {/* Overlay System - Modal Layers */}
+        <AnimatePresence mode="wait">
+          {/* Speech to Speech Popover */}
+          {state.showVoiceOverlay && !state.isVoiceMinimized && (
+            <SpeechToSpeechPopover
+              isOpen={state.showVoiceOverlay}
+              onClose={() => updateState({ showVoiceOverlay: false })}
+              onMinimize={() => updateState({ isVoiceMinimized: true })}
+              onTranscriptComplete={handleVoiceComplete}
+            />
+          )}
+
+          {/* Settings Overlay */}
+          {state.showSettingsOverlay && (
+            <SettingsOverlay
+              isOpen={state.showSettingsOverlay}
+              onClose={() => updateState({ showSettingsOverlay: false })}
+              theme={state.theme}
+              onThemeChange={(theme) => updateState({ theme })}
+            />
+          )}
+
+          {/* File Upload Overlay */}
+          {state.showFileUpload && (
+            <FileUploadOverlay
+              isOpen={state.showFileUpload}
+              onClose={() => updateState({ showFileUpload: false })}
+              onFilesUploaded={handleFilesUploaded}
+            />
+          )}
+
+          {/* Canvas System */}
+          {state.activeCanvasTool && (
+            <UnifiedCanvasSystem
+              activeTool={state.activeCanvasTool}
+              onClose={() => updateState({ activeCanvasTool: null })}
+            />
+          )}
+
+          {/* Webcam Interface */}
+          {state.showWebcamInterface && !state.isWebcamMinimized && (
+            <WebcamInterface
+              isOpen={state.showWebcamInterface}
+              onClose={() => updateState({ showWebcamInterface: false })}
+              onMinimize={() => updateState({ isWebcamMinimized: true })}
+              onCapture={(imageData) => {
+                const message: MessageData = {
+                  id: generateMessageId(),
+                  content: 'Image captured from webcam',
+                  sender: 'user',
+                  timestamp: new Date(),
+                  metadata: { type: 'image', data: imageData }
+                };
+                updateState({ messages: [...state.messages, message] });
+                activateCapability('visual-analysis');
+              }}
+              facing={state.cameraFacing}
+              onFacingChange={(facing) => updateState({ cameraFacing: facing })}
+            />
+          )}
+
+          {/* Screen Share Interface */}
+          {state.showScreenShareInterface && !state.isScreenShareMinimized && (
+            <ScreenShareInterface
+              isOpen={state.showScreenShareInterface}
+              onClose={() => updateState({ showScreenShareInterface: false })}
+              onMinimize={() => updateState({ isScreenShareMinimized: true })}
+              onCapture={(screenData) => {
+                const message: MessageData = {
+                  id: generateMessageId(),
+                  content: 'Screen captured',
+                  sender: 'user',
+                  timestamp: new Date(),
+                  metadata: { type: 'screen', data: screenData }
+                };
+                updateState({ messages: [...state.messages, message] });
+                activateCapability('screen-analysis');
+              }}
+            />
+          )}
+
+          {/* Calendar Booking Overlay */}
+          {state.showBookingOverlay && (
+            <CalendarBookingOverlay
+              isOpen={state.showBookingOverlay}
+              onClose={() => updateState({ showBookingOverlay: false })}
+              onComplete={handleBookingComplete}
+              leadInfo={{
+                name: state.conversationState.name || '',
+                email: state.conversationState.email || '',
+                company: state.conversationState.company || ''
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Multimodal Widget System */}
+        {multimodalWidgets.length > 0 && (
+          <UnifiedMultimodalWidget
+            widgets={multimodalWidgets}
+            onExpand={handleWidgetExpand}
+            onClose={handleWidgetClose}
+          />
+        )}
+
+        {/* Stage Rail - Progress Indicator */}
+        <AnimatePresence>
+          {state.messages.length > 2 && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="fixed left-4 top-1/2 -translate-y-1/2 z-20"
+            >
+              <StageRail
+                currentStage={systemState.currentStageIndex}
+                stages={systemState.stages}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Scroll to Bottom Button */}
+        <AnimatePresence>
+          {state.isUserScrolling && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              onClick={scrollToBottom}
+              className="fixed bottom-24 right-4 z-20 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow"
+              aria-label="Scroll to bottom"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </DndProvider>
+  );
 }
