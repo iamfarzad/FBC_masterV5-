@@ -317,7 +317,7 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <Button
                         onClick={onSubmit}
-                        disabled={isLoading || !input.trim()}
+                        disabled={isLoading || !input?.trim()}
                         size="sm"
                         className="w-11 h-11 p-0 rounded-2xl glass-button bg-primary/10 text-primary hover:bg-primary/20 interactive-glow"
                         aria-label="Send message"
