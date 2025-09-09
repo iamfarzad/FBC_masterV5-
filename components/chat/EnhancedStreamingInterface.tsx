@@ -64,7 +64,7 @@ const AdvancedAudioVisualizer: React.FC<{
   className?: string;
 }> = ({ audioLevel, isListening, isSpeaking, mode, className = "" }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const [bars, setBars] = useState<number[]>(new Array(32).fill(0));
 
   // Canvas-based visualization for voice mode
@@ -995,7 +995,7 @@ export const EnhancedStreamingInterface: React.FC<EnhancedStreamingInterfaceProp
             </div>
 
             {/* Mobile hint for video mode */}
-            {isMobile && mode === 'video' && (
+            {isMobile && mode === 'screen' && (
               <motion.div 
                 className="mt-8 text-center"
                 initial={{ opacity: 0, y: 10 }}
