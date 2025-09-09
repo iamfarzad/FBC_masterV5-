@@ -20,6 +20,7 @@ import { CleanInputField } from '@/components/input/CleanInputField';
 import { SettingsOverlay } from '@/components/overlays/SettingsOverlay';
 import { FileUploadOverlay } from '@/components/overlays/FileUploadOverlay';
 import { UnifiedCanvasSystem } from '@/components/UnifiedCanvasSystem';
+import './layout.css';
 
 // Import existing components
 import { CalendarBookingOverlay } from '@/components/chat/CalendarBookingOverlay';
@@ -228,15 +229,9 @@ export default function ChatPage() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-        {/* Main Layout Structure */}
-        <div className="flex flex-col h-screen">
-          {/* Fixed Header - UnifiedControlPanel */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-b"
-          >
+      <div className="chat-container">
+        {/* Fixed Header - UnifiedControlPanel */}
+        <header className="chat-header">
             <UnifiedControlPanel
               leadScore={state.conversationState.leadScore}
               systemState={systemState}
@@ -245,14 +240,14 @@ export default function ChatPage() {
               onOpenBooking={() => updateState({ showBookingOverlay: true })}
               onOpenSettings={() => updateState({ showSettingsOverlay: true })}
             />
-          </motion.div>
+          </header>
 
-          {/* Main Chat Area - Scrollable Center */}
-          <div 
-            ref={messagesContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 pt-20 pb-24 scroll-smooth"
-          >
+        {/* Main Chat Area - Scrollable Center */}
+        <main 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="chat-messages"
+        >
             <div className="max-w-4xl mx-auto">
               {state.messages.length === 0 ? (
                 <WelcomeScreen />
@@ -292,19 +287,15 @@ export default function ChatPage() {
               {/* Auto-scroll target */}
               <div ref={messagesEndRef} />
             </div>
-          </div>
+          </main>
 
-          {/* Fixed Bottom - CleanInputField */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-t p-4"
-          >
-            <div className="max-w-4xl mx-auto">
+        {/* Fixed Bottom - CleanInputField */}
+        <footer className="chat-input-container">
+          <div className="max-w-4xl mx-auto">
               <CleanInputField
-                value={state.input}
-                onChange={(value) => updateState({ input: value })}
-                onSend={handleSendMessage}
+                input={state.input}
+                setInput={(value: string) => updateState({ input: value })}
+                onSubmit={handleSendMessage}
                 onToolSelect={handleToolSelect}
                 isLoading={state.isLoading}
                 voiceMode={state.voiceMode}
@@ -315,10 +306,12 @@ export default function ChatPage() {
                   "Schedule a consultation"
                 ]}
                 onSuggestionClick={handleSuggestionClick}
+                onShowVoiceOverlay={() => updateState({ showVoiceOverlay: true })}
+                onShowSettings={() => updateState({ showSettingsOverlay: true })}
+                activeTools={state.activeTools || []}
               />
-            </div>
-          </motion.div>
-        </div>
+          </div>
+        </footer>
 
         {/* Overlay System - Modal Layers */}
         <AnimatePresence mode="wait">
