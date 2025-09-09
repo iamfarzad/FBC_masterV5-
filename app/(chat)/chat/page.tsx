@@ -1,466 +1,316 @@
 "use client"
 
-import React, { useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
-// Import AI Elements system
-import { useAIElementsSystem } from '@/components/ai-elements/ai-system';
-
-// Import extracted components
-import { UnifiedControlPanel } from '@/components/UnifiedControlPanel';
-import { WelcomeScreen } from '@/components/screens/WelcomeScreen';
-import { LoadingIndicator } from '@/components/indicators/LoadingIndicator';
-import { CleanInputField } from '@/components/input/CleanInputField';
-
-// Import overlays
-import { SettingsOverlay } from '@/components/overlays/SettingsOverlay';
-import { FileUploadOverlay } from '@/components/overlays/FileUploadOverlay';
-import { UnifiedCanvasSystem } from '@/components/UnifiedCanvasSystem';
+import { 
+  Mic, 
+  Settings, 
+  FileText,
+  Phone,
+  Send,
+  Plus,
+  Camera,
+  Monitor,
+  Upload,
+  Search,
+  GraduationCap
+} from 'lucide-react';
 import './layout.css';
 
-// Import existing components
-import { CalendarBookingOverlay } from '@/components/chat/CalendarBookingOverlay';
-import { UnifiedMessage, MessageData } from '@/components/chat/UnifiedMessage';
-import { SpeechToSpeechPopover } from '@/components/chat/SpeechToSpeechPopover';
-import { WebcamInterface } from '@/components/chat/WebcamInterface';
-import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
-import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
-import { StageRail } from '@/components/chat/StageRail';
+// Message Interface
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'assistant';
+  timestamp: Date;
+  suggestions?: string[];
+}
 
-// Import hooks and utilities
-import { useAppState } from '@/hooks/useAppState';
-// Constants
-const AI_RESPONSES = [
-  "Thank you for sharing that. Based on your industry, I can already see several AI opportunities. What's your biggest operational challenge right now?",
-  "Great! Your business profile shows strong potential for AI implementation. What specific goals are you hoping to achieve this year?", 
-  "That's helpful context. Could you share your email so I can send you a personalized AI assessment after our conversation?",
-  "Perfect! I'm building a comprehensive understanding of your needs. What's driving your interest in AI - competitive pressure or growth opportunities?"
+// Tool Interface
+interface Tool {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description: string;
+}
+
+const TOOLS: Tool[] = [
+  { id: 'voice', icon: Mic, label: 'Voice AI', description: 'Natural conversation mode' },
+  { id: 'webcam', icon: Camera, label: 'Video Call', description: 'Face-to-face consultation' },
+  { id: 'screen', icon: Monitor, label: 'Screen Share', description: 'Business process analysis' },
+  { id: 'docs', icon: Upload, label: 'Documents', description: 'Upload & analyze files' },
+  { id: 'research', icon: Search, label: 'Research', description: 'Market & competitor analysis' },
+  { id: 'workshop', icon: GraduationCap, label: 'AI Academy', description: 'Executive training resources' }
 ];
 
-const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-// Import styles
-import '@/styles/figma-design.css';
-
-// Main Chat Page Component
 export default function ChatPage() {
-  // Use centralized state management
-  const {
-    state,
-    updateState,
-    messagesEndRef,
-    messagesContainerRef,
-    scrollToBottom,
-    handleScroll,
-    handleSendMessage
-  } = useAppState();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [showTools, setShowTools] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // AI Elements system hook
-  const {
-    systemState,
-    updateSystem,
-    activateCapability,
-    advanceStage
-  } = useAIElementsSystem();
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  // Update AI system when messages change
-  React.useEffect(() => {
-    updateSystem(state.messages);
-  }, [state.messages, updateSystem]);
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || isLoading) return;
 
-  // Multimodal widgets management
-  const multimodalWidgets = React.useMemo(() => {
-    const widgets = [];
-    
-    if (state.showVoiceOverlay && state.isVoiceMinimized) {
-      widgets.push({
-        id: 'voice',
-        type: 'voice' as const,
-        title: 'Voice AI',
-        status: state.voiceMode ? 'Active' : 'Ready',
-        isActive: state.voiceMode,
-        data: {
-          isRecording: false,
-          transcript: '',
-          audioLevel: 0
-        }
-      });
-    }
-    
-    if (state.showWebcamInterface && state.isWebcamMinimized) {
-      widgets.push({
-        id: 'webcam',
-        type: 'video' as const,
-        title: 'Video Call',
-        status: 'Streaming',
-        isActive: true,
-        data: {
-          resolution: '1920x1080',
-          frameRate: 30
-        }
-      });
-    }
-    
-    if (state.showScreenShareInterface && state.isScreenShareMinimized) {
-      widgets.push({
-        id: 'screen',
-        type: 'screen' as const,
-        title: 'Screen Share',
-        status: 'Active',
-        isActive: true,
-        data: {
-          displayName: 'Main Display',
-          resolution: '2560x1440'
-        }
-      });
-    }
-    
-    return widgets;
-  }, [
-    state.showVoiceOverlay,
-    state.isVoiceMinimized,
-    state.voiceMode,
-    state.showWebcamInterface,
-    state.isWebcamMinimized,
-    state.showScreenShareInterface,
-    state.isScreenShareMinimized
-  ]);
-
-  // Event Handlers
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    updateState({ input: suggestion });
-    handleSendMessage();
-  }, [updateState, handleSendMessage]);
-
-  const handleVoiceComplete = useCallback((transcript: string) => {
-    updateState({ input: transcript });
-    handleSendMessage();
-  }, [updateState, handleSendMessage]);
-
-  const handleToolSelect = useCallback((toolId: string) => {
-    switch (toolId) {
-      case 'docs':
-        updateState({ showFileUpload: true });
-        break;
-      case 'voice':
-        updateState({ showVoiceOverlay: true, isVoiceMinimized: false });
-        break;
-      case 'webcam':
-        updateState({ showWebcamInterface: true, isWebcamMinimized: false });
-        break;
-      case 'screen':
-        updateState({ showScreenShareInterface: true, isScreenShareMinimized: false });
-        break;
-      case 'settings':
-        updateState({ showSettingsOverlay: true });
-        break;
-      default:
-        break;
-    }
-  }, [updateState]);
-
-  const handleFilesUploaded = useCallback((files: File[]) => {
-    const fileNames = files.map(f => f.name).join(', ');
-    const message: MessageData = {
-      id: generateMessageId(),
-      content: `Uploaded files: ${fileNames}`,
+    const newMessage: Message = {
+      id: `msg_${Date.now()}`,
+      content: input,
       sender: 'user',
-      timestamp: new Date(),
-      metadata: { type: 'file_upload', files: fileNames }
+      timestamp: new Date()
     };
-    updateState({ 
-      messages: [...state.messages, message],
-      showFileUpload: false 
-    });
-    activateCapability('document-analysis');
-  }, [state.messages, updateState, activateCapability]);
 
-  const handleWidgetExpand = useCallback((widgetId: string) => {
-    switch (widgetId) {
-      case 'voice':
-        updateState({ isVoiceMinimized: false });
-        break;
-      case 'webcam':
-        updateState({ isWebcamMinimized: false });
-        break;
-      case 'screen':
-        updateState({ isScreenShareMinimized: false });
-        break;
+    setMessages(prev => [...prev, newMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: `msg_${Date.now()}_ai`,
+        content: "Thank you for sharing that. Based on your industry, I can already see several AI opportunities. What's your biggest operational challenge right now?",
+        sender: 'assistant',
+        timestamp: new Date(),
+        suggestions: ['Customer service efficiency', 'Better data insights', 'Process automation', 'Sales optimization']
+      };
+      setMessages(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 1500);
+  }, [input, isLoading]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
-  }, [updateState]);
+  };
 
-  const handleWidgetClose = useCallback((widgetId: string) => {
-    switch (widgetId) {
-      case 'voice':
-        updateState({ showVoiceOverlay: false, isVoiceMinimized: false });
-        break;
-      case 'webcam':
-        updateState({ showWebcamInterface: false, isWebcamMinimized: false });
-        break;
-      case 'screen':
-        updateState({ showScreenShareInterface: false, isScreenShareMinimized: false });
-        break;
-    }
-  }, [updateState]);
-
-  const handleBookingComplete = useCallback((bookingData: any) => {
-    const message: MessageData = {
-      id: generateMessageId(),
-      content: `Meeting scheduled for ${bookingData.selectedDate} at ${bookingData.selectedTime}`,
-      sender: 'system',
-      timestamp: new Date(),
-      metadata: { type: 'booking', data: bookingData }
-    };
-    updateState({ 
-      messages: [...state.messages, message],
-      showBookingOverlay: false 
-    });
-    advanceStage();
-  }, [state.messages, updateState, advanceStage]);
-
-  const handleGeneratePDF = useCallback(() => {
-    activateCapability('pdf-generation');
-    // PDF generation logic here
-  }, [activateCapability]);
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    inputRef.current?.focus();
+  };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="chat-container">
-        {/* Fixed Header - UnifiedControlPanel */}
-        <header className="chat-header">
-            <UnifiedControlPanel
-              leadScore={state.conversationState.leadScore}
-              systemState={systemState}
-              currentStageIndex={systemState.currentStageIndex}
-              onGeneratePDF={handleGeneratePDF}
-              onOpenBooking={() => updateState({ showBookingOverlay: true })}
-              onOpenSettings={() => updateState({ showSettingsOverlay: true })}
-            />
-          </header>
+    <div className="chat-page">
+      {/* Header */}
+      <header className="chat-header-minimal">
+        <div className="header-content">
+          <div className="header-left">
+            <span className="ai-badge">F.B/c AI Assistant</span>
+            <span className="business-badge">Business Intelligence</span>
+          </div>
+          <div className="header-right">
+            <span className="time">09:44 PM</span>
+            <span className="location">Tue, Sep 9</span>
+            <span className="weather">72°F</span>
+            <span className="weather-status">Sunny</span>
+          </div>
+        </div>
+      </header>
 
-        {/* Main Chat Area - Scrollable Center */}
-        <main 
-          ref={messagesContainerRef}
-          onScroll={handleScroll}
-          className="chat-messages"
-        >
-            <div className="max-w-4xl mx-auto">
-              {state.messages.length === 0 ? (
-                <WelcomeScreen />
-              ) : (
-                <AnimatePresence mode="popLayout">
-                  {state.messages.map((message, index) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <UnifiedMessage
-                        message={message}
-                        onSuggestionClick={handleSuggestionClick}
-                        onActionClick={(action) => {
-                          if (action === 'book') {
-                            updateState({ showBookingOverlay: true });
-                          }
-                        }}
-                        isLatest={index === state.messages.length - 1}
-                      />
-                    </motion.div>
-                  ))}
-                  {state.isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                    >
-                      <LoadingIndicator />
-                    </motion.div>
+      {/* Main Content Area */}
+      <main className="chat-main">
+        <div className="chat-content">
+          {messages.length === 0 ? (
+            <div className="welcome-container">
+              <motion.div 
+                className="welcome-message"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="ai-avatar">
+                  <div className="avatar-ring">
+                    <span>AI</span>
+                  </div>
+                </div>
+                <h2 className="welcome-title">F.B/c AI Assistant</h2>
+                <p className="welcome-text">
+                  Hi! I'm your AI Strategy Assistant. I help businesses discover how AI can transform their operations and drive growth.<br/><br/>
+                  What's your name, and what industry are you in?
+                </p>
+                <div className="welcome-meta">
+                  <span>I'm John Smith, CEO of a tech startup</span>
+                  <span className="separator">•</span>
+                  <span>Sarah from retail/e-commerce</span>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+            <div className="messages-container">
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  className={`message ${message.sender}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {message.sender === 'assistant' && (
+                    <div className="message-avatar">
+                      <div className="avatar-ring small">
+                        <span>AI</span>
+                      </div>
+                    </div>
                   )}
-                </AnimatePresence>
+                  <div className="message-content">
+                    <p>{message.content}</p>
+                    {message.suggestions && (
+                      <div className="suggestions">
+                        {message.suggestions.map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            className="suggestion-chip"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+              {isLoading && (
+                <motion.div 
+                  className="message assistant"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="message-avatar">
+                    <div className="avatar-ring small">
+                      <span>AI</span>
+                    </div>
+                  </div>
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </motion.div>
               )}
-              {/* Auto-scroll target */}
               <div ref={messagesEndRef} />
             </div>
-          </main>
-
-        {/* Fixed Bottom - CleanInputField */}
-        <footer className="chat-input-container">
-          <div className="max-w-4xl mx-auto">
-              <CleanInputField
-                input={state.input}
-                setInput={(value: string) => updateState({ input: value })}
-                onSubmit={handleSendMessage}
-                onToolSelect={handleToolSelect}
-                isLoading={state.isLoading}
-                voiceMode={state.voiceMode}
-                suggestions={[
-                  "Tell me about AI solutions",
-                  "How can AI help my business?",
-                  "What's your pricing?",
-                  "Schedule a consultation"
-                ]}
-                onSuggestionClick={handleSuggestionClick}
-                onShowVoiceOverlay={() => updateState({ showVoiceOverlay: true })}
-                onShowSettings={() => updateState({ showSettingsOverlay: true })}
-                activeTools={state.activeTools || []}
-              />
-          </div>
-        </footer>
-
-        {/* Overlay System - Modal Layers */}
-        <AnimatePresence mode="wait">
-          {/* Speech to Speech Popover */}
-          {state.showVoiceOverlay && !state.isVoiceMinimized && (
-            <SpeechToSpeechPopover
-              isOpen={state.showVoiceOverlay}
-              onClose={() => updateState({ showVoiceOverlay: false })}
-              onMinimize={() => updateState({ isVoiceMinimized: true })}
-              onTranscriptComplete={handleVoiceComplete}
-            />
           )}
+        </div>
 
-          {/* Settings Overlay */}
-          {state.showSettingsOverlay && (
-            <SettingsOverlay
-              isOpen={state.showSettingsOverlay}
-              onClose={() => updateState({ showSettingsOverlay: false })}
-              theme={state.theme}
-              onThemeChange={(theme) => updateState({ theme })}
-            />
-          )}
-
-          {/* File Upload Overlay */}
-          {state.showFileUpload && (
-            <FileUploadOverlay
-              isOpen={state.showFileUpload}
-              onClose={() => updateState({ showFileUpload: false })}
-              onFilesUploaded={handleFilesUploaded}
-            />
-          )}
-
-          {/* Canvas System */}
-          {state.activeCanvasTool && (
-            <UnifiedCanvasSystem
-              activeTool={state.activeCanvasTool}
-              onClose={() => updateState({ activeCanvasTool: null })}
-            />
-          )}
-
-          {/* Webcam Interface */}
-          {state.showWebcamInterface && !state.isWebcamMinimized && (
-            <WebcamInterface
-              isOpen={state.showWebcamInterface}
-              onClose={() => updateState({ showWebcamInterface: false })}
-              onMinimize={() => updateState({ isWebcamMinimized: true })}
-              onCapture={(imageData) => {
-                const message: MessageData = {
-                  id: generateMessageId(),
-                  content: 'Image captured from webcam',
-                  sender: 'user',
-                  timestamp: new Date(),
-                  metadata: { type: 'image', data: imageData }
-                };
-                updateState({ messages: [...state.messages, message] });
-                activateCapability('visual-analysis');
-              }}
-              facing={state.cameraFacing}
-              onFacingChange={(facing) => updateState({ cameraFacing: facing })}
-            />
-          )}
-
-          {/* Screen Share Interface */}
-          {state.showScreenShareInterface && !state.isScreenShareMinimized && (
-            <ScreenShareInterface
-              isOpen={state.showScreenShareInterface}
-              onClose={() => updateState({ showScreenShareInterface: false })}
-              onMinimize={() => updateState({ isScreenShareMinimized: true })}
-              onCapture={(screenData) => {
-                const message: MessageData = {
-                  id: generateMessageId(),
-                  content: 'Screen captured',
-                  sender: 'user',
-                  timestamp: new Date(),
-                  metadata: { type: 'screen', data: screenData }
-                };
-                updateState({ messages: [...state.messages, message] });
-                activateCapability('screen-analysis');
-              }}
-            />
-          )}
-
-          {/* Calendar Booking Overlay */}
-          {state.showBookingOverlay && (
-            <CalendarBookingOverlay
-              isOpen={state.showBookingOverlay}
-              onClose={() => updateState({ showBookingOverlay: false })}
-              onComplete={handleBookingComplete}
-              leadInfo={{
-                name: state.conversationState.name || '',
-                email: state.conversationState.email || '',
-                company: state.conversationState.company || ''
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Multimodal Widget System */}
-        {multimodalWidgets.length > 0 && (
-          <UnifiedMultimodalWidget
-            widgets={multimodalWidgets}
-            onExpand={handleWidgetExpand}
-            onClose={handleWidgetClose}
-          />
+        {/* Quick Actions Panel (shown when messages exist) */}
+        {messages.length > 0 && (
+          <motion.div 
+            className="quick-actions-panel"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="panel-section">
+              <h3>Quick Actions</h3>
+              <div className="action-buttons">
+                <Button variant="outline" size="sm" className="action-btn">
+                  <Mic className="w-4 h-4" />
+                  Voice
+                </Button>
+                <Button variant="outline" size="sm" className="action-btn">
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </Button>
+              </div>
+            </div>
+            <div className="panel-section">
+              <h3>Business Actions</h3>
+              <div className="action-buttons">
+                <Button variant="outline" size="sm" className="action-btn">
+                  <FileText className="w-4 h-4" />
+                  Report
+                </Button>
+                <Button variant="outline" size="sm" className="action-btn">
+                  <Phone className="w-4 h-4" />
+                  Book Call
+                </Button>
+              </div>
+            </div>
+            <div className="panel-info">
+              <span>Ready for next steps</span>
+            </div>
+          </motion.div>
         )}
+      </main>
 
-        {/* Stage Rail - Progress Indicator */}
-        <AnimatePresence>
-          {state.messages.length > 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="fixed left-4 top-1/2 -translate-y-1/2 z-20"
+      {/* Input Area */}
+      <footer className="chat-input-area">
+        <div className="input-container">
+          <div className="input-wrapper">
+            <button 
+              className="tools-button"
+              onClick={() => setShowTools(!showTools)}
             >
-              <StageRail
-                currentStage={systemState.currentStageIndex}
-                stages={systemState.stages}
-              />
+              <Plus className="w-5 h-5" />
+            </button>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Describe your business challenge or AI opportunity..."
+              className="chat-input"
+              rows={1}
+            />
+            {input.trim() && (
+              <button 
+                className="send-button"
+                onClick={handleSend}
+                disabled={isLoading}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tools Popover */}
+        <AnimatePresence>
+          {showTools && (
+            <motion.div 
+              className="tools-popover"
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            >
+              {TOOLS.map((tool) => (
+                <button
+                  key={tool.id}
+                  className="tool-item"
+                  onClick={() => {
+                    console.log(`Selected tool: ${tool.id}`);
+                    setShowTools(false);
+                  }}
+                >
+                  <div className="tool-icon">
+                    <tool.icon className="w-5 h-5" />
+                  </div>
+                  <div className="tool-info">
+                    <span className="tool-label">{tool.label}</span>
+                    <span className="tool-description">{tool.description}</span>
+                  </div>
+                </button>
+              ))}
+              <button className="tool-item">
+                <div className="tool-icon">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div className="tool-info">
+                  <span className="tool-label">Settings</span>
+                  <span className="tool-description">Preferences & theme</span>
+                </div>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Scroll to Bottom Button */}
-        <AnimatePresence>
-          {state.isUserScrolling && (
-            <motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              onClick={scrollToBottom}
-              className="fixed bottom-24 right-4 z-20 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow"
-              aria-label="Scroll to bottom"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-    </DndProvider>
+      </footer>
+    </div>
   );
 }
