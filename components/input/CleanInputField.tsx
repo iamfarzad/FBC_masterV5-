@@ -92,16 +92,16 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
             setIsToolsExpanded(false);
           }}
           className={`w-full h-auto p-4 rounded-2xl justify-start glass-button interactive-lift ${
-            activeTools.includes(tool.id) ? 'bg-primary/15 text-primary state-success' : ''
+            activeTools?.includes(tool.id) ? 'bg-primary/15 text-primary state-success' : ''
           }`}
-          aria-pressed={activeTools.includes(tool.id)}
+          aria-pressed={activeTools?.includes(tool.id) || false}
         >
           <div className="flex items-center gap-4 w-full">
             <motion.div 
               className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-                activeTools.includes(tool.id) ? 'bg-primary/20 animate-glow-pulse' : 'bg-muted/30'
+                activeTools?.includes(tool.id) ? 'bg-primary/20 animate-glow-pulse' : 'bg-muted/30'
               }`}
-              animate={activeTools.includes(tool.id) ? { scale: [1, 1.05, 1] } : {}}
+              animate={activeTools?.includes(tool.id) ? { scale: [1, 1.05, 1] } : {}}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
               <tool.icon className="w-5 h-5" aria-hidden="true" />
@@ -110,7 +110,7 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
               <div className="font-medium text-holographic">{tool.label}</div>
               <div className="text-muted-foreground">{tool.description}</div>
             </div>
-            {activeTools.includes(tool.id) && (
+            {activeTools?.includes(tool.id) && (
               <motion.div 
                 className="w-2.5 h-2.5 bg-primary rounded-full animate-modern-pulse" 
                 aria-hidden="true"
@@ -305,7 +305,7 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
           </Tooltip>
 
           <AnimatePresence>
-            {input.trim() && (
+            {input?.trim() && (
               <motion.div
                 initial={{ scale: 0, opacity: 0, rotate: -180 }}
                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
