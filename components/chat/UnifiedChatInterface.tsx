@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Textarea } from './ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Textarea } from '../ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Send, Sparkles, User, AlertTriangle, X, Paperclip, Mic, MicOff, Check, Camera, Monitor } from 'lucide-react';
 import { UnifiedMessage, UnifiedTypingIndicator, MessageData } from './UnifiedMessage';
 import { UnifiedStatusBar, LiveStatusCard } from './UnifiedStreamingControls';
 import { MediaSupportChecker } from './MediaSupportChecker';
 import { EnhancedStreamingInterface } from './EnhancedStreamingInterface';
-import { config } from '../config/environment';
+import { config } from '@/config/environment';
 
 interface ConversationState {
   stage: string;
