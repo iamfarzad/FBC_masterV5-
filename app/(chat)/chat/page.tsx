@@ -24,7 +24,7 @@ import { UnifiedCanvasSystem } from '@/components/UnifiedCanvasSystem';
 // Import existing components
 import { CalendarBookingOverlay } from '@/components/chat/CalendarBookingOverlay';
 import { UnifiedMessage, MessageData } from '@/components/chat/UnifiedMessage';
-import { SpeechToSpeechPopover } from '@/components/SpeechToSpeechPopover';
+import { SpeechToSpeechPopover } from '@/components/chat/SpeechToSpeechPopover';
 import { WebcamInterface } from '@/components/chat/WebcamInterface';
 import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
 import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
@@ -32,7 +32,15 @@ import { StageRail } from '@/components/chat/StageRail';
 
 // Import hooks and utilities
 import { useAppState } from '@/hooks/useAppState';
-import { AI_RESPONSES, generateMessageId } from '@/constants/appConstants';
+// Constants
+const AI_RESPONSES = [
+  "Thank you for sharing that. Based on your industry, I can already see several AI opportunities. What's your biggest operational challenge right now?",
+  "Great! Your business profile shows strong potential for AI implementation. What specific goals are you hoping to achieve this year?", 
+  "That's helpful context. Could you share your email so I can send you a personalized AI assessment after our conversation?",
+  "Perfect! I'm building a comprehensive understanding of your needs. What's driving your interest in AI - competitive pressure or growth opportunities?"
+];
+
+const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // Import styles
 import '@/styles/figma-design.css';
