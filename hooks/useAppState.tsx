@@ -63,24 +63,11 @@ export const useAppState = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize state
+  // Initialize state with static values for SSR consistency
   const [state, setState] = useState<AppState>({
     input: '',
     isLoading: false,
-    messages: [
-      {
-        id: generateMessageId(),
-        content: "Hi! I'm your AI Strategy Assistant. I help businesses discover how AI can transform their operations and drive growth.\n\nWhat's your name, and what industry are you in?",
-        sender: 'ai' as const,
-        timestamp: new Date(),
-        type: 'text',
-        suggestions: [
-          "I'm John Smith, CEO of a tech startup",
-          "Sarah from retail/e-commerce",
-          "Mike, manufacturing company"
-        ]
-      }
-    ],
+    messages: [],
     voiceMode: false,
     showVoiceOverlay: false,
     isVoiceMinimized: false,
@@ -102,6 +89,25 @@ export const useAppState = () => {
     },
     isUserScrolling: false
   });
+
+  // Initialize with welcome message after hydration
+  useEffect(() => {
+    if (state.messages.length === 0) {
+      const welcomeMessage: MessageData = {
+        id: generateMessageId(),
+        content: "Hi! I'm your AI Strategy Assistant. I help businesses discover how AI can transform their operations and drive growth.\n\nWhat's your name, and what industry are you in?",
+        sender: 'ai' as const,
+        timestamp: new Date(),
+        type: 'text',
+        suggestions: [
+          "I'm John Smith, CEO of a tech startup",
+          "Sarah from retail/e-commerce", 
+          "Mike, manufacturing company"
+        ]
+      };
+      setState(prev => ({ ...prev, messages: [welcomeMessage] }));
+    }
+  }, []);
 
   // Update individual state properties
   const updateState = useCallback((updates: Partial<AppState>) => {
