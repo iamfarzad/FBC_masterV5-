@@ -181,8 +181,8 @@ export const useAppState = () => {
     };
   }, []);
 
-  // Message sending logic
-  const handleSendMessage = useCallback(() => {
+  // Message sending logic - Connected to backend API
+  const handleSendMessage = useCallback(async () => {
     if (!state.input.trim() || state.isLoading) return;
 
     const userMessage: MessageData = {
@@ -192,6 +192,7 @@ export const useAppState = () => {
       timestamp: new Date()
     };
 
+    const currentInput = state.input;
     updateState({
       messages: [...state.messages, userMessage],
       input: '',
@@ -201,11 +202,39 @@ export const useAppState = () => {
     
     setTimeout(() => scrollToBottom(), 50);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the real backend API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            ...state.messages.map(msg => ({
+              role: msg.sender === 'user' ? 'user' : 'assistant',
+              content: msg.content
+            })),
+            {
+              role: 'user',
+              content: currentInput
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
       const aiMessage: MessageData = {
         id: generateMessageId(),
-        content: AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)],
+        content: '',
         sender: 'ai',
         timestamp: new Date(),
         suggestions: [
@@ -216,14 +245,77 @@ export const useAppState = () => {
         ]
       };
 
-      updateState({
-        messages: [...state.messages, userMessage, aiMessage],
+      // Add the AI message to state for streaming
+      setState(prev => ({
+        ...prev,
+        messages: [...prev.messages, aiMessage],
         isLoading: false
-      });
+      }));
+
+      // Handle streaming response
+      const decoder = new TextDecoder();
+      let buffer = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') break;
+            
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                // Update the AI message content progressively
+                setState(prev => ({
+                  ...prev,
+                  messages: prev.messages.map(msg => 
+                    msg.id === aiMessage.id 
+                      ? { ...msg, content: msg.content + parsed.content }
+                      : msg
+                  )
+                }));
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
       
       setTimeout(() => scrollToBottom(), 100);
-    }, 1800);
-  }, [state.input, state.isLoading, state.messages, updateState, scrollToBottom]);
+    } catch (error) {
+      console.error('Chat API Error:', error);
+      
+      // Fallback to mock response if API fails
+      const aiMessage: MessageData = {
+        id: generateMessageId(),
+        content: `${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`,
+        sender: 'ai',
+        timestamp: new Date(),
+        suggestions: [
+          'Customer service efficiency',
+          'Better data insights', 
+          'Process automation',
+          'Sales optimization'
+        ]
+      };
+
+      setState(prev => ({
+        ...prev,
+        messages: [...prev.messages, aiMessage],
+        isLoading: false
+      }));
+      
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [state.input, state.isLoading, state.messages, scrollToBottom]);
 
   return {
     state,
