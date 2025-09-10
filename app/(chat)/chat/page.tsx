@@ -1,8 +1,8 @@
 "use client"
 
-import ChatAppClient from './ChatApp.client';
+import ChatShell from './ChatShell';
 
-// Simple client component wrapper
+// Clean, simple page component that renders the new ChatShell
 export default function ChatPage() {
-  return <ChatAppClient />;
+  return <ChatShell />;
 }
