@@ -21,10 +21,10 @@ import { SettingsOverlay } from '@/components/overlays/SettingsOverlay';
 import { FileUploadOverlay } from '@/components/overlays/FileUploadOverlay';
 import { UnifiedCanvasSystem } from '@/components/UnifiedCanvasSystem';
 
-// Import existing components
+// Import existing components - CORRECTED PATHS
 import { CalendarBookingOverlay } from '@/components/chat/CalendarBookingOverlay';
 import { UnifiedMessage, MessageData } from '@/components/chat/UnifiedMessage';
-import { SpeechToSpeechPopover } from '@/components/chat/SpeechToSpeechPopover';
+import { SpeechToSpeechPopover } from '@/components/SpeechToSpeechPopover';
 import { WebcamInterface } from '@/components/chat/WebcamInterface';
 import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
 import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
@@ -32,7 +32,7 @@ import { StageRail } from '@/components/chat/StageRail';
 
 // Import hooks and utilities
 import { useAppState } from '@/hooks/useAppState';
-import { AI_RESPONSES, generateMessageId } from '../../../constants/appConstants';
+import { AI_RESPONSES, generateMessageId } from '@/constants/appConstants';
 
 // Main App Component
 export default function App() {
