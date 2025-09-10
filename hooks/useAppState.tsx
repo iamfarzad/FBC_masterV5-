@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { MessageData } from '../components/UnifiedMessage';
+import type { MessageData } from '../components/chat/UnifiedMessage';
 
 export interface ConversationState {
   leadScore: number;
