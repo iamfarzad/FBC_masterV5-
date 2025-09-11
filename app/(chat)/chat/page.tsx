@@ -145,37 +145,49 @@ export default function ChatPage() {
   const [contextLoading, setContextLoading] = useState(false)
 
   const refreshIntelligenceContext = useCallback(async () => {
-    if (!sessionId || sessionId === 'anonymous') return
-    
+    if (!sessionId || sessionId === 'anonymous') {
+      console.log('⚠️ No valid session ID for intelligence context')
+      setIntelligenceContext(null)
+      setContextLoading(false)
+      return
+    }
+
     setContextLoading(true)
     try {
-      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`, { 
+      console.log('🔍 Fetching intelligence context for session:', sessionId)
+      const response = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`, {
         cache: 'no-store',
         headers: {
-          'x-intelligence-session-id': sessionId
+          'x-intelligence-session-id': sessionId,
+          'Cache-Control': 'no-cache'
         }
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         const context = data.ok ? (data.output || data) : null
-        setIntelligenceContext(context)
-        if (context) {
-          console.log('🧠 Intelligence context loaded:', {
+
+        if (context && (context.lead || context.company || context.person)) {
+          setIntelligenceContext(context)
+          console.log('✅ Intelligence context loaded successfully:', {
             hasLead: !!context.lead,
             hasCompany: !!context.company,
             hasPerson: !!context.person,
             role: context.role,
-            confidence: context.roleConfidence
+            confidence: context.roleConfidence,
+            capabilities: context.capabilities?.length || 0
           })
         } else {
-          console.log('⚠️ No intelligence context available')
+          console.log('ℹ️ Intelligence context is empty or minimal')
+          setIntelligenceContext(null)
         }
       } else {
-        console.warn('⚠️ Intelligence context fetch failed:', response.status)
+        console.warn('⚠️ Intelligence context fetch failed:', response.status, await response.text().catch(() => ''))
+        setIntelligenceContext(null)
       }
     } catch (error) {
-      console.warn('Failed to fetch intelligence context:', error)
+      console.warn('❌ Failed to fetch intelligence context:', error)
+      setIntelligenceContext(null)
     } finally {
       setContextLoading(false)
     }
@@ -188,9 +200,28 @@ export default function ChatPage() {
   // Fetch intelligence context when session is available
   useEffect(() => {
     if (sessionId && sessionId !== 'anonymous') {
-      refreshIntelligenceContext()
+      // Add a small delay to ensure session is properly set
+      const timer = setTimeout(() => {
+        refreshIntelligenceContext()
+      }, 100)
+      return () => clearTimeout(timer)
     }
   }, [sessionId, refreshIntelligenceContext])
+
+  // 🔧 FIX: Also try to load intelligence context when component mounts (in case session exists)
+  useEffect(() => {
+    const existingSessionId = typeof window !== 'undefined'
+      ? window.localStorage.getItem('intelligence-session-id')
+      : null
+
+    if (existingSessionId && existingSessionId !== 'anonymous' && !intelligenceContext) {
+      console.log('🔄 Found existing session, loading intelligence context:', existingSessionId)
+      // Update sessionId state if it doesn't match
+      if (existingSessionId !== sessionId) {
+        setSessionId(existingSessionId)
+      }
+    }
+  }, []) // Run once on mount
 
   // 🔧 MASTER FLOW: Handle consent submission with intelligence trigger
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
@@ -204,7 +235,7 @@ export default function ChatPage() {
           email: data.email,
           companyUrl: data.companyUrl,
           name: data.name,
-          sessionId: sessionId // Pass sessionId to trigger intelligence
+          sessionId: sessionId // Pass current sessionId to link intelligence
         }),
       })
 
@@ -213,10 +244,23 @@ export default function ChatPage() {
         setHasConsent(true)
         setShowConsentOverlay(false)
 
+        // 🔧 FIX: Update session ID if consent API returns a different one
+        if (result.sessionId && result.sessionId !== sessionId) {
+          console.log('🔄 Updating session ID from consent:', sessionId, '→', result.sessionId)
+          setSessionId(result.sessionId)
+          // Update localStorage with the canonical session ID
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('intelligence-session-id', result.sessionId)
+          }
+        }
+
         // If intelligence was initialized, refresh context immediately
         if (result.intelligenceReady) {
           console.log('🚀 Intelligence ready, refreshing context...')
-          setTimeout(() => refreshIntelligenceContext(), 1000) // Small delay for processing
+          // Use a shorter delay and pass the correct session ID
+          setTimeout(() => {
+            refreshIntelligenceContext()
+          }, 500)
         }
 
         // Add personalized welcome message
@@ -722,10 +766,28 @@ export default function ChatPage() {
                                 </div>
                               )}
                               {intelligenceContext && (
-                                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
-                                  <div className="size-2 rounded-full bg-green-500"></div>
-                                  Ready with personalized insights
-                                  {intelligenceContext.company?.name && ` for ${intelligenceContext.company.name}`}
+                                <div className="mt-4 flex flex-col items-center justify-center gap-2 text-sm text-green-600">
+                                  <div className="flex items-center gap-2">
+                                    <div className="size-2 rounded-full bg-green-500"></div>
+                                    <span>Intelligence loaded for {intelligenceContext.lead?.name || 'you'}</span>
+                                  </div>
+                                  {intelligenceContext.company?.name && (
+                                    <div className="text-xs text-green-500/80">
+                                      Company: {intelligenceContext.company.name}
+                                      {intelligenceContext.role && ` • Role: ${intelligenceContext.role}`}
+                                    </div>
+                                  )}
+                                  {intelligenceContext.capabilities && intelligenceContext.capabilities.length > 0 && (
+                                    <div className="text-xs text-green-500/80">
+                                      {intelligenceContext.capabilities.length} tools explored
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {!contextLoading && !intelligenceContext && sessionId && sessionId !== 'anonymous' && (
+                                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-amber-600">
+                                  <div className="size-2 rounded-full bg-amber-500"></div>
+                                  <span>Session active - Intelligence context will load</span>
                                 </div>
                               )}
                             </div>

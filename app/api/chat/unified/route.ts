@@ -58,26 +58,41 @@ export async function POST(req: NextRequest) {
     // 🔧 MASTER FLOW: Server-side safety net - lazy-load intelligence context if missing
     if (!chatContext.intelligenceContext && chatContext.sessionId && chatContext.sessionId !== 'anonymous') {
       try {
+        console.log('🔍 Server-side: Loading intelligence context for session:', chatContext.sessionId)
+
         const { ContextStorage } = await import('@/src/core/context/context-storage')
         const contextStorage = new ContextStorage()
         const storedContext = await contextStorage.get(chatContext.sessionId)
-        
-        if (storedContext && (storedContext.company_context || storedContext.person_context || storedContext.role)) {
-          chatContext.intelligenceContext = {
-            lead: { 
-              email: storedContext.email || '', 
-              name: storedContext.name || 'Unknown' 
-            },
-            ...(storedContext.company_context ? { company: storedContext.company_context } : {}),
-            ...(storedContext.person_context ? { person: storedContext.person_context } : {}),
-            ...(storedContext.role ? { role: storedContext.role } : {}),
-            ...(storedContext.role_confidence !== null ? { roleConfidence: storedContext.role_confidence } : {}),
-            capabilities: storedContext.ai_capabilities_shown || []
+
+        if (storedContext) {
+          // Check if we have meaningful intelligence data
+          const hasIntelligenceData = storedContext.company_context ||
+                                     storedContext.person_context ||
+                                     storedContext.role ||
+                                     (storedContext.ai_capabilities_shown && storedContext.ai_capabilities_shown.length > 0)
+
+          if (hasIntelligenceData) {
+            chatContext.intelligenceContext = {
+              lead: {
+                email: storedContext.email || '',
+                name: storedContext.name || 'Unknown'
+              },
+              ...(storedContext.company_context ? { company: storedContext.company_context } : {}),
+              ...(storedContext.person_context ? { person: storedContext.person_context } : {}),
+              ...(storedContext.role ? { role: storedContext.role } : {}),
+              ...(storedContext.role_confidence !== null ? { roleConfidence: storedContext.role_confidence } : {}),
+              capabilities: storedContext.ai_capabilities_shown || [],
+              ...(storedContext.intent_data ? { intent: storedContext.intent_data } : {})
+            }
+            console.log('✅ Server-side intelligence context loaded successfully for session:', chatContext.sessionId)
+          } else {
+            console.log('ℹ️ Server-side: No intelligence data available for session:', chatContext.sessionId)
           }
-          console.log('🔧 Server-side intelligence context loaded for session:', chatContext.sessionId)
+        } else {
+          console.log('ℹ️ Server-side: No stored context found for session:', chatContext.sessionId)
         }
       } catch (error) {
-        console.warn('Failed to lazy-load intelligence context:', error)
+        console.warn('⚠️ Failed to lazy-load intelligence context:', error)
       }
     }
 

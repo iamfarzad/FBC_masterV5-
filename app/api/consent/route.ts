@@ -54,15 +54,16 @@ export async function POST(req: NextRequest) {
     // 🔧 MASTER FLOW: Wire consent → session-init (idempotent)
     // Immediately trigger intelligence initialization after consent
     const finalSessionId = sessionId || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
+
+    let intelligenceReady = false
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                     (req.headers.get('x-forwarded-proto') || 'http') + '://' + 
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                     (req.headers.get('x-forwarded-proto') || 'http') + '://' +
                      (req.headers.get('x-forwarded-host') || req.headers.get('host') || 'localhost:3000')
-      
+
       const initResponse = await fetch(`${baseUrl}/api/intelligence/session-init`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'x-intelligence-session-id': finalSessionId
         },
@@ -76,21 +77,25 @@ export async function POST(req: NextRequest) {
 
       if (initResponse.ok) {
         console.log(`🧠 Intelligence initialized for session: ${finalSessionId}`)
-        // Include sessionId in response for client to use
-        const responseData = await res.json()
-        return NextResponse.json({ 
-          ...responseData, 
-          sessionId: finalSessionId,
-          intelligenceReady: true 
-        })
+        intelligenceReady = true
       } else {
         console.warn(`⚠️ Intelligence init failed (non-fatal): ${initResponse.status}`)
+        // Still return success - consent worked, intelligence is optional
+        intelligenceReady = false
       }
     } catch (e) {
       console.warn('[consent] session-init failed (non-fatal)', e)
+      // Still return success - consent worked, intelligence is optional
+      intelligenceReady = false
     }
 
-    return res
+    // Always return the session ID and consent result
+    const responseData = await res.json()
+    return NextResponse.json({
+      ...responseData,
+      sessionId: finalSessionId,
+      intelligenceReady
+    })
   } catch (e: unknown) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 })
   }
