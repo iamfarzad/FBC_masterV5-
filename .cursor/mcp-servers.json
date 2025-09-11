@@ -42,6 +42,25 @@
       },
       "disabled": false,
       "timeout": 1800
+    },
+    "figma-developer-mcp": {
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "figma-developer-mcp"
+      ],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}",
+        "FIGMA_OAUTH_TOKEN": "${FIGMA_OAUTH_TOKEN}"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "get_figma_file",
+        "get_figma_file_components",
+        "get_figma_file_images",
+        "download_figma_images"
+      ],
+      "timeout": 1800
     }
   }
 }

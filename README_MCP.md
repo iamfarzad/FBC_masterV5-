@@ -1,10 +1,11 @@
-# 🚀 Supabase MCP Quick Start
+# 🚀 MCP Servers Quick Start
 
 ## What You Get
 
-✅ **Official Supabase MCP Server** - Full database operations  
-✅ **PostgREST MCP Server** - Direct SQL queries  
-✅ **BrowserTools MCP** - Browser automation  
+✅ **Official Supabase MCP Server** - Full database operations
+✅ **PostgREST MCP Server** - Direct SQL queries
+✅ **BrowserTools MCP** - Browser automation
+✅ **Figma Developer MCP** - Access design files and components
 ✅ **Complete Setup Scripts** - One-command configuration  
 
 ## 🎯 Quick Setup
@@ -21,6 +22,13 @@
 SUPABASE_ACCESS_TOKEN=your-service-role-key-here
 SUPABASE_URL=your-project-url-here
 SUPABASE_ANON_KEY=your-anon-key-here
+FIGMA_API_KEY=your-figma-personal-access-token-here
+```
+
+### 2.5. Get Your Figma API Key
+```bash
+# Go to https://www.figma.com/settings
+# Settings → Personal access tokens → Create new token
 ```
 
 ### 3. Run Setup Script
@@ -41,6 +49,7 @@ pnpm mcp:supabase:dev
 | `pnpm mcp:postgrest` | PostgREST MCP server |
 | `pnpm mcp:bridge` | BrowserTools bridge |
 | `pnpm mcp:server` | BrowserTools MCP |
+| `pnpm mcp:figma` | Figma Developer MCP |
 | `pnpm mcp:supabase:dev` | All servers together |
 
 ## 🎨 What You Can Do
@@ -62,6 +71,13 @@ pnpm mcp:supabase:dev
 - Track network requests
 - Take screenshots
 - Run performance audits
+
+### Figma Developer MCP
+- Access Figma design files
+- Extract components and styles
+- Download images and assets
+- Get design specifications
+- Implement designs in any framework
 
 ## 🚨 Important Notes
 

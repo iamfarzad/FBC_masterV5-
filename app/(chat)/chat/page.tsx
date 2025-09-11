@@ -84,16 +84,12 @@ export default function ChatPage() {
   // 🔧 MASTER FLOW: Session Management with Intelligence Integration
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      const existingId = window.localStorage.getItem('intelligence-session-id')
-      if (existingId) {
-        return existingId
-      }
-      // 🔒 Generate cryptographically secure session ID (256-bit random)
-      const newId = generateSecureSessionId()
-      window.localStorage.setItem('intelligence-session-id', newId)
-      return newId
+      // Always start fresh - clear any cached sessions to force consent flow
+      window.localStorage.removeItem('intelligence-session-id')
+      console.log('🧹 Cleared all cached sessions to ensure fresh consent flow')
+      return 'anonymous'
     }
-    return null
+    return 'anonymous'
   })
 
   // Component State - Following Blueprint Pattern
@@ -222,6 +218,21 @@ export default function ChatPage() {
       }
     }
   }, []) // Run once on mount
+
+  // 🔧 CRITICAL FIX: Show consent overlay if no intelligence context after loading attempt
+  useEffect(() => {
+    if (!contextLoading && !intelligenceContext && sessionId === 'anonymous' && !hasConsent) {
+      console.log('🚨 No intelligence context found, showing consent overlay')
+      setShowConsentOverlay(true)
+    }
+  }, [contextLoading, intelligenceContext, sessionId, hasConsent])
+
+  // Also show consent overlay on initial load if no valid session
+  useEffect(() => {
+    if (sessionId === 'anonymous' && !hasConsent) {
+      setShowConsentOverlay(true)
+    }
+  }, [sessionId, hasConsent])
 
   // 🔧 MASTER FLOW: Handle consent submission with intelligence trigger
   const handleConsentSubmit = async (data: { name: string; email: string; companyUrl: string }) => {
@@ -811,10 +822,10 @@ export default function ChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask anything..."
+                    placeholder={showConsentOverlay ? "Please complete consent to start chatting..." : "Ask anything..."}
                     data-testid="chat-input"
                     className="resize-none rounded-3xl border-none bg-transparent py-6 pl-16 pr-20 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-0"
-                                              disabled={isLoading}
+                                              disabled={isLoading || showConsentOverlay}
                   />
 
                   <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center">
@@ -825,6 +836,7 @@ export default function ChatPage() {
                           variant="ghost"
                           size="sm"
                           className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
+                          disabled={showConsentOverlay}
                         >
                           <Plus className="size-5" />
                         </Button>
@@ -986,6 +998,7 @@ export default function ChatPage() {
                       size="sm"
                         className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
                       onClick={() => setShowVoiceOverlay(true)}
+                      disabled={showConsentOverlay}
                     >
                       <Mic className="size-5" />
                     </Button>
@@ -994,7 +1007,7 @@ export default function ChatPage() {
                         onClick={() => handleSendMessage(input)}
                         size="sm"
                         className="modern-button size-10 rounded-full bg-gradient-to-r from-brand to-brand-hover p-0 text-surface shadow-lg shadow-brand/30 hover:from-brand-hover hover:to-brand"
-                                                  disabled={isLoading}
+                                                  disabled={isLoading || showConsentOverlay}
                       >
                         <Send className="size-4" />
                       </Button>

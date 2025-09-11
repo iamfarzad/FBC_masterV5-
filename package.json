@@ -31,6 +31,7 @@
     "mcp:postgrest": "pnpm dlx @supabase/mcp-server-postgrest --access-token $SUPABASE_SERVICE_ROLE_KEY",
     "mcp:dev": "concurrently --names \"bridge,mcp\" --kill-others-on-fail \"pnpm mcp:bridge\" \"pnpm mcp:server\"",
     "mcp:supabase:dev": "concurrently --names \"bridge,mcp,supabase\" --kill-others-on-fail \"pnpm mcp:bridge\" \"pnpm mcp:server\" \"pnpm mcp:supabase\"",
+    "mcp:figma": "pnpm dlx figma-developer-mcp",
     "supabase-mcp-setup": "node scripts/supabase-mcp-setup.js",
     "fix-feature-flags": "node scripts/fix-feature-flags-mcp.js",
     "fix-feature-flags-direct": "node scripts/fix-feature-flags-direct.js",

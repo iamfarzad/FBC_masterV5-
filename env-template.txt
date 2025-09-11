@@ -14,6 +14,10 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
 SUPABASE_ACCESS_TOKEN=your-supabase-access-token-here
 SUPABASE_PROJECT_ID=your-supabase-project-id-here
 
+# Figma MCP Configuration (NEW)
+FIGMA_API_KEY=your-figma-personal-access-token-here
+FIGMA_OAUTH_TOKEN=your-figma-oauth-bearer-token-here
+
 # Database Configuration
 POSTGRES_URL=your-postgres-url-here
 POSTGRES_PRISMA_URL=your-postgres-prisma-url-here
