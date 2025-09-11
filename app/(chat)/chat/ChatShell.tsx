@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -36,6 +36,12 @@ import { AI_RESPONSES, generateMessageId } from '@/constants/appConstants';
 
 // Main ChatShell Component - Exact replica of attached_assets/src/App.tsx
 export default function ChatShell() {
+  // Add mounted state to prevent hydration errors
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   // Use centralized state management
   const {
     state,
@@ -301,6 +307,15 @@ Contact us to discuss implementation details.
   }, [state.cameraFacing, updateState]);
 
   // Render - Exact structure from reference
+  // Show loading state until mounted on client
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingIndicator />
+      </div>
+    );
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-background">

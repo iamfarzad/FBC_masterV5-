@@ -34,13 +34,18 @@ export async function POST(req: NextRequest) {
     let contentType = 'text/html'
     
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'F.B/c AI Assistant (https://farzadbayat.com)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         },
-        timeout: 10000 // 10 second timeout
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -116,9 +121,12 @@ export async function POST(req: NextRequest) {
       analysisPrompt += `Connect the analysis to business context and provide specific actionable insights.\n\n`
       analysisPrompt += `WEB CONTENT:\n${webContent}`
 
-      const result = await genAI.models.generateContent({
+      const model = genAI.getGenerativeModel({
         model: modelSelection.model,
-        config: optimizedConfig,
+        generationConfig: optimizedConfig
+      })
+      
+      const result = await model.generateContent({
         contents: [{
           role: 'user',
           parts: [{ text: analysisPrompt }]

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { ConversationStage } from './ai-elements/ai-system';
 
@@ -49,6 +49,11 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
@@ -57,6 +62,10 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
   const toggleCollapsed = useCallback(() => {
     setIsCollapsed(prev => !prev);
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <motion.div 

@@ -330,14 +330,34 @@ function createGeminiProvider(): TextProvider {
             systemInstruction: getSystemPrompt(messages)
           })
 
-          // Build conversation history
+          // Build conversation history - ensure proper format and role sequence
           const conversationHistory = messages.map(msg => ({
             role: msg.role === 'user' ? 'user' : 'model',
             parts: [{ text: msg.content }]
           }))
 
+          // Handle conversation history properly to avoid empty history or wrong role sequence
+          let history = conversationHistory.slice(0, -1) // Exclude the last message
+          
+          // Ensure history starts with 'user' role and has proper alternating sequence
+          if (history.length > 0) {
+            // If first message in history is not 'user', remove it or fix the sequence
+            if (history[0]?.role !== 'user') {
+              history = history.slice(1) // Remove first message if it's not from user
+            }
+            
+            // Ensure we have alternating user/model roles
+            history = history.filter((msg, index) => {
+              if (index === 0) return msg.role === 'user'
+              const prevMsg = history[index - 1]
+              if (!prevMsg) return false
+              const expectedRole = prevMsg.role === 'user' ? 'model' : 'user'
+              return msg.role === expectedRole
+            })
+          }
+
           const chat = model.startChat({
-            history: conversationHistory.slice(0, -1) // Exclude the last message as we'll send it separately
+            history: history // Use the cleaned history
           })
 
           // Send the last message
