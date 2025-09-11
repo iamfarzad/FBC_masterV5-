@@ -35,6 +35,8 @@ export class ContextStorage {
   // Use the service client type to avoid Database generic issues.
   private supabase: ReturnType<typeof getSupabaseService> | null
   private inMemoryStorage = new Map<string, DatabaseConversationContext>()
+  private cacheTimestamps = new Map<string, number>()
+  private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes TTL
 
   constructor() {
     // Try to create Supabase client, fallback to in-memory if unavailable
@@ -102,8 +104,21 @@ export class ContextStorage {
     }
   }
 
+  // Check if cached data is still valid (not expired)
+  private isCacheValid(sessionId: string): boolean {
+    const timestamp = this.cacheTimestamps.get(sessionId)
+    if (!timestamp) return false
+    return (Date.now() - timestamp) < this.CACHE_TTL
+  }
+
   async get(sessionId: string): Promise<DatabaseConversationContext | null> {
     try {
+      // Check if we have valid cached data first
+      const cachedData = this.inMemoryStorage.get(sessionId)
+      if (cachedData && this.isCacheValid(sessionId)) {
+        return cachedData
+      }
+
       // Try Supabase first, fallback to in-memory
       if (this.supabase) {
         try {
@@ -126,9 +141,10 @@ export class ContextStorage {
             }
           }
 
-          // If we got data from Supabase, also store in memory for faster access
+          // If we got data from Supabase, cache it with timestamp
           if (data) {
             this.inMemoryStorage.set(sessionId, data)
+            this.cacheTimestamps.set(sessionId, Date.now())
           }
 
           return data || null
@@ -143,6 +159,27 @@ export class ContextStorage {
     } catch (error) {
       logger.error('Context retrieval failed completely:', error)
       return this.inMemoryStorage.get(sessionId) || null
+    }
+  }
+
+  // Clean up expired cache entries to prevent memory leaks
+  private cleanupExpiredCache(): void {
+    const now = Date.now()
+    const expiredKeys: string[] = []
+
+    for (const [sessionId, timestamp] of this.cacheTimestamps) {
+      if ((now - timestamp) > this.CACHE_TTL) {
+        expiredKeys.push(sessionId)
+      }
+    }
+
+    expiredKeys.forEach(sessionId => {
+      this.inMemoryStorage.delete(sessionId)
+      this.cacheTimestamps.delete(sessionId)
+    })
+
+    if (expiredKeys.length > 0) {
+      logger.debug(`Cleaned up ${expiredKeys.length} expired cache entries`)
     }
   }
 
@@ -167,13 +204,18 @@ export class ContextStorage {
           const existing = this.inMemoryStorage.get(sessionId)
           if (existing) {
             this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
+            this.cacheTimestamps.set(sessionId, Date.now()) // Refresh cache timestamp
           }
+
+          // Periodic cleanup of expired entries
+          this.cleanupExpiredCache()
         } catch (supabaseError) {
           logger.warn('Supabase update failed, falling back to in-memory:', supabaseError)
           // Update in-memory storage
           const existing = this.inMemoryStorage.get(sessionId)
           if (existing) {
             this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
+            this.cacheTimestamps.set(sessionId, Date.now()) // Refresh cache timestamp
           } else {
             // Create new entry if it doesn't exist
             this.inMemoryStorage.set(sessionId, {
@@ -182,13 +224,18 @@ export class ContextStorage {
               ...patch,
               updated_at: new Date().toISOString()
             } as DatabaseConversationContext)
+            this.cacheTimestamps.set(sessionId, Date.now()) // Set cache timestamp
           }
+
+          // Periodic cleanup of expired entries
+          this.cleanupExpiredCache()
         }
       } else {
         // Use in-memory storage only
         const existing = this.inMemoryStorage.get(sessionId)
         if (existing) {
           this.inMemoryStorage.set(sessionId, { ...existing, ...patch, updated_at: new Date().toISOString() } as DatabaseConversationContext)
+          this.cacheTimestamps.set(sessionId, Date.now()) // Refresh cache timestamp
         } else {
           // Create new entry if it doesn't exist
           this.inMemoryStorage.set(sessionId, {
@@ -197,7 +244,11 @@ export class ContextStorage {
             ...patch,
             updated_at: new Date().toISOString()
           } as DatabaseConversationContext)
+          this.cacheTimestamps.set(sessionId, Date.now()) // Set cache timestamp
         }
+
+        // Periodic cleanup of expired entries
+        this.cleanupExpiredCache()
       }
     } catch (error) {
       logger.error('Context update failed completely:', error)
