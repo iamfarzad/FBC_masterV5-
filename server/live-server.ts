@@ -53,44 +53,141 @@ wss.on('connection', (ws) => {
 
 async function handleStartSession(ws: unknown, message: unknown, connectionId: string) {
   try {
-    console.log(`🎯 Starting session:`, { languageCode: message.languageCode })
-    
-    // For now, just acknowledge the session start
-    // In a full implementation, you'd initialize Gemini Live API here
-    ws.send(JSON.stringify({
-      type: 'session_started',
-      sessionId: connectionId,
-      status: 'ready'
-    }))
-    
-    console.log(`✅ Session started for ${connectionId}`)
+    console.log(`🎯 Starting REAL Gemini Live session:`, { languageCode: message.languageCode })
+
+    // Initialize actual Gemini Live API session
+    const response = await fetch('http://localhost:3000/api/gemini-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'start',
+        sessionId: connectionId,
+        leadContext: {
+          name: 'Live User',
+          email: `live-${connectionId}@temp.com`
+        }
+      })
+    })
+
+    const result = await response.json()
+
+    if (response.ok) {
+      console.log(`✅ Gemini Live session started for ${connectionId}`)
+      ws.send(JSON.stringify({
+        type: 'session_started',
+        sessionId: connectionId,
+        status: 'ready',
+        session: result
+      }))
+    } else {
+      console.error(`❌ Failed to start Gemini Live session:`, result)
+      ws.send(JSON.stringify({
+        type: 'error',
+        error: 'Failed to start Gemini Live session',
+        details: result
+      }))
+    }
   } catch (error) {
     console.error(`❌ Error starting session:`, error)
     ws.send(JSON.stringify({
       type: 'error',
-      error: 'Failed to start session'
+      error: 'Failed to start session',
+      details: error.message
     }))
   }
 }
 
 async function handleAudioData(ws: unknown, message: unknown, connectionId: string) {
   try {
-    // For now, just echo back that we received audio
-    // In a full implementation, you'd process the audio with Gemini Live API
-    ws.send(JSON.stringify({
-      type: 'audio_received',
-      timestamp: Date.now()
-    }))
+    // REAL LIVE AUDIO PROCESSING - Forward to Gemini Live API
+    const audioMessage = message as { audioData: string, mimeType?: string }
+
+    if (!audioMessage.audioData) {
+      ws.send(JSON.stringify({
+        type: 'error',
+        error: 'No audio data provided'
+      }))
+      return
+    }
+
+    console.log(`🎵 Processing ${audioMessage.audioData.length} bytes of audio for ${connectionId}`)
+
+    // Forward audio to Gemini Live API via HTTP request
+    const response = await fetch('http://localhost:3000/api/gemini-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'send',
+        sessionId: connectionId, // Use connectionId as sessionId
+        audioData: audioMessage.audioData,
+        mimeType: audioMessage.mimeType || 'audio/pcm;rate=16000'
+      })
+    })
+
+    const result = await response.json()
+
+    if (response.ok) {
+      console.log(`✅ Audio processed successfully for ${connectionId}`)
+      ws.send(JSON.stringify({
+        type: 'audio_processed',
+        sessionId: connectionId,
+        timestamp: Date.now(),
+        response: result
+      }))
+    } else {
+      console.error(`❌ Audio processing failed:`, result)
+      ws.send(JSON.stringify({
+        type: 'error',
+        error: 'Audio processing failed',
+        details: result
+      }))
+    }
   } catch (error) {
     console.error(`❌ Error processing audio:`, error)
+    ws.send(JSON.stringify({
+      type: 'error',
+      error: 'Internal audio processing error',
+      details: error.message
+    }))
   }
 }
 
-function handleStopSession(ws: unknown, connectionId: string) {
-  console.log(`🛑 Stopping session: ${connectionId}`)
-  ws.send(JSON.stringify({
-    type: 'session_stopped'
-  }))
+async function handleStopSession(ws: unknown, connectionId: string) {
+  try {
+    console.log(`🛑 Stopping Gemini Live session: ${connectionId}`)
+
+    // End the Gemini Live session
+    const response = await fetch('http://localhost:3000/api/gemini-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'end',
+        sessionId: connectionId
+      })
+    })
+
+    const result = await response.json()
+    console.log(`✅ Session ended for ${connectionId}:`, result)
+
+    ws.send(JSON.stringify({
+      type: 'session_stopped',
+      sessionId: connectionId,
+      result: result
+    }))
+  } catch (error) {
+    console.error(`❌ Error stopping session ${connectionId}:`, error)
+    ws.send(JSON.stringify({
+      type: 'error',
+      error: 'Failed to stop session',
+      details: error.message
+    }))
+  }
 }
 
 console.log(`🚀 Live WebSocket server running on port ${PORT}`)
