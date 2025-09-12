@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
 
     estimatedTokens = estimateTokens('screen analysis') + 2000
-    modelSelection = selectModelForFeature('image_analysis', { maxTokens: estimatedTokens })
+
+    // Use hardcoded model for now to fix multimodal functionality
+    modelSelection = { model: 'gemini-2.5-flash', score: 30, cost: 0.001 }
 
 
 

@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
 
     // Budget and access checks
     estimatedTokens = estimateTokens('image analysis') + 1500
-    modelSelection = selectModelForFeature('image_analysis', estimatedTokens, !!sessionId)
+    // Use hardcoded model for now to fix multimodal functionality
+    modelSelection = { model: 'gemini-2.5-flash', score: 30, cost: 0.001 }
 
 
 
