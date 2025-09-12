@@ -1,6 +1,10 @@
 import { intelligenceService } from '@/src/core/intelligence/simple-service'
+import { LeadResearchService } from '@/src/core/intelligence/lead-research'
 import { sessionInitSchema } from '@/src/core/validation/index'
 import type { ContextSnapshot } from '@/src/core/types/intelligence'
+
+// Create instance of lead research service
+const leadResearchService = new LeadResearchService()
 
 export interface IntelligenceRequest {
   action: 'init-session' | 'analyze-message' | 'research-lead'
@@ -28,7 +32,7 @@ export async function handleIntelligence(body: IntelligenceRequest): Promise<unk
 
       // Action logged
 
-      const result = await intelligenceService.researchLead(email, name, companyUrl)
+      const result = await leadResearchService.researchLead(email, name, companyUrl, sessionId)
 
       // Store in context if sessionId provided
       if (sessionId) {

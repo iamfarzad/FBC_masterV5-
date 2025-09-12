@@ -4,22 +4,24 @@ import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { 
-  Send, 
-  Paperclip, 
-  Mic, 
-  FileText, 
-  Calendar, 
-  Download, 
-  Mail, 
-  ChevronDown 
+import {
+  Send,
+  Paperclip,
+  Mic,
+  FileText,
+  Calendar,
+  Download,
+  Mail,
+  ChevronDown
 } from 'lucide-react';
 
 // Import hooks and components
 import { useConversationFlow, MessageData } from '../../hooks/useConversationFlow';
+import { useUnifiedChat } from '../../hooks/useUnifiedChat';
 import { EnhancedMessage } from './EnhancedMessage';
 import { EnhancedTypingIndicator } from './EnhancedTypingIndicator';
 import { generateConversationPDF } from '../../services/pdfService';
+import { UnifiedMessage } from '../../src/core/chat/unified-types';
 
 interface BookingData {
   name: string;
@@ -50,14 +52,59 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   streamingState
 }) => {
   const [input, setInput] = useState('');
-  
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+
+  // Use conversation flow for state management (lead qualification stages)
   const {
-    messages,
     conversationState,
-    isLoading,
-    processUserMessage,
-    addMessage
+    processUserMessage: processConversationFlow,
+    addMessage: addConversationMessage
   } = useConversationFlow();
+
+  // Create reactive context that updates when conversation state changes
+  const aiContext = useMemo(() => ({
+    sessionId,
+    conversationStage: conversationState.stage,
+    leadContext: conversationState.email ? {
+      name: conversationState.name,
+      email: conversationState.email,
+      company: conversationState.companyInfo?.name,
+      role: conversationState.role
+    } : (conversationState.name ? {
+      name: conversationState.name
+    } : undefined)
+  }), [sessionId, conversationState.stage, conversationState.name, conversationState.email, conversationState.companyInfo?.name]);
+
+  // Use unified chat for real AI responses
+  const {
+    messages: aiMessages,
+    isLoading: aiLoading,
+    isStreaming,
+    error: aiError,
+    sendMessage: sendAIMessage
+  } = useUnifiedChat({
+    sessionId,
+    mode: 'standard',
+    initialMessages: [],
+    context: aiContext
+  });
+
+  // Combine conversation flow messages with AI messages
+  const messages = useMemo(() => {
+    // Convert AI messages to the format expected by the UI
+    const convertedMessages: MessageData[] = aiMessages.map(aiMsg => ({
+      id: aiMsg.id,
+      content: aiMsg.content,
+      role: aiMsg.role as 'user' | 'assistant' | 'system',
+      timestamp: aiMsg.timestamp,
+      type: aiMsg.type === 'text' ? 'text' : 'insight',
+      metadata: aiMsg.metadata
+    }));
+
+    return convertedMessages;
+  }, [aiMessages]);
+
+  const isLoading = aiLoading || isStreaming;
 
   // Handle PDF generation
   const handleGeneratePDF = async (action: 'download' | 'email') => {
@@ -210,9 +257,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userInput = input;
+    const userInput = input.trim();
     setInput('');
-    await processUserMessage(userInput, onShowBookingOverlay);
+
+    try {
+      // First, process the conversation flow to update state and get any flow-specific logic
+      await processConversationFlow(userInput, onShowBookingOverlay);
+
+      // Then send the actual message to AI for real response
+      await sendAIMessage(userInput);
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      // Add error message to chat
+      addConversationMessage({
+        id: Date.now().toString(),
+        content: 'I apologize, but I encountered an error processing your message. Please try again.',
+        role: 'assistant',
+        timestamp: new Date(),
+        type: 'text'
+      });
+    }
   };
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

@@ -91,15 +91,18 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       const controller = new AbortController()
       abortControllerRef.current = controller
 
-      // Add user message
+      // Add user message with session data for AI context
       const userMessage = addMessage({
         role: 'user',
         content: content.trim(),
         timestamp: new Date(),
-        type: 'text'
+        type: 'text',
+        metadata: {
+          sessionData: options.context // Include current context in metadata
+        }
       })
 
-      // Prepare unified request
+      // Prepare unified request with updated context
       const request: UnifiedChatRequest = {
         messages: [...messages, userMessage],
         context: options.context,

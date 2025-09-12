@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
     if (!image) return NextResponse.json({ ok: false, error: 'No image data provided' }, { status: 400 })
 
     estimatedTokens = estimateTokens('screen analysis') + 2000
-    modelSelection = selectModelForFeature('screenshot_analysis', estimatedTokens)
+    modelSelection = selectModelForFeature('image_analysis', { maxTokens: estimatedTokens })
 
 
 
     if (userId && process.env.NODE_ENV !== 'test') {
-      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'screenshot_analysis', modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
+      const budgetCheck = await enforceBudgetAndLog(userId, sessionId, 'screen', modelSelection.model, estimatedTokens, estimatedTokens * 0.5, true)
       if (!budgetCheck.allowed) return NextResponse.json({ ok: false, error: 'Budget limit reached' }, { status: 429 })
     }
 
@@ -63,24 +63,60 @@ export async function POST(req: NextRequest) {
     try {
       // 🔍 ENHANCED SCREEN ANALYSIS PROMPT
       let analysisPrompt = 'Analyze this screen for business insights'
-      
+
       if (context?.prompt) {
         analysisPrompt += ` with focus on: ${context.prompt}`
       }
-      
+
       if (context?.trigger === 'manual') {
         analysisPrompt += '. Provide detailed manual analysis.'
       }
 
-      const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1024, temperature: 0.3, topP: 0.8, topK: 40 })
+      console.log('Analysis prompt:', analysisPrompt)
+      console.log('Model selected:', modelSelection.model)
+      console.log('Image length:', image.length)
+      console.log('Image starts with:', image.substring(0, 50))
+
+      // Use simple config instead of optimized config to avoid compatibility issues
+      const optimizedConfig = {
+        maxOutputTokens: 1024,
+        temperature: 0.3,
+        topP: 0.8,
+        topK: 40
+      }
+      console.log('Config:', JSON.stringify(optimizedConfig, null, 2))
+
+      const imageData = image.startsWith('data:') ? image.split(',')[1] : image
+      console.log('Image data length after processing:', imageData.length)
+
+      // First test without image to see if API call structure works
+      console.log('Testing API call without image first...')
+      console.log('Using model:', modelSelection.model)
+      const testResult = await genAI.models.generateContent({
+        model: 'gemini-2.5-flash', // Use known working model
+        contents: [{ role: 'user', parts: [{ text: 'Hello, test message' }] }],
+      })
+      console.log('Text-only API call successful')
+
       const result = await genAI.models.generateContent({
         model: modelSelection.model,
         config: optimizedConfig,
-        contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType: 'image/jpeg', data: image.split(',')[1] } } ] }],
+        contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType: 'image/png', data: imageData } } ] }],
       })
+
+      console.log('Gemini response received, type:', typeof result)
+      console.log('Gemini response keys:', Object.keys(result || {}))
+
+      if (!result) {
+        throw new Error('No response from Gemini API')
+      }
+
       analysisResult = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
+      console.log('Analysis result:', analysisResult)
     } catch (e) {
-      return NextResponse.json({ ok: false, error: 'AI analysis failed' }, { status: 500 })
+      console.error('Screen analysis AI error:', e)
+      console.error('Error stack:', (e as Error).stack)
+      return NextResponse.json({ ok: false, error: 'AI analysis failed', details: (e as Error).message, stack: (e as Error).stack }, { status: 500 })
     }
 
     const response = { ok: true, output: {
@@ -94,8 +130,8 @@ export async function POST(req: NextRequest) {
     }}
     if (sessionId) {
       try {
-        await recordCapabilityUsed(String(sessionId), capability, { insights: response.output.insights, imageSize: image.length })
-        if (capability === 'screenshot') await recordCapabilityUsed(String(sessionId), 'screenShare', { alias: true })
+        await recordCapabilityUsed(String(sessionId), 'screen', { insights: response.output.insights, imageSize: image.length })
+        await recordCapabilityUsed(String(sessionId), 'screenShare', { alias: true })
 
         // Add visual analysis to multimodal context
         await multimodalContextManager.addVisualAnalysis(

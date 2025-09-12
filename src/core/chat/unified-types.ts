@@ -26,6 +26,7 @@ export interface UnifiedChatSession {
 // Context management
 export interface UnifiedContext {
   sessionId?: string
+  conversationStage?: 'greeting' | 'email_request' | 'email_collected' | 'discovery' | 'solution_positioning' | 'booking_offer'
   leadContext?: LeadContext
   intelligenceContext?: IntelligenceContext
   multimodalData?: MultimodalData

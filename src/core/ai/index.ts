@@ -5,13 +5,15 @@ export interface TextProvider {
 }
 
 export function getProvider(): TextProvider {
-  // Always use real Gemini provider when API key exists
-  if (process.env.GEMINI_API_KEY) {
+  // Check for various possible environment variable names
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY_SERVER
+
+  if (apiKey) {
     console.log('✅ Using real Gemini API')
     return createGeminiProvider()
   }
-  
-  console.log('⚠️ No API key, using mock provider')
+
+  console.log('⚠️ No API key found, using mock provider')
   return createMockProvider()
 }
 
@@ -171,12 +173,69 @@ class ErrorRecoveryManager {
 
 const errorRecoveryManager = new ErrorRecoveryManager()
 
+// Conversation stage-specific instructions for AI
+function getStageInstructions(stage: string, leadContext: any): string {
+  const instructions = {
+    greeting: `
+## GREETING STAGE INSTRUCTIONS:
+- Ask for the user's name naturally
+- Keep it friendly and professional
+- Do NOT ask for email yet
+- Example: "Hi! I'm F.B/c, your AI business consultant. What's your name?"`,
+
+    email_request: `
+## EMAIL REQUEST STAGE INSTRUCTIONS:
+- Thank them for their name
+- Ask for their work email to send personalized summary
+- Explain you'll use it for research and personalization
+- Example: "Nice to meet you, [Name]! To send you a personalized summary of our conversation, what's your work email?"`,
+
+    email_collected: `
+## EMAIL COLLECTED STAGE INSTRUCTIONS:
+- Acknowledge the email
+- Mention you'll analyze their company background
+- Transition to asking about their challenges
+- Do NOT show tools yet - focus on discovery first`,
+
+    discovery: `
+## DISCOVERY STAGE INSTRUCTIONS:
+- Ask about their biggest business challenges
+- Focus on problems they want to solve with AI/automation
+- Provide 3-4 specific suggestion options
+- Keep responses focused on understanding their needs`,
+
+    solution_positioning: `
+## SOLUTION POSITIONING STAGE INSTRUCTIONS:
+- Present training vs consulting options
+- Explain the differences clearly
+- Ask which approach interests them more
+- Mention you'll calculate ROI and provide next steps`,
+
+    booking_offer: `
+## BOOKING OFFER STAGE INSTRUCTIONS:
+- Offer to schedule a consultation call
+- Mention personalized strategy summary
+- Provide clear next steps
+- Be ready to open booking calendar`
+  }
+
+  return instructions[stage as keyof typeof instructions] || `
+## GENERAL CONVERSATION INSTRUCTIONS:
+- Stay in character as F.B/c, the AI business consultant
+- Focus on business value and practical applications
+- Be professional yet approachable`
+}
+
 // F.B/c System Prompt Generator
-function getSystemPrompt(messages: { role: string; content: string }[]): string {
+function getSystemPrompt(messages: { role: string; content: string; metadata?: any }[]): string {
   // Try to extract session data from messages (passed via metadata)
-  const firstMessage = messages[0]
-  const sessionData = (firstMessage as any)?.sessionData || {}
+  const latestMessage = messages[messages.length - 1]
+  const sessionData = latestMessage?.metadata?.sessionData || {}
   const leadContext = sessionData.leadContext || {}
+  const conversationStage = sessionData.conversationStage || 'greeting'
+
+  // Conversation stage-specific instructions
+  const stageInstructions = getStageInstructions(conversationStage, leadContext)
 
   const systemPrompt = `You are F.B/c, an advanced AI business consultant and automation specialist.
 
@@ -185,6 +244,9 @@ function getSystemPrompt(messages: { role: string; content: string }[]): string 
 - You are an AI-powered business consultant specializing in automation, ROI analysis, and digital transformation
 - You help entrepreneurs and businesses optimize their operations and increase profitability
 - You have expertise in business analysis, financial modeling, process automation, and AI implementation
+
+## CONVERSATION STAGE: ${conversationStage.toUpperCase()}
+${stageInstructions}
 
 ## YOUR CAPABILITIES
 I'm an AI business consultant specializing in automation, ROI analysis, and digital transformation. I help optimize operations and increase profitability through data-driven strategies.
@@ -320,11 +382,12 @@ function createGeminiProvider(): TextProvider {
         const result = await errorRecoveryManager.executeWithRetry(async () => {
           const { GoogleGenerativeAI } = await import('@google/generative-ai')
 
-          if (!process.env.GEMINI_API_KEY) {
-            throw new Error('GEMINI_API_KEY environment variable is not set')
+          const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY_SERVER
+          if (!apiKey) {
+            throw new Error('Gemini API key environment variable is not set')
           }
 
-          const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+          const genAI = new GoogleGenerativeAI(apiKey)
           const model = genAI.getGenerativeModel({
             model: 'gemini-1.5-flash',
             systemInstruction: getSystemPrompt(messages)
