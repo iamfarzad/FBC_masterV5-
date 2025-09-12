@@ -37,6 +37,8 @@
     <script>
         let ws = null;
         let connectionId = null;
+        let connected = false;
+        let startTime = null;
 
         function log(message, type = 'info') {
             const logDiv = document.getElementById('log');
@@ -65,10 +67,20 @@
             }
 
             try {
+                // Reset state
+                connected = false;
+                startTime = Date.now();
+                
+                // Add detailed connection logging
+                log('🌐 Attempting connection to: wss://fb-consulting-websocket.fly.dev');
+                log('🔧 Browser WebSocket support: ' + (typeof WebSocket !== 'undefined' ? 'Available' : 'Not Available'));
+                
                 ws = new WebSocket('wss://fb-consulting-websocket.fly.dev');
                 
                 ws.onopen = () => {
-                    log('✅ WebSocket connected successfully!', 'success');
+                    connected = true;
+                    const connectTime = Date.now() - startTime;
+                    log(`✅ WebSocket connected successfully in ${connectTime}ms!`, 'success');
                     updateStatus('Connected - WebSocket is working!', 'success');
                 };
 
@@ -92,8 +104,31 @@
                 };
 
                 ws.onclose = (event) => {
-                    log(`🔌 WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
-                    updateStatus('WebSocket disconnected', 'warning');
+                    const closeTime = Date.now() - startTime;
+                    log(`🔌 WebSocket closed after ${closeTime}ms. Code: ${event.code}, Reason: ${event.reason || 'No reason'}`);
+                    
+                    // Detailed close code analysis
+                    let closeReason = 'Unknown';
+                    switch(event.code) {
+                        case 1000: closeReason = 'Normal closure'; break;
+                        case 1001: closeReason = 'Going away'; break;
+                        case 1002: closeReason = 'Protocol error'; break;
+                        case 1003: closeReason = 'Unsupported data'; break;
+                        case 1006: closeReason = 'Connection lost (abnormal)'; break;
+                        case 1011: closeReason = 'Server error'; break;
+                        case 1015: closeReason = 'TLS handshake failure'; break;
+                        default: closeReason = `Code ${event.code}`;
+                    }
+                    
+                    log(`📊 Close analysis: ${closeReason}`);
+                    
+                    if (!connected) {
+                        log('❌ Connection closed BEFORE establishing connection!', 'error');
+                        log('🔍 This indicates a server-side configuration issue', 'error');
+                        updateStatus('Connection failed - Server issue detected!', 'error');
+                    } else {
+                        updateStatus('WebSocket disconnected normally', 'warning');
+                    }
                 };
 
             } catch (error) {

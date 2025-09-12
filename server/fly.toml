@@ -27,9 +27,9 @@ kill_timeout = '5s'
 
   [[services.ports]]
     port = 443
-    handlers = ['tls']
-    # Direct TCP connection for WebSocket
-
+    handlers = ['tls', 'http']
+    # HTTPS with WebSocket upgrade support
+    
   [[services.ports]]
     port = 80
     handlers = ['http']
