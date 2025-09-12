@@ -24,7 +24,9 @@ export const fetchCache = 'force-no-store'
  */
 export async function POST(req: NextRequest) {
   try {
+    console.log('🎯 Unified chat API called')
     const body = await req.json()
+    console.log('📨 Request body:', JSON.stringify(body, null, 2))
 
     // Validate the unified request format
     const validation = validateUnifiedRequest(body)

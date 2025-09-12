@@ -51,6 +51,8 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
   }): AsyncIterable<UnifiedMessage> {
     const { messages, context, mode = 'standard' } = input
 
+    console.log('🚀 UnifiedChatProvider.generate called with:', { messages: messages.length, context, mode })
+
     try {
       // Get the underlying AI provider
       const aiProvider = getProvider()
@@ -647,12 +649,25 @@ Response Style:
     mode?: ChatMode,
     multimodalContent?: string
   ): { role: string; content: string }[] {
+    console.log('🎯 enhanceMessagesWithContext called with context:', context)
+
     // Convert UnifiedMessage[] to the format expected by AI provider
     // IMPORTANT: Map 'assistant' to 'model' for Gemini API compatibility
     let enhancedMessages = messages.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : msg.role, // Convert assistant -> model
       content: msg.content
     }))
+
+    // Add system prompt as the first message if we have context
+    if (context?.conversationStage) {
+      const systemPrompt = this.buildSystemPrompt(context, mode)
+      console.log('📝 Adding system prompt to messages:', systemPrompt.substring(0, 200) + '...')
+      enhancedMessages.unshift({
+        role: 'user', // Gemini doesn't support 'system' role, so we use 'user' with system content
+        content: `[SYSTEM_PROMPT]\n${systemPrompt}\n[/SYSTEM_PROMPT]`
+      })
+      console.log('📨 Enhanced messages now have', enhancedMessages.length, 'messages')
+    }
 
     // Filter out system messages since Gemini doesn't support them in chat history
     enhancedMessages = enhancedMessages.filter(msg => msg.role !== 'system')
@@ -689,13 +704,87 @@ Response Style:
   }
 
   private buildSystemPrompt(context?: UnifiedContext, mode?: ChatMode): string {
+    console.log('🔧 Building system prompt for context:', context, 'mode:', mode)
+
     // Admin mode has special system prompt
     if (mode === 'admin') {
       return `You are an AI assistant helping with lead management and business operations. You have access to conversation history and can reference specific leads when asked. Always be helpful, accurate, and professional.`
     }
 
-    // Standard system prompt for other modes
-    return `You are F.B/c AI, a helpful and intelligent assistant. Provide clear, actionable responses.`
+    // For standard mode, use stage-aware system prompt
+    const conversationStage = context?.conversationStage || 'greeting'
+    console.log('📋 Conversation stage detected:', conversationStage)
+    const leadContext = context?.leadContext || {}
+
+    // Stage-specific instructions (imported from ai/index.ts)
+    const getStageInstructions = (stage: string, leadContext: any): string => {
+      const instructions = {
+        greeting: `
+## GREETING STAGE INSTRUCTIONS:
+- Ask for the user's name naturally
+- Keep it friendly and professional
+- Do NOT ask for email yet
+- Example: "Hi! I'm F.B/c, your AI business consultant. What's your name?"`,
+
+        email_request: `
+## EMAIL REQUEST STAGE INSTRUCTIONS:
+- Thank them for their name
+- Ask for their work email to send personalized summary
+- Explain you'll use it for research and personalization
+- Example: "Nice to meet you, [Name]! To send you a personalized summary of our conversation, what's your work email?"`,
+
+        email_collected: `
+## EMAIL COLLECTED STAGE INSTRUCTIONS:
+- Acknowledge the email
+- Mention you are analyzing their company background
+- Transition to discovery phase
+- Use company research tools`,
+
+        discovery: `
+## DISCOVERY STAGE INSTRUCTIONS:
+- Ask about their biggest business challenges
+- Focus on problems they want to solve with AI/automation
+- Provide 3-4 specific suggestion options
+- Keep responses focused on understanding their needs`,
+
+        solution_positioning: `
+## SOLUTION POSITIONING STAGE INSTRUCTIONS:
+- Present training vs consulting options
+- Explain the differences clearly
+- Ask which approach interests them more
+- Mention you'll calculate ROI and provide next steps`,
+
+        booking_offer: `
+## BOOKING OFFER STAGE INSTRUCTIONS:
+- Offer to schedule a consultation call
+- Mention personalized strategy summary
+- Provide clear next steps
+- Be ready to open booking calendar`
+      }
+
+      return instructions[stage as keyof typeof instructions] || `
+## GENERAL CONVERSATION INSTRUCTIONS:
+- Stay in character as F.B/c, the AI business consultant
+- Focus on business value and practical applications
+- Be professional yet approachable`
+    }
+
+    const stageInstructions = getStageInstructions(conversationStage, leadContext)
+
+    return `You are F.B/c, an advanced AI business consultant and automation specialist.
+
+## YOUR IDENTITY
+- You are F.B/c (pronounced "F dot B slash C")
+- You are an AI-powered business consultant specializing in automation, ROI analysis, and digital transformation
+- You help entrepreneurs and businesses optimize their operations and increase profitability
+- You have expertise in business analysis, financial modeling, process automation, and AI implementation
+
+## CRITICAL: CONVERSATION STAGE PROTOCOL
+You are currently in the ${conversationStage.toUpperCase()} stage of a structured lead qualification conversation.
+
+${stageInstructions}
+
+IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.`
   }
 
   // Admin session management implementation
