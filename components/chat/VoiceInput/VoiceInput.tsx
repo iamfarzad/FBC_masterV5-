@@ -68,7 +68,7 @@ export function VoiceInput({
         recognitionRef.current.stop()
       }
     }
-  }, [transcript, toast])
+  }, [transcript, toast, handleTranscript])
 
   const startRecording = () => {
     if (recognitionRef.current) {

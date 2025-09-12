@@ -217,7 +217,7 @@ export default function ChatPage() {
         setSessionId(existingSessionId)
       }
     }
-  }, []) // Run once on mount
+  }, [intelligenceContext, sessionId]) // Include required dependencies
 
   // 🔧 CRITICAL FIX: Show consent overlay if no intelligence context after loading attempt
   useEffect(() => {

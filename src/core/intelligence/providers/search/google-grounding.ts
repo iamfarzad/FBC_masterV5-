@@ -4,10 +4,14 @@ export type GroundedCitation = { uri: string; title?: string; description?: stri
 export type GroundedAnswer = { text: string; citations: GroundedCitation[]; raw?: unknown }
 
 export class GoogleGroundingProvider {
-  private genAI: GoogleGenAI
+  private genAI: GoogleGenAI | null = null
 
   constructor() {
-    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured')
+    // Gracefully handle missing API key during build time
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn('⚠️ GEMINI_API_KEY not configured - GoogleGroundingProvider will use fallback mode')
+      return
+    }
     this.genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   }
 
@@ -89,6 +93,15 @@ export class GoogleGroundingProvider {
    */
   async groundedAnswer(query: string, urls?: string[]): Promise<GroundedAnswer> {
     try {
+      // Handle case where API key is not available (build time)
+      if (!this.genAI) {
+        return {
+          text: 'Search functionality is currently unavailable. Please check the API configuration.',
+          citations: [],
+          raw: { error: 'GEMINI_API_KEY not configured' }
+        }
+      }
+
       const useUrls = Array.isArray(urls) && urls.length > 0
       const tools: unknown[] = [{ googleSearch: {} }]
       if (useUrls) tools.unshift({ urlContext: {} })

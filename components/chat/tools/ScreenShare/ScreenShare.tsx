@@ -90,8 +90,19 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         videoTrack.addEventListener("ended", () => {
           // Professional shutdown with feedback
           setIsAnalyzing(false)
-          onAnalysis?.(`**📊 Screen Share Session Ended**\n\nSession completed. Total analyses: ${  analysisCount}`)
-          stopScreenShare()
+          onAnalysis?.(`**📊 Screen Share Session Ended**\n\nSession completed. Total analyses: ${analysisCount}`)
+          // Stop screen sharing inline to avoid circular dependency
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop())
+            setStream(null)
+          }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current)
+            intervalRef.current = null
+          }
+          setIsAnalyzing(false)
+          setConnectionQuality('good')
+          onClose()
         })
       }
       
