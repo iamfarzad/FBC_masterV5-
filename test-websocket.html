@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Live Streaming Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #log { background: #f8f9fa; padding: 15px; height: 300px; overflow-y: auto; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🚀 F.B/c WebSocket Live Streaming Test</h1>
+    
+    <div class="status info">
+        <strong>Testing:</strong> wss://fb-consulting-websocket.fly.dev
+    </div>
+    
+    <div>
+        <button onclick="testConnection()">🔌 Test WebSocket Connection</button>
+        <button onclick="testVoiceSession()">🎤 Test Voice Session</button>
+        <button onclick="testMultimodal()">📹 Test Multimodal</button>
+        <button onclick="clearLog()">🧹 Clear Log</button>
+    </div>
+    
+    <div id="status" class="status info">Ready to test...</div>
+    
+    <h3>📋 Test Log:</h3>
+    <div id="log"></div>
+
+    <script>
+        let ws = null;
+        let connectionId = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            entry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#333';
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function testConnection() {
+            log('🔌 Starting WebSocket connection test...');
+            updateStatus('Connecting to WebSocket...', 'warning');
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+
+            try {
+                ws = new WebSocket('wss://fb-consulting-websocket.fly.dev');
+                
+                ws.onopen = () => {
+                    log('✅ WebSocket connected successfully!', 'success');
+                    updateStatus('Connected - WebSocket is working!', 'success');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`📨 Received: ${JSON.stringify(data, null, 2)}`);
+                        
+                        if (data.type === 'connected') {
+                            connectionId = data.payload?.connectionId;
+                            log(`🆔 Connection ID: ${connectionId}`, 'success');
+                        }
+                    } catch (e) {
+                        log(`📨 Raw message: ${event.data}`);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    log(`❌ WebSocket error: ${error}`, 'error');
+                    updateStatus('WebSocket connection failed!', 'error');
+                };
+
+                ws.onclose = (event) => {
+                    log(`🔌 WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
+                    updateStatus('WebSocket disconnected', 'warning');
+                };
+
+            } catch (error) {
+                log(`❌ Failed to create WebSocket: ${error.message}`, 'error');
+                updateStatus('Failed to create WebSocket connection!', 'error');
+            }
+        }
+
+        function testVoiceSession() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('❌ No WebSocket connection. Connect first!', 'error');
+                return;
+            }
+
+            log('🎤 Testing voice session initialization...');
+            
+            const startMessage = {
+                type: 'start',
+                payload: {
+                    languageCode: 'en-US',
+                    voiceName: 'Puck',
+                    leadContext: {
+                        name: 'Test User',
+                        company: 'Test Company',
+                        role: 'Developer'
+                    }
+                }
+            };
+
+            try {
+                ws.send(JSON.stringify(startMessage));
+                log('📤 Sent voice session start message');
+                updateStatus('Testing voice session...', 'warning');
+            } catch (error) {
+                log(`❌ Failed to send start message: ${error.message}`, 'error');
+            }
+        }
+
+        function testMultimodal() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('❌ No WebSocket connection. Connect first!', 'error');
+                return;
+            }
+
+            log('📹 Testing multimodal capabilities...');
+            
+            // Test with a small base64 image (1x1 pixel)
+            const testImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
+            
+            const multimodalMessage = {
+                type: 'user_audio',
+                payload: {
+                    mimeType: 'image/png',
+                    data: testImage.split(',')[1], // Remove data:image/png;base64, prefix
+                    isImage: true
+                }
+            };
+
+            try {
+                ws.send(JSON.stringify(multimodalMessage));
+                log('📤 Sent test image for multimodal processing');
+                updateStatus('Testing multimodal features...', 'warning');
+            } catch (error) {
+                log(`❌ Failed to send multimodal message: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('🧹 Log cleared');
+        }
+
+        // Auto-test connection on page load
+        window.onload = () => {
+            log('🚀 F.B/c WebSocket Test Page Loaded');
+            log('ℹ️ Click "Test WebSocket Connection" to start testing');
+        };
+    </script>
+</body>
+</html>
