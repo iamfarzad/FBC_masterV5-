@@ -2,14 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { 
-  Mic, 
+import {
+  Mic,
   MicOff,
   Volume2,
   VolumeX,
   X,
   Settings
 } from 'lucide-react';
+import { useWebSocketVoice } from '@/hooks/use-websocket-voice';
+import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
+import { useToast } from '@/hooks/use-toast';
 
 interface SpeechState {
   isRecording: boolean;
@@ -147,13 +150,38 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
     audioEnabled: audioEnabled
   });
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const { toast } = useToast();
+
+  // Use WebSocket voice integration
+  const {
+    isConnected,
+    isProcessing,
+    transcript,
+    error: websocketError,
+    startSession,
+    stopSession,
+    onAudioChunk,
+    onTurnComplete,
+  } = useWebSocketVoice();
+
+  // Use voice recorder hook
+  const {
+    isRecording: recorderIsRecording,
+    startRecording,
+    stopRecording,
+    error: recorderError,
+    volume,
+    hasPermission,
+    requestPermission,
+  } = useVoiceRecorder({
+    onAudioChunk,
+    onTurnComplete
+  });
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -165,6 +193,92 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
       audioContextRef.current = new AudioContext();
     }
   }, []);
+
+  // Initialize WebSocket voice session
+  useEffect(() => {
+    const initializeVoiceSession = async () => {
+      if (!isOpen) return;
+
+      console.log('[SpeechToSpeech] Requesting microphone permission...');
+      const permissionGranted = await requestPermission();
+      if (!permissionGranted) {
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access to use voice input. Check your browser settings and reload the page.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('[SpeechToSpeech] Initializing WebSocket connection...');
+      try {
+        await startSession();
+        console.log('[SpeechToSpeech] WebSocket session started');
+      } catch (error) {
+        console.error('[SpeechToSpeech] Failed to start WebSocket session:', error);
+        toast({
+          title: "Connection Error",
+          description: "Failed to connect to voice server. Please try again.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    initializeVoiceSession();
+
+    // Cleanup on unmount
+    return () => {
+      if (recorderIsRecording) {
+        stopRecording();
+      }
+      stopSession();
+    };
+  }, [isOpen, startSession, stopSession, requestPermission, recorderIsRecording, stopRecording, toast]);
+
+  // Sync WebSocket state with component state
+  useEffect(() => {
+    setSpeechState(prev => ({
+      ...prev,
+      isRecording: recorderIsRecording,
+      isListening: isProcessing,
+      aiState: isProcessing ? 'analyzing' : 'idle'
+    }));
+  }, [recorderIsRecording, isProcessing]);
+
+  // Handle transcript updates
+  useEffect(() => {
+    if (transcript) {
+      setSpeechState(prev => ({
+        ...prev,
+        transcript,
+        aiState: 'thinking'
+      }));
+
+      if (onSpeechInput) {
+        onSpeechInput(transcript);
+      }
+
+      if (onTranscriptComplete) {
+        onTranscriptComplete(transcript);
+      }
+    }
+  }, [transcript, onSpeechInput, onTranscriptComplete]);
+
+  // Handle errors
+  useEffect(() => {
+    const anyError = websocketError || recorderError;
+    if (anyError) {
+      setSpeechState(prev => ({
+        ...prev,
+        error: anyError
+      }));
+      toast({
+        title: "Voice Error",
+        description: anyError,
+        variant: "destructive"
+      });
+    }
+  }, [websocketError, recorderError, toast]);
 
   // Audio level monitoring
   const monitorAudioLevel = (stream: MediaStream) => {
@@ -201,47 +315,26 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
     setSpeechState(prev => ({ ...prev, error: undefined }));
 
     try {
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Microphone not supported in this browser');
+      if (!isConnected) {
+        throw new Error('Voice server not connected');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      monitorAudioLevel(stream);
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await processVoiceInput(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-        
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-      };
-
-      mediaRecorder.start();
-      setSpeechState(prev => ({ 
-        ...prev, 
-        isRecording: true, 
+      await startRecording();
+      setSpeechState(prev => ({
+        ...prev,
+        isRecording: true,
         isListening: true,
         aiState: 'idle',
         error: undefined
       }));
 
-      // Auto-stop after 10 seconds
-      setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          stopVoiceRecording();
-        }
-      }, 10000);
+      // Update audio level from voice recorder hook
+      if (volume !== undefined) {
+        setSpeechState(prev => ({
+          ...prev,
+          audioLevel: volume
+        }));
+      }
 
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -282,17 +375,15 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
   };
 
   // Stop voice recording
-  const stopVoiceRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setSpeechState(prev => ({ 
-      ...prev, 
-      isRecording: false, 
-      isListening: false, 
-      audioLevel: 0 
+  const stopVoiceRecording = async () => {
+    await stopRecording();
+    setSpeechState(prev => ({
+      ...prev,
+      isRecording: false,
+      isListening: false,
+      audioLevel: 0
     }));
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -399,50 +490,6 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
   };
 
   // Process voice input
-  const processVoiceInput = async (audioBlob: Blob) => {
-    setSpeechState(prev => ({ ...prev, isListening: false }));
-    
-    // Simulate speech-to-text processing
-    setTimeout(() => {
-      const mockTranscript = "I'm interested in learning about your AI solutions for my business";
-      setSpeechState(prev => ({ ...prev, transcript: mockTranscript }));
-      if (onSpeechInput) {
-        onSpeechInput(mockTranscript);
-      }
-      if (onTranscriptComplete) {
-        onTranscriptComplete(mockTranscript);
-      }
-      simulateAIProcessing(mockTranscript);
-    }, 1000);
-  };
-
-  // Simulate AI processing and response
-  const simulateAIProcessing = async (input: string) => {
-    // Thinking phase
-    setSpeechState(prev => ({ ...prev, aiState: 'thinking' }));
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Analyzing phase
-    setSpeechState(prev => ({ ...prev, aiState: 'analyzing' }));
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Generate response
-    const responses = [
-      "That's great! I'd be happy to help you explore AI solutions for your business. Based on your needs, I can recommend several approaches that could significantly improve your operations and efficiency.",
-      "Excellent question! AI can transform businesses in many ways. Let me walk you through some specific solutions that might be perfect for your industry and current challenges.",
-      "I understand you're interested in AI solutions. There are several powerful options we could explore together, from automation tools to advanced analytics systems."
-    ];
-    
-    const response = responses[Math.floor(Math.random() * responses.length)];
-    setSpeechState(prev => ({ ...prev, aiResponse: response }));
-    
-    // Speaking phase
-    if (speechState.audioEnabled) {
-      speakResponse(response);
-    } else {
-      setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
-    }
-  };
 
   // Text-to-Speech
   const speakResponse = (text: string) => {

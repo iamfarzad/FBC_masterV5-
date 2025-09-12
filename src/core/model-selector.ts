@@ -40,10 +40,32 @@ export function estimateTokens(text: string): number {
 }
 
 /**
- * Select model for specific feature/use case
- * Alias for ModelSelector.selectModel for backward compatibility
+ * Select model for specific feature/use case - SIMPLIFIED RELIABLE VERSION
+ * Returns object with model selection details (compatible with multimodal APIs)
  */
-export function selectModelForFeature(useCase: UseCase, requirements: ModelRequirements = {}): string {
+export function selectModelForFeature(feature: string, estimatedTokens: number, hasSession?: boolean): {
+  model: string
+  estimatedCost?: number
+  reason?: string
+} {
+  const inputCost = 0.075 // Cost per 1M input tokens for gemini-2.5-flash
+  const outputCost = 0.30 // Cost per 1M output tokens for gemini-2.5-flash
+  const estimatedOutputTokens = estimatedTokens * 0.8 // Rough estimate
+
+  const estimatedCost = ((estimatedTokens / 1_000_000) * inputCost) + ((estimatedOutputTokens / 1_000_000) * outputCost)
+
+  // SIMPLE: Always use default model - this works reliably for multimodal
+  return {
+    model: config.ai.gemini.models.default,
+    estimatedCost,
+    reason: 'Using reliable default model for multimodal functionality'
+  }
+}
+
+/**
+ * Legacy function for backward compatibility
+ */
+export function selectModelForFeatureLegacy(useCase: UseCase, requirements: ModelRequirements = {}): string {
   return ModelSelector.selectModel(useCase, requirements)
 }
 

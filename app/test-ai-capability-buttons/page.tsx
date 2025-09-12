@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Response } from '@/components/ai-elements/response'
-import { MessageContent } from '@/components/ai-elements/message'
+// import { MessageContent } from '@/components/ai-elements/message' // Temporarily disabled
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -81,11 +81,16 @@ export default function TestAICapabilityButtons() {
                 <Badge variant="outline">AI Response with Tool Buttons</Badge>
               </div>
               
-              <MessageContent>
+              {/* <MessageContent>
                 <Response parseIncompleteMarkdown={false}>
                   {AI_RESPONSE_WITH_BUTTONS}
                 </Response>
-              </MessageContent>
+              </MessageContent> */}
+              <div className="bg-muted p-4 rounded-lg">
+                <Response parseIncompleteMarkdown={false}>
+                  {AI_RESPONSE_WITH_BUTTONS}
+                </Response>
+              </div>
             </div>
 
             <div className="space-y-2 text-sm text-muted-foreground">

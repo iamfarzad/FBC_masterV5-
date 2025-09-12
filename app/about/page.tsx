@@ -73,7 +73,7 @@ export default function AboutPage() {
                 <div className="border-accent/20 absolute left-1/2 top-1/2 size-60 -translate-x-1/2 -translate-y-1/2 rounded-full border" />
               </div>
               <Avatar className="size-48 border-4 border-border shadow-lg">
-                <AvatarImage src="/placeholder.svg?width=200&height=200" alt="Farzad Bayat - AI Automation Consultant with 10,000+ hours experience in artificial intelligence and business automation" />
+                <AvatarImage src="/placeholder-user.jpg" alt="Farzad Bayat - AI Automation Consultant with 10,000+ hours experience in artificial intelligence and business automation" />
                 <AvatarFallback>FB</AvatarFallback>
               </Avatar>
             </div>

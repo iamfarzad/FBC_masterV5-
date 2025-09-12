@@ -70,6 +70,7 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
 
   const screenRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -203,18 +204,28 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
         video: true,
         audio: false
       });
-      
+
       streamRef.current = stream;
-      setScreenState(prev => ({ 
-        ...prev, 
+
+      // Set the stream to the video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(console.error);
+      }
+
+      setScreenState(prev => ({
+        ...prev,
         isSharing: true,
-        isAnalyzing: true 
+        isAnalyzing: true
       }));
-      
+
       // Handle stream end
       stream.getVideoTracks()[0].onended = () => {
-        setScreenState(prev => ({ 
-          ...prev, 
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
+        setScreenState(prev => ({
+          ...prev,
           isSharing: false,
           isAnalyzing: false,
           confidence: 0
@@ -223,6 +234,10 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
       };
     } catch (error) {
       console.error('Screen share failed:', error);
+      setScreenState(prev => ({
+        ...prev,
+        error: 'Failed to access screen sharing. Please ensure you have granted permissions.'
+      }));
     }
   }, []);
 
@@ -231,8 +246,14 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    setScreenState(prev => ({ 
-      ...prev, 
+
+    // Clear the video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setScreenState(prev => ({
+      ...prev,
       isSharing: false,
       isAnalyzing: false,
       confidence: 0
@@ -438,25 +459,33 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
         {/* Screen Analysis Area */}
         <div className="flex-1 relative" ref={screenRef}>
           {screenState.isSharing ? (
-            <div className="w-full h-full bg-muted/5 flex items-center justify-center relative">
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="text-center"
-              >
-                <div className="w-32 h-32 rounded-2xl glass-card mx-auto mb-6 flex items-center justify-center">
-                  <Monitor className="w-16 h-16" />
-                </div>
-                <div className="text-xl font-medium mb-2">Screen Analysis Active</div>
-                <div className="text-muted-foreground mb-4">
-                  AI is analyzing your screen for optimization opportunities
-                </div>
-                
+            <div className="w-full h-full bg-black flex items-center justify-center relative">
+              {/* Video Element for Screen Sharing */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-contain"
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+
+              {/* Analysis Status Overlay */}
+              <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card rounded-lg px-3 py-2 flex items-center gap-2"
+                >
+                  <Monitor className="w-4 h-4" />
+                  <span className="text-sm font-medium">Screen Analysis Active</span>
+                </motion.div>
+
                 {screenState.isAnalyzing && !screenState.isPaused && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-center gap-2 text-sm"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="glass-card rounded-lg px-3 py-2 flex items-center gap-2"
                   >
                     <motion.div
                       animate={{ rotate: 360 }}
@@ -464,21 +493,21 @@ export const ScreenShareInterface: React.FC<ScreenShareInterfaceProps> = ({
                     >
                       <Brain className="w-4 h-4" />
                     </motion.div>
-                    AI analyzing workflow patterns...
+                    <span className="text-sm">Analyzing...</span>
                   </motion.div>
                 )}
-                
+
                 {screenState.isPaused && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="glass-card rounded-lg px-3 py-2 flex items-center gap-2"
                   >
                     <Pause className="w-4 h-4" />
-                    Analysis paused
+                    <span className="text-sm text-muted-foreground">Analysis paused</span>
                   </motion.div>
                 )}
-              </motion.div>
+              </div>
               
               {/* Analysis Overlay Indicators */}
               {aiAnalyses.length > 0 && screenState.isSharing && (

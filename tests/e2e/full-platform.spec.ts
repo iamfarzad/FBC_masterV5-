@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('FBC Platform - Complete E2E Testing', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     await page.waitForLoadState('networkidle')
   })
 
@@ -29,7 +29,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Homepage functionality', async ({ page }) => {
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     
     // Check hero section
     await expect(page.locator('h1')).toBeVisible()
@@ -43,7 +43,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Chat platform - Core functionality', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     await page.waitForLoadState('networkidle')
     
     // Check consent overlay if visible
@@ -75,7 +75,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Sidebar tools navigation', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     await page.waitForLoadState('networkidle')
     
     // Test sidebar buttons
@@ -105,7 +105,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Upload functionality', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     await page.waitForLoadState('networkidle')
     
     // Find upload button (paperclip icon)
@@ -119,7 +119,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Theme toggle', async ({ page }) => {
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     
     // Find theme toggle button
     const themeToggle = page.locator('button[aria-label*="theme"], button:has(svg[class*="Sun"]), button:has(svg[class*="Moon"])')
@@ -139,7 +139,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Workshop page', async ({ page }) => {
-    await page.goto('http://localhost:5000/workshop')
+    await page.goto('http://localhost:3000/workshop')
     await page.waitForLoadState('networkidle')
     
     // Check workshop header
@@ -158,7 +158,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Contact form', async ({ page }) => {
-    await page.goto('http://localhost:5000/contact')
+    await page.goto('http://localhost:3000/contact')
     await page.waitForLoadState('networkidle')
     
     // Check form elements
@@ -183,7 +183,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   test('Responsive design', async ({ page }) => {
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     
     // Check mobile menu
     const mobileMenuButton = page.locator('button[aria-label*="menu"], button:has(svg[class*="Menu"])')
@@ -206,7 +206,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Stage Rail indicator', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     await page.waitForLoadState('networkidle')
     
     // Check if Stage Rail is visible (after session starts)
@@ -228,7 +228,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Voice input button', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     await page.waitForLoadState('networkidle')
     
     // Find voice button
@@ -251,7 +251,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
   })
 
   test('Performance and polish', async ({ page }) => {
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     
     // Check for smooth animations
     const animatedElements = page.locator('[class*="animate"], [class*="transition"]')
@@ -271,12 +271,12 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
 
   test('Error handling', async ({ page }) => {
     // Test 404 page
-    await page.goto('http://localhost:5000/non-existent-page')
+    await page.goto('http://localhost:3000/non-existent-page')
     await page.waitForLoadState('networkidle')
     
     // Should show 404 or redirect to home
     const notFoundText = page.locator('text=/404|not found/i')
-    const homeRedirect = page.url() === 'http://localhost:5000/'
+    const homeRedirect = page.url() === 'http://localhost:3000/'
     
     expect(await notFoundText.isVisible() || homeRedirect).toBeTruthy()
   })
@@ -284,7 +284,7 @@ test.describe('FBC Platform - Complete E2E Testing', () => {
 
 test.describe('Accessibility', () => {
   test('Keyboard navigation', async ({ page }) => {
-    await page.goto('http://localhost:5000')
+    await page.goto('http://localhost:3000')
     
     // Tab through interactive elements
     await page.keyboard.press('Tab')
@@ -305,7 +305,7 @@ test.describe('Accessibility', () => {
   })
 
   test('ARIA labels', async ({ page }) => {
-    await page.goto('http://localhost:5000/chat')
+    await page.goto('http://localhost:3000/chat')
     
     // Check for ARIA labels on buttons
     const buttons = page.locator('button')

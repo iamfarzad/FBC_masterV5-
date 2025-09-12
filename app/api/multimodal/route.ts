@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
-import { unifiedChatProvider } from '@/src/core/chat/unified-provider'
 import { z } from 'zod'
 
 // Unified multimodal request schema
 const MultimodalRequestSchema = z.object({
-  modality: z.enum(['text', 'voice', 'vision', 'upload', 'realtime-voice']),
+  modality: z.enum(['text', 'voice', 'vision', 'upload']),
   content: z.string().optional(),
   metadata: z.object({
     sessionId: z.string().optional(),
@@ -16,8 +15,6 @@ const MultimodalRequestSchema = z.object({
     duration: z.number().optional(), // for audio
     transcription: z.string().optional(), // for voice
     imageSize: z.number().optional(), // for vision
-    streamId: z.string().optional(), // for real-time voice streams
-    isStreaming: z.boolean().optional(), // for real-time voice
   }).optional()
 })
 
@@ -39,28 +36,6 @@ export async function POST(request: NextRequest) {
       context = await multimodalContextManager.initializeSession(sessionId)
     }
 
-    // INTEGRATE INTELLIGENCE: Get intelligence context for this session
-    let intelligenceContext = null
-    try {
-      const intelligenceResponse = await fetch(`${request.nextUrl.origin}/api/admin/server-handler`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'init_admin_session',
-          sessionId,
-          email: metadata?.userId ? `${metadata.userId}@session.local` : `session-${sessionId}@local`,
-          name: metadata?.userId || `Session ${sessionId}`
-        })
-      })
-
-      if (intelligenceResponse.ok) {
-        const intelligenceData = await intelligenceResponse.json()
-        intelligenceContext = intelligenceData.session
-      }
-    } catch (intelligenceError) {
-      console.warn('Intelligence integration failed for multimodal:', intelligenceError)
-    }
-
     const response = { ok: true, modality, sessionId, processedAt: new Date().toISOString() }
 
     // Route to appropriate handler based on modality
@@ -79,100 +54,12 @@ export async function POST(request: NextRequest) {
             error: 'Transcription and duration required for voice modality'
           }, { status: 400 })
         }
-
-        // Add to multimodal context
         await multimodalContextManager.addVoiceMessage(
           sessionId,
           metadata.transcription,
           metadata.duration
         )
-
-        // Process through unified chat system
-        const voiceMessage = {
-          id: crypto.randomUUID(),
-          role: 'user' as const,
-          content: metadata.transcription,
-          timestamp: new Date(),
-          type: 'text' as const
-        }
-
-        const voiceContext = {
-          sessionId,
-          multimodalData: {
-            audioData: metadata.transcription,
-            mimeType: 'text/plain'
-          },
-          intelligenceContext
-        }
-
-        // Generate response using unified provider
-        const voiceStream = unifiedChatProvider.generate({
-          messages: [voiceMessage],
-          context: voiceContext,
-          mode: 'multimodal'
-        })
-
-        // Collect response (similar to other endpoints)
-        const voiceResponses: any[] = []
-        for await (const msg of voiceStream) {
-          voiceResponses.push(msg)
-        }
-
         response.processed = 'voice'
-        response.aiResponse = voiceResponses.map(m => m.content).join('') || 'Voice message processed successfully'
-        break
-
-      case 'realtime-voice':
-        // Route real-time voice to existing Gemini Live API
-        if (!metadata?.transcription || !metadata?.duration) {
-          return NextResponse.json({
-            error: 'Transcription and duration required for real-time voice modality'
-          }, { status: 400 })
-        }
-
-        try {
-          // Add voice message to unified context
-          await multimodalContextManager.addVoiceMessage(
-            sessionId,
-            metadata.transcription,
-            metadata.duration,
-            {
-              sampleRate: 16000,
-              format: 'audio/pcm',
-              confidence: 0.9,
-              isRealtime: true,
-              streamId: metadata.streamId
-            }
-          )
-
-          // Send to Gemini Live API for real-time processing
-          const liveResponse = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/gemini-live`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-intelligence-session-id': sessionId
-            },
-            body: JSON.stringify({
-              action: 'send',
-              sessionId,
-              audioData: metadata.fileData, // base64 audio data
-              mimeType: 'audio/pcm;rate=16000'
-            })
-          })
-
-          if (!liveResponse.ok) {
-            console.warn('Live API send failed, but voice stored in context')
-          }
-
-          response.processed = 'realtime-voice'
-          response.liveApiSent = liveResponse.ok
-
-        } catch (error) {
-          console.error('Real-time voice processing error:', error)
-          // Still store in context even if Live API fails
-          response.processed = 'realtime-voice'
-          response.liveApiError = true
-        }
         break
 
       case 'vision':
@@ -181,10 +68,7 @@ export async function POST(request: NextRequest) {
             error: 'Analysis content and image size required for vision modality'
           }, { status: 400 })
         }
-
         const visionType = metadata.fileType?.startsWith('image/') ? 'webcam' : 'screen'
-
-        // Add to multimodal context
         await multimodalContextManager.addVisualAnalysis(
           sessionId,
           content,
@@ -192,40 +76,7 @@ export async function POST(request: NextRequest) {
           metadata.imageSize,
           metadata.fileData
         )
-
-        // Process through unified chat system
-        const visionMessage = {
-          id: crypto.randomUUID(),
-          role: 'user' as const,
-          content: `Visual analysis: ${content}`,
-          timestamp: new Date(),
-          type: 'text' as const
-        }
-
-        const visionContext = {
-          sessionId,
-          multimodalData: {
-            imageData: metadata.fileData,
-            mimeType: metadata.fileType || 'image/jpeg'
-          },
-          intelligenceContext
-        }
-
-        // Generate response using unified provider
-        const visionStream = unifiedChatProvider.generate({
-          messages: [visionMessage],
-          context: visionContext,
-          mode: 'multimodal'
-        })
-
-        // Collect response
-        const visionResponses: any[] = []
-        for await (const msg of visionStream) {
-          visionResponses.push(msg)
-        }
-
         response.processed = 'vision'
-        response.aiResponse = visionResponses.map(m => m.content).join('') || 'Visual analysis processed successfully'
         break
 
       case 'upload':

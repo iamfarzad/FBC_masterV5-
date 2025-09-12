@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   return new Response(
     JSON.stringify({
       message: 'WebSocket endpoint',
-      url: 'ws://localhost:5000/api/ws',
+      url: 'ws://localhost:3000/api/ws',
       status: 'ready'
     }),
     {

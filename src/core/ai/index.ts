@@ -228,11 +228,32 @@ function getStageInstructions(stage: string, leadContext: any): string {
 
 // F.B/c System Prompt Generator
 function getSystemPrompt(messages: { role: string; content: string; metadata?: any }[]): string {
-  // Try to extract session data from messages (passed via metadata)
+  // Try to extract session data from messages (passed via metadata or content)
   const latestMessage = messages[messages.length - 1]
-  const sessionData = latestMessage?.metadata?.sessionData || {}
+  let sessionData = latestMessage?.metadata?.sessionData || {}
+
+  // Also check message content for SESSION_CONTEXT (used by unified provider)
+  const content = latestMessage?.content || ''
+  const sessionContextMatch = content.match(/\[SESSION_CONTEXT:\s*(\{[^}]+\})\]/)
+  if (sessionContextMatch) {
+    try {
+      const parsedContext = JSON.parse(sessionContextMatch[1])
+      sessionData = { ...sessionData, ...parsedContext }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
   const leadContext = sessionData.leadContext || {}
   const conversationStage = sessionData.conversationStage || 'greeting'
+
+  console.log('🤖 AI Context Debug:', {
+    conversationStage,
+    leadContext,
+    sessionData,
+    latestMessageMetadata: latestMessage?.metadata,
+    contentSnippet: content.substring(0, 200)
+  })
 
   // Conversation stage-specific instructions
   const stageInstructions = getStageInstructions(conversationStage, leadContext)
@@ -245,8 +266,12 @@ function getSystemPrompt(messages: { role: string; content: string; metadata?: a
 - You help entrepreneurs and businesses optimize their operations and increase profitability
 - You have expertise in business analysis, financial modeling, process automation, and AI implementation
 
-## CONVERSATION STAGE: ${conversationStage.toUpperCase()}
+## CRITICAL: CONVERSATION STAGE PROTOCOL
+You are currently in the ${conversationStage.toUpperCase()} stage of a structured lead qualification conversation.
+
 ${stageInstructions}
+
+IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.`
 
 ## YOUR CAPABILITIES
 I'm an AI business consultant specializing in automation, ROI analysis, and digital transformation. I help optimize operations and increase profitability through data-driven strategies.

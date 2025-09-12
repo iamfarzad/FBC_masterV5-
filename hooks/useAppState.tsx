@@ -276,20 +276,44 @@ export const useAppState = () => {
             if (data === '[DONE]') break;
             
             try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
+              // Handle both JSON and plain string responses
+              let content = '';
+              if (data.startsWith('"') && data.endsWith('"')) {
+                // Plain string response (quoted)
+                content = JSON.parse(data);
+              } else {
+                // Try parsing as JSON object
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  content = parsed.content;
+                } else if (typeof parsed === 'string') {
+                  content = parsed;
+                }
+              }
+
+              if (content) {
                 // Update the AI message content progressively
                 setState(prev => ({
                   ...prev,
-                  messages: prev.messages.map(msg => 
-                    msg.id === aiMessage.id 
-                      ? { ...msg, content: msg.content + parsed.content }
+                  messages: prev.messages.map(msg =>
+                    msg.id === aiMessage.id
+                      ? { ...msg, content: msg.content + content }
                       : msg
                   )
                 }));
               }
             } catch (e) {
-              // Skip invalid JSON
+              // If parsing fails, try treating as plain text
+              if (data && typeof data === 'string' && data.trim()) {
+                setState(prev => ({
+                  ...prev,
+                  messages: prev.messages.map(msg =>
+                    msg.id === aiMessage.id
+                      ? { ...msg, content: msg.content + data }
+                      : msg
+                  )
+                }));
+              }
             }
           }
         }
