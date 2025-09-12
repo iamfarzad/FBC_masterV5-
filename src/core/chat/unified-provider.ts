@@ -18,9 +18,38 @@ import { unifiedErrorHandler } from './unified-error-handler'
 import { unifiedStreamingService, sseFromAsyncIterable } from '../streaming/unified-stream'
 import { adminChatService } from '../admin/admin-chat-service'
 import { embedText } from '../embeddings/gemini'
+import { GoogleGroundingProvider } from '@/src/core/intelligence/providers/search/google-grounding'
 import { supabaseService } from '../supabase/client'
 
 export class UnifiedChatProviderImpl implements UnifiedChatProvider {
+  private groundingProvider = new GoogleGroundingProvider()
+
+  /**
+   * Perform Google Grounding search for real-time information
+   */
+  private async performGroundingSearch(query: string, context?: string): Promise<string> {
+    try {
+      console.log('🔍 Performing Google Grounding search:', query)
+      const results = await this.groundingProvider.searchGeneral(query)
+
+      if (results && results.length > 0) {
+        const topResult = results[0]
+        const formattedResult = `
+📊 **Grounded Information:**
+${topResult.title}
+${topResult.description}
+${topResult.url ? `Source: ${topResult.url}` : ''}
+
+This information is based on current web search results.`
+        return formattedResult
+      }
+    } catch (error) {
+      console.error('❌ Grounding search failed:', error)
+    }
+
+    return '' // Return empty string if grounding fails
+  }
+
   private adminSessions = new Map<string, {
     isConnected: boolean
     lastActivity: Date
@@ -152,11 +181,35 @@ export class UnifiedChatProviderImpl implements UnifiedChatProvider {
         }
       }
 
+      // Check for grounding requests in final response
+      let finalContent = responseText
+      if (finalContent.includes('[GROUNDING_REQUEST:')) {
+        const groundingMatch = finalContent.match(/\[GROUNDING_REQUEST:\s*"([^"]+)"\]/)
+        if (groundingMatch) {
+          const searchQuery = groundingMatch[1]
+          console.log('🔍 Processing grounding request:', searchQuery)
+
+          try {
+            // Perform grounding search
+            const groundingResult = await this.performGroundingSearch(searchQuery)
+
+            // Replace the grounding request with actual results
+            finalContent = finalContent.replace(/\[GROUNDING_REQUEST:\s*"[^"]+"\]/, groundingResult)
+
+            // Clean up any remaining grounding markers
+            finalContent = finalContent.replace(/\[GROUNDING_REQUEST:[^\]]*\]/g, '')
+          } catch (groundingError) {
+            console.error('❌ Grounding search failed:', groundingError)
+            // Keep original content if grounding fails
+          }
+        }
+      }
+
       // Yield final complete message
       yield {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: responseText,
+        content: finalContent,
         timestamp: new Date(),
         type: 'text',
         metadata: {
@@ -704,7 +757,7 @@ Response Style:
   }
 
   private buildSystemPrompt(context?: UnifiedContext, mode?: ChatMode): string {
-    console.log('🔧 Building system prompt for context:', context, 'mode:', mode)
+    console.log('🔧 Building system prompt for context:', JSON.stringify(context, null, 2), 'mode:', mode)
 
     // Admin mode has special system prompt
     if (mode === 'admin') {
@@ -713,7 +766,7 @@ Response Style:
 
     // For standard mode, use stage-aware system prompt
     const conversationStage = context?.conversationStage || 'greeting'
-    console.log('📋 Conversation stage detected:', conversationStage)
+    console.log('📋 Conversation stage detected:', conversationStage, 'leadContext:', JSON.stringify(context?.leadContext, null, 2))
     const leadContext = context?.leadContext || {}
 
     // Stage-specific instructions (imported from ai/index.ts)
@@ -784,7 +837,22 @@ You are currently in the ${conversationStage.toUpperCase()} stage of a structure
 
 ${stageInstructions}
 
-IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.`
+IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.
+
+## GOOGLE GROUNDING CAPABILITIES
+You have access to real-time Google Search for current information, company research, and industry insights. When users ask questions that would benefit from current data, use your grounding capabilities to provide accurate, up-to-date information.
+
+**When to use grounding:**
+- Current market trends or statistics
+- Company information or news
+- Industry developments
+- Pricing or competitive information
+- Recent technological advancements
+- Economic data or business intelligence
+
+**How to request grounding:** If you need current information to answer a user question, include [GROUNDING_REQUEST: "your search query"] in your response, and the system will provide real-time search results.
+
+Remember: You are F.B/c, the AI business consultant who helps businesses grow through intelligent automation and data-driven strategies.`
   }
 
   // Admin session management implementation

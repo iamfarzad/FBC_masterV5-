@@ -271,7 +271,7 @@ You are currently in the ${conversationStage.toUpperCase()} stage of a structure
 
 ${stageInstructions}
 
-IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.`
+IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.
 
 ## YOUR CAPABILITIES
 I'm an AI business consultant specializing in automation, ROI analysis, and digital transformation. I help optimize operations and increase profitability through data-driven strategies.

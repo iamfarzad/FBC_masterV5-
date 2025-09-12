@@ -62,18 +62,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   } = useConversationFlow();
 
   // Create reactive context that updates when conversation state changes
-  const aiContext = useMemo(() => ({
-    sessionId,
-    conversationStage: conversationState.stage,
-    leadContext: conversationState.email ? {
-      name: conversationState.name,
-      email: conversationState.email,
-      company: conversationState.companyInfo?.name,
-      role: conversationState.role
-    } : (conversationState.name ? {
-      name: conversationState.name
-    } : undefined)
-  }), [sessionId, conversationState.stage, conversationState.name, conversationState.email, conversationState.companyInfo?.name]);
+  const aiContext = useMemo(() => {
+    const context = {
+      sessionId,
+      conversationStage: conversationState.stage,
+      leadContext: conversationState.email ? {
+        name: conversationState.name,
+        email: conversationState.email,
+        company: conversationState.companyInfo?.name,
+        role: conversationState.role
+      } : (conversationState.name ? {
+        name: conversationState.name
+      } : undefined)
+    };
+    console.log('🎯 SENDING AI CONTEXT:', JSON.stringify(context, null, 2));
+    return context;
+  }, [sessionId, conversationState.stage, conversationState.name, conversationState.email, conversationState.companyInfo?.name]);
 
   // Use unified chat for real AI responses
   const {
@@ -264,8 +268,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // First, process the conversation flow to update state and get any flow-specific logic
       await processConversationFlow(userInput, onShowBookingOverlay);
 
-      // Then send the actual message to AI for real response
-      await sendAIMessage(userInput);
+      // Create updated context with the latest conversation state
+      const updatedContext = {
+        sessionId,
+        conversationStage: conversationState.stage,
+        leadContext: conversationState.email ? {
+          name: conversationState.name,
+          email: conversationState.email,
+          company: conversationState.companyInfo?.name,
+          role: conversationState.role
+        } : (conversationState.name ? {
+          name: conversationState.name
+        } : undefined)
+      };
+
+      console.log('🚀 SENDING UPDATED CONTEXT TO AI:', JSON.stringify(updatedContext, null, 2));
+
+      // Then send the actual message to AI for real response with updated context
+      await sendAIMessage(userInput, updatedContext);
     } catch (error) {
       console.error('Error sending message:', error);
 

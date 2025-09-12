@@ -118,6 +118,9 @@ export const useConversationFlow = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const processUserMessage = useCallback(async (userInput: string, setShowBookingOverlay: (show: boolean) => void) => {
+    console.log('🔄 Processing user message:', userInput, 'current stage:', conversationState.stage)
+    console.log('📊 Current conversation state:', JSON.stringify(conversationState, null, 2))
+
     // Only handle conversation state management - AI responses come from unified chat
     const newState = { ...conversationState };
 
@@ -193,6 +196,7 @@ export const useConversationFlow = () => {
         break;
     }
 
+    console.log('✅ Updated conversation state:', JSON.stringify(newState, null, 2))
     setConversationState(newState);
   }, [conversationState]);
 

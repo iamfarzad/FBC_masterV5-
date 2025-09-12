@@ -76,7 +76,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     )
   }, [])
 
-  const sendMessage = useCallback(async (content: string): Promise<void> => {
+  const sendMessage = useCallback(async (content: string, overrideContext?: any): Promise<void> => {
     if (!content.trim() || isLoading || isStreaming) return
 
     try {
@@ -98,14 +98,14 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
         timestamp: new Date(),
         type: 'text',
         metadata: {
-          sessionData: options.context // Include current context in metadata
+          sessionData: overrideContext || options.context // Include current context in metadata
         }
       })
 
       // Prepare unified request with updated context
       const request: UnifiedChatRequest = {
         messages: [...messages, userMessage],
-        context: options.context,
+        context: overrideContext || options.context,
         mode: options.mode || 'standard',
         stream: true
       }
