@@ -562,28 +562,28 @@ export default function ChatPage() {
         <DemoSessionProvider>
         {/* MODERN BLUEPRINT-COMPLIANT LAYOUT - Following Inspiration Files */}
         <div className="flex h-screen w-full overflow-hidden bg-background">
-          {/* Slim Left Sidebar - Modern Design with F.B/c Brand Colors */}
-          <div className="relative flex w-16 flex-col border-r border-border bg-surface-elevated py-4">
-            {/* Logo/Brand with glow effect */}
-            <div className="mb-6 px-3">
+          {/* Slim Left Sidebar - Modern Design with F.B/c Brand Colors - Responsive */}
+          <div className="relative flex w-12 sm:w-16 flex-col border-r border-border bg-surface-elevated py-2 sm:py-4">
+            {/* Logo/Brand with glow effect - Responsive */}
+            <div className="mb-4 sm:mb-6 px-1 sm:px-3">
               <div className="relative">
-                <div className="modern-hover flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-lg">
-                  <span className="text-base font-bold text-white">C</span>
+                <div className="modern-hover flex size-8 sm:size-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-brand to-brand-hover shadow-lg">
+                  <span className="text-sm sm:text-base font-bold text-white">C</span>
                 </div>
-                <div className="absolute inset-0 -z-10 animate-modern-pulse rounded-xl bg-orange-accent/20 blur-md"></div>
+                <div className="absolute inset-0 -z-10 animate-modern-pulse rounded-lg sm:rounded-xl bg-brand/20 blur-md"></div>
               </div>
             </div>
 
-            {/* Navigation - Tighter Spacing */}
-            <nav className="flex flex-1 flex-col gap-1 px-2">
+            {/* Navigation - Responsive Spacing */}
+            <nav className="flex flex-1 flex-col gap-1 px-1 sm:px-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant={feature === 'chat' ? 'default' : 'ghost'}
                   size="sm"
-                  className={`modern-button relative size-12 rounded-xl p-0 transition-all duration-300 ${
+                  className={`modern-button relative size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 transition-all duration-300 ${
                     feature === 'chat'
-                      ? 'bg-gradient-to-br from-orange-accent to-orange-accent-hover text-white shadow-lg shadow-orange-accent/30'
+                      ? 'bg-gradient-to-br from-brand to-brand-hover text-white shadow-lg shadow-brand/30'
                       : 'text-text-muted hover:bg-surface hover:text-text'
                   }`}
                   onClick={() => {
@@ -591,9 +591,9 @@ export default function ChatPage() {
                     setShowProgressRail(false);
                   }}
                 >
-                  <MessageCircle className="size-5" />
+                  <MessageCircle className="size-4 sm:size-5" />
                   {feature === 'chat' && (
-                    <div className="absolute inset-0 -z-10 rounded-xl bg-orange-accent/20 blur-lg"></div>
+                    <div className="absolute inset-0 -z-10 rounded-lg sm:rounded-xl bg-brand/20 blur-lg"></div>
                   )}
                 </Button>
               </TooltipTrigger>
@@ -614,16 +614,16 @@ export default function ChatPage() {
                     <Button
                       variant={isActive ? 'default' : 'ghost'}
                       size="sm"
-                      className={`modern-button relative size-12 rounded-xl p-0 transition-all duration-300 ${
+                      className={`modern-button relative size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 transition-all duration-300 ${
                         isActive
-                          ? 'bg-gradient-to-br from-orange-accent to-orange-accent-hover text-white shadow-lg shadow-orange-accent/30'
+                          ? 'bg-gradient-to-br from-brand to-brand-hover text-white shadow-lg shadow-brand/30'
                           : 'text-text-muted hover:bg-surface hover:text-text'
                       }`}
                       onClick={() => handleToolSelect(tool.id)}
                     >
-                      <Icon className="size-5" />
+                      <Icon className="size-4 sm:size-5" />
                       {isActive && (
-                        <div className="absolute inset-0 -z-10 rounded-xl bg-orange-accent/20 blur-lg"></div>
+                        <div className="absolute inset-0 -z-10 rounded-lg sm:rounded-xl bg-brand/20 blur-lg"></div>
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -640,17 +640,17 @@ export default function ChatPage() {
             })}
           </nav>
 
-          {/* Settings - Tighter Spacing */}
-          <div className="space-y-1 px-2">
+          {/* Settings - Responsive Spacing */}
+          <div className="space-y-1 px-1 sm:px-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="modern-button size-12 rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
+                  className="modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
                   onClick={() => setShowCanvasOverlay(!showCanvasOverlay)}
                 >
-                  <Layers className="size-5" />
+                  <Layers className="size-4 sm:size-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -666,10 +666,10 @@ export default function ChatPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="modern-button size-12 rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
+                  className="modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
-                  {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+                  {theme === 'dark' ? <Sun className="size-4 sm:size-5" /> : <Moon className="size-4 sm:size-5" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -682,16 +682,16 @@ export default function ChatPage() {
         {/* Main Content Area */}
         <div className="flex min-w-0 flex-1">
           <div className="flex-1 bg-background">
-            {/* Enhanced Header for Tools */}
+            {/* Enhanced Header for Tools - Responsive */}
             {feature !== 'chat' && (
-              <header className="flex h-16 items-center justify-between border-b border-border bg-surface/95 px-8 backdrop-blur-lg">
-                <div className="flex items-center gap-4">
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-accent to-orange-accent-hover shadow-md">
+              <header className="flex h-12 sm:h-16 items-center justify-between border-b border-border bg-surface/95 px-4 sm:px-8 backdrop-blur-lg">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="flex size-6 sm:size-8 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-brand to-brand-hover shadow-md">
                     {React.createElement(toolItems.find(t => t.id === feature)?.icon || MessageCircle, {
-                      className: "h-4 w-4 text-white"
+                      className: "h-3 w-3 sm:h-4 sm:w-4 text-white"
                     })}
                   </div>
-                  <h1 className="text-xl font-semibold text-text">
+                  <h1 className="text-lg sm:text-xl font-semibold text-text">
                     {toolItems.find(t => t.id === feature)?.label || feature}
                   </h1>
                   <Badge
@@ -713,16 +713,16 @@ export default function ChatPage() {
               </header>
             )}
 
-            {/* Main Panel - Chat Content Area */}
+            {/* Main Panel - Chat Content Area - Responsive */}
             <main className={`overflow-hidden bg-background ${
-              feature === 'chat' ? "h-full" : "h-[calc(100vh-4rem)]"
+              feature === 'chat' ? "h-full" : "h-[calc(100vh-3rem)] sm:h-[calc(100vh-4rem)]"
             }`}>
               {/* Chat Interface Content - Following Blueprint Pattern */}
               <div className="flex h-full">
-                {/* Main Chat Area - Takes full width */}
+                {/* Main Chat Area - Takes full width - Responsive */}
                 <div className="flex flex-1 flex-col bg-gradient-to-br from-surface via-bg/50 to-bg/30">
-                  {/* Messages Area */}
-                  <div className="scrollbar-modern flex-1 overflow-y-auto px-6 py-8">
+                  {/* Messages Area - Responsive padding */}
+                  <div className="scrollbar-modern flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-8">
                     <div className="mx-auto max-w-4xl space-y-8">
                       {/* Inline ROI Calculator */}
                       {showInlineROI && (
@@ -760,10 +760,10 @@ export default function ChatPage() {
                           <div className="animate-smooth-fade-in space-y-8 py-16 text-center">
                             <div className="space-y-4">
                               <div className="relative">
-                                <div className="mx-auto mb-6 flex size-16 animate-modern-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-orange-accent to-orange-accent-hover">
+                                <div className="mx-auto mb-6 flex size-16 animate-modern-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-hover">
                                   <Sparkles className="size-8 text-white" />
                                 </div>
-                                <div className="absolute -inset-2 animate-modern-pulse rounded-3xl bg-orange-accent/20 opacity-50 blur-xl"></div>
+                                <div className="absolute -inset-2 animate-modern-pulse rounded-3xl bg-brand/20 opacity-50 blur-xl"></div>
                               </div>
                               <h1 className="text-gradient mb-2 text-3xl font-bold">What can we build together?</h1>
                               <p className="mx-auto max-w-md text-lg text-muted-foreground">
@@ -772,7 +772,7 @@ export default function ChatPage() {
                               {/* 🔧 MASTER FLOW: Intelligence Status Indicator */}
                               {contextLoading && (
                                 <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                  <div className="size-4 animate-spin rounded-full border-2 border-orange-accent border-t-transparent"></div>
+                                  <div className="size-4 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
                                   Analyzing your background for personalized assistance...
                                 </div>
                               )}
@@ -808,8 +808,8 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Clean Input Area - No Redundant Tools */}
-            <div className="border-t border-border bg-bg/90 p-6 backdrop-blur-lg">
+            {/* Clean Input Area - Responsive */}
+            <div className="border-t border-border bg-bg/90 p-4 sm:p-6 backdrop-blur-lg">
               <div className="mx-auto max-w-4xl">
                 {/* SuggestedActions Component - Connected to Composer Top Slot */}
                 <SuggestedActions
@@ -824,21 +824,21 @@ export default function ChatPage() {
                     onKeyDown={handleKeyDown}
                     placeholder={showConsentOverlay ? "Please complete consent to start chatting..." : "Ask anything..."}
                     data-testid="chat-input"
-                    className="resize-none rounded-3xl border-none bg-transparent py-6 pl-16 pr-20 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-0"
+                    className="resize-none rounded-3xl border-none bg-transparent py-4 sm:py-6 pl-12 sm:pl-16 pr-16 sm:pr-20 text-sm sm:text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-0"
                                               disabled={isLoading || showConsentOverlay}
                   />
 
-                  <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center">
-                    {/* 🎯 MULTIMODAL INPUT TRIGGER - Enhanced + Icon */}
+                  <div className="absolute left-2 sm:left-4 top-1/2 flex -translate-y-1/2 items-center">
+                    {/* 🎯 MULTIMODAL INPUT TRIGGER - Enhanced + Icon - Responsive */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
+                          className="modern-button size-8 sm:size-10 rounded-full p-0 text-text-muted hover:text-brand"
                           disabled={showConsentOverlay}
                         >
-                          <Plus className="size-5" />
+                          <Plus className="size-4 sm:size-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="top" align="start" className="w-56">
@@ -992,24 +992,24 @@ export default function ChatPage() {
                     </DropdownMenu>
                   </div>
 
-                  <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2">
+                  <div className="absolute right-2 sm:right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 sm:gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                        className="modern-button size-10 rounded-full p-0 text-text-muted hover:text-brand"
+                        className="modern-button size-8 sm:size-10 rounded-full p-0 text-text-muted hover:text-brand"
                       onClick={() => setShowVoiceOverlay(true)}
                       disabled={showConsentOverlay}
                     >
-                      <Mic className="size-5" />
+                      <Mic className="size-4 sm:size-5" />
                     </Button>
                     {input.trim() && (
                       <Button
                         onClick={() => handleSendMessage(input)}
                         size="sm"
-                        className="modern-button size-10 rounded-full bg-gradient-to-r from-brand to-brand-hover p-0 text-surface shadow-lg shadow-brand/30 hover:from-brand-hover hover:to-brand"
+                        className="modern-button size-8 sm:size-10 rounded-full bg-gradient-to-r from-brand to-brand-hover p-0 text-surface shadow-lg shadow-brand/30 hover:from-brand-hover hover:to-brand"
                                                   disabled={isLoading || showConsentOverlay}
                       >
-                        <Send className="size-4" />
+                        <Send className="size-3 sm:size-4" />
                       </Button>
                     )}
                   </div>

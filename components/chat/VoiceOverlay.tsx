@@ -147,7 +147,7 @@ export function VoiceOverlay({
       {open && (
         <motion.div
           ref={overlayRef}
-          className="glass-card-dark fixed inset-0 z-[70] flex flex-col items-center justify-center px-6"
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center px-4 sm:px-6 bg-black/80 backdrop-blur-md"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -155,7 +155,7 @@ export function VoiceOverlay({
         >
           {/* Enhanced Status Badge */}
           <motion.div
-            className="glass absolute right-6 top-6 flex items-center gap-2 rounded-xl px-4 py-2 text-xs shadow-lg"
+            className="absolute right-4 top-4 sm:right-6 sm:top-6 flex items-center gap-2 rounded-xl px-3 py-2 text-xs shadow-lg bg-surface/90 backdrop-blur-sm border border-border"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3 }}
@@ -216,7 +216,7 @@ export function VoiceOverlay({
           </div>
 
           {/* Live Conversation Status */}
-          <div className="mt-6 w-full max-w-md">
+          <div className="mt-6 w-full max-w-md px-4 sm:px-0">
             <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
               <motion.div
                 className="h-full bg-orange-400"
@@ -226,7 +226,7 @@ export function VoiceOverlay({
             </div>
 
             {/* Status Display */}
-            <div className="h-32 overflow-auto rounded-lg border border-white/20 bg-black/30 p-4 text-sm text-white">
+            <div className="h-32 overflow-auto rounded-lg border border-white/20 bg-surface/90 backdrop-blur-sm p-4 text-sm text-text shadow-lg">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className={`size-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
@@ -278,22 +278,22 @@ export function VoiceOverlay({
                 </div>
 
                 {transcript && (
-                  <div className="mt-3 rounded bg-white/10 p-2 text-xs">
-                    <div className="mb-1 text-white/70">Latest:</div>
-                    <div className="text-white">{transcript}</div>
+                  <div className="mt-3 rounded bg-brand/10 border border-brand/20 p-2 text-xs">
+                    <div className="mb-1 text-text-muted">Latest:</div>
+                    <div className="text-text">{transcript}</div>
                   </div>
                 )}
 
                 {/* Token Usage Display */}
                 {usageMetadata && (
-                  <div className="mt-3 rounded bg-white/10 p-2 text-xs">
-                    <div className="mb-1 text-white/70">Usage:</div>
-                    <div className="text-white">
+                  <div className="mt-3 rounded bg-surface/80 border border-border p-2 text-xs">
+                    <div className="mb-1 text-text-muted">Usage:</div>
+                    <div className="text-text">
                       {usageMetadata.totalTokenCount} tokens
                       {usageMetadata.responseTokensDetails.length > 0 && (
                         <div className="mt-1 space-y-1">
                           {usageMetadata.responseTokensDetails.map((detail, idx) => (
-                            <div key={idx} className="text-white/60">
+                            <div key={idx} className="text-text-muted">
                               {detail.modality}: {detail.tokenCount}
                             </div>
                           ))}

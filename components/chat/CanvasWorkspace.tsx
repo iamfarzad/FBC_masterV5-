@@ -32,7 +32,7 @@ export function CanvasWorkspace({ open, title = 'Canvas', onClose, left, console
   if (!open) return null
 
   return (
-    <div className="bg-background/95 fixed inset-0 z-[70]">
+    <div className="bg-background fixed inset-0 z-[70] backdrop-blur-sm">
       {/* Toolbar */}
       <div className={compact ? "flex h-10 items-center justify-between border-b px-2" : "flex h-12 items-center justify-between border-b px-3"}>
         <div className="flex items-center gap-2">
