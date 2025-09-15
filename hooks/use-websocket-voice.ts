@@ -385,20 +385,20 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
     }
 
     ws.onclose = (event) => {
-      // Action logged
       setIsConnected(false)
       setSession(null)
       reconnectingRef.current = false
       sessionActiveRef.current = false
-
-      // Auto-reconnect on unexpected close (not user-initiated)
       if (event.code !== 1000 && event.code !== 1001) {
-        // Action logged
-        setTimeout(() => {
-          if (!reconnectingRef.current) {
-            connectWebSocket()
-          }
-        }, 1000)
+        const backoffKey = '__voice_backoff__'
+        const win = (typeof window !== 'undefined' ? (window as any) : {})
+        const last = Number(win[backoffKey] || 500)
+        const next = Math.min(last * 2, 10000)
+        win[backoffKey] = next
+        setTimeout(() => { if (!reconnectingRef.current) connectWebSocket() }, next)
+      }
+    }
+  }, 1000)
       }
     }
   }, []) // Remove all dependencies to prevent infinite re-renders
@@ -605,14 +605,30 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
 
   // Callback for voice recorder - properly encode audio data as base64
   const onAudioChunk = useCallback((audioData: ArrayBuffer) => {
-    // Convert ArrayBuffer to base64 string
-    let binary = '';
-    const bytes = new Uint8Array(audioData);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    const base64Audio = btoa(binary);
+    // Optional simple VAD gating (RMS threshold) to avoid sending silence
+    try {
+      if (process.env.NEXT_PUBLIC_VAD_ENABLED === '1') {
+        const view = new DataView(audioData)
+        let sumSq = 0
+        const n = view.byteLength / 2
+        for (let i = 0; i < view.byteLength; i += 2) {
+          const s = view.getInt16(i, true) / 32768
+          sumSq += s * s
+        }
+        const rms = Math.sqrt(sumSq / Math.max(1, n))
+        const threshold = Number(process.env.NEXT_PUBLIC_VAD_RMS || 0.01)
+        if (rms < threshold) {
+          // Skip quiet chunk
+          return
+        }
+      }
+    } catch {}
+
+    // Convert ArrayBuffer to base64 string (PCM 16-bit)
+    let binary = ''
+    const bytes = new Uint8Array(audioData)
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+    const base64Audio = btoa(binary)
 
     // If using direct Gemini Live session, send via session API instead of WS
     const isDirect = process.env.NEXT_PUBLIC_GEMINI_DIRECT === '1'
@@ -628,11 +644,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       return
     }
 
+    const pcmRate = process.env.NEXT_PUBLIC_LIVE_PCM_RATE === '24000' ? '24000' : '16000'
     const payload = JSON.stringify({
       type: 'user_audio',
       payload: { 
         audioData: base64Audio,
-        mimeType: 'audio/pcm;rate=16000'
+        mimeType: `audio/pcm;rate=${pcmRate}`
       }
     })
 

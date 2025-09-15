@@ -87,6 +87,20 @@ body {
   box-shadow: 0 4px 12px rgba(160, 160, 160, 0.15);
 }
 
+/* Interactive Scale Animation */
+.interactive-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.interactive-scale:hover {
+  transform: scale(1.05);
+}
+
+.interactive-scale:active {
+  transition: transform 0.1s;
+  transform: scale(0.95);
+}
+
 /* Monochrome Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

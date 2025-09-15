@@ -222,7 +222,7 @@
   }
 }
 
-@layer base {
+/* @layer base { */
   *, :after, :before, ::backdrop {
     box-sizing: border-box;
     border: 0 solid;
@@ -515,7 +515,7 @@
     backdrop-filter: blur(10px);
     border: 1px solid var(--color-holo-border);
     box-shadow: var(--glow-sm), inset 0 1px 0 var(--color-holo-glow);
-    background: #ffffff05;
+    background: #ffffffcc;
   }
 
   .scan-line {
@@ -727,7 +727,7 @@
 
   .dark .modern-card {
     background: #1a1a1acc;
-    border: 1px solid #ffffff14;
+    border: 1px solid #ffffff66;
   }
 
   .modern-hover {
@@ -1173,9 +1173,9 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
-}
+/* } */
 
-@layer utilities {
+/* @layer utilities { */
   .\@container\/card-header {
     container: card-header / inline-size;
   }
@@ -8359,7 +8359,7 @@
       color: var(--accent-foreground);
     }
   }
-}
+/* } */
 
 :root {
   --color-void-black: #000;
@@ -8390,7 +8390,7 @@
   --modern-shadow-lg: 0 10px 15px -3px #0000001a, 0 4px 6px -2px #0000000d;
   --modern-shadow-xl: 0 25px 50px -12px #00000040;
   --modern-shadow-2xl: 0 25px 50px -12px #0006;
-  --glass-bg: #ffffff14;
+  --glass-bg: #ffffffcc;
   --glass-border: #ffffff26;
   --glass-blur: blur(12px);
   --glass-highlight: #ffffff40;

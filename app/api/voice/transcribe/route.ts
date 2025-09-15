@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Keep simple and unambiguous: Live API handles voice.
+// This endpoint is intentionally disabled to avoid confusion in production.
 export const runtime = 'edge'
 
-export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData()
-    const audio = formData.get('audio')
-    
-    // In production, integrate with speech-to-text service
-    // For now, return mock transcription
-    return NextResponse.json({
-      success: true,
-      text: 'This is a transcribed message from the audio input',
-      confidence: 0.95,
-      language: 'en-US'
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to transcribe audio' },
-      { status: 500 }
-    )
-  }
+export async function POST() {
+  return NextResponse.json({ error: 'Disabled: Use Gemini Live WebSocket for voice.' }, { status: 405 })
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  })
 }

@@ -4,17 +4,39 @@ export interface TextProvider {
   generate(input: { messages: { role: string; content: string }[] }): AsyncIterable<string>
 }
 
-export function getProvider(): TextProvider {
-  // Check for various possible environment variable names
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY_SERVER
+// Basic heuristics to detect research intent and URLs
+function hasSearchIntent(text: string): boolean {
+  const t = (text || '').toLowerCase()
+  return /(search|find|look\s*up|research|latest|news|what\s+is|who\s+is|competitor)/.test(t)
+}
 
-  if (apiKey) {
-    console.log('✅ Using real Gemini API')
+function extractUrls(text: string): string[] {
+  const re = /\bhttps?:\/\/[^\s)]+/gi
+  const matches = text.match(re) || []
+  return matches.map(u => u.replace(/[),.;]+$/, ''))
+}
+
+export function selectProvider(messages: { role: string; content: string }[]): TextProvider {
+  const last = messages[messages.length - 1]?.content || ''
+  const urls = extractUrls(last)
+  const wantsSearch = hasSearchIntent(last) || urls.length > 0
+
+  const ppxKey = process.env.PERPLEXITY_API_KEY
+  const gemKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY_SERVER
+
+  if (ppxKey && wantsSearch) {
+    return createPerplexityProvider()
+  }
+  if (gemKey) {
     return createGeminiProvider()
   }
-
-  console.log('⚠️ No API key found, using mock provider')
   return createMockProvider()
+}
+
+// Backward-compatible default provider (Gemini or mock)
+export function getProvider(): TextProvider {
+  const gemKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY_SERVER
+  return gemKey ? createGeminiProvider() : createMockProvider()
 }
 
 export function createMockProvider(): TextProvider {
@@ -246,6 +268,8 @@ function getSystemPrompt(messages: { role: string; content: string; metadata?: a
 
   const leadContext = sessionData.leadContext || {}
   const conversationStage = sessionData.conversationStage || 'greeting'
+  const intelligenceCtx = sessionData.intelligenceContext || null
+  const hasGreeted = Boolean((sessionData as any)?.hasGreeted)
 
   console.log('🤖 AI Context Debug:', {
     conversationStage,
@@ -257,6 +281,35 @@ function getSystemPrompt(messages: { role: string; content: string; metadata?: a
 
   // Conversation stage-specific instructions
   const stageInstructions = getStageInstructions(conversationStage, leadContext)
+
+  // Optionally format lead research context for prompt enrichment
+  const formatLeadResearch = (ctx: any): string => {
+    try {
+      if (!ctx) return ''
+      const company = ctx.company || {}
+      const person = ctx.person || {}
+      const lines: string[] = []
+      if (company || person) {
+        lines.push('## LEAD RESEARCH CONTEXT')
+      }
+      if (company && (company.name || company.domain || company.industry || company.size || company.summary)) {
+        lines.push('- Company: ' + [company.name, company.domain].filter(Boolean).join(' • '))
+        if (company.industry) lines.push(`- Industry: ${company.industry}`)
+        if (company.size) lines.push(`- Size: ${company.size}`)
+        if (company.summary) lines.push(`- Summary: ${company.summary}`)
+      }
+      if (person && (person.fullName || person.role || person.company)) {
+        lines.push('- Contact: ' + [person.fullName, person.role].filter(Boolean).join(' • '))
+        if (person.company) lines.push(`- Works at: ${person.company}`)
+      }
+      if ((sessionData as any).role && (sessionData as any).roleConfidence) {
+        lines.push(`- Detected role: ${(sessionData as any).role} (confidence ${(Math.round(((sessionData as any).roleConfidence || 0) * 100))}%)`)
+      }
+      return lines.length ? lines.join('\n') + '\n' : ''
+    } catch {
+      return ''
+    }
+  }
 
   const systemPrompt = `You are F.B/c, an advanced AI business consultant and automation specialist.
 
@@ -272,6 +325,12 @@ You are currently in the ${conversationStage.toUpperCase()} stage of a structure
 ${stageInstructions}
 
 IMPORTANT: You MUST follow the stage-specific instructions above. Do not skip stages or respond generically. Stay in your assigned role for this conversation stage.
+
+${hasGreeted || conversationStage === 'discovery' ? `
+CRITICAL CONSTRAINTS:
+- The user has already been greeted (or we are past greeting). Do NOT introduce yourself again or repeat your name/role.
+- Do NOT start replies with a greeting (e.g., "Hi", "Hello").
+- Do NOT ask for the user's name again; proceed directly with discovery and next-step questions.` : ''}
 
 ## YOUR CAPABILITIES
 I'm an AI business consultant specializing in automation, ROI analysis, and digital transformation. I help optimize operations and increase profitability through data-driven strategies.
@@ -299,6 +358,8 @@ ${leadContext.name ? `## CURRENT USER CONTEXT
 - Industry: ${leadContext.industry || 'Not specified'}
 
 Tailor your responses to be relevant to their business context and industry.` : ''}
+
+ ${intelligenceCtx ? formatLeadResearch(intelligenceCtx) : ''}
 
 ## RESPONSE GUIDELINES
 - Always maintain your F.B/c identity and expertise
@@ -475,4 +536,48 @@ function createGeminiProvider(): TextProvider {
       }
     }
   }
+}
+
+function createPerplexityProvider(): TextProvider {
+  const provider: TextProvider = {
+    async *generate({ messages }) {
+      try {
+        const apiKey = process.env.PERPLEXITY_API_KEY
+        if (!apiKey) throw new Error('PERPLEXITY_API_KEY not set')
+
+        // Build prompt leveraging system + last user
+        const sys = getSystemPrompt(messages)
+        const user = messages[messages.length - 1]?.content || ''
+
+        // Convert to PerplexityMessage format
+        const perplexityMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+          { role: 'system', content: sys },
+          { role: 'user', content: user }
+        ]
+
+        // Use the consolidated Perplexity provider
+        const { streamPerplexity } = await import('../providers/perplexity')
+        
+        for await (const event of streamPerplexity({
+          apiKey,
+          messages: perplexityMessages,
+          options: {
+            model: process.env.PERPLEXITY_MODEL || 'sonar-pro',
+            temperature: 0.3,
+            web_search: true
+          }
+        })) {
+          if (event.content) {
+            yield event.content
+          }
+          if (event.done) break
+        }
+      } catch (e) {
+        console.error('Perplexity provider error:', e)
+        yield 'I had an issue fetching grounded results just now. I can continue the discussion while research completes.'
+      }
+    }
+  }
+
+  return provider
 }

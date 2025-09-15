@@ -28,9 +28,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Pass validated data to handler with version - Edge Function will handle streaming
+    // Pass validated data to handler and preserve useful extras from the original body
+    const extras: Record<string, unknown> = {}
+    if (body && typeof body === 'object') {
+      const { sessionId, leadContext, conversationStage, hasGreeted } = body as any
+      if (sessionId) extras.sessionId = sessionId
+      if (leadContext) extras.leadContext = leadContext
+      if (conversationStage) extras.conversationStage = conversationStage
+      if (typeof hasGreeted !== 'undefined') extras.hasGreeted = hasGreeted
+    }
+
+    // Edge Function will handle streaming
     return await handleChat({
       ...validation.data,
+      ...extras,
       version: 'v1'
     })
   } catch (error) {

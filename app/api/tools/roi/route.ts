@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withApiHandler, parseJson, api } from '@/src/core/api/api-utils'
 import { recordCapabilityUsed } from '@/src/core/context/capabilities'
+import { rateLimit } from '@/src/core/api/rate-limit'
 import type { ToolRunResult } from '@/src/core/types/intelligence'
 
 const RoiInputSchema = z.object({
@@ -14,6 +15,10 @@ const RoiInputSchema = z.object({
 function round(n: number) { return Math.round(n * 100) / 100 }
 
 export const POST = withApiHandler(async (req: NextRequest) => {
+  const rl = rateLimit(req, { limit: 12, windowMs: 15000 })
+  if (!rl.ok) {
+    return new Response(JSON.stringify({ ok: false, error: 'Rate limited' }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil((rl.retryAfterMs || 1000)/1000)) } })
+  }
   const body = await parseJson(req)
   const data = RoiInputSchema.parse(body)
 

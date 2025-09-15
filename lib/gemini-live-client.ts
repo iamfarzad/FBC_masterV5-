@@ -1,369 +1,139 @@
 /**
- * Gemini Live API WebSocket Client
- * Handles real-time multimodal streaming with Gemini 2.0
+ * Gemini Live API Client using official @google/genai library
+ * Based on working template from /Users/farzad/Downloads/live-audio (6)
  */
 
-export interface LiveConfig {
-  model?: string
-  systemInstruction?: string
-  responseModalities?: ('TEXT' | 'AUDIO')[]
-  speechConfig?: {
-    voiceConfig?: {
-      prebuiltVoiceConfig?: {
-        voiceName: string
-      }
-    }
-  }
-  tools?: any[]
-  temperature?: number
+import { GoogleGenAI, LiveServerMessage, Modality, Session } from '@google/genai';
+
+export interface GeminiLiveConfig {
+  apiKey: string;
+  model?: string;
+  onAudioResponse?: (audioData: any) => void;
+  onTextResponse?: (text: string) => void;
+  onError?: (error: Error) => void;
+  onStatusChange?: (status: string) => void;
 }
 
-export interface LiveMessage {
-  clientContent?: {
-    turns?: any[]
-    turnComplete?: boolean
-    realtimeInput?: {
-      mediaChunks?: Array<{
-        mimeType: string
-        data: string // base64
-      }>
-    }
-  }
-  serverContent?: {
-    modelTurn?: {
-      parts?: Array<{
-        text?: string
-        inlineData?: {
-          mimeType: string
-          data: string // base64
-        }
-      }>
-    }
-    turnComplete?: boolean
-  }
-}
+export class GeminiLiveClient {
+  private client: GoogleGenAI;
+  private session: Session | null = null;
+  private config: GeminiLiveConfig;
+  private isConnected = false;
 
-export class GeminiLiveClient extends EventTarget {
-  private ws: WebSocket | null = null
-  private config: LiveConfig
-  private isConnected = false
-  private messageQueue: LiveMessage[] = []
-  private audioContext: AudioContext | null = null
-  private mediaStream: MediaStream | null = null
-  private mediaRecorder: MediaRecorder | null = null
-  private frameInterval: NodeJS.Timeout | null = null
-
-  constructor(config: LiveConfig = {}) {
-    super()
+  constructor(config: GeminiLiveConfig) {
     this.config = {
-      model: 'gemini-2.0-flash-exp',
-      responseModalities: ['TEXT', 'AUDIO'],
+      model: 'gemini-2.5-flash-preview-native-audio-dialog',
       ...config
-    }
+    };
+
+    this.client = new GoogleGenAI({
+      apiKey: this.config.apiKey,
+    });
   }
 
-  async connect(apiKey: string): Promise<void> {
-    if (this.isConnected) {
-      console.warn('Already connected')
-      return
-    }
+  async connect(): Promise<void> {
+    try {
+      this.config.onStatusChange?.('Connecting to Gemini Live...');
 
-    // WebSocket URL for Gemini Live API
-    const wsUrl = `wss://generativelanguage.googleapis.com/v1alpha/models/${this.config.model}:streamGenerateContent`
-    
-    const params = new URLSearchParams({
-      key: apiKey,
-      alt: 'sse'
-    })
+      this.session = await this.client.live.connect({
+        model: this.config.model!,
+        callbacks: {
+          onopen: () => {
+            this.isConnected = true;
+            this.config.onStatusChange?.('Connected');
+          },
+          onmessage: async (message: LiveServerMessage) => {
+            // Handle text responses
+            const text = message.serverContent?.modelTurn?.parts?.[0]?.text;
+            if (text) {
+              this.config.onTextResponse?.(text);
+            }
 
-    this.ws = new WebSocket(`${wsUrl}?${params}`)
-    
-    this.ws.onopen = () => {
-      this.isConnected = true
-      console.log('✅ Connected to Gemini Live')
-      this.dispatchEvent(new Event('open'))
-      
-      // Send initial configuration
-      this.sendSetup()
-      
-      // Process queued messages
-      while (this.messageQueue.length > 0) {
-        const msg = this.messageQueue.shift()
-        if (msg) this.send(msg)
-      }
-    }
+            // Handle audio responses
+            const audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData;
+            if (audio) {
+              this.config.onAudioResponse?.(audio);
+            }
 
-    this.ws.onmessage = (event) => {
-      try {
-        const message: LiveMessage = JSON.parse(event.data)
-        this.handleServerMessage(message)
-      } catch (error) {
-        console.error('Failed to parse message:', error)
-      }
-    }
-
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      this.dispatchEvent(new CustomEvent('error', { detail: error }))
-    }
-
-    this.ws.onclose = () => {
-      this.isConnected = false
-      console.log('Disconnected from Gemini Live')
-      this.dispatchEvent(new Event('close'))
-      this.stopAllStreaming()
-    }
-  }
-
-  private sendSetup(): void {
-    const setupMessage = {
-      setup: {
+            // Handle interruptions
+            const interrupted = message.serverContent?.interrupted;
+            if (interrupted) {
+              this.config.onStatusChange?.('Response interrupted');
+            }
+          },
+          onerror: (error: ErrorEvent) => {
+            this.config.onError?.(new Error(error.message));
+            this.config.onStatusChange?.('Connection error');
+          },
+          onclose: (event: CloseEvent) => {
+            this.isConnected = false;
+            this.config.onStatusChange?.(`Connection closed: ${event.reason}`);
+          },
+        },
         config: {
-          responseModalities: this.config.responseModalities,
-          speechConfig: this.config.speechConfig,
-          systemInstruction: this.config.systemInstruction ? {
-            parts: [{ text: this.config.systemInstruction }]
-          } : undefined,
-          tools: this.config.tools,
-          temperature: this.config.temperature
-        }
-      }
-    }
-    
-    this.send(setupMessage)
-  }
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Orus' } },
+          },
+        },
+      });
 
-  private handleServerMessage(message: LiveMessage): void {
-    if (message.serverContent?.modelTurn?.parts) {
-      for (const part of message.serverContent.modelTurn.parts) {
-        if (part.text) {
-          this.dispatchEvent(new CustomEvent('text', { 
-            detail: { text: part.text } 
-          }))
-        }
-        
-        if (part.inlineData) {
-          this.dispatchEvent(new CustomEvent('audio', { 
-            detail: { 
-              mimeType: part.inlineData.mimeType,
-              data: part.inlineData.data 
-            }
-          }))
-          
-          // Play audio automatically
-          this.playAudio(part.inlineData.data, part.inlineData.mimeType)
-        }
-      }
-    }
-    
-    if (message.serverContent?.turnComplete) {
-      this.dispatchEvent(new Event('turnComplete'))
-    }
-  }
-
-  private async playAudio(base64Data: string, mimeType: string): Promise<void> {
-    try {
-      if (!this.audioContext) {
-        this.audioContext = new AudioContext()
-      }
-      
-      // Convert base64 to ArrayBuffer
-      const binaryString = atob(base64Data)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-      
-      // Decode audio
-      const audioBuffer = await this.audioContext.decodeAudioData(bytes.buffer)
-      
-      // Play audio
-      const source = this.audioContext.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(this.audioContext.destination)
-      source.start()
+      this.config.onStatusChange?.('Connected to Gemini Live');
     } catch (error) {
-      console.error('Failed to play audio:', error)
+      this.config.onError?.(error as Error);
+      throw error;
     }
   }
 
-  send(message: any): void {
-    if (!this.isConnected || !this.ws) {
-      this.messageQueue.push(message)
-      return
+  async sendAudio(audioData: ArrayBuffer | Blob): Promise<void> {
+    if (!this.session || !this.isConnected) {
+      throw new Error('Not connected to Gemini Live session');
     }
-    
-    this.ws.send(JSON.stringify(message))
-  }
 
-  sendText(text: string, turnComplete: boolean = true): void {
-    this.send({
-      clientContent: {
-        turns: [{
-          role: 'user',
-          parts: [{ text }]
-        }],
-        turnComplete
-      }
-    })
-  }
-
-  // Start continuous audio streaming
-  async startAudioStream(): Promise<void> {
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 16000
-        } 
-      })
-      
-      this.mediaRecorder = new MediaRecorder(this.mediaStream, {
-        mimeType: 'audio/webm;codecs=opus'
-      })
-      
-      this.mediaRecorder.ondataavailable = async (event) => {
-        if (event.data.size > 0) {
-          const base64 = await this.blobToBase64(event.data)
-          this.send({
-            clientContent: {
-              realtimeInput: {
-                mediaChunks: [{
-                  mimeType: 'audio/webm',
-                  data: base64
-                }]
-              }
-            }
-          })
-        }
-      }
-      
-      // Send chunks every 100ms for real-time streaming
-      this.mediaRecorder.start(100)
-      console.log('🎤 Audio streaming started')
+      await this.session.sendRealtimeInput({ media: audioData });
     } catch (error) {
-      console.error('Failed to start audio stream:', error)
-      throw error
+      this.config.onError?.(error as Error);
+      throw error;
     }
   }
 
-  // Start continuous video streaming (webcam or screen)
-  async startVideoStream(type: 'webcam' | 'screen'): Promise<MediaStream> {
+  async sendText(text: string): Promise<void> {
+    if (!this.session || !this.isConnected) {
+      throw new Error('Not connected to Gemini Live session');
+    }
+
     try {
-      if (type === 'webcam') {
-        this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: 640, height: 480 } 
-        })
-      } else {
-        this.mediaStream = await navigator.mediaDevices.getDisplayMedia({ 
-          video: { width: 1280, height: 720 } 
-        })
-      }
-      
-      // Start sending frames every 1 second
-      this.startFrameCapture()
-      
-      console.log(`📹 ${type} streaming started`)
-      return this.mediaStream
+      await this.session.sendRealtimeInput({
+        text: text
+      });
     } catch (error) {
-      console.error(`Failed to start ${type} stream:`, error)
-      throw error
+      this.config.onError?.(error as Error);
+      throw error;
     }
-  }
-
-  private startFrameCapture(): void {
-    if (!this.mediaStream) return
-    
-    const video = document.createElement('video')
-    video.srcObject = this.mediaStream
-    video.play()
-    
-    const canvas = document.createElement('canvas')
-    canvas.width = 640
-    canvas.height = 480
-    const ctx = canvas.getContext('2d')
-    
-    // Capture and send frame every second
-    this.frameInterval = setInterval(() => {
-      if (ctx && video.readyState === video.HAVE_ENOUGH_DATA) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        
-        canvas.toBlob(async (blob) => {
-          if (blob) {
-            const base64 = await this.blobToBase64(blob)
-            this.send({
-              clientContent: {
-                realtimeInput: {
-                  mediaChunks: [{
-                    mimeType: 'image/jpeg',
-                    data: base64
-                  }]
-                }
-              }
-            })
-          }
-        }, 'image/jpeg', 0.8)
-      }
-    }, 1000)
-  }
-
-  private async blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result?.toString().split(',')[1] || ''
-        resolve(base64)
-      }
-      reader.readAsDataURL(blob)
-    })
-  }
-
-  stopAudioStream(): void {
-    if (this.mediaRecorder) {
-      this.mediaRecorder.stop()
-      this.mediaRecorder = null
-    }
-    
-    if (this.mediaStream && !this.frameInterval) {
-      this.mediaStream.getTracks().forEach(track => track.stop())
-      this.mediaStream = null
-    }
-    
-    console.log('🎤 Audio streaming stopped')
-  }
-
-  stopVideoStream(): void {
-    if (this.frameInterval) {
-      clearInterval(this.frameInterval)
-      this.frameInterval = null
-    }
-    
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop())
-      this.mediaStream = null
-    }
-    
-    console.log('📹 Video streaming stopped')
-  }
-
-  stopAllStreaming(): void {
-    this.stopAudioStream()
-    this.stopVideoStream()
   }
 
   disconnect(): void {
-    this.stopAllStreaming()
-    
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
+    if (this.session) {
+      this.session.close();
+      this.session = null;
+      this.isConnected = false;
+      this.config.onStatusChange?.('Disconnected');
     }
-    
-    this.isConnected = false
   }
 
-  isActive(): boolean {
-    return this.isConnected
+  isSessionActive(): boolean {
+    return this.isConnected && this.session !== null;
+  }
+
+  // Utility method to create PCM blob from audio data (for real-time streaming)
+  createPCMBlob(pcmData: Float32Array): Blob {
+    // Convert Float32Array to Int16Array (16-bit PCM)
+    const int16Array = new Int16Array(pcmData.length);
+    for (let i = 0; i < pcmData.length; i++) {
+      int16Array[i] = Math.max(-32768, Math.min(32767, pcmData[i] * 32768));
+    }
+
+    return new Blob([int16Array.buffer], { type: 'audio/pcm' });
   }
 }

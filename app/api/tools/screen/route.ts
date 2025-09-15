@@ -60,6 +60,28 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+    // Robust text extractor to handle different SDK shapes
+    const getResponseText = (result: any): string => {
+      try {
+        if (result && typeof result.text === 'function') {
+          const t = result.text()
+          if (t) return String(t)
+        }
+      } catch {}
+      try {
+        if (result && typeof result.text === 'string') {
+          return result.text
+        }
+      } catch {}
+      try {
+        const parts = result?.candidates?.[0]?.content?.parts
+        if (Array.isArray(parts)) {
+          const s = parts.map((p: any) => p?.text).filter(Boolean).join(' ')
+          if (s) return s
+        }
+      } catch {}
+      return 'Analysis completed'
+    }
     let analysisResult = ''
 
     try {
@@ -84,7 +106,8 @@ export async function POST(req: NextRequest) {
         maxOutputTokens: 1024,
         temperature: 0.3,
         topP: 0.8,
-        topK: 40
+        topK: 40,
+        responseMimeType: 'text/plain'
       }
       console.log('Config:', JSON.stringify(optimizedConfig, null, 2))
 
@@ -100,6 +123,11 @@ export async function POST(req: NextRequest) {
       })
       console.log('Text-only API call successful')
 
+      // Reject obviously invalid or tiny images to avoid Gemini INVALID_ARGUMENT
+      if (!imageData || imageData.length < 500) {
+        return NextResponse.json({ ok: false, error: 'Image too small or invalid' }, { status: 422 })
+      }
+
       const result = await genAI.models.generateContent({
         model: modelSelection.model,
         config: optimizedConfig,
@@ -113,7 +141,7 @@ export async function POST(req: NextRequest) {
         throw new Error('No response from Gemini API')
       }
 
-      analysisResult = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
+      analysisResult = getResponseText(result)
       console.log('Analysis result:', analysisResult)
     } catch (e) {
       console.error('Screen analysis AI error:', e)
@@ -168,5 +196,3 @@ export async function POST(req: NextRequest) {
     return APIErrorHandler.createErrorResponse(error)
   }
 }
-
-

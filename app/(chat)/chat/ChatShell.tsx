@@ -29,10 +29,12 @@ import { WebcamInterface } from '@/components/chat/WebcamInterface';
 import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
 import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
 import { StageRail } from '@/components/chat/StageRail';
+import { ResearchPanel } from '@/components/overlays/ResearchPanel';
 
 // Import hooks and utilities
 import { useAppState } from '@/hooks/useAppState';
 import { AI_RESPONSES, generateMessageId } from '@/constants/appConstants';
+import { useToolActions } from '@/hooks/use-tool-actions'
 
 // Main ChatShell Component - Exact replica of attached_assets/src/App.tsx
 export default function ChatShell() {
@@ -46,6 +48,8 @@ export default function ChatShell() {
   const {
     state,
     updateState,
+    appendMessage,
+    updateMessage,
     messagesEndRef,
     messagesContainerRef,
     scrollToBottom,
@@ -60,6 +64,149 @@ export default function ChatShell() {
     activateCapability,
     advanceStage
   } = useAIElementsSystem();
+
+  // Tool actions for grounded search and URL analysis
+  const { search, analyzeURL } = useToolActions();
+  // Consent-triggered lead research (run once per page session)
+  const consentTriggeredRef = React.useRef(false)
+  const ensureSessionId = useCallback(() => {
+    if (typeof window === 'undefined') return null
+    const key = 'intelligence-session-id'
+    let sid = localStorage.getItem(key)
+    if (!sid) {
+      sid = Math.random().toString(36).slice(2) + Date.now().toString(36)
+      localStorage.setItem(key, sid)
+    }
+    return sid
+  }, [])
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const res = await fetch('/api/consent', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data?.allow || consentTriggeredRef.current) return
+        consentTriggeredRef.current = true
+
+        const sessionId = ensureSessionId()
+        const email = data.email || (data.companyDomain ? `lead@${data.companyDomain}` : null)
+        const name = data.name || 'Prospect'
+        const companyUrl = data.companyDomain ? `https://${data.companyDomain}` : undefined
+        if (!sessionId || !email) return
+
+        const lr = await fetch('/api/intelligence/lead-research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, email, name, companyUrl, provider: 'google' })
+        })
+        const out = await lr.json().catch(() => ({}))
+
+        // Activate research capabilities in UI system
+        activateCapability('source-citation')
+        activateCapability('web-preview')
+
+        const summary = out?.output || out?.research || {}
+        const company = summary?.company?.name || data.companyDomain || 'the company'
+        const person = summary?.person?.fullName || name
+        const msg: MessageData = {
+          id: generateMessageId(),
+          sender: 'ai',
+          timestamp: new Date(),
+          type: 'insight',
+          content: `🔎 Lead research initialized for ${person} at ${company}. I can reference this context for more tailored guidance.`,
+          sources: Array.isArray(summary?.citations) ? summary.citations.slice(0,3).map((c: any) => ({ title: String(c.title||'Source'), url: String(c.uri||c.url||''), excerpt: String(c.description||'') })) : undefined,
+          tools: [{ name: 'Web Search', description: 'Grounded search with citations', used: true }]
+        }
+        appendMessage(msg)
+      } catch {}
+    }
+    run()
+  }, [activateCapability, appendMessage, ensureSessionId])
+  const researchSeenRef = React.useRef<Map<string, number>>(new Map())
+
+  // Helpers for auto research triggers
+  const extractUrls = useCallback((text: string): string[] => {
+    const re = /\bhttps?:\/\/[^\s)]+/gi
+    const matches = text.match(re) || []
+    return (matches || []).map(u => u.replace(/[),.;]+$/, ''))
+  }, [])
+
+  const hasSearchIntent = useCallback((text: string): boolean => {
+    const t = text.toLowerCase()
+    return /(search|find|look\s*up|research|latest|news|what\s+is|who\s+is)/.test(t)
+  }, [])
+
+  const runAutoResearch = useCallback(async (originalText: string) => {
+    try {
+      // Prefer selected text if available
+      let query = originalText
+      if (typeof window !== 'undefined') {
+        const sel = (window.getSelection && window.getSelection()?.toString())?.trim()
+        if (sel && sel.length > 3) query = sel
+      }
+
+      // TTL guard: avoid repeated auto-research for same query within 30s
+      const key = (query || '').toLowerCase().trim()
+      const now = Date.now()
+      const last = researchSeenRef.current.get(key) || 0
+      if (now - last < 30000) return
+      researchSeenRef.current.set(key, now)
+      
+      const urls = extractUrls(query)
+      const wantsSearch = hasSearchIntent(query) || urls.length > 0
+      if (!wantsSearch) {
+        return
+      }
+
+      // Show a lightweight loader message only when we actually run research
+      const loaderId = generateMessageId()
+      appendMessage({ id: loaderId, sender: 'ai', timestamp: new Date(), type: 'insight', content: '🔎 Researching…', isComplete: false })
+
+      if (urls.length > 0) {
+        // URL Context Analysis
+        const res = await analyzeURL(urls, { query })
+        if (res?.ok) {
+          const output = (res.output as any) || {}
+          const citations = Array.isArray(output.citations) ? output.citations : []
+          const sources = citations.map((c: any) => ({
+            title: String(c.title || 'Source'),
+            url: String(c.uri || c.url || ''),
+            excerpt: String(c.description || '')
+          }))
+          updateMessage(loaderId, {
+            content: `🔎 URL Analysis Results\n\n${output.text || 'Analysis complete.'}`,
+            sources,
+            tools: [{ name: 'URL Context', description: 'Grounded webpage analysis', used: true }],
+            isComplete: true
+          })
+        }
+        return
+      }
+
+      if (hasSearchIntent(query)) {
+        const res = await search(query)
+        if (res?.ok) {
+          const output = (res.output as any) || {}
+          const citations = Array.isArray(output.citations) ? output.citations : []
+          const sources = citations.map((c: any) => ({
+            title: String(c.title || 'Source'),
+            url: String(c.uri || c.url || ''),
+            excerpt: String(c.description || '')
+          }))
+          updateMessage(loaderId, {
+            content: `🔎 Web Search Results\n\n${output.text || 'Search complete.'}`,
+            sources,
+            tools: [{ name: 'Web Search', description: 'Grounded search with citations', used: true }],
+            isComplete: true
+          })
+        }
+      }
+    } catch (err) {
+      // Non-fatal; ignore
+      console.warn('Auto-research failed', err)
+    }
+  }, [analyzeURL, extractUrls, generateMessageId, hasSearchIntent, search, appendMessage, updateMessage])
 
   // Update AI system when messages change
   React.useEffect(() => {
@@ -209,52 +356,66 @@ export default function ChatShell() {
     });
   }, [state.messages, activateCapability, updateState]);
 
-  const handleGeneratePDF = useCallback(() => {
-    const pdfMessage: MessageData = {
-      id: generateMessageId(),
-      content: `📋 **AI Strategy Report Generated**\n\nYour personalized business intelligence report is ready:\n\n**Included Sections:**\n• Conversation summary & insights\n• AI opportunity assessment\n• ROI projections & timelines\n• Implementation roadmap\n• Next steps & recommendations\n\nThe report has been tailored to your specific business needs and industry requirements.\n\n[**⬇️ Download Report**](download) | [**📧 Email Report**](email)`,
-      sender: 'ai',
-      timestamp: new Date(),
-      type: 'cta'
-    };
-    
-    updateState({ 
-      messages: [...state.messages, pdfMessage] 
-    });
+  const handleGeneratePDF = useCallback(async () => {
+    try {
+      // Append a small status message
+      const msgId = generateMessageId()
+      const pending: MessageData = {
+        id: msgId,
+        sender: 'ai',
+        timestamp: new Date(),
+        type: 'cta',
+        content: '📋 Preparing your AI Strategy Report…'
+      }
+      updateState({ messages: [...state.messages, pending] })
 
-    // Simulate PDF generation and download
-    setTimeout(() => {
-      const element = document.createElement('a');
-      const file = new Blob([`
-AI STRATEGY CONSULTATION REPORT
-===============================
+      // Resolve consent for email/name
+      let toEmail: string | undefined
+      let leadName: string | undefined
+      try {
+        const res = await fetch('/api/consent', { cache: 'no-store' })
+        if (res.ok) {
+          const cj = await res.json()
+          if (cj?.allow) {
+            toEmail = cj.email || undefined
+            leadName = cj.name || undefined
+          }
+        }
+      } catch {}
 
-Lead Score: ${state.conversationState.leadScore}%
-Generated: ${new Date().toLocaleDateString()}
+      // Trigger server-side PDF (download)
+      const exportRes = await fetch('/api/export-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: localStorage.getItem('intelligence-session-id') || undefined, leadEmail: toEmail })
+      })
+      if (exportRes.ok) {
+        const blob = await exportRes.blob()
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `FB-c_Summary_${(leadName || 'Lead').replace(/\s+/g,'_')}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      }
 
-CONVERSATION SUMMARY:
-• ${state.messages.length} message exchanges
-• Business intelligence consultation completed
-• AI opportunities identified
-• Implementation roadmap prepared
+      // Send via email if we have a consent email and Resend is configured
+      if (toEmail) {
+        try {
+          await fetch('/api/send-pdf-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: localStorage.getItem('intelligence-session-id'), toEmail, leadName })
+          })
+        } catch {}
+      }
 
-NEXT STEPS:
-1. Review AI implementation priorities
-2. Schedule technical consultation
-3. Begin pilot program development
-4. Monitor ROI and performance metrics
-
-This report was generated by your AI Strategy Assistant.
-Contact us to discuss implementation details.
-      `], { type: 'text/plain' });
-      
-      element.href = URL.createObjectURL(file);
-      element.download = `AI_Strategy_Report_${Date.now()}.txt`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-    }, 1000);
-  }, [state.conversationState.leadScore, state.messages, updateState]);
+      // Update message
+      updateState({ messages: state.messages.map(m => m.id === msgId ? { ...m, content: '📋 Your AI Strategy Report is ready. A download started, and a copy has been emailed if available.' } : m) })
+    } catch (e) {
+      updateState({ messages: [...state.messages, { id: generateMessageId(), sender: 'ai', timestamp: new Date(), type: 'cta', content: 'There was an issue generating the PDF. Please try again.' }] })
+    }
+  }, [generateMessageId, state.messages, updateState])
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     updateState({ 
@@ -332,6 +493,7 @@ Contact us to discuss implementation details.
         onShowBooking={() => updateState({ showBookingOverlay: true })}
         onShowSettings={() => updateState({ showSettingsOverlay: true })}
         onShowVoiceOverlay={() => updateState({ showVoiceOverlay: true })}
+        onShowResearchPanel={() => updateState({ showResearchPanel: true })}
       />
 
       {/* Stage Rail - Floating Stage Progress Indicator */}
@@ -345,7 +507,7 @@ Contact us to discuss implementation details.
       {/* Main Content with Auto-Scroll */}
       <main 
         ref={messagesContainerRef}
-        className="max-w-4xl mx-auto px-6 py-24 pb-40 overflow-y-auto" 
+        className="max-w-4xl mx-auto px-6 py-24 pb-40 overflow-y-auto relative z-10" 
         role="main"
         onScroll={handleScroll}
         style={{ 
@@ -371,8 +533,28 @@ Contact us to discuss implementation details.
                 <UnifiedMessage
                   message={message}
                   onSuggestionClick={handleSuggestionClick}
-                  onMessageAction={(action, messageId) => {
-                    console.log('Action:', action, messageId);
+                  onMessageAction={async (action, messageId) => {
+                    if (action === 'tool:voice') {
+                      updateState({ showVoiceOverlay: true })
+                      return
+                    }
+                    if (action === 'tool:screen') {
+                      updateState({ showScreenShareInterface: true })
+                      return
+                    }
+                    if (action === 'tool:research') {
+                      const msg = state.messages.find(m => m.id === messageId)
+                      const text = msg?.content || state.input
+                      if (text && text.trim()) {
+                        await runAutoResearch(text.trim())
+                      }
+                      return
+                    }
+                    if (action === 'tool:roi-inline') {
+                      // No extra UI needed; card is inline. We can optionally scroll it into view
+                      return
+                    }
+                    console.log('Action:', action, messageId)
                   }}
                   onPlayMessage={() => {}}
                   onStopMessage={() => {}}
@@ -442,7 +624,15 @@ Contact us to discuss implementation details.
       <CleanInputField
         input={state.input}
         setInput={(value) => updateState({ input: value })}
-        onSubmit={handleSendMessage}
+        onSubmit={() => {
+          const current = state.input
+          // Kick off chat response
+          handleSendMessage()
+          // Run grounded research triggers in background using the same text
+          if (current && current.trim()) {
+            void runAutoResearch(current.trim())
+          }
+        }}
         isLoading={state.isLoading}
         voiceMode={state.voiceMode}
         onToggleVoice={() => updateState({ voiceMode: !state.voiceMode })}
@@ -453,6 +643,15 @@ Contact us to discuss implementation details.
       />
 
       {/* Overlays */}
+      <AnimatePresence mode="wait">
+        {state.showResearchPanel && (
+          <ResearchPanel
+            isOpen={state.showResearchPanel}
+            onClose={() => updateState({ showResearchPanel: false })}
+            messages={state.messages}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence mode="wait">
         {state.showVoiceOverlay && !state.isVoiceMinimized && (
           <SpeechToSpeechPopover

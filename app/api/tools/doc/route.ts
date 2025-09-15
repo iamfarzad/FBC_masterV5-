@@ -78,6 +78,28 @@ export async function POST(req: NextRequest) {
     // Generate with Gemini
     const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1536, temperature: 0.3, topP: 0.8, topK: 40 })
+    // Robust text extractor similar to other tools
+    const getResponseText = (result: any): string => {
+      try {
+        if (result && typeof result.text === 'function') {
+          const t = result.text()
+          if (t) return String(t)
+        }
+      } catch {}
+      try {
+        if (result && typeof result.text === 'string') {
+          return result.text
+        }
+      } catch {}
+      try {
+        const parts = result?.candidates?.[0]?.content?.parts
+        if (Array.isArray(parts)) {
+          const s = parts.map((p: any) => p?.text).filter(Boolean).join(' ')
+          if (s) return s
+        }
+      } catch {}
+      return 'Analysis completed'
+    }
     let analysisText = ''
     try {
       const result = await genAI.models.generateContent({
@@ -91,7 +113,7 @@ export async function POST(req: NextRequest) {
           ]
         }]
       })
-      analysisText = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
+      analysisText = getResponseText(result)
     } catch (e) {
       return NextResponse.json({ ok: false, error: 'AI analysis failed' }, { status: 500 })
     }
@@ -136,5 +158,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 })
   }
 }
-
 

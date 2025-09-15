@@ -23,6 +23,7 @@ import { Tool } from '../ai-elements/tool';
 import { Actions } from '../ai-elements/actions';
 import { Loader } from '../ai-elements/loader';
 import { PDFGenerator } from './PDFGenerator';
+import { ROIInlineCard } from '../ai-elements/roi-inline-card';
 
 export interface MessageData {
   id: string;
@@ -118,6 +119,13 @@ export const UnifiedMessage: React.FC<UnifiedMessageProps> = ({
   // Check if this is a user message (support both sender and role properties)
   const isUserMessage = message.sender === 'user' || message.role === 'user';
   
+  // Keyword-based tool suggestion detection on AI text
+  const lower = (message.content || '').toLowerCase()
+  const suggestROI = /\broi\b|return on investment|payback/.test(lower)
+  const suggestVoice = /\b(voice|talk|speak|audio chat)\b/.test(lower)
+  const suggestScreen = /\b(screen|share|workflow|audit)\b/.test(lower)
+  const suggestResearch = /\b(search|research|find|look up|latest|news|competitor)\b/.test(lower)
+  
   if (isUserMessage) {
     return (
       <motion.div 
@@ -162,7 +170,19 @@ export const UnifiedMessage: React.FC<UnifiedMessageProps> = ({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex gap-3 max-w-4xl">
+      <div className="flex gap-3 max-w-4xl" onClick={(e) => {
+        const target = e.target as HTMLElement
+        const btn = target.closest('button[data-tool]') as HTMLElement | null
+        if (btn) {
+          const tool = btn.getAttribute('data-tool') || ''
+          const query = btn.getAttribute('data-query') || ''
+          if (tool === 'voice') onMessageAction('tool:voice', message.id)
+          else if (tool === 'screen') onMessageAction('tool:screen', message.id)
+          else if (tool === 'search') onMessageAction('tool:research', message.id)
+          else if (tool === 'roi-inline') onMessageAction('tool:roi-inline', message.id)
+          else onMessageAction(`tool:${tool}`, message.id)
+        }
+      }}>
         {/* Simple AI Avatar */}
         <div className="flex-shrink-0">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -243,6 +263,30 @@ export const UnifiedMessage: React.FC<UnifiedMessageProps> = ({
                   used={tool.used}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Inline tool buttons & ROI card */}
+          {(suggestROI || suggestVoice || suggestScreen || suggestResearch) && (
+            <div className="mt-3 space-y-2">
+              {suggestROI && <ROIInlineCard />}
+              <div className="flex flex-wrap gap-2">
+                {suggestVoice && (
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => onMessageAction('tool:voice', message.id)}>
+                    Start Voice Chat
+                  </Button>
+                )}
+                {suggestScreen && (
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => onMessageAction('tool:screen', message.id)}>
+                    Share Screen
+                  </Button>
+                )}
+                {suggestResearch && (
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => onMessageAction('tool:research', message.id)}>
+                    Search Web
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 

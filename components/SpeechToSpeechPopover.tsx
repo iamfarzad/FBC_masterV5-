@@ -1,15 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  Mic, 
+import {
+  Mic,
   MicOff,
   Volume2,
   VolumeX,
   X,
   Settings
 } from 'lucide-react';
+
+// Import Gemini Live Client
+import { GeminiLiveClient, GeminiLiveConfig } from '@/lib/gemini-live-client';
 
 interface SpeechState {
   isRecording: boolean;
@@ -26,6 +29,7 @@ interface SpeechToSpeechPopoverProps {
   onSpeechInput?: (text: string) => void;
   onAudioToggle?: (enabled: boolean) => void;
   onTranscriptComplete?: (transcript: string) => void;
+  onTextInput?: (text: string) => void;
   isOpen?: boolean;
   onClose?: () => void;
   onMinimize?: () => void;
@@ -133,6 +137,7 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
   onSpeechInput,
   onAudioToggle,
   onTranscriptComplete,
+  onTextInput,
   isOpen = false,
   onClose,
   onMinimize,
@@ -155,16 +160,132 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
+  // Gemini Live Client
+  const geminiClientRef = useRef<GeminiLiveClient | null>(null);
+
   // Initialize speech synthesis
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       synthRef.current = window.speechSynthesis;
     }
-    
+
     if (typeof window !== 'undefined' && 'AudioContext' in window) {
       audioContextRef.current = new AudioContext();
     }
   }, []);
+
+  // Initialize connection to server-side Gemini Live API
+  const initGeminiConnection = useCallback(async () => {
+    try {
+      // Connect to server-side WebSocket endpoint
+      const wsUrl = `ws://localhost:3001/api/gemini-live/ws`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('✅ Connected to server-side Gemini Live');
+        setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'text') {
+            handleTextResponse(data.content);
+          } else if (data.type === 'audio') {
+            handleAudioResponse(data.audioData);
+          } else if (data.type === 'error') {
+            handleGeminiError(new Error(data.message));
+          } else if (data.type === 'status') {
+            handleGeminiStatus(data.status);
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        handleGeminiError(new Error('WebSocket connection failed'));
+      };
+
+      ws.onclose = () => {
+        console.log('Disconnected from server-side Gemini Live');
+        setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
+      };
+
+      // Store WebSocket reference
+      geminiClientRef.current = ws as any; // Type cast for compatibility
+    } catch (error) {
+      console.error('Failed to initialize Gemini connection:', error);
+      handleGeminiError(error as Error);
+    }
+  }, []);
+
+  // Handle Gemini Live audio responses
+  const handleAudioResponse = useCallback(async (audioData: any) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext({ sampleRate: 24000 });
+      }
+
+      // Convert base64 to ArrayBuffer
+      const binaryString = atob(audioData.data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Decode and play audio
+      const audioBuffer = await audioContextRef.current.decodeAudioData(bytes.buffer);
+      const source = audioContextRef.current.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContextRef.current.destination);
+      source.start();
+
+      setSpeechState(prev => ({ ...prev, aiState: 'speaking' }));
+    } catch (error) {
+      console.error('Error playing Gemini audio:', error);
+      setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
+    }
+  }, []);
+
+  // Handle Gemini Live text responses
+  const handleTextResponse = useCallback((text: string) => {
+    setSpeechState(prev => ({
+      ...prev,
+      aiResponse: text,
+      aiState: 'speaking'
+    }));
+
+    // Pass to parent component
+    if (onSpeechInput) {
+      onSpeechInput(text);
+    }
+  }, [onSpeechInput]);
+
+  // Handle Gemini Live errors
+  const handleGeminiError = useCallback((error: Error) => {
+    console.error('Gemini Live error:', error);
+    setSpeechState(prev => ({
+      ...prev,
+      error: error.message,
+      aiState: 'idle'
+    }));
+  }, []);
+
+  // Handle Gemini Live status changes
+  const handleGeminiStatus = useCallback((status: string) => {
+    console.log('Gemini Live status:', status);
+    if (status === 'Connected') {
+      setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
+    }
+  }, []);
+
+  // Initialize Gemini connection on mount
+  useEffect(() => {
+    initGeminiConnection();
+  }, [initGeminiConnection]);
 
   // Audio level monitoring
   const monitorAudioLevel = (stream: MediaStream) => {
@@ -213,35 +334,54 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
 
       monitorAudioLevel(stream);
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await processVoiceInput(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-        
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
+      mediaRecorder.ondataavailable = async (event) => {
+        if (event.data.size > 0 && geminiClientRef.current?.readyState === WebSocket.OPEN) {
+          try {
+            // Convert audio chunk to base64 and send through WebSocket
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64Audio = reader.result?.toString().split(',')[1];
+              if (base64Audio) {
+                geminiClientRef.current.send(JSON.stringify({
+                  type: 'audio_chunk',
+                  data: base64Audio,
+                  mimeType: 'audio/webm'
+                }));
+              }
+            };
+            reader.readAsDataURL(event.data);
+          } catch (error) {
+            console.error('Error sending audio chunk:', error);
+          }
         }
       };
 
-      mediaRecorder.start();
-      setSpeechState(prev => ({ 
-        ...prev, 
-        isRecording: true, 
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+
+        setSpeechState(prev => ({
+          ...prev,
+          isRecording: false,
+          isListening: false,
+          aiState: 'idle'
+        }));
+      };
+
+      // Start recording with smaller time slices for real-time streaming
+      mediaRecorder.start(100); // 100ms chunks
+      setSpeechState(prev => ({
+        ...prev,
+        isRecording: true,
         isListening: true,
         aiState: 'idle',
         error: undefined
       }));
 
-      // Auto-stop after 10 seconds
-      setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          stopVoiceRecording();
-        }
-      }, 10000);
+      // Let user control when to stop (no auto-stop for real-time conversation)
 
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -400,49 +540,70 @@ export const SpeechToSpeechPopover: React.FC<SpeechToSpeechPopoverProps> = ({
 
   // Process voice input
   const processVoiceInput = async (audioBlob: Blob) => {
-    setSpeechState(prev => ({ ...prev, isListening: false }));
-    
-    // Simulate speech-to-text processing
-    setTimeout(() => {
-      const mockTranscript = "I'm interested in learning about your AI solutions for my business";
-      setSpeechState(prev => ({ ...prev, transcript: mockTranscript }));
-      if (onSpeechInput) {
-        onSpeechInput(mockTranscript);
-      }
-      if (onTranscriptComplete) {
-        onTranscriptComplete(mockTranscript);
-      }
-      simulateAIProcessing(mockTranscript);
-    }, 1000);
-  };
+    setSpeechState(prev => ({
+      ...prev,
+      isListening: false,
+      aiState: 'thinking'
+    }));
 
-  // Simulate AI processing and response
-  const simulateAIProcessing = async (input: string) => {
-    // Thinking phase
-    setSpeechState(prev => ({ ...prev, aiState: 'thinking' }));
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Analyzing phase
-    setSpeechState(prev => ({ ...prev, aiState: 'analyzing' }));
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Generate response
-    const responses = [
-      "That's great! I'd be happy to help you explore AI solutions for your business. Based on your needs, I can recommend several approaches that could significantly improve your operations and efficiency.",
-      "Excellent question! AI can transform businesses in many ways. Let me walk you through some specific solutions that might be perfect for your industry and current challenges.",
-      "I understand you're interested in AI solutions. There are several powerful options we could explore together, from automation tools to advanced analytics systems."
-    ];
-    
-    const response = responses[Math.floor(Math.random() * responses.length)];
-    setSpeechState(prev => ({ ...prev, aiResponse: response }));
-    
-    // Speaking phase
-    if (speechState.audioEnabled) {
-      speakResponse(response);
-    } else {
-      setSpeechState(prev => ({ ...prev, aiState: 'idle' }));
+    try {
+      // Send audio through WebSocket to server-side Gemini API
+      if (geminiClientRef.current && geminiClientRef.current.readyState === WebSocket.OPEN) {
+        // Convert blob to base64 for WebSocket transmission
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Audio = reader.result?.toString().split(',')[1];
+          if (base64Audio) {
+            geminiClientRef.current.send(JSON.stringify({
+              type: 'audio',
+              data: base64Audio,
+              mimeType: 'audio/webm'
+            }));
+          }
+        };
+        reader.readAsDataURL(audioBlob);
+      } else {
+        throw new Error('WebSocket connection not active');
+      }
+    } catch (error) {
+      console.error('Error sending audio to server:', error);
+      setSpeechState(prev => ({
+        ...prev,
+        error: 'Failed to process voice input',
+        aiState: 'idle'
+      }));
     }
   };
+
+  // Note: AI processing is now handled by Gemini Live API in real-time
+
+  // Send text input to server-side Gemini Live
+  const sendTextToGemini = async (text: string) => {
+    try {
+      if (!geminiClientRef.current || geminiClientRef.current.readyState !== WebSocket.OPEN) {
+        throw new Error('WebSocket connection not active');
+      }
+
+      setSpeechState(prev => ({ ...prev, aiState: 'thinking' }));
+
+      geminiClientRef.current.send(JSON.stringify({
+        type: 'text',
+        content: text
+      }));
+
+      // Also call the parent callback
+      if (onTextInput) {
+        onTextInput(text);
+      }
+    } catch (error) {
+      console.error('Error sending text to server:', error);
+      setSpeechState(prev => ({
+        ...prev,
+        error: 'Failed to send text to server',
+        aiState: 'idle'
+      }));
+    }
+  }
 
   // Text-to-Speech
   const speakResponse = (text: string) => {

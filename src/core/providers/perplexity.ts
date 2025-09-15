@@ -19,6 +19,8 @@ export type PerplexityOptions = {
     search_context_size?: 'low' | 'medium' | 'high'
     latest_updated?: string
   }
+  enable_search_classifier?: boolean
+  disable_search?: boolean
 }
 
 type StreamEvent = {
@@ -46,6 +48,8 @@ export async function *streamPerplexity(params: {
   if (options?.search_domain_filter?.length) body.search_domain_filter = options.search_domain_filter
   if (options?.search_mode) body.search_mode = options.search_mode
   if (options?.web_search_options) body.web_search_options = options.web_search_options
+  if (options?.enable_search_classifier) body.enable_search_classifier = options.enable_search_classifier
+  if (options?.disable_search) body.disable_search = options.disable_search
 
   const res = await fetch(PERPLEXITY_URL, {
     method: 'POST',

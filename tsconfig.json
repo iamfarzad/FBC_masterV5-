@@ -46,6 +46,8 @@
     "fbc-logo-icon",
     "live-audio (5)",
     "video2app",
-    "archive"
+    "archive",
+    "attached_assets",
+    "**/Code-component-*.tsx"
   ]
 }

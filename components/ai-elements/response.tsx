@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { sanitizeHtml } from '@/src/core/html-sanitizer'
 
 interface ResponseProps {
   content?: string;
@@ -57,9 +58,15 @@ export const Response: React.FC<ResponseProps> = ({
 
   return (
     <div className={`prose prose-sm max-w-none dark:prose-invert ${className}`}>
-      <div className="response-content">
-        {processContent(content)}
-      </div>
+      {useMemo(() => {
+        const text = content || ''
+        const looksLikeHtml = /<\w+[\s>]/.test(text)
+        if (looksLikeHtml) {
+          const safe = sanitizeHtml(text)
+          return <div className="response-content" dangerouslySetInnerHTML={{ __html: safe }} />
+        }
+        return <div className="response-content">{processContent(text)}</div>
+      }, [content])}
     </div>
   );
 };

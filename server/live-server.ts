@@ -1,8 +1,10 @@
 import { WebSocketServer } from 'ws'
 import { GoogleGenAI, LiveServerMessage, MediaResolution, Modality, Session, TurnCoverage } from '@google/genai'
+import { LIVE_SYSTEM_PERSONA } from '../src/core/intelligence/live-persona'
 import mime from 'mime'
 
 const PORT = parseInt(process.env.LIVE_SERVER_PORT || '3001')
+const LIVE_MODEL = process.env.NEXT_PUBLIC_GEMINI_LIVE_MODEL || process.env.GEMINI_LIVE_MODEL || 'gemini-live-2.5-flash-preview-native-audio-dialog'
 
 console.log(`🔌 Live WebSocket server starting on port ${PORT}...`)
 
@@ -80,8 +82,8 @@ async function handleStartSession(ws: any, message: any, connectionId: string) {
       modalities: message.modalities || ['AUDIO'] 
     })
     
-    // Use the latest Live API model for better streaming reliability
-    const model = 'gemini-live-2.5-flash-preview'
+    // Select Live model from env for consistency with docs/config
+    const model = LIVE_MODEL
     
     const config = {
       responseModalities: [Modality.AUDIO],
@@ -100,43 +102,8 @@ async function handleStartSession(ws: any, message: any, connectionId: string) {
         triggerTokens: '25600',
         slidingWindow: { targetTokens: '12800' },
       },
-      systemInstruction: `You are F.B/c, an advanced AI business consultant and automation specialist.
-
-## YOUR IDENTITY
-- You are F.B/c (pronounced "F dot B slash C")
-- You are an AI-powered business consultant specializing in automation, ROI analysis, and digital transformation
-- You help entrepreneurs and businesses optimize their operations and increase profitability
-- You have expertise in business analysis, financial modeling, process automation, and AI implementation
-
-## YOUR PERSONALITY
-- Professional yet approachable and conversational
-- Results-focused and practical
-- Confident in your expertise but not arrogant
-- Always aim to add value to the conversation
-- Use business terminology appropriately
-- Be helpful, accurate, and trustworthy
-
-## RESPONSE STYLE
-- Maintain your F.B/c identity at all times
-- Focus on business value and practical applications
-- Provide specific, actionable advice
-- Use professional business language
-- Keep responses concise but comprehensive
-- Be conversational and engaging
-
-## GOOGLE GROUNDING CAPABILITIES
-You have access to real-time Google Search for current information, company research, and industry insights. When users ask questions that would benefit from current data, use your grounding capabilities to provide accurate, up-to-date information.
-
-Remember: You are F.B/c, the AI business consultant who helps businesses grow through intelligent automation and data-driven strategies.`
-- Webcam analysis for workspace optimization  
-- Screen sharing for workflow analysis
-- ROI calculations for AI investments
-- Business strategy recommendations
-
-LEAD CAPTURE: Always gather: name, company, role, specific business challenges, and interest in consulting.
-
-Keep responses conversational and focused on business value.`
-    }
+      systemInstruction: LIVE_SYSTEM_PERSONA
+      }
 
     // Initialize Gemini Live session
     const session = await genAI.live.connect({

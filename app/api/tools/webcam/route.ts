@@ -65,6 +65,28 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+    // Robust text extractor to handle different SDK return shapes
+    const getResponseText = (result: any): string => {
+      try {
+        if (result && typeof result.text === 'function') {
+          const t = result.text()
+          if (t) return String(t)
+        }
+      } catch {}
+      try {
+        if (result && typeof result.text === 'string') {
+          return result.text
+        }
+      } catch {}
+      try {
+        const parts = result?.candidates?.[0]?.content?.parts
+        if (Array.isArray(parts)) {
+          const s = parts.map((p: any) => p?.text).filter(Boolean).join(' ')
+          if (s) return s
+        }
+      } catch {}
+      return 'Analysis completed'
+    }
     let analysisResult = ''
     try {
       // 🔍 ENHANCED CONTEXT-AWARE ANALYSIS  
@@ -79,12 +101,17 @@ export async function POST(req: NextRequest) {
       }
 
       const optimizedConfig = createOptimizedConfig('analysis', { maxOutputTokens: 1024, temperature: 0.3, topP: 0.8, topK: 40 })
+      // Reject obviously invalid or tiny images to avoid Gemini INVALID_ARGUMENT
+      if (!base64Data || base64Data.length < 500) {
+        return NextResponse.json({ ok: false, error: 'Image too small or invalid' }, { status: 422 })
+      }
+
       const result = await genAI.models.generateContent({
         model: modelSelection.model,
         config: optimizedConfig,
         contents: [{ role: 'user', parts: [ { text: analysisPrompt }, { inlineData: { mimeType, data: base64Data } } ] }],
       })
-      analysisResult = result.candidates?.[0]?.content?.parts?.map(p => (p as any).text).filter(Boolean).join(' ') || result.candidates?.[0]?.content?.parts?.[0]?.text || 'Analysis completed'
+      analysisResult = getResponseText(result)
     } catch (e) {
       return NextResponse.json({ ok: false, error: 'AI analysis failed' }, { status: 500 })
     }
@@ -135,5 +162,3 @@ export async function POST(req: NextRequest) {
     return APIErrorHandler.createErrorResponse(error)
   }
 }
-
-

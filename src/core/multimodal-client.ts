@@ -117,6 +117,15 @@ export class MultimodalClient {
    * Analyze image using webcam tool
    */
   async analyzeImage(imageData: string, options: MultimodalOptions = {}): Promise<unknown> {
+    // Lightweight client-side validation to reduce server 422s
+    try {
+      const base64 = imageData.startsWith('data:') ? imageData.split(',')[1] : imageData
+      if (!base64 || base64.length < 500) {
+        throw new Error('Image too small or invalid. Please capture a larger frame.')
+      }
+    } catch (e) {
+      throw e instanceof Error ? e : new Error('Invalid image input')
+    }
     const response = await fetch(`${this.baseUrl}/api/tools/webcam`, {
       method: 'POST',
       headers: {
@@ -141,6 +150,15 @@ export class MultimodalClient {
    * Analyze screen capture
    */
   async analyzeScreen(imageData: string, options: MultimodalOptions = {}): Promise<unknown> {
+    // Lightweight client-side validation to reduce server 422s
+    try {
+      const base64 = imageData.startsWith('data:') ? imageData.split(',')[1] : imageData
+      if (!base64 || base64.length < 500) {
+        throw new Error('Screenshot too small or invalid. Please provide a full frame.')
+      }
+    } catch (e) {
+      throw e instanceof Error ? e : new Error('Invalid screenshot input')
+    }
     const response = await fetch(`${this.baseUrl}/api/tools/screen`, {
       method: 'POST',
       headers: {

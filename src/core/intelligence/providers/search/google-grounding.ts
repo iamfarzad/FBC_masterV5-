@@ -134,4 +134,38 @@ export class GoogleGroundingProvider {
     const query = `What is ${name}'s current role and position at ${domain}? Find their professional title, seniority level, and responsibilities.`
     return this.groundedAnswer(query)
   }
+
+  /**
+   * General search method for unified chat provider
+   */
+  async searchGeneral(query: string): Promise<Array<{ url: string; title: string; snippet: string; source: string }>> {
+    try {
+      const result = await this.groundedAnswer(query)
+      
+      // Extract search results from citations
+      const searchResults = result.citations
+        .filter(citation => citation.source === 'search')
+        .map(citation => ({
+          url: citation.uri || '',
+          title: citation.title || 'Search Result',
+          snippet: citation.description || result.text.substring(0, 200),
+          source: 'google-grounding'
+        }))
+
+      // If no search citations, create a fallback result
+      if (searchResults.length === 0) {
+        return [{
+          url: '',
+          title: 'Search Result',
+          snippet: result.text.substring(0, 200),
+          source: 'google-grounding'
+        }]
+      }
+
+      return searchResults
+    } catch (error) {
+      console.error('General search failed:', error)
+      return []
+    }
+  }
 }

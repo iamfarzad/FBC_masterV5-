@@ -30,6 +30,7 @@ export interface AppState {
   showSettingsOverlay: boolean;
   showFileUpload: boolean;
   activeCanvasTool: string | null;
+  showResearchPanel: boolean;
   
   // Tools and UI state
   activeTools: string[];
@@ -80,6 +81,7 @@ export const useAppState = () => {
     showSettingsOverlay: false,
     showFileUpload: false,
     activeCanvasTool: null,
+    showResearchPanel: false,
     activeTools: [],
     theme: 'light',
     conversationState: {
@@ -90,9 +92,15 @@ export const useAppState = () => {
     isUserScrolling: false
   });
 
-  // Initialize with welcome message after hydration
+  // Initialize with welcome message once per page session (avoid StrictMode duplicate)
+  const welcomeRef = useRef(false)
   useEffect(() => {
-    if (state.messages.length === 0) {
+    try {
+      const flagKey = 'ai-elements-welcome-shown'
+      const already = typeof window !== 'undefined' ? sessionStorage.getItem(flagKey) : '1'
+      if (welcomeRef.current || already === '1') return
+      if (state.messages.length > 0) return
+
       const welcomeMessage: MessageData = {
         id: generateMessageId(),
         content: "Hi! I'm your AI Strategy Assistant. I help businesses discover how AI can transform their operations and drive growth.\n\nWhat's your name, and what industry are you in?",
@@ -104,15 +112,56 @@ export const useAppState = () => {
           "Sarah from retail/e-commerce", 
           "Mike, manufacturing company"
         ]
-      };
-      setState(prev => ({ ...prev, messages: [welcomeMessage] }));
+      }
+
+      welcomeRef.current = true
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(flagKey, '1')
+        sessionStorage.setItem('ai-elements-has-greeted', '1')
+      }
+      setState(prev => ({ 
+        ...prev, 
+        messages: [welcomeMessage],
+        conversationState: { ...prev.conversationState, stage: CONVERSATION_STAGES.DISCOVERY }
+      }))
+    } catch {
+      // Fallback: still guard by ref
+      if (!welcomeRef.current && state.messages.length === 0) {
+        welcomeRef.current = true
+        setState(prev => ({ ...prev, messages: [
+          {
+            id: generateMessageId(),
+            content: "Hi! I'm your AI Strategy Assistant. I help businesses discover how AI can transform their operations and drive growth.\n\nWhat's your name, and what industry are you in?",
+            sender: 'ai' as const,
+            timestamp: new Date(),
+            type: 'text',
+            suggestions: [
+              "I'm John Smith, CEO of a tech startup",
+              "Sarah from retail/e-commerce", 
+              "Mike, manufacturing company"
+            ]
+          }
+        ], conversationState: { ...prev.conversationState, stage: CONVERSATION_STAGES.DISCOVERY } }))
+      }
     }
-  }, []);
+  }, [state.messages.length, generateMessageId])
 
   // Update individual state properties
   const updateState = useCallback((updates: Partial<AppState>) => {
     setState(prev => ({ ...prev, ...updates }));
   }, []);
+
+  // Safe message appender to avoid race conditions
+  const appendMessage = useCallback((message: MessageData) => {
+    setState(prev => ({ ...prev, messages: [...prev.messages, message] }))
+  }, [])
+
+  const updateMessage = useCallback((id: string, patch: Partial<MessageData>) => {
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.map(m => m.id === id ? { ...m, ...patch } : m)
+    }))
+  }, [])
 
   // Auto-scroll functionality
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -188,8 +237,9 @@ export const useAppState = () => {
   }, []);
 
   // Message sending logic - Connected to backend API
+  const inFlightRef = useRef(false)
   const handleSendMessage = useCallback(async () => {
-    if (!state.input.trim() || state.isLoading) return;
+    if (!state.input.trim() || state.isLoading || inFlightRef.current) return;
 
     const userMessage: MessageData = {
       id: generateMessageId(),
@@ -199,6 +249,7 @@ export const useAppState = () => {
     };
 
     const currentInput = state.input;
+    inFlightRef.current = true
     updateState({
       messages: [...state.messages, userMessage],
       input: '',
@@ -209,13 +260,47 @@ export const useAppState = () => {
     setTimeout(() => scrollToBottom(), 50);
 
     try {
+      // Build session + lead context from consent
+      let leadContext: any = {}
+      try {
+        const consent = await fetch('/api/consent', { cache: 'no-store' })
+        if (consent.ok) {
+          const cj = await consent.json()
+          if (cj?.allow) {
+            leadContext = {
+              name: cj.name || undefined,
+              email: cj.email || undefined,
+              company: cj.companyDomain || undefined
+            }
+          }
+        }
+      } catch {}
+
+      const sessionId = (() => {
+        try {
+          const key = 'intelligence-session-id'
+          let sid = localStorage.getItem(key)
+          if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(key, sid) }
+          return sid
+        } catch { return null }
+      })()
+
       // Call the real backend API
+      const hasGreeted = (() => {
+        try {
+          const flag = (typeof window !== 'undefined' ? sessionStorage.getItem('ai-elements-has-greeted') : null) === '1'
+          const byStage = (state.conversationState?.stage || '').toLowerCase() !== 'greeting'
+          const hasAIMsg = state.messages.some(m => m.sender === 'ai')
+          return flag || byStage || hasAIMsg
+        } catch { return true }
+      })()
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          version: 1,
           messages: [
             ...state.messages.map(msg => ({
               role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -225,7 +310,12 @@ export const useAppState = () => {
               role: 'user',
               content: currentInput
             }
-          ]
+          ],
+          sessionId: sessionId || undefined,
+          leadContext,
+          hasGreeted,
+          // Provide stage hint so backend can align system prompt
+          conversationStage: state.conversationState?.stage || 'greeting'
         })
       });
 
@@ -344,12 +434,16 @@ export const useAppState = () => {
       }));
       
       setTimeout(() => scrollToBottom(), 100);
+    } finally {
+      inFlightRef.current = false
     }
   }, [state.input, state.isLoading, state.messages, scrollToBottom]);
 
   return {
     state,
     updateState,
+    appendMessage,
+    updateMessage,
     messagesEndRef,
     messagesContainerRef,
     scrollToBottom,

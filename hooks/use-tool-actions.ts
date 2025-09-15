@@ -113,11 +113,13 @@ export function useToolActions() {
   }, [callTool])
 
   const analyzeURL = useCallback(async (
-    url: string,
-    options: ToolOptions = {}
+    urlOrUrls: string | string[],
+    options: ToolOptions & { query?: string } = {}
   ) => {
+    const urls = Array.isArray(urlOrUrls) ? urlOrUrls : [urlOrUrls]
     return callTool('/api/tools/url', {
-      url
+      urls,
+      query: options.query
     }, options)
   }, [callTool])
 

@@ -24,7 +24,15 @@ export async function GET(req: NextRequest) {
   if (!cookie) return NextResponse.json({ allow: false }, { status: 200 })
   try {
     const data = JSON.parse(cookie) as ConsentCookie
-    return NextResponse.json({ allow: !!data.allow, allowedDomains: data.allowedDomains, ts: data.ts })
+    return NextResponse.json({ 
+      allow: !!data.allow, 
+      allowedDomains: data.allowedDomains, 
+      ts: data.ts,
+      name: data.name || null,
+      email: data.email || null,
+      companyDomain: data.companyDomain || null,
+      policyVersion: data.policyVersion || null
+    })
   } catch {
     return NextResponse.json({ allow: false }, { status: 200 })
   }
@@ -61,5 +69,4 @@ export async function DELETE() {
   res.cookies.set('fbc-consent', '', { httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 0 })
   return res
 }
-
 

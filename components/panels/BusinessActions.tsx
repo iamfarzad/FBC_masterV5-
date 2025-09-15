@@ -1,22 +1,53 @@
 "use client"
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { TrendingUp, FileText, Calendar } from 'lucide-react';
+import { TrendingUp, FileText, Calendar, Globe, Link as LinkIcon } from 'lucide-react';
+import { useToolActions } from '@/hooks/use-tool-actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface BusinessActionsProps {
   conversationStarted: boolean;
   onGeneratePDF: () => void;
   onShowBooking: () => void;
+  onShowResearchPanel?: () => void;
 }
 
 export const BusinessActions = React.memo<BusinessActionsProps>(({ 
   conversationStarted, 
   onGeneratePDF, 
-  onShowBooking 
-}) => (
+  onShowBooking,
+  onShowResearchPanel 
+}) => {
+  const { search, analyzeURL } = useToolActions()
+  const { toast } = useToast()
+
+  const runSearch = useCallback(async () => {
+    const sel = (typeof window !== 'undefined' && window.getSelection && window.getSelection()?.toString())?.trim() || ''
+    const query = window.prompt('Web Search: enter your query', sel)?.trim()
+    if (!query) return
+    const res = await search(query)
+    if (res.ok) {
+      const text = (res.output as any)?.text || 'Search completed.'
+      toast({ title: 'Search Complete', description: text.slice(0, 200) + (text.length > 200 ? '…' : '') })
+    }
+  }, [search, toast])
+
+  const runUrlContext = useCallback(async () => {
+    const sel = (typeof window !== 'undefined' && window.getSelection && window.getSelection()?.toString())?.trim() || ''
+    const raw = window.prompt('URL Analysis: enter one or more URLs (comma or space separated)', sel)?.trim()
+    if (!raw) return
+    const urls = raw.split(/[\s,]+/).filter(Boolean)
+    const res = await analyzeURL(urls)
+    if (res.ok) {
+      const text = (res.output as any)?.text || 'URL analysis completed.'
+      toast({ title: 'URL Analysis Complete', description: text.slice(0, 200) + (text.length > 200 ? '…' : '') })
+    }
+  }, [analyzeURL, toast])
+
+  return (
   <AnimatePresence>
     {conversationStarted && (
       <motion.div 
@@ -97,6 +128,60 @@ export const BusinessActions = React.memo<BusinessActionsProps>(({
             </TooltipTrigger>
             <TooltipContent>Schedule Strategy Session</TooltipContent>
           </Tooltip>
+          
+          {/* Web Search */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.div 
+                className="flex-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={runSearch}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 rounded-xl glass-button border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                >
+                  <motion.div whileHover={{ scale: 1.1 }}>
+                    <Globe className="w-3 h-3 mr-2" />
+                  </motion.div>
+                  Web Search
+                </Button>
+              </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>Grounded Web Search</TooltipContent>
+          </Tooltip>
+
+          {/* URL Context */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.div 
+                className="flex-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={runUrlContext}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 rounded-xl glass-button border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                >
+                  <motion.div whileHover={{ scale: 1.1 }}>
+                    <LinkIcon className="w-3 h-3 mr-2" />
+                  </motion.div>
+                  Analyze URL
+                </Button>
+              </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>Analyze Webpage Content</TooltipContent>
+          </Tooltip>
         </div>
         
         {/* Progress indicator for business actions */}
@@ -127,6 +212,29 @@ export const BusinessActions = React.memo<BusinessActionsProps>(({
       </motion.div>
     )}
   </AnimatePresence>
-));
+)});
 
 BusinessActions.displayName = 'BusinessActions';
+          {/* Research Panel */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.div 
+                className="flex-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.0 }}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={() => onShowResearchPanel?.()}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 rounded-xl glass-button border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                >
+                  Research Panel
+                </Button>
+              </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>Show Recent Research</TooltipContent>
+          </Tooltip>

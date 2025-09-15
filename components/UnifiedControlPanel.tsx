@@ -32,6 +32,7 @@ interface UnifiedControlPanelProps {
   onShowBooking: () => void;
   onShowSettings: () => void;
   onShowVoiceOverlay: () => void;
+  onShowResearchPanel?: () => void;
 }
 
 export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({ 
@@ -45,7 +46,8 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
   onGeneratePDF, 
   onShowBooking, 
   onShowSettings, 
-  onShowVoiceOverlay 
+  onShowVoiceOverlay,
+  onShowResearchPanel 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -69,7 +71,7 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
 
   return (
     <motion.div 
-      className="fixed top-6 right-6 z-20"
+      className="fixed top-6 right-6 z-[9999] pointer-events-auto"
       initial={{ opacity: 0, scale: 0.8, y: -20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -128,6 +130,7 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
                     conversationStarted={conversationStarted}
                     onGeneratePDF={onGeneratePDF}
                     onShowBooking={onShowBooking}
+                    onShowResearchPanel={onShowResearchPanel}
                   />
                 </motion.div>
               )}

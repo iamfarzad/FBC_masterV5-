@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI, Modality } from '@google/genai'
+import { LIVE_SYSTEM_PERSONA } from '@/src/core/intelligence/live-persona'
 import { createOptimizedConfig } from '@/src/core/gemini-config-enhanced'
 import { getSafetySettings, filterContent, sanitizeInput } from '@/src/core/config/safety'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey })
-    const modelName = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview-native-audio'
+    const modelName = process.env.NEXT_PUBLIC_GEMINI_LIVE_MODEL || process.env.GEMINI_LIVE_MODEL || 'gemini-live-2.5-flash-preview-native-audio-dialog'
 
     switch (action) {
       case 'probe': {
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
               },
               inputAudioTranscription: {},
               safetySettings: getSafetySettings(),
+              systemInstruction: LIVE_SYSTEM_PERSONA,
             },
             callbacks: {
               onopen: () => {

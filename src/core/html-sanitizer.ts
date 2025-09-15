@@ -50,6 +50,10 @@ export function sanitizeHtml(html: string): string {
       "src",
       "href",
       "target",
+      // Tool CTA attributes
+      "data-coach-cta",
+      "data-tool",
+      "data-query",
       "data-interaction-id",
       "data-interaction-type",
       "data-interaction-value",

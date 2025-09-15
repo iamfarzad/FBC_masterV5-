@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ToolRunResult, ContextSnapshot, IntentResult } from '@/src/core/types/intelligence'
 import { z } from 'zod'
-import { ContextStorage } from '@/src/core/context/context-storage'
+import { contextStorage } from '@/src/core/context/context-storage'
 import { suggestTools } from '@/src/core/intelligence/tool-suggestion-engine'
 import { withApiGuard } from '@/app/api-utils/withApiGuard'
 
-const contextStorage = new ContextStorage()
+// Use shared singleton to maintain consistent in-memory context across routes
 
 const Body = z.object({ sessionId: z.string().min(1), stage: z.string().optional() })
 
@@ -34,5 +34,4 @@ export const POST = withApiGuard({ schema: Body, requireSession: false, rateLimi
   // Back-compat: keep top-level suggestions array
   return NextResponse.json({ ok: true, output: { suggestions }, suggestions } as any)
 }})
-
 
