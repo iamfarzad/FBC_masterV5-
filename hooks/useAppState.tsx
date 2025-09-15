@@ -92,6 +92,17 @@ export const useAppState = () => {
     isUserScrolling: false
   });
 
+  // Ensure a stable sessionId exists as early as possible (reduces 'default-session' fallbacks)
+  useEffect(() => {
+    try {
+      const key = 'intelligence-session-id'
+      if (typeof window !== 'undefined' && !localStorage.getItem(key)) {
+        const sid = Math.random().toString(36).slice(2) + Date.now().toString(36)
+        localStorage.setItem(key, sid)
+      }
+    } catch {}
+  }, [])
+
   // Initialize with welcome message once per page session (avoid StrictMode duplicate)
   const welcomeRef = useRef(false)
   useEffect(() => {
@@ -296,9 +307,13 @@ export const useAppState = () => {
       })()
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: (() => {
+          const h: Record<string, string> = { 'Content-Type': 'application/json' }
+          try {
+            if (sessionId) h['x-intelligence-session-id'] = sessionId
+          } catch {}
+          return h
+        })(),
         body: JSON.stringify({
           version: 1,
           messages: [

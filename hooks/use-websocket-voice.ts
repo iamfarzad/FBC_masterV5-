@@ -398,10 +398,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         setTimeout(() => { if (!reconnectingRef.current) connectWebSocket() }, next)
       }
     }
-  }, 1000)
-      }
-    }
   }, []) // Remove all dependencies to prevent infinite re-renders
+
+  // Auto-connect WebSocket on mount
+  useEffect(() => {
+    connectWebSocket()
+  }, [connectWebSocket])
 
   // Initial session setup (not auto-connect)
   const startSession = useCallback(async (leadContext?: unknown) => {

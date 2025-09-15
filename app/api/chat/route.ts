@@ -37,6 +37,9 @@ export async function POST(req: NextRequest) {
       if (conversationStage) extras.conversationStage = conversationStage
       if (typeof hasGreeted !== 'undefined') extras.hasGreeted = hasGreeted
     }
+    // Also accept session id from header as a robust fallback
+    const sidHeader = req.headers.get('x-intelligence-session-id')
+    if (sidHeader && !extras.sessionId) extras.sessionId = sidHeader
 
     // Edge Function will handle streaming
     return await handleChat({

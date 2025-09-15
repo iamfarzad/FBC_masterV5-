@@ -30,6 +30,7 @@ import { ScreenShareInterface } from '@/components/chat/ScreenShareInterface';
 import { UnifiedMultimodalWidget } from '@/components/chat/UnifiedMultimodalWidget';
 import { StageRail } from '@/components/chat/StageRail';
 import { ResearchPanel } from '@/components/overlays/ResearchPanel';
+import { TCConsentCard } from '@/components/cards/TCConsentCard';
 
 // Import hooks and utilities
 import { useAppState } from '@/hooks/useAppState';
@@ -69,6 +70,8 @@ export default function ChatShell() {
   const { search, analyzeURL } = useToolActions();
   // Consent-triggered lead research (run once per page session)
   const consentTriggeredRef = React.useRef(false)
+  const [needsConsent, setNeedsConsent] = useState(false)
+  const [consentLoading, setConsentLoading] = useState(false)
   const ensureSessionId = useCallback(() => {
     if (typeof window === 'undefined') return null
     const key = 'intelligence-session-id'
@@ -86,10 +89,18 @@ export default function ChatShell() {
         const res = await fetch('/api/consent', { cache: 'no-store' })
         if (!res.ok) return
         const data = await res.json()
-        if (!data?.allow || consentTriggeredRef.current) return
+        if (!data?.allow) { setNeedsConsent(true); return }
+        if (consentTriggeredRef.current) return
         consentTriggeredRef.current = true
 
         const sessionId = ensureSessionId()
+        // Once-per-session guard for lead research across remounts/refreshes
+        const lrKey = sessionId ? `lead-research-done:${sessionId}` : null
+        try {
+          if (lrKey && typeof window !== 'undefined' && sessionStorage.getItem(lrKey) === '1') {
+            return
+          }
+        } catch {}
         const email = data.email || (data.companyDomain ? `lead@${data.companyDomain}` : null)
         const name = data.name || 'Prospect'
         const companyUrl = data.companyDomain ? `https://${data.companyDomain}` : undefined
@@ -101,6 +112,9 @@ export default function ChatShell() {
           body: JSON.stringify({ sessionId, email, name, companyUrl, provider: 'google' })
         })
         const out = await lr.json().catch(() => ({}))
+
+        // Mark as done for this session to avoid duplicate calls on remounts
+        try { if (lrKey) sessionStorage.setItem(lrKey, '1') } catch {}
 
         // Activate research capabilities in UI system
         activateCapability('source-citation')
@@ -123,6 +137,48 @@ export default function ChatShell() {
     }
     run()
   }, [activateCapability, appendMessage, ensureSessionId])
+
+  const triggerLeadResearch = useCallback(async (payload: { name: string; email: string; companyUrl?: string }) => {
+    try {
+      const sessionId = ensureSessionId()
+      if (!sessionId) return
+      const lr = await fetch('/api/intelligence/lead-research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, email: payload.email, name: payload.name || 'Prospect', companyUrl: payload.companyUrl, provider: 'google' })
+      })
+      const out = await lr.json().catch(() => ({}))
+      activateCapability('source-citation')
+      activateCapability('web-preview')
+      const summary = out?.output || out?.research || {}
+      const company = summary?.company?.name || payload.companyUrl || 'the company'
+      const person = summary?.person?.fullName || payload.name
+      const msg: MessageData = {
+        id: generateMessageId(),
+        sender: 'ai',
+        timestamp: new Date(),
+        type: 'insight',
+        content: `🔎 Lead research initialized for ${person} at ${company}. I can reference this context for more tailored guidance.`,
+        sources: Array.isArray(summary?.citations) ? summary.citations.slice(0,3).map((c: any) => ({ title: String(c.title||'Source'), url: String(c.uri||c.url||''), excerpt: String(c.description||'') })) : undefined,
+        tools: [{ name: 'Web Search', description: 'Grounded search with citations', used: true }]
+      }
+      appendMessage(msg)
+    } catch {}
+  }, [activateCapability, appendMessage, ensureSessionId, generateMessageId])
+
+  const handleConsent = useCallback(async (data: { name: string; email: string; company: string }) => {
+    try {
+      setConsentLoading(true)
+      const body = { name: data.name, email: data.email, companyUrl: data.company }
+      const res = await fetch('/api/consent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      if (res.ok) {
+        setNeedsConsent(false)
+        await triggerLeadResearch({ name: data.name, email: data.email, companyUrl: data.company })
+      }
+    } finally {
+      setConsentLoading(false)
+    }
+  }, [triggerLeadResearch])
   const researchSeenRef = React.useRef<Map<string, number>>(new Map())
 
   // Helpers for auto research triggers
@@ -154,6 +210,29 @@ export default function ChatShell() {
       researchSeenRef.current.set(key, now)
       
       const urls = extractUrls(query)
+      const lower = (query || '').toLowerCase()
+
+      // If user asks about themselves ("about me/my company"), prefer lead context over web search
+      if (/(about\s+me|about\s+us|my\s+company|what\s+did\s+you\s+find\s+out|who\s+am\s+i)/.test(lower)) {
+        try {
+          const sessionId = ensureSessionId()
+          if (sessionId) {
+            const dbg = await fetch(`/api/intelligence/context?sessionId=${encodeURIComponent(sessionId)}`, { cache: 'no-store' })
+            if (dbg.ok) {
+              const snap = await dbg.json()
+              const parts: string[] = []
+              if (snap?.person) parts.push(`Person: ${snap.person?.fullName || ''}${snap.person?.role ? `, ${snap.person.role}` : ''}`)
+              if (snap?.company) parts.push(`Company: ${snap.company?.name || ''}${snap.company?.industry ? `, ${snap.company.industry}` : ''}`)
+              if (snap?.role) parts.push(`Role: ${snap.role}`)
+              const msg = parts.filter(Boolean).join('\n') || 'I have your consent details and will personalize as we continue.'
+              const loaderId = generateMessageId()
+              appendMessage({ id: loaderId, sender: 'ai', timestamp: new Date(), type: 'insight', content: `🔎 Lead context\n\n${msg}`, isComplete: true })
+              return
+            }
+          }
+        } catch {}
+      }
+
       const wantsSearch = hasSearchIntent(query) || urls.length > 0
       if (!wantsSearch) {
         return
@@ -480,6 +559,17 @@ export default function ChatShell() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-background">
+      {/* Consent Gate - blocks interaction until completed */}
+      {needsConsent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="relative">
+            <TCConsentCard onConsentGranted={({ name, email, company }) => handleConsent({ name, email, company })} />
+            {consentLoading && (
+              <div className="absolute inset-0 bg-background/40 rounded-2xl flex items-center justify-center text-sm">Saving…</div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Unified Control Panel */}
       <UnifiedControlPanel
         voiceMode={state.voiceMode}

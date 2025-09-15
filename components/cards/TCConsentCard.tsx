@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ConsentOverlay } from '@/components/collab/ConsentOverlay'
+// Simplified inline consent card without external overlay
 
 interface TCConsentCardProps {
   className?: string
@@ -24,7 +24,7 @@ export function TCConsentCard({ className, onConsentGranted }: TCConsentCardProp
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [showOverlay, setShowOverlay] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,17 +42,7 @@ export function TCConsentCard({ className, onConsentGranted }: TCConsentCardProp
       })
     }
 
-    setShowOverlay(true)
-  }
-
-  const handleOverlayAllow = () => {
-    setShowOverlay(false)
-    // Additional logic for when consent is granted can go here
-  }
-
-  const handleOverlayDeny = () => {
-    setShowOverlay(false)
-    // Reset form or handle denial
+    setSubmitted(true)
   }
 
   return (
@@ -134,15 +124,11 @@ export function TCConsentCard({ className, onConsentGranted }: TCConsentCardProp
         </CardContent>
       </Card>
 
-      <ConsentOverlay
-        open={showOverlay}
-        email={email}
-        company={company}
-        onEmailChange={setEmail}
-        onCompanyChange={setCompany}
-        onAllow={handleOverlayAllow}
-        onDeny={handleOverlayDeny}
-      />
+      {submitted && (
+        <div className="text-center text-xs text-muted-foreground mt-3">
+          Thanks! Preparing personalized insights…
+        </div>
+      )}
     </>
   )
 }
