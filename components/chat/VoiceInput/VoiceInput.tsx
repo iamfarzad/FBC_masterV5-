@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ToolCardWrapper } from "@/components/chat/ToolCardWrapper"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,20 @@ export function VoiceInput({
   const [isProcessing, setIsProcessing] = useState(false)
   const [transcript, setTranscript] = useState("")
   const recognitionRef = useRef<any>(null)
+
+  const handleTranscript = useCallback((text: string) => {
+    setIsProcessing(true)
+    try {
+      if (mode === 'modal') {
+        onTranscript(text)
+        onClose?.()
+      } else {
+        onTranscript(text)
+      }
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [mode, onTranscript, onClose])
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -91,19 +105,6 @@ export function VoiceInput({
     setIsRecording(false)
   }
 
-  const handleTranscript = (text: string) => {
-    setIsProcessing(true)
-    try {
-      if (mode === 'modal') {
-        onTranscript(text)
-        onClose?.()
-      } else {
-        onTranscript(text)
-      }
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
   const handleCancel = () => {
     stopRecording()
