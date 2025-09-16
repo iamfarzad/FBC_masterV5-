@@ -87,6 +87,30 @@ function renderAIResponse(content: string) {
 }
 
 export default function ChatPage() {
+  // 🚨 REDIRECT TO V2 - Source of Truth
+  const [shouldRedirectToV2] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const override = localStorage.getItem('use-chat-v1-override')
+      return override !== 'true' // Default to V2 unless explicitly overridden
+    }
+    return true
+  })
+
+  // Auto-redirect to V2 as Source of Truth
+  useEffect(() => {
+    if (shouldRedirectToV2 && typeof window !== 'undefined') {
+      console.log('🚀 [CHAT_V1] Redirecting to Chat V2 (Source of Truth)')
+      console.log('💡 To stay on V1 for testing: localStorage.setItem("use-chat-v1-override", "true")')
+      window.location.href = '/chat/v2'
+      return
+    }
+  }, [shouldRedirectToV2])
+
+  // Show redirect notice if staying on V1
+  if (!shouldRedirectToV2) {
+    console.log('⚠️ [CHAT_V1] Using legacy Chat V1 (override active)')
+  }
+
   // 🎯 AI SDK TOOLS FEATURE FLAG
   const [useAISDKTools, setUseAISDKTools] = useState(() => {
     if (typeof window !== 'undefined') {
