@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUnifiedChat } from '@/hooks/useUnifiedChat';
+import { useOriginalPipeline } from './hooks/useOriginalPipeline';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -20,8 +20,9 @@ import {
 // Chat V2 with AI SDK Integration
 export default function ChatV2() {
   const [input, setInput] = useState('')
+  const [sessionId] = useState(() => crypto.randomUUID())
 
-  // Use your existing unified chat hook with AI SDK backend
+  // Connect to your complete original pipeline with AI SDK backend
   const {
     messages,
     isLoading,
@@ -29,16 +30,23 @@ export default function ChatV2() {
     error,
     sendMessage,
     addMessage,
-    clearMessages
-  } = useUnifiedChat({
-    sessionId: 'v2-session',
-    mode: 'standard',
-    onMessage: (message) => {
-      console.log('[AI_SDK_V2] Message received:', message.content.slice(0, 50) + '...')
-    },
-    onError: (error) => {
-      console.error('[AI_SDK_V2] Error:', error)
-    }
+    clearMessages,
+    // Original pipeline features
+    intelligenceContext,
+    contextLoading,
+    refreshIntelligence,
+    captureWebcam,
+    captureScreen,
+    startVoice,
+    getAdminAnalytics,
+    calculateROI,
+    pipelineStatus
+  } = useOriginalPipeline({
+    sessionId,
+    enableIntelligence: true,
+    enableMultimodal: true,
+    enableVoice: true,
+    enableAdmin: true
   });
 
   const handleSendMessage = useCallback(async () => {
@@ -91,49 +99,118 @@ export default function ChatV2() {
             </div>
 
             <div className="bg-surface-elevated rounded-lg p-4">
-              <h3 className="font-medium text-text mb-2">Pipeline Status</h3>
-              <div className="space-y-2 text-sm text-text-muted">
+              <h3 className="font-medium text-text mb-2">Original Pipeline Status</h3>
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Messages:</span>
-                  <span>{messages.length}</span>
+                  <span className="text-text-muted">Intelligence:</span>
+                  <Badge variant={pipelineStatus.intelligence ? "default" : "secondary"} className="text-xs">
+                    {pipelineStatus.intelligence ? "Connected" : "Ready"}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>API:</span>
-                  <Badge variant="secondary" className="text-xs">AI SDK</Badge>
+                  <span className="text-text-muted">Multimodal:</span>
+                  <Badge variant={pipelineStatus.multimodal ? "default" : "secondary"} className="text-xs">
+                    {pipelineStatus.multimodal ? "Enabled" : "Disabled"}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span>Backend:</span>
-                  <Badge variant="secondary" className="text-xs">Unified</Badge>
+                  <span className="text-text-muted">Voice:</span>
+                  <Badge variant={pipelineStatus.voice ? "default" : "secondary"} className="text-xs">
+                    {pipelineStatus.voice ? "Ready" : "Disabled"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Admin:</span>
+                  <Badge variant={pipelineStatus.admin ? "default" : "secondary"} className="text-xs">
+                    {pipelineStatus.admin ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Backend:</span>
+                  <Badge variant="default" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                    AI SDK
+                  </Badge>
                 </div>
               </div>
             </div>
+
+            {/* Intelligence Context Display */}
+            {intelligenceContext && (
+              <div className="bg-surface-elevated rounded-lg p-4">
+                <h3 className="font-medium text-text mb-2">Intelligence Context</h3>
+                <div className="space-y-2 text-sm text-text-muted">
+                  {intelligenceContext.lead && (
+                    <div>
+                      <span className="font-medium">Lead:</span> {intelligenceContext.lead.name}
+                    </div>
+                  )}
+                  {intelligenceContext.company && (
+                    <div>
+                      <span className="font-medium">Company:</span> {intelligenceContext.company.name}
+                    </div>
+                  )}
+                  {intelligenceContext.role && (
+                    <div>
+                      <span className="font-medium">Role:</span> {intelligenceContext.role}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {contextLoading && (
+              <div className="bg-surface-elevated rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
+                  <span className="text-sm text-text-muted">Loading intelligence...</span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Settings')}
+                onClick={refreshIntelligence}
+                disabled={contextLoading}
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+                <Brain className="w-4 h-4 mr-2" />
+                {contextLoading ? 'Loading...' : 'Refresh Intelligence'}
               </Button>
               
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Calendar')}
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                Book Call
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => console.log('Generate Report')}
+                onClick={() => calculateROI({
+                  initialInvestment: 10000,
+                  monthlyRevenue: 5000,
+                  monthlyExpenses: 3000,
+                  timePeriod: 12
+                })}
               >
                 <FileText className="w-4 h-4 mr-2" />
-                Generate Report
+                Test ROI Calculator
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={startVoice}
+              >
+                <Mic className="w-4 h-4 mr-2" />
+                Test Voice
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={async () => {
+                  const analytics = await getAdminAnalytics()
+                  console.log('Admin Analytics:', analytics)
+                }}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Test Admin
               </Button>
             </div>
           </div>

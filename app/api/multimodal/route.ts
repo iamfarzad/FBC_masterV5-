@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { multimodalContextManager } from '@/src/core/context/multimodal-context'
-import { unifiedChatProvider } from '@/src/core/chat/unified-provider'
 import { z } from 'zod'
+import { google } from '@ai-sdk/google'
+import { generateText } from 'ai'
+
+// AI SDK model for multimodal
+const model = google('gemini-1.5-pro-latest')
 
 // Unified multimodal request schema
 const MultimodalRequestSchema = z.object({
@@ -117,7 +121,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Generate response using unified provider
-        const voiceStream = unifiedChatProvider.generate({
+        // Use AI SDK for voice processing
+        const voiceResult = await generateText({
+          model,
+          system: "You are F.B/c AI processing voice input. Provide helpful responses.",
           messages: [voiceMessage],
           context: voiceContext,
           mode: 'multimodal'

@@ -1,7 +1,19 @@
 import { getSupabaseService } from '@/src/lib/supabase'
 import { logger } from '@/src/lib/logger'
-import { ConversationContext } from '../chat/conversation-memory'
 import { MultimodalContext } from './context-types'
+
+// Conversation context interface (replacing deleted conversation-memory)
+interface ConversationContext {
+  sessionId: string
+  messageCount: number
+  lastUserMessage?: string
+  lastAssistantMessage?: string
+  conversationSummary?: string
+  topics: string[]
+  sentiment: 'positive' | 'neutral' | 'negative'
+  stage: string
+  metadata: Record<string, any>
+}
 
 // Database-compatible interface for conversation contexts
 interface DatabaseConversationContext {
