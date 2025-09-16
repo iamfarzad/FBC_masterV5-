@@ -9,6 +9,7 @@ import { Mic, Send, BookOpen, Layers, Zap, User, MessageCircle, Camera, Monitor,
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUnifiedChat } from "@/hooks/useUnifiedChat"
+import { useUnifiedChatV2 } from "@/hooks/useUnifiedChatV2"
 // import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence" // DEPRECATED - now uses unified chat internally
 import { generateSecureSessionId } from "@/src/core/security/session"
 import { useCanvas } from "@/components/providers/canvas-provider"
@@ -18,12 +19,14 @@ import { SuggestedActions } from "@/components/intelligence/SuggestedActions"
 import { VoiceOverlay } from "@/components/chat/VoiceOverlay"
 import { StageRail } from "@/components/collab/StageRail"
 import { ConsentOverlay } from "@/components/ui/consent-overlay"
+import { ChatDevtools } from "@/components/debug/ChatDevtools"
 
 import { PromptInputTextarea } from "@/components/ai-elements/prompt-input"
 import { Response } from "@/components/ai-elements/response"
 import { InlineROICalculator } from "@/components/chat/tools/InlineROICalculator"
 import { useMeeting } from "@/components/providers/meeting-provider"
 import { omitUndefined } from '@/src/core/utils/optional'
+import { cn } from '@/src/core/utils'
 import { ChatMessages } from "@/components/chat/layouts/ChatMessages"
 import type { ChatMessageUI } from "@/components/chat/types"
 
@@ -81,6 +84,14 @@ function renderAIResponse(content: string) {
 }
 
 export default function ChatPage() {
+  // 🎯 AI SDK TOOLS FEATURE FLAG
+  const [useAISDKTools, setUseAISDKTools] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('use-ai-sdk-tools') === 'true'
+    }
+    return false
+  })
+
   // 🔧 MASTER FLOW: Session Management with Intelligence Integration
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -370,11 +381,18 @@ export default function ChatPage() {
     return Object.keys(ctx).length ? ctx : undefined;
   }, [leadContextData, intelligenceContext, sessionId]);
 
-  const chat = useUnifiedChat({
+  // 🎯 ALWAYS CALL BOTH HOOKS - Use AI SDK Tools or original implementation
+  const chatOptions = {
     sessionId: sessionId || 'anonymous',
-    mode: 'standard',
+    mode: 'standard' as const,
     ...(unifiedContext ? { context: unifiedContext } : {})
-  });
+  }
+  
+  const chatV1 = useUnifiedChat(chatOptions)
+  const chatV2 = useUnifiedChatV2(chatOptions)
+  
+  // Select which implementation to use
+  const chat = useAISDKTools ? chatV2 : chatV1
 
   const {
     messages: rawMessages,
@@ -674,6 +692,38 @@ export default function ChatPage() {
               </TooltipTrigger>
               <TooltipContent side="right">
                 <span>Toggle Theme</span>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* AI SDK Tools Toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={useAISDKTools ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 transition-all duration-300",
+                    useAISDKTools 
+                      ? "bg-gradient-to-br from-brand to-brand-hover text-white shadow-lg shadow-brand/30"
+                      : "text-text-muted hover:bg-surface hover:text-text"
+                  )}
+                  onClick={() => {
+                    const newValue = !useAISDKTools
+                    setUseAISDKTools(newValue)
+                    localStorage.setItem('use-ai-sdk-tools', String(newValue))
+                  }}
+                >
+                  <Zap className="size-4 sm:size-5" />
+                  {useAISDKTools && (
+                    <div className="absolute inset-0 -z-10 rounded-lg sm:rounded-xl bg-brand/20 blur-lg"></div>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="flex items-center gap-2">
+                  <span>{useAISDKTools ? 'AI SDK Tools: ON' : 'AI SDK Tools: OFF'}</span>
+                  <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">Z</kbd>
+                </div>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -1047,6 +1097,11 @@ export default function ChatPage() {
           isVisible={showConsentOverlay}
           onSubmit={handleConsentSubmit}
         />
+
+        {/* AI SDK Tools Devtools */}
+        {useAISDKTools && (
+          <ChatDevtools />
+        )}
         </div>
               </div>
       </DemoSessionProvider>
