@@ -33,8 +33,8 @@ const BANNED_PATTERNS = [
   /\bfrom\s+['"]@\/hooks\/useChat-ui['"]\b/,
   // legacy api route imports/usages
   /\bfrom\s+['"]@\/app\/api\/chat\/route['"]\b/,
-  // direct fetch/axios to legacy endpoint
-  /\/api\/chat(?!\/unified)\b/,
+  // direct fetch/axios to legacy endpoint (but allow AI SDK routes)
+  /\/api\/chat(?!\/unified|\/intelligent|\/admin|\/realtime|\/multimodal|\/simple)\b/,
 ];
 
 // Optional allowlist files (tests, mocks) – expand if needed
