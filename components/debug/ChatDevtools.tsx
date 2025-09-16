@@ -121,12 +121,69 @@ export function ChatDevtools({ className, position = 'fixed' }: ChatDevtoolsProp
           </CardHeader>
 
           <CardContent className="pt-0">
-            <Tabs defaultValue="sessions" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs defaultValue="implementation" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 text-xs">
+                <TabsTrigger value="implementation">Impl</TabsTrigger>
                 <TabsTrigger value="sessions">Sessions</TabsTrigger>
                 <TabsTrigger value="messages">Messages</TabsTrigger>
-                <TabsTrigger value="performance">Performance</TabsTrigger>
+                <TabsTrigger value="performance">Perf</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="implementation" className="mt-4">
+                <div className="space-y-3">
+                  <div className="text-sm font-medium">Current Implementation</div>
+                  
+                  {/* Implementation Status */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 rounded bg-surface-elevated">
+                      <span className="text-sm">State Management</span>
+                      <Badge variant={typeof window !== 'undefined' && localStorage.getItem('use-ai-sdk-tools') === 'true' ? 'default' : 'secondary'}>
+                        {typeof window !== 'undefined' && localStorage.getItem('use-ai-sdk-tools') === 'true' ? 'Zustand' : 'useState'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 rounded bg-surface-elevated">
+                      <span className="text-sm">API Pipeline</span>
+                      <Badge variant={typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'default' : 'secondary'}>
+                        {typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'AI SDK' : 'Custom'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 rounded bg-surface-elevated">
+                      <span className="text-sm">Streaming</span>
+                      <Badge variant={typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'default' : 'secondary'}>
+                        {typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'AI SDK' : 'SSE'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 rounded bg-surface-elevated">
+                      <span className="text-sm">Error Handling</span>
+                      <Badge variant={typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'default' : 'secondary'}>
+                        {typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'Built-in' : 'Custom'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Migration Progress */}
+                  <div className="mt-4">
+                    <div className="text-sm font-medium mb-2">Migration Progress</div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-xs">State Management ✓</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                        <span className="text-xs">API Pipeline {typeof window !== 'undefined' && localStorage.getItem('use-full-ai-sdk') === 'true' ? '✓' : '⚠️'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                        <span className="text-xs">Legacy Cleanup (Pending)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
 
               <TabsContent value="sessions" className="mt-4">
                 <ScrollArea className="h-64">

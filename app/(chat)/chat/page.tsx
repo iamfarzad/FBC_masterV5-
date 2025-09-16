@@ -10,6 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUnifiedChat } from "@/hooks/useUnifiedChat"
 import { useUnifiedChatV2 } from "@/hooks/useUnifiedChatV2"
+import { useAISDKChat } from "@/hooks/useAISDKChat"
+import { useSimpleAISDK } from "@/hooks/useSimpleAISDK"
 // import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence" // DEPRECATED - now uses unified chat internally
 import { generateSecureSessionId } from "@/src/core/security/session"
 import { useCanvas } from "@/components/providers/canvas-provider"
@@ -88,6 +90,14 @@ export default function ChatPage() {
   const [useAISDKTools, setUseAISDKTools] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('use-ai-sdk-tools') === 'true'
+    }
+    return false
+  })
+
+  // 🚀 FULL AI SDK PIPELINE FEATURE FLAG
+  const [useFullAISDK, setUseFullAISDK] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('use-full-ai-sdk') === 'true'
     }
     return false
   })
@@ -381,7 +391,7 @@ export default function ChatPage() {
     return Object.keys(ctx).length ? ctx : undefined;
   }, [leadContextData, intelligenceContext, sessionId]);
 
-  // 🎯 ALWAYS CALL BOTH HOOKS - Use AI SDK Tools or original implementation
+  // 🎯 ALWAYS CALL ALL HOOKS - Progressive enhancement with feature flags
   const chatOptions = {
     sessionId: sessionId || 'anonymous',
     mode: 'standard' as const,
@@ -390,9 +400,10 @@ export default function ChatPage() {
   
   const chatV1 = useUnifiedChat(chatOptions)
   const chatV2 = useUnifiedChatV2(chatOptions)
+  const chatSDK = useSimpleAISDK({ sessionId: sessionId || 'anonymous', mode: 'standard' })
   
-  // Select which implementation to use
-  const chat = useAISDKTools ? chatV2 : chatV1
+  // Select implementation based on feature flags
+  const chat = useFullAISDK ? chatSDK : (useAISDKTools ? chatV2 : chatV1)
 
   const {
     messages: rawMessages,
@@ -404,7 +415,7 @@ export default function ChatPage() {
   } = chat
 
   // Convert UnifiedMessage[] to ChatMessageUI[] for UI compatibility
-  const chatMessages: ChatMessageUI[] = rawMessages.map(msg => ({
+  const chatMessages: ChatMessageUI[] = rawMessages.map((msg: any) => ({
     ...msg,
     imageUrl: null,
     videoToAppCard: null
@@ -723,6 +734,38 @@ export default function ChatPage() {
                 <div className="flex items-center gap-2">
                   <span>{useAISDKTools ? 'AI SDK Tools: ON' : 'AI SDK Tools: OFF'}</span>
                   <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">Z</kbd>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Full AI SDK Pipeline Toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={useFullAISDK ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 transition-all duration-300",
+                    useFullAISDK 
+                      ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30"
+                      : "text-text-muted hover:bg-surface hover:text-text"
+                  )}
+                  onClick={() => {
+                    const newValue = !useFullAISDK
+                    setUseFullAISDK(newValue)
+                    localStorage.setItem('use-full-ai-sdk', String(newValue))
+                  }}
+                >
+                  <Sparkles className="size-4 sm:size-5" />
+                  {useFullAISDK && (
+                    <div className="absolute inset-0 -z-10 rounded-lg sm:rounded-xl bg-green-500/20 blur-lg"></div>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="flex items-center gap-2">
+                  <span>{useFullAISDK ? 'Full AI SDK: ON' : 'Full AI SDK: OFF'}</span>
+                  <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">X</kbd>
                 </div>
               </TooltipContent>
             </Tooltip>
