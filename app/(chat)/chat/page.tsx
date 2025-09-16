@@ -10,9 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUnifiedChat } from "@/hooks/useUnifiedChat"
 import { useUnifiedChatV2 } from "@/hooks/useUnifiedChatV2"
-import { useAISDKChat } from "@/hooks/useAISDKChat"
 import { useSimpleAISDK } from "@/hooks/useSimpleAISDK"
-import { useIntelligentAISDK } from "@/hooks/useIntelligentAISDK"
 // import { useConversationalIntelligence } from "@/hooks/useConversationalIntelligence" // DEPRECATED - now uses unified chat internally
 import { generateSecureSessionId } from "@/src/core/security/session"
 import { useCanvas } from "@/components/providers/canvas-provider"
@@ -127,13 +125,8 @@ export default function ChatPage() {
     return false
   })
 
-  // 🧠 INTELLIGENT AI SDK FEATURE FLAG
-  const [useIntelligentAISDK, setUseIntelligentAISDK] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('use-intelligent-ai-sdk') === 'true'
-    }
-    return false
-  })
+  // 🧠 INTELLIGENT AI SDK FEATURE FLAG (Coming Soon)
+  // const [useIntelligentAISDK, setUseIntelligentAISDK] = useState(false)
 
   // 🔧 MASTER FLOW: Session Management with Intelligence Integration
   const [sessionId, setSessionId] = useState<string | null>(() => {
@@ -434,25 +427,13 @@ export default function ChatPage() {
   const chatV1 = useUnifiedChat(chatOptions)
   const chatV2 = useUnifiedChatV2(chatOptions)
   const chatSDK = useSimpleAISDK({ sessionId: sessionId || 'anonymous', mode: 'standard' })
-  const chatIntelligent = useIntelligentAISDK({ 
-    sessionId: sessionId || 'anonymous', 
-    mode: 'standard',
-    context: unifiedContext,
-    enableIntelligence: true,
-    enableTools: true,
-    onIntelligenceUpdate: (context) => {
-      console.log('🧠 Intelligence context updated:', context)
-    }
-  })
   
-  // Select implementation based on feature flags - Priority: Intelligent > Full > Tools > Original
-  const chat = useIntelligentAISDK 
-    ? chatIntelligent
-    : useFullAISDK 
-      ? chatSDK 
-      : useAISDKTools 
-        ? chatV2 
-        : chatV1
+  // Select implementation based on feature flags
+  const chat = useFullAISDK 
+    ? chatSDK 
+    : useAISDKTools 
+      ? chatV2 
+      : chatV1
 
   const {
     messages: rawMessages,
@@ -819,34 +800,24 @@ export default function ChatPage() {
               </TooltipContent>
             </Tooltip>
 
-            {/* Intelligent AI SDK Toggle */}
+            {/* Chat V2 Link */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={useIntelligentAISDK ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className={cn(
-                    "modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 transition-all duration-300",
-                    useIntelligentAISDK 
-                      ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30"
-                      : "text-text-muted hover:bg-surface hover:text-text"
-                  )}
+                  className="modern-button size-10 sm:size-12 rounded-lg sm:rounded-xl p-0 text-text-muted hover:bg-surface hover:text-text"
                   onClick={() => {
-                    const newValue = !useIntelligentAISDK
-                    setUseIntelligentAISDK(newValue)
-                    localStorage.setItem('use-intelligent-ai-sdk', String(newValue))
+                    window.location.href = '/chat/v2'
                   }}
                 >
                   <User className="size-4 sm:size-5" />
-                  {useIntelligentAISDK && (
-                    <div className="absolute inset-0 -z-10 rounded-lg sm:rounded-xl bg-purple-500/20 blur-lg"></div>
-                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <div className="flex items-center gap-2">
-                  <span>{useIntelligentAISDK ? 'Intelligent AI: ON' : 'Intelligent AI: OFF'}</span>
-                  <kbd className="rounded bg-surface-elevated px-2 py-1 font-mono text-xs">I</kbd>
+                  <span>Go to Chat V2 (Source of Truth)</span>
+                  <Badge variant="default" className="bg-purple-500 text-xs">V2</Badge>
                 </div>
               </TooltipContent>
             </Tooltip>

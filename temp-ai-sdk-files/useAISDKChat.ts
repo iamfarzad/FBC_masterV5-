@@ -43,7 +43,7 @@ export function useAISDKChat(options: AISDKChatOptions) {
     setMessages,
     setInput
   } = useChat({
-    api: '/api/chat',
+    api: '/api/chat/simple',
     initialMessages: options.initialMessages,
     body: {
       sessionId: options.sessionId,
