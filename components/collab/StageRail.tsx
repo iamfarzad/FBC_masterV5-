@@ -37,9 +37,11 @@ const INTELLIGENCE_STAGE_MAP = {
 interface StageRailProps {
   sessionId?: string
   side?: 'left' | 'right'
+  show?: boolean
 }
 
-export function StageRail({ sessionId, side = 'right' }: StageRailProps) {
+export function StageRail({ sessionId, side = 'right', show = true }: StageRailProps) {
+  if (!show) return null
   // Use the StageProvider context for proper stage management
   const { currentStageIndex, stages, getProgressPercentage } = useStage()
   const [ctx, setCtx] = useState<Context>({ stage: 1, exploredCount: 0, total: 16 })
@@ -319,5 +321,31 @@ export function StageRail({ sessionId, side = 'right' }: StageRailProps) {
   )
 }
 
+export function StageRailCard() {
+  const { currentStageIndex, stages, getProgressPercentage } = useStage()
+  const currentStage = stages[currentStageIndex] ?? null
+  const percentage = getProgressPercentage()
+  const stageNumber = currentStageIndex + 1
+  const stageInstruction = StageInstructions[String(stageNumber) as keyof typeof StageInstructions]
 
-
+  return (
+    <div className="rounded-2xl border border-border bg-surface/80 p-4 backdrop-blur">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-text">Discovery Progress</span>
+        <span className="text-[11px] text-text-muted">Stage {stageNumber}/{stages.length}</span>
+      </div>
+      <p className="mt-2 text-sm font-medium text-text">
+        {currentStage?.label ?? 'Discovery Stage'}
+      </p>
+      <p className="mt-1 text-xs text-text-muted">
+        {stageInstruction ?? 'Guided exploration'}
+      </p>
+      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-brand transition-all"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  )
+}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { User, Sparkles, Copy, RefreshCw, Share, Play, Square, Mic, Camera, Monitor, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useUnifiedChatMessages } from '@/src/core/chat/state/unified-chat-store'
 import type { UnifiedMessage as UnifiedChatMessageType } from '@/src/core/chat/unified-types'
+import { StageRailCard } from '@/components/collab/StageRail'
 
 export interface MessageData {
   id: string;
@@ -370,6 +371,9 @@ export const UnifiedMultimodalWidget = ({
 
   return (
     <div className="grid gap-3 rounded-2xl border border-border bg-surface/80 p-4 backdrop-blur">
+      <div className="md:hidden">
+        <StageRailCard />
+      </div>
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium text-text">Multimodal Tools</div>
         <Badge variant="secondary" className="text-xs bg-brand/10 text-brand border-brand/20">

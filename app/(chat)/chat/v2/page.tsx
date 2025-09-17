@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Sparkles, Brain, Mic, X } from 'lucide-react'
 
-import { StageRail } from '@/components/collab/StageRail'
+import { StageRailCard } from '@/components/collab/StageRail'
 import { UnifiedControlPanel } from './components/UnifiedControlPanel'
 import {
   UnifiedMessage,
@@ -427,7 +427,6 @@ export default function ChatV2() {
       }}
     >
       <div className="relative min-h-screen bg-background pb-40">
-        <StageRail sessionId={sessionId} side="left" />
         <UnifiedControlPanel
           systemState={systemState}
           conversationState={conversationState}
@@ -482,11 +481,15 @@ export default function ChatV2() {
               )}
             </div>
 
-            <UnifiedMultimodalWidget
+           <UnifiedMultimodalWidget
               onVoiceToggle={() => setIsVoiceOverlayOpen(true)}
               onWebcamToggle={() => setIsWebcamOpen(true)}
               onScreenShareToggle={() => setIsScreenShareOpen(true)}
             />
+
+            <div className="hidden md:block">
+              <StageRailCard />
+            </div>
 
             <div className="rounded-3xl border border-border bg-surface/70 p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
