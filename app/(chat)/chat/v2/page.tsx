@@ -18,6 +18,7 @@ import {
   User,
   RefreshCw
 } from 'lucide-react'
+import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
 
 // Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
@@ -552,6 +553,7 @@ export default function ChatV2() {
           </div>
         </div>
       </div>
+      <UnifiedChatDebugPanel />
     </div>
   )
 }

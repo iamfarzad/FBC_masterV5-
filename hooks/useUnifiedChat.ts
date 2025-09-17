@@ -3,7 +3,7 @@
  * Compatibility layer that connects to AI SDK
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   UnifiedMessage,
   UnifiedChatOptions,
@@ -11,6 +11,10 @@ import {
   UnifiedChatRequest,
   UnifiedContext
 } from '@/src/core/chat/unified-types'
+import {
+  UNIFIED_CHAT_STORE_ID,
+  syncUnifiedChatStoreState,
+} from '@/src/core/chat/state/unified-chat-store'
 
 export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
   const [messages, setMessages] = useState<UnifiedMessage[]>(options.initialMessages || [])
@@ -36,6 +40,34 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     setMessages(prev =>
       prev.map(msg => msg.id === id ? { ...msg, ...updates } : msg)
     )
+  }, [])
+
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
+  const replaceMessages = useCallback((nextMessages: UnifiedMessage[]) => {
+    setMessages(nextMessages)
+  }, [])
+
+  const stop = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    setIsStreaming(false)
+    setIsLoading(false)
+  }, [])
+
+  const regenerate = useCallback(async () => {
+    console.warn('Regenerate not implemented for unified chat yet.')
+  }, [])
+
+  const resumeStream = useCallback(async () => {
+    console.warn('resumeStream not implemented for unified chat yet.')
+  }, [])
+
+  const addToolResult = useCallback(async () => {
+    console.warn('addToolResult not implemented for unified chat yet.')
   }, [])
 
   const sendMessage = useCallback(async (content: string): Promise<void> => {
@@ -173,6 +205,41 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     // Context updates would trigger re-initialization
     console.log('Context update:', context)
   }, [])
+
+  const chatStatus = useMemo(() => {
+    if (error) return 'error' as const
+    if (isStreaming) return 'streaming' as const
+    if (isLoading) return 'submitted' as const
+    return 'ready' as const
+  }, [error, isStreaming, isLoading])
+
+  useEffect(() => {
+    syncUnifiedChatStoreState({
+      id: options.sessionId || 'unified-session',
+      messages,
+      error: error ?? undefined,
+      status: chatStatus,
+      sendMessage,
+      regenerate,
+      stop,
+      resumeStream,
+      addToolResult,
+      setMessages: replaceMessages,
+      clearError,
+    } as any, UNIFIED_CHAT_STORE_ID)
+  }, [
+    messages,
+    error,
+    chatStatus,
+    sendMessage,
+    regenerate,
+    stop,
+    resumeStream,
+    addToolResult,
+    replaceMessages,
+    clearError,
+    options.sessionId,
+  ])
 
   // Cleanup on unmount
   useEffect(() => {

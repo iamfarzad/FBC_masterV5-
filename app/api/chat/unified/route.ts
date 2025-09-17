@@ -4,11 +4,24 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { google } from '@ai-sdk/google'
+import { google, createGoogleGenerativeAI } from '@ai-sdk/google'
 import { streamText, generateText } from 'ai'
 
 // AI SDK model
-const model = google('gemini-1.5-pro-latest')
+const geminiApiKey =
+  process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+  process.env.GEMINI_API_KEY ||
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY
+
+const geminiProvider = createGoogleGenerativeAI(
+  geminiApiKey ? { apiKey: geminiApiKey } : undefined,
+)
+
+const model = geminiProvider(
+  process.env.GEMINI_TEXT_MODEL ||
+    process.env.NEXT_PUBLIC_GEMINI_TEXT_MODEL ||
+    'gemini-2.5-flash',
+)
 
 // Node.js runtime for streaming compatibility
 export const runtime = 'nodejs'
