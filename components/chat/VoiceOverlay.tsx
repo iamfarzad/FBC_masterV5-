@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { FbcVoiceOrb } from "@/components/ui/fbc-voice-orb"
 import { useWebSocketVoice } from '@/hooks/use-websocket-voice'
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
+import { useUnifiedChatActionsContext } from '@/src/core/chat/unified-chat-context'
 
 export interface VoiceOverlayProps {
   open: boolean
@@ -28,6 +29,7 @@ export function VoiceOverlay({
   onAccept,
   activeModalities = { voice: false, webcam: false, screen: false }
 }: VoiceOverlayProps) {
+  const chatActions = useUnifiedChatActionsContext()
   const overlayRef = React.useRef<HTMLDivElement | null>(null)
   const [collectedAudioData, setCollectedAudioData] = React.useState<string[]>([])
   const [recordingStartTime, setRecordingStartTime] = React.useState<number | null>(null)
@@ -134,13 +136,27 @@ export function VoiceOverlay({
       hasAudioData: !!combinedAudioData
     })
 
-    // Pass all data to parent
-    onAccept(transcript, combinedAudioData, duration)
+    if (onAccept) {
+      onAccept(transcript, combinedAudioData, duration)
+    } else if (chatActions) {
+      chatActions.addMessage({
+        role: 'user',
+        content: transcript,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: {
+          source: 'voice-input',
+          duration,
+          audioChunks: collectedAudioData.length,
+        },
+      })
+      void chatActions.sendMessage(transcript)
+    }
 
     // Reset state
     setCollectedAudioData([])
     setRecordingStartTime(null)
-  }, [transcript, collectedAudioData, recordingStartTime, onAccept])
+  }, [transcript, collectedAudioData, recordingStartTime, onAccept, chatActions])
 
   return (
     <AnimatePresence>

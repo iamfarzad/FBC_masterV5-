@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -19,15 +19,42 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
+import { UnifiedChatActionsProvider } from '@/src/core/chat/unified-chat-context'
+import { useUnifiedChat } from '@/hooks/useUnifiedChat'
+import {
+  useUnifiedChatMessages,
+  useUnifiedChatStatus,
+  useUnifiedChatError,
+} from '@/src/core/chat/state/unified-chat-store'
 
 // Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [sessionId] = useState(() => crypto.randomUUID())
   const [intelligenceContext, setIntelligenceContext] = useState<any>(null)
   const [contextLoading, setContextLoading] = useState(false)
+
+  const chatContext = useMemo(() => ({
+    sessionId,
+    intelligenceContext: intelligenceContext || undefined,
+  }), [sessionId, intelligenceContext])
+
+  const {
+    sendMessage: sendUnifiedMessage,
+    addMessage,
+    updateContext,
+  } = useUnifiedChat({
+    sessionId,
+    mode: 'standard',
+    context: chatContext,
+  })
+
+  const messages = useUnifiedChatMessages()
+  const chatStatus = useUnifiedChatStatus()
+  const chatError = useUnifiedChatError()
+  const isStreaming = chatStatus === 'streaming'
+  const isSubmitting = chatStatus === 'submitted'
+  const isLoading = isStreaming || isSubmitting
 
   // Connect to your original intelligence system
   const refreshIntelligence = useCallback(async () => {
@@ -47,106 +74,31 @@ export default function ChatV2() {
     }
   }, [sessionId])
 
-  // Connect to your original chat API
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || isLoading) return
-
-    const userMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: content.trim(),
-      timestamp: new Date()
+  useEffect(() => {
+    if (intelligenceContext) {
+      updateContext({ intelligenceContext })
     }
+  }, [intelligenceContext, updateContext])
 
-    setMessages(prev => [...prev, userMessage])
-    setIsLoading(true)
-
-    try {
-      // Use your original unified API (now with AI SDK backend)
-      const response = await fetch('/api/chat/unified', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          context: {
-            sessionId,
-            intelligenceContext
-          },
-          mode: 'standard',
-          stream: true
+  // Connect to unified chat backend via AI SDK store
+  const handleSendMessage = useCallback(
+    async (content: string) => {
+      if (!content.trim()) return
+      try {
+        await sendUnifiedMessage(content.trim())
+      } catch (error) {
+        console.error('❌ Send message failed:', error)
+        addMessage({
+          role: 'assistant',
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          timestamp: new Date(),
+          type: 'text',
+          metadata: { error: true },
         })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
       }
-
-      // Parse SSE response
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('No response stream')
-
-      let assistantContent = ''
-      const decoder = new TextDecoder()
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              if (data.role === 'assistant') {
-                assistantContent = data.content
-                
-                // Update or add assistant message
-                setMessages(prev => {
-                  const existing = prev.find(m => m.role === 'assistant' && m.id.startsWith('assistant-'))
-                  if (existing) {
-                    return prev.map(m => 
-                      m.id === existing.id 
-                        ? { ...m, content: assistantContent }
-                        : m
-                    )
-                  } else {
-                    return [...prev, {
-                      id: 'assistant-' + Date.now(),
-                      role: 'assistant',
-                      content: assistantContent,
-                      timestamp: new Date()
-                    }]
-                  }
-                })
-
-                if (data.metadata?.isComplete) {
-                  break
-                }
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ Send message failed:', error)
-      setMessages(prev => [...prev, {
-        id: 'error-' + Date.now(),
-        role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date()
-      }])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [messages, isLoading, sessionId, intelligenceContext])
+    },
+    [sendUnifiedMessage, addMessage],
+  )
 
   // Test your original tools
   const testROI = useCallback(async () => {
@@ -158,120 +110,143 @@ export default function ChatV2() {
           initialInvestment: 10000,
           monthlyRevenue: 5000,
           monthlyExpenses: 3000,
-          timePeriod: 12
-        })
+          timePeriod: 12,
+        }),
       })
-      
+
       const result = await response.json()
       console.log('✅ ROI Test Result:', result)
-      
-      // Handle different response formats
-      const summary = result?.output?.summary || 
-                     result?.summary || 
-                     result?.message || 
-                     `ROI: ${result?.roi || 'N/A'}%, Payback: ${result?.paybackPeriod || 'N/A'} months`
-      
-      setMessages(prev => [...prev, {
-        id: 'roi-' + Date.now(),
+
+      const summary =
+        result?.output?.summary ||
+        result?.summary ||
+        result?.message ||
+        `ROI: ${result?.roi || 'N/A'}%, Payback: ${result?.paybackPeriod || 'N/A'} months`
+
+      addMessage({
         role: 'assistant',
-        content: `💰 **ROI API Test Result**\n\nStatus: ${response.ok ? 'Connected ✅' : 'Failed ❌'}\nResponse: ${summary}`,
-        timestamp: new Date()
-      }])
+        content: `💰 **ROI API Test Result**
+
+Status: ${response.ok ? 'Connected ✅' : 'Failed ❌'}
+Response: ${summary}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'roi-test' },
+      })
     } catch (error) {
       console.error('❌ ROI test failed:', error)
-      setMessages(prev => [...prev, {
-        id: 'roi-error-' + Date.now(),
+      addMessage({
         role: 'assistant',
-        content: `💰 **ROI API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
-        timestamp: new Date()
-      }])
+        content: `💰 **ROI API Test**
+
+Status: Failed ❌
+Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'roi-test', error: true },
+      })
     }
-  }, [])
+  }, [addMessage])
 
   const testWebcam = useCallback(async () => {
     try {
       const response = await fetch('/api/tools/webcam', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'x-intelligence-session-id': sessionId
+          'x-intelligence-session-id': sessionId,
         },
         body: JSON.stringify({
           image: 'data:image/jpeg;base64,test',
           type: 'webcam',
-          context: { trigger: 'test' }
-        })
+          context: { trigger: 'test' },
+        }),
       })
-      
+
       const result = await response.json()
       console.log('✅ Webcam Test Result:', result)
-      
-      setMessages(prev => [...prev, {
-        id: 'webcam-' + Date.now(),
+
+      addMessage({
         role: 'assistant',
         content: `📷 **Webcam API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
-        timestamp: new Date()
-      }])
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'webcam-test' },
+      })
     } catch (error) {
       console.error('❌ Webcam test failed:', error)
-      setMessages(prev => [...prev, {
-        id: 'webcam-error-' + Date.now(),
+      addMessage({
         role: 'assistant',
-        content: `📷 **Webcam API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
-        timestamp: new Date()
-      }])
+        content: `📷 **Webcam API Test**
+
+Status: Failed ❌
+Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'webcam-test', error: true },
+      })
     }
-  }, [sessionId])
+  }, [sessionId, addMessage])
 
   const testAdmin = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/analytics')
       const result = await response.json()
       console.log('✅ Admin Test Result:', result)
-      
-      setMessages(prev => [...prev, {
-        id: 'admin-' + Date.now(),
+
+      addMessage({
         role: 'assistant',
         content: `👥 **Admin API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
-        timestamp: new Date()
-      }])
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'admin-test' },
+      })
     } catch (error) {
       console.error('❌ Admin test failed:', error)
-      setMessages(prev => [...prev, {
-        id: 'admin-error-' + Date.now(),
+      addMessage({
         role: 'assistant',
-        content: `👥 **Admin API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
-        timestamp: new Date()
-      }])
+        content: `👥 **Admin API Test**
+
+Status: Failed ❌
+Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'admin-test', error: true },
+      })
     }
-  }, [])
+  }, [addMessage])
 
   const testVoice = useCallback(async () => {
     try {
       const response = await fetch('/api/gemini-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test' })
+        body: JSON.stringify({ action: 'test' }),
       })
-      
+
       console.log('✅ Voice Test Result:', response.status)
-      
-      setMessages(prev => [...prev, {
-        id: 'voice-' + Date.now(),
+
+      addMessage({
         role: 'assistant',
         content: `🎤 **Voice API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
-        timestamp: new Date()
-      }])
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'voice-test' },
+      })
     } catch (error) {
       console.error('❌ Voice test failed:', error)
-      setMessages(prev => [...prev, {
-        id: 'voice-error-' + Date.now(),
+      addMessage({
         role: 'assistant',
-        content: `🎤 **Voice API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
-        timestamp: new Date()
-      }])
+        content: `🎤 **Voice API Test**
+
+Status: Failed ❌
+Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { source: 'voice-test', error: true },
+      })
     }
-  }, [])
+  }, [addMessage])
 
   // Initialize intelligence on mount
   useEffect(() => {
@@ -282,13 +257,20 @@ export default function ChatV2() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (input.trim()) {
-        sendMessage(input)
+        handleSendMessage(input)
         setInput('')
       }
     }
-  }, [input, sendMessage])
+  }, [input, handleSendMessage])
 
   return (
+    <UnifiedChatActionsProvider
+      value={{
+        addMessage,
+        sendMessage: handleSendMessage,
+        updateContext,
+      }}
+    >
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar - Original Pipeline Status */}
       <div className="w-80 border-r border-border bg-surface-elevated p-6">
@@ -438,7 +420,7 @@ export default function ChatV2() {
                 </p>
                   <div className="mt-4">
                     <Button
-                      onClick={() => sendMessage("Hello! Test the chat functionality.")}
+                      onClick={() => handleSendMessage("Hello! Test the chat functionality.")}
                       className="bg-brand hover:bg-brand-hover text-surface"
                     >
                       Test Chat Now
@@ -532,7 +514,7 @@ export default function ChatV2() {
                 {input.trim() && (
                   <Button
                     onClick={() => {
-                      sendMessage(input)
+                      handleSendMessage(input)
                       setInput('')
                     }}
                     disabled={isLoading || !input.trim()}
@@ -549,11 +531,17 @@ export default function ChatV2() {
               <p className="text-xs text-text-muted">
                 Chat V2 - Original pipeline connected to AI SDK backend
               </p>
+              {chatError && (
+                <p className="mt-2 text-xs text-red-500">
+                  {chatError.message}
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
       <UnifiedChatDebugPanel />
     </div>
+    </UnifiedChatActionsProvider>
   )
 }

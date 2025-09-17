@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Monitor, X, Activity, Eye, Zap, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useUnifiedChatActionsContext } from '@/src/core/chat/unified-chat-context'
 
 interface ScreenShareProps {
   onClose: () => void
@@ -12,6 +13,7 @@ interface ScreenShareProps {
 }
 
 export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
+  const chatActions = useUnifiedChatActionsContext()
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(true) // Start with auto-analysis enabled
   const [isConnecting, setIsConnecting] = useState(false)
@@ -90,7 +92,15 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         videoTrack.addEventListener("ended", () => {
           // Professional shutdown with feedback
           setIsAnalyzing(false)
-          onAnalysis?.(`**📊 Screen Share Session Ended**\n\nSession completed. Total analyses: ${analysisCount}`)
+          const endedMessage = `**📊 Screen Share Session Ended**\\n\\nSession completed. Total analyses: ${analysisCount}`
+          onAnalysis?.(endedMessage)
+          chatActions?.addMessage({
+            role: 'assistant',
+            content: endedMessage,
+            timestamp: new Date(),
+            type: 'multimodal',
+            metadata: { source: 'screen-share', event: 'ended', analyses: analysisCount },
+          })
           // Stop screen sharing inline to avoid circular dependency
           if (stream) {
             stream.getTracks().forEach((track) => track.stop())
@@ -107,16 +117,32 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       }
       
       // 🎉 Success feedback
-      onAnalysis?.("**🖥️ Screen Share Connected**\n\nAI analysis will begin automatically every 15 seconds. Use 'Analyze Now' for instant feedback.")
+      const connectionMessage = "**🖥️ Screen Share Connected**\\n\\nAI analysis will begin automatically every 15 seconds. Use 'Analyze Now' for instant feedback."
+      onAnalysis?.(connectionMessage)
+      chatActions?.addMessage({
+        role: 'assistant',
+        content: connectionMessage,
+        timestamp: new Date(),
+        type: 'multimodal',
+        metadata: { source: 'screen-share', event: 'connected' },
+      })
       
     } catch (error) {
       console.error("Screen share failed:", error)
-      onAnalysis?.("**⚠️ Screen Share Failed**\n\nUnable to access screen. Please check permissions and try again.")
+      const errorMessage = "**⚠️ Screen Share Failed**\\n\\nUnable to access screen. Please check permissions and try again."
+      onAnalysis?.(errorMessage)
+      chatActions?.addMessage({
+        role: 'assistant',
+        content: errorMessage,
+        timestamp: new Date(),
+        type: 'multimodal',
+        metadata: { source: 'screen-share', event: 'error' },
+      })
       onClose()
     } finally {
       setIsConnecting(false)
     }
-  }, [onClose, onAnalysis, analysisCount])
+  }, [onClose, onAnalysis, analysisCount, chatActions])
 
   // Stop screen share
   const stopScreenShare = useCallback(() => {
@@ -199,6 +225,17 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         
         const enhancedAnalysis = `**${triggerEmoji} Screen Analysis #${analysisCount + 1}** ${qualityBadge}\n\n${analysisText}\n\n*${context?.trigger === 'manual' ? 'Manual analysis' : 'Auto-analysis'} • ${new Date().toLocaleTimeString()} • Quality: ${connectionQuality}*`
         onAnalysis?.(enhancedAnalysis)
+        chatActions?.addMessage({
+          role: 'assistant',
+          content: enhancedAnalysis,
+          timestamp: new Date(),
+          type: 'multimodal',
+          metadata: {
+            source: 'screen-analysis',
+            trigger: context?.trigger || 'auto',
+            quality: connectionQuality,
+          },
+        })
         
         // 🎵 Subtle success feedback (visual only)
         if (context?.trigger === 'manual') {
@@ -212,11 +249,19 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
     } catch (err) {
       console.error("Screen analysis error:", err)
       // Intelligent error recovery
-      onAnalysis?.(`**⚠️ Analysis Error:** Unable to analyze screen content. ${err instanceof Error ? err.message : 'Unknown error'}`)
+      const errorMessage = `**⚠️ Analysis Error:** Unable to analyze screen content. ${err instanceof Error ? err.message : 'Unknown error'}`
+      onAnalysis?.(errorMessage)
+      chatActions?.addMessage({
+        role: 'assistant',
+        content: errorMessage,
+        timestamp: new Date(),
+        type: 'multimodal',
+        metadata: { source: 'screen-analysis', event: 'error' },
+      })
     } finally {
       setIsAnalyzing(false)
     }
-  }, [onAnalysis, sessionId])
+  }, [onAnalysis, sessionId, chatActions])
 
   // 🚀 PERFORMANCE-OPTIMIZED AUTO-ANALYSIS LOOP - Adaptive & Smart
   useEffect(() => {

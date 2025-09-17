@@ -7,6 +7,7 @@ import { Camera, CameraOff, Mic, MicOff, Circle, Square, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { useUnifiedChatActionsContext } from '@/src/core/chat/unified-chat-context'
 
 import type { WebcamCaptureProps } from "./WebcamCapture.types"
 
@@ -20,6 +21,7 @@ export function WebcamCapture({
   onAIAnalysis: _onAIAnalysis,
   onLog: _onLog,
 }: WebcamCaptureProps) {
+  const chatActions = useUnifiedChatActionsContext()
   // Intelligence context integration
   const sessionId = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
   const { toast } = useToast()
@@ -178,9 +180,23 @@ export function WebcamCapture({
               description: analysisText.slice(0, 100) + (analysisText.length > 100 ? '...' : ''),
             })
             _onAIAnalysis(analysisText)
+            chatActions?.addMessage({
+              role: 'assistant',
+              content: `📸 **Webcam Analysis**\\n\\n${analysisText}`,
+              timestamp: new Date(),
+              type: 'multimodal',
+              metadata: { source: 'webcam-analysis' },
+            })
           }
         } catch (error) {
           console.error('AI analysis failed:', error)
+          chatActions?.addMessage({
+            role: 'assistant',
+            content: `📸 **Webcam Analysis Failed**\\n\\n${error instanceof Error ? error.message : 'Unknown error'}` ,
+            timestamp: new Date(),
+            type: 'multimodal',
+            metadata: { source: 'webcam-analysis', error: true },
+          })
         }
       }
 
