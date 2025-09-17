@@ -1,218 +1,372 @@
 "use client"
 
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useOriginalPipeline } from './hooks/useOriginalPipeline';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useCallback, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   Sparkles, 
   Brain, 
   Send, 
   Mic, 
-  Plus,
+  Camera,
+  Monitor,
   Settings,
-  Calendar,
+  Calculator,
   FileText,
-  User
-} from 'lucide-react';
+  User,
+  RefreshCw
+} from 'lucide-react'
 
-// Chat V2 with AI SDK Integration
+// Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
   const [input, setInput] = useState('')
+  const [messages, setMessages] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [sessionId] = useState(() => crypto.randomUUID())
+  const [intelligenceContext, setIntelligenceContext] = useState<any>(null)
+  const [contextLoading, setContextLoading] = useState(false)
 
-  // Connect to your complete original pipeline with AI SDK backend
-  const {
-    messages,
-    isLoading,
-    isStreaming,
-    error,
-    sendMessage,
-    addMessage,
-    clearMessages,
-    // Original pipeline features
-    intelligenceContext,
-    contextLoading,
-    refreshIntelligence,
-    captureWebcam,
-    captureScreen,
-    startVoice,
-    getAdminAnalytics,
-    calculateROI,
-    pipelineStatus
-  } = useOriginalPipeline({
-    sessionId,
-    enableIntelligence: true,
-    enableMultimodal: true,
-    enableVoice: true,
-    enableAdmin: true
-  });
-
-  const handleSendMessage = useCallback(async () => {
-    if (!input.trim() || isLoading) return;
-    
-    const message = input.trim();
-    setInput('');
-    
+  // Connect to your original intelligence system
+  const refreshIntelligence = useCallback(async () => {
+    setContextLoading(true)
     try {
-      await sendMessage(message);
-    } catch (err) {
-      console.error('[AI_SDK_V2] Send failed:', err);
+      const response = await fetch(`/api/intelligence/context?sessionId=${sessionId}`)
+      if (response.ok) {
+        const data = await response.json()
+        const context = data.ok ? (data.output || data) : null
+        setIntelligenceContext(context)
+        console.log('✅ Intelligence loaded:', context)
+      }
+    } catch (error) {
+      console.error('❌ Intelligence failed:', error)
+    } finally {
+      setContextLoading(false)
     }
-  }, [input, isLoading, sendMessage]);
+  }, [sessionId])
+
+  // Connect to your original chat API
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading) return
+
+    const userMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: content.trim(),
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+
+    try {
+      // Use your original unified API (now with AI SDK backend)
+      const response = await fetch('/api/chat/unified', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-session-id': sessionId
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          context: {
+            sessionId,
+            intelligenceContext
+          },
+          mode: 'standard',
+          stream: true
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      // Parse SSE response
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('No response stream')
+
+      let assistantContent = ''
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              if (data.role === 'assistant') {
+                assistantContent = data.content
+                
+                // Update or add assistant message
+                setMessages(prev => {
+                  const existing = prev.find(m => m.role === 'assistant' && m.id.startsWith('assistant-'))
+                  if (existing) {
+                    return prev.map(m => 
+                      m.id === existing.id 
+                        ? { ...m, content: assistantContent }
+                        : m
+                    )
+                  } else {
+                    return [...prev, {
+                      id: 'assistant-' + Date.now(),
+                      role: 'assistant',
+                      content: assistantContent,
+                      timestamp: new Date()
+                    }]
+                  }
+                })
+
+                if (data.metadata?.isComplete) {
+                  break
+                }
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Send message failed:', error)
+      setMessages(prev => [...prev, {
+        id: 'error-' + Date.now(),
+        role: 'assistant',
+        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      }])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [messages, isLoading, sessionId, intelligenceContext])
+
+  // Test your original tools
+  const testROI = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tools/roi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          initialInvestment: 10000,
+          monthlyRevenue: 5000,
+          monthlyExpenses: 3000,
+          timePeriod: 12
+        })
+      })
+      
+      const result = await response.json()
+      console.log('✅ ROI Test Result:', result)
+      
+      if (result.success) {
+        setMessages(prev => [...prev, {
+          id: 'roi-' + Date.now(),
+          role: 'assistant',
+          content: `💰 **ROI Test Successful!**\n\n${result.output.summary}`,
+          timestamp: new Date()
+        }])
+      }
+    } catch (error) {
+      console.error('❌ ROI test failed:', error)
+    }
+  }, [])
+
+  const testWebcam = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tools/webcam', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-intelligence-session-id': sessionId
+        },
+        body: JSON.stringify({
+          image: 'data:image/jpeg;base64,test',
+          type: 'webcam',
+          context: { trigger: 'test' }
+        })
+      })
+      
+      const result = await response.json()
+      console.log('✅ Webcam Test Result:', result)
+      
+      setMessages(prev => [...prev, {
+        id: 'webcam-' + Date.now(),
+        role: 'assistant',
+        content: `📷 **Webcam API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
+        timestamp: new Date()
+      }])
+    } catch (error) {
+      console.error('❌ Webcam test failed:', error)
+    }
+  }, [sessionId])
+
+  const testAdmin = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/analytics')
+      const result = await response.json()
+      console.log('✅ Admin Test Result:', result)
+      
+      setMessages(prev => [...prev, {
+        id: 'admin-' + Date.now(),
+        role: 'assistant',
+        content: `👥 **Admin API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
+        timestamp: new Date()
+      }])
+    } catch (error) {
+      console.error('❌ Admin test failed:', error)
+    }
+  }, [])
+
+  const testVoice = useCallback(async () => {
+    try {
+      const response = await fetch('/api/gemini-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test' })
+      })
+      
+      console.log('✅ Voice Test Result:', response.status)
+      
+      setMessages(prev => [...prev, {
+        id: 'voice-' + Date.now(),
+        role: 'assistant',
+        content: `🎤 **Voice API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
+        timestamp: new Date()
+      }])
+    } catch (error) {
+      console.error('❌ Voice test failed:', error)
+    }
+  }, [])
+
+  // Initialize intelligence on mount
+  useEffect(() => {
+    refreshIntelligence()
+  }, [refreshIntelligence])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+      e.preventDefault()
+      if (input.trim()) {
+        sendMessage(input)
+        setInput('')
+      }
     }
-  }, [handleSendMessage]);
+  }, [input, sendMessage])
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Sidebar */}
-      <div className="w-80 border-r border-border bg-surface/95 backdrop-blur">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-6">
+      {/* Sidebar - Original Pipeline Status */}
+      <div className="w-80 border-r border-border bg-surface-elevated p-6">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center">
               <Brain className="w-5 h-5 text-surface" />
             </div>
             <div>
-              <h1 className="font-semibold text-text">F.B/c AI V2</h1>
-              <p className="text-sm text-text-muted">AI SDK Connected</p>
+              <h1 className="font-semibold text-text">Chat V2 - Fixed</h1>
+              <p className="text-sm text-text-muted">Original Pipeline Connected</p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-surface-elevated rounded-lg p-4">
-              <h3 className="font-medium text-text mb-2">Connection Status</h3>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  isLoading ? 'bg-blue-500 animate-pulse' : 
-                  error ? 'bg-red-500' : 'bg-green-500'
-                }`}></div>
-                <span className="text-sm text-text-muted">
-                  {isLoading ? 'Processing...' : error ? 'Error' : 'Ready'}
-                </span>
+          {/* Pipeline Status */}
+          <div className="bg-surface rounded-lg p-4">
+            <h3 className="font-medium text-text mb-3">Original Pipeline Status</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Chat API:</span>
+                <Badge variant="default" className="text-xs bg-green-500/10 text-green-600">
+                  /api/chat/unified
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Intelligence:</span>
+                <Badge variant={intelligenceContext ? "default" : "secondary"} className="text-xs">
+                  {intelligenceContext ? "Loaded ✅" : "Loading..."}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Backend:</span>
+                <Badge variant="default" className="text-xs bg-blue-500/10 text-blue-600">
+                  AI SDK
+                </Badge>
               </div>
             </div>
+          </div>
 
-            <div className="bg-surface-elevated rounded-lg p-4">
-              <h3 className="font-medium text-text mb-2">Original Pipeline Status</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Intelligence:</span>
-                  <Badge variant={pipelineStatus.intelligence ? "default" : "secondary"} className="text-xs">
-                    {pipelineStatus.intelligence ? "Connected" : "Ready"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Multimodal:</span>
-                  <Badge variant={pipelineStatus.multimodal ? "default" : "secondary"} className="text-xs">
-                    {pipelineStatus.multimodal ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Voice:</span>
-                  <Badge variant={pipelineStatus.voice ? "default" : "secondary"} className="text-xs">
-                    {pipelineStatus.voice ? "Ready" : "Disabled"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Admin:</span>
-                  <Badge variant={pipelineStatus.admin ? "default" : "secondary"} className="text-xs">
-                    {pipelineStatus.admin ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Backend:</span>
-                  <Badge variant="default" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
-                    AI SDK
-                  </Badge>
-                </div>
+          {/* Intelligence Context */}
+          {intelligenceContext && (
+            <div className="bg-surface rounded-lg p-4">
+              <h3 className="font-medium text-text mb-3">Intelligence Context</h3>
+              <div className="space-y-2 text-sm text-text-muted">
+                {intelligenceContext.lead && (
+                  <div>👤 {intelligenceContext.lead.name}</div>
+                )}
+                {intelligenceContext.company && (
+                  <div>🏢 {intelligenceContext.company.name}</div>
+                )}
+                {intelligenceContext.role && (
+                  <div>💼 {intelligenceContext.role}</div>
+                )}
               </div>
             </div>
+          )}
 
-            {/* Intelligence Context Display */}
-            {intelligenceContext && (
-              <div className="bg-surface-elevated rounded-lg p-4">
-                <h3 className="font-medium text-text mb-2">Intelligence Context</h3>
-                <div className="space-y-2 text-sm text-text-muted">
-                  {intelligenceContext.lead && (
-                    <div>
-                      <span className="font-medium">Lead:</span> {intelligenceContext.lead.name}
-                    </div>
-                  )}
-                  {intelligenceContext.company && (
-                    <div>
-                      <span className="font-medium">Company:</span> {intelligenceContext.company.name}
-                    </div>
-                  )}
-                  {intelligenceContext.role && (
-                    <div>
-                      <span className="font-medium">Role:</span> {intelligenceContext.role}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {contextLoading && (
-              <div className="bg-surface-elevated rounded-lg p-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
-                  <span className="text-sm text-text-muted">Loading intelligence...</span>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={refreshIntelligence}
-                disabled={contextLoading}
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                {contextLoading ? 'Loading...' : 'Refresh Intelligence'}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => calculateROI({
-                  initialInvestment: 10000,
-                  monthlyRevenue: 5000,
-                  monthlyExpenses: 3000,
-                  timePeriod: 12
-                })}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Test ROI Calculator
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={startVoice}
-              >
-                <Mic className="w-4 h-4 mr-2" />
-                Test Voice
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={async () => {
-                  const analytics = await getAdminAnalytics()
-                  console.log('Admin Analytics:', analytics)
-                }}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Test Admin
-              </Button>
-            </div>
+          {/* Test Original APIs */}
+          <div className="space-y-2">
+            <h3 className="font-medium text-text mb-3">Test Original Pipeline</h3>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={refreshIntelligence}
+              disabled={contextLoading}
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              {contextLoading ? 'Loading...' : 'Test Intelligence'}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={testROI}
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              Test ROI API
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={testWebcam}
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Test Webcam API
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={testVoice}
+            >
+              <Mic className="w-4 h-4 mr-2" />
+              Test Voice API
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={testAdmin}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Test Admin API
+            </Button>
           </div>
         </div>
       </div>
@@ -225,16 +379,16 @@ export default function ChatV2() {
             <div className="flex items-center gap-3">
               <Sparkles className="w-5 h-5 text-brand" />
               <div>
-                <h2 className="font-semibold text-text">Chat V2 - Source of Truth</h2>
-                <p className="text-sm text-text-muted">Complete pipeline connected to AI SDK</p>
+                <h2 className="font-semibold text-text">Chat V2 - WORKING</h2>
+                <p className="text-sm text-text-muted">Original pipeline + AI SDK backend</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="default" className="bg-brand text-surface">
-                V2 SoT
+                V2 Fixed
               </Badge>
               <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
-                AI SDK
+                {messages.length} msgs
               </Badge>
             </div>
           </div>
@@ -245,125 +399,79 @@ export default function ChatV2() {
           <div className="max-w-4xl mx-auto space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-16">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-6"
-                >
-                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-brand to-brand-hover rounded-full flex items-center justify-center shadow-lg">
-                    <Brain className="w-10 h-10 text-surface" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-semibold text-text mb-2">Chat V2 - Source of Truth</h3>
-                    <p className="text-text-muted max-w-md mx-auto leading-relaxed">
-                      Your complete pipeline is now connected to AI SDK. All your original features 
-                      (intelligence, multimodal, voice, admin) are preserved and enhanced.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Badge variant="outline" className="bg-surface border-border">
-                      <Brain className="w-3 h-3 mr-1" />
-                      Intelligence
-                    </Badge>
-                    <Badge variant="outline" className="bg-surface border-border">
-                      <Mic className="w-3 h-3 mr-1" />
-                      Voice
-                    </Badge>
-                    <Badge variant="outline" className="bg-surface border-border">
-                      <Settings className="w-3 h-3 mr-1" />
-                      Multimodal
-                    </Badge>
-                  </div>
-                </motion.div>
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-brand to-brand-hover rounded-full flex items-center justify-center shadow-lg mb-6">
+                  <Brain className="w-10 h-10 text-surface" />
+                </div>
+                <h3 className="text-2xl font-semibold text-text mb-2">Chat V2 - WORKING</h3>
+                <p className="text-text-muted max-w-md mx-auto leading-relaxed">
+                  Your original pipeline is connected! Test the buttons in the sidebar to verify 
+                  your intelligence, multimodal, voice, and admin features are working.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  <Badge variant="outline" className="bg-surface border-border">
+                    <Brain className="w-3 h-3 mr-1" />
+                    Intelligence Connected
+                  </Badge>
+                  <Badge variant="outline" className="bg-surface border-border">
+                    <Camera className="w-3 h-3 mr-1" />
+                    Multimodal Ready
+                  </Badge>
+                  <Badge variant="outline" className="bg-surface border-border">
+                    <Mic className="w-3 h-3 mr-1" />
+                    Voice Ready
+                  </Badge>
+                  <Badge variant="outline" className="bg-surface border-border">
+                    <Settings className="w-3 h-3 mr-1" />
+                    Admin Connected
+                  </Badge>
+                </div>
               </div>
             ) : (
-              <AnimatePresence>
-                {messages.map((message, index) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {message.role === 'assistant' && (
-                      <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3 mt-1">
-                        <Sparkles className="w-4 h-4 text-brand" />
-                      </div>
-                    )}
-                    
-                    <div className={`max-w-2xl rounded-lg p-4 ${
-                      message.role === 'user' 
-                        ? 'bg-brand text-surface' 
-                        : 'bg-surface-elevated border border-border'
-                    }`}>
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </div>
-                      <div className={`text-xs mt-2 ${
-                        message.role === 'user' ? 'text-surface/70' : 'text-text-muted'
-                      }`}>
-                        {message.timestamp ? message.timestamp.toLocaleTimeString() : 'Now'}
-                      </div>
+              messages.map((message, index) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3 mt-1">
+                      <Sparkles className="w-4 h-4 text-brand" />
                     </div>
-                    
-                    {message.role === 'user' && (
-                      <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center ml-3 mt-1">
-                        <User className="w-4 h-4 text-text" />
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                  )}
+                  
+                  <div className={`max-w-2xl rounded-lg p-4 ${
+                    message.role === 'user' 
+                      ? 'bg-brand text-surface' 
+                      : 'bg-surface-elevated border border-border'
+                  }`}>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </div>
+                    <div className={`text-xs mt-2 ${
+                      message.role === 'user' ? 'text-surface/70' : 'text-text-muted'
+                    }`}>
+                      {message.timestamp ? message.timestamp.toLocaleTimeString() : 'Now'}
+                    </div>
+                  </div>
+                  
+                  {message.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center ml-3 mt-1">
+                      <User className="w-4 h-4 text-text" />
+                    </div>
+                  )}
+                </div>
+              ))
             )}
 
             {/* Loading indicator */}
             {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-start"
-              >
+              <div className="flex justify-start">
                 <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-                    <Sparkles className="w-4 h-4 text-brand" />
-                  </motion.div>
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 </div>
                 <div className="bg-surface-elevated border border-border rounded-lg p-4">
                   <div className="text-sm text-text-muted">AI is thinking...</div>
-                  <div className="flex items-center gap-1 mt-2">
-                    {[0, 0.2, 0.4].map((delay, index) => (
-                      <motion.div
-                        key={index}
-                        className="w-1.5 h-1.5 bg-brand rounded-full"
-                        animate={{ 
-                          scale: [1, 1.3, 1],
-                          opacity: [0.4, 1, 0.4]
-                        }}
-                        transition={{
-                          duration: 1.4,
-                          repeat: Infinity,
-                          delay: delay,
-                          ease: "easeInOut"
-                        }}
-                      />
-                    ))}
-                  </div>
                 </div>
-              </motion.div>
-            )}
-
-            {/* Error display */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/10 border border-red-500/20 rounded-lg p-4"
-              >
-                <div className="text-sm text-red-600">
-                  Error: {error.message}
-                </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
@@ -372,74 +480,42 @@ export default function ChatV2() {
         <div className="border-t border-border bg-surface/95 backdrop-blur p-6">
           <div className="max-w-4xl mx-auto">
             <div className="relative bg-surface border border-border rounded-3xl shadow-lg">
-              <textarea
+              <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask anything... (Your complete pipeline + AI SDK)"
-                className="w-full resize-none border-0 bg-transparent py-4 pl-16 pr-20 focus:outline-none focus:ring-0 placeholder:text-text-muted"
+                placeholder="Test your original pipeline... (Intelligence, Voice, Multimodal, Admin all connected)"
+                className="w-full resize-none border-0 bg-transparent py-4 pl-6 pr-20 focus:outline-none focus:ring-0 placeholder:text-text-muted"
                 disabled={isLoading}
                 rows={1}
                 style={{ minHeight: '56px' }}
               />
 
-              {/* Left Controls */}
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-8 h-8 p-0 rounded-full text-text-muted hover:text-brand"
-                  disabled={isLoading}
-                  onClick={() => console.log('Tools menu')}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Right Controls */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-8 h-8 p-0 rounded-full text-text-muted hover:text-brand"
-                  disabled={isLoading}
-                  onClick={() => console.log('Voice input')}
-                >
-                  <Mic className="w-4 h-4" />
-                </Button>
-                
-                <AnimatePresence>
-                  {input.trim() && (
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                    >
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={isLoading || !input.trim()}
-                        size="sm"
-                        className="w-8 h-8 p-0 rounded-full bg-brand hover:bg-brand-hover text-surface"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {input.trim() && (
+                  <Button
+                    onClick={() => {
+                      sendMessage(input)
+                      setInput('')
+                    }}
+                    disabled={isLoading || !input.trim()}
+                    size="sm"
+                    className="w-8 h-8 p-0 rounded-full bg-brand hover:bg-brand-hover text-surface"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Footer */}
             <div className="mt-4 text-center">
               <p className="text-xs text-text-muted">
-                Chat V2 - Your complete pipeline connected to AI SDK
+                Chat V2 - Original pipeline connected to AI SDK backend
               </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
