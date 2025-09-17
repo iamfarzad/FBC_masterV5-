@@ -164,16 +164,26 @@ export default function ChatV2() {
       const result = await response.json()
       console.log('✅ ROI Test Result:', result)
       
-      if (result.success) {
-        setMessages(prev => [...prev, {
-          id: 'roi-' + Date.now(),
-          role: 'assistant',
-          content: `💰 **ROI Test Successful!**\n\n${result.output.summary}`,
-          timestamp: new Date()
-        }])
-      }
+      // Handle different response formats
+      const summary = result?.output?.summary || 
+                     result?.summary || 
+                     result?.message || 
+                     `ROI: ${result?.roi || 'N/A'}%, Payback: ${result?.paybackPeriod || 'N/A'} months`
+      
+      setMessages(prev => [...prev, {
+        id: 'roi-' + Date.now(),
+        role: 'assistant',
+        content: `💰 **ROI API Test Result**\n\nStatus: ${response.ok ? 'Connected ✅' : 'Failed ❌'}\nResponse: ${summary}`,
+        timestamp: new Date()
+      }])
     } catch (error) {
       console.error('❌ ROI test failed:', error)
+      setMessages(prev => [...prev, {
+        id: 'roi-error-' + Date.now(),
+        role: 'assistant',
+        content: `💰 **ROI API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date()
+      }])
     }
   }, [])
 
@@ -203,6 +213,12 @@ export default function ChatV2() {
       }])
     } catch (error) {
       console.error('❌ Webcam test failed:', error)
+      setMessages(prev => [...prev, {
+        id: 'webcam-error-' + Date.now(),
+        role: 'assistant',
+        content: `📷 **Webcam API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date()
+      }])
     }
   }, [sessionId])
 
@@ -220,6 +236,12 @@ export default function ChatV2() {
       }])
     } catch (error) {
       console.error('❌ Admin test failed:', error)
+      setMessages(prev => [...prev, {
+        id: 'admin-error-' + Date.now(),
+        role: 'assistant',
+        content: `👥 **Admin API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date()
+      }])
     }
   }, [])
 
@@ -241,6 +263,12 @@ export default function ChatV2() {
       }])
     } catch (error) {
       console.error('❌ Voice test failed:', error)
+      setMessages(prev => [...prev, {
+        id: 'voice-error-' + Date.now(),
+        role: 'assistant',
+        content: `🎤 **Voice API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
+        timestamp: new Date()
+      }])
     }
   }, [])
 
@@ -407,7 +435,15 @@ export default function ChatV2() {
                   Your original pipeline is connected! Test the buttons in the sidebar to verify 
                   your intelligence, multimodal, voice, and admin features are working.
                 </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => sendMessage("Hello! Test the chat functionality.")}
+                      className="bg-brand hover:bg-brand-hover text-surface"
+                    >
+                      Test Chat Now
+                    </Button>
+                  </div>
+                  <div className="mt-6 flex flex-wrap justify-center gap-2">
                   <Badge variant="outline" className="bg-surface border-border">
                     <Brain className="w-3 h-3 mr-1" />
                     Intelligence Connected
