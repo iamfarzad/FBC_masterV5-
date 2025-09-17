@@ -413,6 +413,27 @@ export default function ChatV2() {
     })
   }, [addMessage])
 
+
+  const handleDocumentUpload = useCallback(() => {
+    addMessage({
+      role: 'assistant',
+      content: '📄 Document uploads will return after the AI SDK rollout. Please send files to contact@farzadbayat.com for now.',
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { source: 'document', info: true },
+    })
+  }, [addMessage])
+
+  const handleImageUpload = useCallback(() => {
+    addMessage({
+      role: 'assistant',
+      content: '🖼️ Image analysis is being reconnected to the new store. Hang tight while we finish the migration.',
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { source: 'image', info: true },
+    })
+  }, [addMessage])
+
   const handleVoiceAccepted = useCallback((transcript: string) => {
     setIsVoiceOverlayOpen(false)
     void handleSendMessage(transcript)
@@ -537,6 +558,11 @@ export default function ChatV2() {
             setInput('')
           }}
           onVoiceClick={() => setIsVoiceOverlayOpen(true)}
+          onWebcamClick={() => setIsWebcamOpen(true)}
+          onScreenShareClick={() => setIsScreenShareOpen(true)}
+          onDocumentUpload={handleDocumentUpload}
+          onImageUpload={handleImageUpload}
+          onROI={testROI}
           isLoading={isLoading}
           voiceMode={isVoiceOverlayOpen}
         />

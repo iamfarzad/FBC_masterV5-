@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Mic, Plus } from 'lucide-react';
+import { Send, Mic } from 'lucide-react';
+import { ToolMenu } from '@/components/chat/ToolMenu';
 
 interface CleanInputFieldProps {
   value: string;
@@ -16,6 +17,9 @@ interface CleanInputFieldProps {
   onScreenShareClick?: () => void;
   onFileUpload?: () => void;
   onCanvasClick?: () => void;
+  onDocumentUpload?: () => void;
+  onImageUpload?: () => void;
+  onROI?: () => void;
   isLoading: boolean;
   voiceMode?: boolean;
   showVoiceOverlay?: boolean;
@@ -29,6 +33,11 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
   onChange,
   onSend,
   onVoiceClick,
+  onWebcamClick,
+  onScreenShareClick,
+  onDocumentUpload,
+  onImageUpload,
+  onROI,
   isLoading,
   voiceMode = false,
   className = ""
@@ -60,17 +69,16 @@ export const CleanInputField = React.memo<CleanInputFieldProps>(({
         
         {/* Left Controls */}
         <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => console.log('Tools menu')}
-              className="w-10 h-10 p-0 rounded-2xl text-text-muted hover:text-brand"
-              disabled={isLoading}
-            >
-              <Plus className="w-5 h-5" />
-            </Button>
-          </motion.div>
+          <ToolMenu
+            disabled={isLoading}
+            {...(onDocumentUpload ? { onUploadDocument: onDocumentUpload } : {})}
+            {...(onImageUpload ? { onUploadImage: onImageUpload } : {})}
+            {...(onWebcamClick ? { onWebcam: onWebcamClick } : {})}
+            {...(onScreenShareClick ? { onScreenShare: onScreenShareClick } : {})}
+            {...(onROI ? { onROI } : {})}
+            comingSoon={['document', 'image']}
+            className="text-text-muted hover:text-brand"
+          />
         </div>
 
         {/* Right Controls */}
