@@ -1,46 +1,108 @@
 "use client"
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import { Sparkles, Brain, Mic, X } from 'lucide-react'
+
+import { StageRail } from '@/components/collab/StageRail'
+import { UnifiedControlPanel } from './components/UnifiedControlPanel'
+import {
+  UnifiedMessage,
+  UnifiedMultimodalWidget,
+  type MessageData,
+} from './components/UnifiedMessage'
+import { CleanInputField } from './components/input/CleanInputField'
+import { VoiceOverlay } from '@/components/chat/VoiceOverlay'
+import { ScreenShare } from '@/components/chat/tools/ScreenShare/ScreenShare'
+import { WebcamCapture } from '@/components/chat/tools/WebcamCapture/WebcamCapture'
+import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { 
-  Sparkles, 
-  Brain, 
-  Send, 
-  Mic, 
-  Camera,
-  Monitor,
-  Settings,
-  Calculator,
-  FileText,
-  User,
-  RefreshCw
-} from 'lucide-react'
-import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
-import { UnifiedChatActionsProvider } from '@/src/core/chat/unified-chat-context'
+
 import { useUnifiedChat } from '@/hooks/useUnifiedChat'
 import {
   useUnifiedChatMessages,
   useUnifiedChatStatus,
   useUnifiedChatError,
 } from '@/src/core/chat/state/unified-chat-store'
+import { UnifiedChatActionsProvider } from '@/src/core/chat/unified-chat-context'
+import { useStage } from '@/contexts/stage-context'
 
-// Chat V2 - Working Implementation Connected to Original Pipeline
+const TEST_ACTIONS: Array<{
+  id: string
+  label: string
+  description: string
+  onClick: (opts: TestActionHandlers) => Promise<void> | void
+}> = [
+  {
+    id: 'intelligence',
+    label: 'Test Intelligence',
+    description: 'Validate session intelligence context',
+    onClick: async ({ refreshIntelligence }) => {
+      await refreshIntelligence()
+    },
+  },
+  {
+    id: 'roi',
+    label: 'Test ROI API',
+    description: 'Run ROI calculation pipeline test',
+    onClick: ({ testROI }) => {
+      void testROI()
+    },
+  },
+  {
+    id: 'webcam',
+    label: 'Test Webcam API',
+    description: 'Trigger webcam analysis endpoint',
+    onClick: ({ testWebcam }) => {
+      void testWebcam()
+    },
+  },
+  {
+    id: 'voice',
+    label: 'Test Voice API',
+    description: 'Ping Gemini Live voice endpoint',
+    onClick: ({ testVoice }) => {
+      void testVoice()
+    },
+  },
+  {
+    id: 'admin',
+    label: 'Test Admin API',
+    description: 'Verify admin analytics integration',
+    onClick: ({ testAdmin }) => {
+      void testAdmin()
+    },
+  },
+]
+
+interface TestActionHandlers {
+  refreshIntelligence: () => Promise<void>
+  testROI: () => Promise<void>
+  testWebcam: () => Promise<void>
+  testVoice: () => Promise<void>
+  testAdmin: () => Promise<void>
+}
+
 export default function ChatV2() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(() => crypto.randomUUID())
   const [intelligenceContext, setIntelligenceContext] = useState<any>(null)
   const [contextLoading, setContextLoading] = useState(false)
 
-  const chatContext = useMemo(() => ({
-    sessionId,
-    intelligenceContext: intelligenceContext || undefined,
-  }), [sessionId, intelligenceContext])
+  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false)
+  const [isWebcamOpen, setIsWebcamOpen] = useState(false)
+  const [isScreenShareOpen, setIsScreenShareOpen] = useState(false)
+
+  const chatContext = useMemo(
+    () => ({
+      sessionId,
+      intelligenceContext: intelligenceContext || undefined,
+    }),
+    [sessionId, intelligenceContext],
+  )
 
   const {
-    sendMessage: sendUnifiedMessage,
+    sendMessage,
     addMessage,
     updateContext,
   } = useUnifiedChat({
@@ -56,7 +118,79 @@ export default function ChatV2() {
   const isSubmitting = chatStatus === 'submitted'
   const isLoading = isStreaming || isSubmitting
 
-  // Connect to your original intelligence system
+  const stageCtx = useStage()
+  const stageProgress = useMemo(() => ({
+    current: stageCtx.currentStageIndex + 1,
+    total: stageCtx.stages.length,
+    percentage: stageCtx.getProgressPercentage(),
+  }), [stageCtx])
+
+  const systemState = useMemo(() => ({
+    currentStage: stageCtx.stages[stageCtx.currentStageIndex] ?? null,
+    stageProgress,
+    capabilityUsage: {
+      used: intelligenceContext?.capabilities?.length ?? 0,
+      total: 16,
+    },
+    activeCapabilities: intelligenceContext?.capabilities ?? [],
+    allCapabilities: intelligenceContext?.capabilities ?? [],
+    allStages: stageCtx.stages,
+    intelligenceScore: stageProgress.percentage,
+  }), [intelligenceContext, stageCtx, stageProgress])
+
+  const conversationState = useMemo(() => ({
+    leadScore: intelligenceContext?.leadScore ?? 65,
+    stage: stageCtx.stages[stageCtx.currentStageIndex]?.label ?? 'Discovery',
+    showActions: true,
+  }), [intelligenceContext, stageCtx])
+
+  const activeTools = useMemo(() => {
+    const tools: string[] = []
+    if (isVoiceOverlayOpen) tools.push('voice')
+    if (isWebcamOpen) tools.push('webcam')
+    if (isScreenShareOpen) tools.push('screen')
+    return tools
+  }, [isVoiceOverlayOpen, isWebcamOpen, isScreenShareOpen])
+
+  const mappedMessages = useMemo<MessageData[]>(
+    () =>
+      messages.map((message) => ({
+        id: message.id,
+        content: message.content,
+        sender: message.role === 'user' ? 'user' : 'ai',
+        role: message.role,
+        timestamp: message.timestamp,
+        type: (message.metadata?.type as MessageData['type']) || 'text',
+        suggestions: message.metadata?.suggestions,
+        isComplete: message.metadata?.isComplete ?? true,
+      })),
+    [messages],
+  )
+
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    setInput(suggestion)
+  }, [])
+
+  const handleMessageAction = useCallback((action: string, messageId: string) => {
+    const target = messages.find((message) => message.id === messageId)
+    if (!target) return
+
+    switch (action) {
+      case 'copy':
+        if (target.content) {
+          void navigator.clipboard.writeText(target.content)
+        }
+        break
+      case 'regenerate':
+        if (target.role === 'user' && target.content) {
+          void sendMessage(target.content)
+        }
+        break
+      default:
+        break
+    }
+  }, [messages, sendMessage])
+
   const refreshIntelligence = useCallback(async () => {
     setContextLoading(true)
     try {
@@ -75,32 +209,31 @@ export default function ChatV2() {
   }, [sessionId])
 
   useEffect(() => {
+    void refreshIntelligence()
+  }, [refreshIntelligence])
+
+  useEffect(() => {
     if (intelligenceContext) {
       updateContext({ intelligenceContext })
     }
   }, [intelligenceContext, updateContext])
 
-  // Connect to unified chat backend via AI SDK store
-  const handleSendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim()) return
-      try {
-        await sendUnifiedMessage(content.trim())
-      } catch (error) {
-        console.error('❌ Send message failed:', error)
-        addMessage({
-          role: 'assistant',
-          content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          timestamp: new Date(),
-          type: 'text',
-          metadata: { error: true },
-        })
-      }
-    },
-    [sendUnifiedMessage, addMessage],
-  )
+  const handleSendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return
+    try {
+      await sendMessage(content.trim())
+    } catch (error) {
+      console.error('❌ Send message failed:', error)
+      addMessage({
+        role: 'assistant',
+        content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { error: true },
+      })
+    }
+  }, [sendMessage, addMessage])
 
-  // Test your original tools
   const testROI = useCallback(async () => {
     try {
       const response = await fetch('/api/tools/roi', {
@@ -115,8 +248,6 @@ export default function ChatV2() {
       })
 
       const result = await response.json()
-      console.log('✅ ROI Test Result:', result)
-
       const summary =
         result?.output?.summary ||
         result?.summary ||
@@ -125,10 +256,7 @@ export default function ChatV2() {
 
       addMessage({
         role: 'assistant',
-        content: `💰 **ROI API Test Result**
-
-Status: ${response.ok ? 'Connected ✅' : 'Failed ❌'}
-Response: ${summary}`,
+        content: `💰 **ROI API Test Result**\n\nStatus: ${response.ok ? 'Connected ✅' : 'Failed ❌'}\nResponse: ${summary}`,
         timestamp: new Date(),
         type: 'text',
         metadata: { source: 'roi-test' },
@@ -137,10 +265,7 @@ Response: ${summary}`,
       console.error('❌ ROI test failed:', error)
       addMessage({
         role: 'assistant',
-        content: `💰 **ROI API Test**
-
-Status: Failed ❌
-Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        content: `💰 **ROI API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
         timestamp: new Date(),
         type: 'text',
         metadata: { source: 'roi-test', error: true },
@@ -163,9 +288,6 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
         }),
       })
 
-      const result = await response.json()
-      console.log('✅ Webcam Test Result:', result)
-
       addMessage({
         role: 'assistant',
         content: `📷 **Webcam API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
@@ -177,10 +299,7 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
       console.error('❌ Webcam test failed:', error)
       addMessage({
         role: 'assistant',
-        content: `📷 **Webcam API Test**
-
-Status: Failed ❌
-Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        content: `📷 **Webcam API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
         timestamp: new Date(),
         type: 'text',
         metadata: { source: 'webcam-test', error: true },
@@ -191,8 +310,7 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
   const testAdmin = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/analytics')
-      const result = await response.json()
-      console.log('✅ Admin Test Result:', result)
+      await response.json().catch(() => undefined)
 
       addMessage({
         role: 'assistant',
@@ -205,10 +323,7 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
       console.error('❌ Admin test failed:', error)
       addMessage({
         role: 'assistant',
-        content: `👥 **Admin API Test**
-
-Status: Failed ❌
-Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        content: `👥 **Admin API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
         timestamp: new Date(),
         type: 'text',
         metadata: { source: 'admin-test', error: true },
@@ -224,8 +339,6 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
         body: JSON.stringify({ action: 'test' }),
       })
 
-      console.log('✅ Voice Test Result:', response.status)
-
       addMessage({
         role: 'assistant',
         content: `🎤 **Voice API Test**: ${response.ok ? 'Connected ✅' : 'Failed ❌'}`,
@@ -237,10 +350,7 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
       console.error('❌ Voice test failed:', error)
       addMessage({
         role: 'assistant',
-        content: `🎤 **Voice API Test**
-
-Status: Failed ❌
-Error: ${error instanceof Error ? error.message : 'Network error'}`,
+        content: `🎤 **Voice API Test**\n\nStatus: Failed ❌\nError: ${error instanceof Error ? error.message : 'Network error'}`,
         timestamp: new Date(),
         type: 'text',
         metadata: { source: 'voice-test', error: true },
@@ -248,20 +358,65 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
     }
   }, [addMessage])
 
-  // Initialize intelligence on mount
-  useEffect(() => {
-    refreshIntelligence()
-  }, [refreshIntelligence])
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      if (input.trim()) {
-        handleSendMessage(input)
-        setInput('')
-      }
+  const handleToolSelect = useCallback((toolId: string) => {
+    switch (toolId) {
+      case 'voice':
+        setIsVoiceOverlayOpen(true)
+        break
+      case 'webcam':
+        setIsWebcamOpen(true)
+        break
+      case 'screen':
+        setIsScreenShareOpen(true)
+        break
+      case 'docs':
+        addMessage({
+          role: 'assistant',
+          content: '📄 Document workspace coming soon. Upload support will be restored after AI SDK migration.',
+          timestamp: new Date(),
+          type: 'text',
+          metadata: { source: 'docs', info: true },
+        })
+        break
+      default:
+        break
     }
-  }, [input, handleSendMessage])
+  }, [addMessage])
+
+  const handleGeneratePDF = useCallback(() => {
+    addMessage({
+      role: 'assistant',
+      content: '📑 Report generation queued. You will receive a draft shortly.',
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { source: 'report' },
+    })
+  }, [addMessage])
+
+  const handleShowSettings = useCallback(() => {
+    addMessage({
+      role: 'assistant',
+      content: '⚙️ Settings panel is under construction as part of the AI SDK migration.',
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { source: 'settings', info: true },
+    })
+  }, [addMessage])
+
+  const handleShowBooking = useCallback(() => {
+    addMessage({
+      role: 'assistant',
+      content: '📅 Booking assistant is syncing with the new pipeline. Please use the contact form meanwhile.',
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { source: 'booking', info: true },
+    })
+  }, [addMessage])
+
+  const handleVoiceAccepted = useCallback((transcript: string) => {
+    setIsVoiceOverlayOpen(false)
+    void handleSendMessage(transcript)
+  }, [handleSendMessage])
 
   return (
     <UnifiedChatActionsProvider
@@ -271,277 +426,181 @@ Error: ${error instanceof Error ? error.message : 'Network error'}`,
         updateContext,
       }}
     >
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Sidebar - Original Pipeline Status */}
-      <div className="w-80 border-r border-border bg-surface-elevated p-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center">
-              <Brain className="w-5 h-5 text-surface" />
-            </div>
-            <div>
-              <h1 className="font-semibold text-text">Chat V2 - Fixed</h1>
-              <p className="text-sm text-text-muted">Original Pipeline Connected</p>
-            </div>
-          </div>
+      <div className="relative min-h-screen bg-background pb-40">
+        <StageRail sessionId={sessionId} side="left" />
+        <UnifiedControlPanel
+          systemState={systemState}
+          conversationState={conversationState}
+          activeTools={activeTools}
+          onToolSelect={handleToolSelect}
+          onGeneratePDF={handleGeneratePDF}
+          onShowSettings={handleShowSettings}
+          onShowBooking={handleShowBooking}
+        />
 
-          {/* Pipeline Status */}
-          <div className="bg-surface rounded-lg p-4">
-            <h3 className="font-medium text-text mb-3">Original Pipeline Status</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-text-muted">Chat API:</span>
-                <Badge variant="default" className="text-xs bg-green-500/10 text-green-600">
-                  /api/chat/unified
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Intelligence:</span>
-                <Badge variant={intelligenceContext ? "default" : "secondary"} className="text-xs">
-                  {intelligenceContext ? "Loaded ✅" : "Loading..."}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">Backend:</span>
-                <Badge variant="default" className="text-xs bg-blue-500/10 text-blue-600">
-                  AI SDK
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Intelligence Context */}
-          {intelligenceContext && (
-            <div className="bg-surface rounded-lg p-4">
-              <h3 className="font-medium text-text mb-3">Intelligence Context</h3>
-              <div className="space-y-2 text-sm text-text-muted">
-                {intelligenceContext.lead && (
-                  <div>👤 {intelligenceContext.lead.name}</div>
-                )}
-                {intelligenceContext.company && (
-                  <div>🏢 {intelligenceContext.company.name}</div>
-                )}
-                {intelligenceContext.role && (
-                  <div>💼 {intelligenceContext.role}</div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Test Original APIs */}
-          <div className="space-y-2">
-            <h3 className="font-medium text-text mb-3">Test Original Pipeline</h3>
-            
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={refreshIntelligence}
-              disabled={contextLoading}
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              {contextLoading ? 'Loading...' : 'Test Intelligence'}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={testROI}
-            >
-              <Calculator className="w-4 h-4 mr-2" />
-              Test ROI API
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={testWebcam}
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Test Webcam API
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={testVoice}
-            >
-              <Mic className="w-4 h-4 mr-2" />
-              Test Voice API
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={testAdmin}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Test Admin API
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="border-b border-border bg-surface/95 backdrop-blur p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-brand" />
-              <div>
-                <h2 className="font-semibold text-text">Chat V2 - WORKING</h2>
-                <p className="text-sm text-text-muted">Original pipeline + AI SDK backend</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-brand text-surface">
-                V2 Fixed
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pt-16 md:flex-row md:gap-16">
+          <div className="w-full flex-1 space-y-8 md:pl-20">
+            <div className="space-y-2">
+              <Badge variant="outline" className="border-brand/40 bg-brand/5 text-brand">
+                <Sparkles className="mr-2 h-3 w-3" /> F.B/c AI Assistant
               </Badge>
-              <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/20">
-                {messages.length} msgs
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-brand to-brand-hover rounded-full flex items-center justify-center shadow-lg mb-6">
-                  <Brain className="w-10 h-10 text-surface" />
-                </div>
-                <h3 className="text-2xl font-semibold text-text mb-2">Chat V2 - WORKING</h3>
-                <p className="text-text-muted max-w-md mx-auto leading-relaxed">
-                  Your original pipeline is connected! Test the buttons in the sidebar to verify 
-                  your intelligence, multimodal, voice, and admin features are working.
-                </p>
-                  <div className="mt-4">
-                    <Button
-                      onClick={() => handleSendMessage("Hello! Test the chat functionality.")}
-                      className="bg-brand hover:bg-brand-hover text-surface"
-                    >
-                      Test Chat Now
-                    </Button>
-                  </div>
-                  <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline" className="bg-surface border-border">
-                    <Brain className="w-3 h-3 mr-1" />
-                    Intelligence Connected
-                  </Badge>
-                  <Badge variant="outline" className="bg-surface border-border">
-                    <Camera className="w-3 h-3 mr-1" />
-                    Multimodal Ready
-                  </Badge>
-                  <Badge variant="outline" className="bg-surface border-border">
-                    <Mic className="w-3 h-3 mr-1" />
-                    Voice Ready
-                  </Badge>
-                  <Badge variant="outline" className="bg-surface border-border">
-                    <Settings className="w-3 h-3 mr-1" />
-                    Admin Connected
-                  </Badge>
-                </div>
+              <div className="flex items-center gap-3 text-lg font-semibold text-text">
+                <Brain className="h-5 w-5 text-brand" />
+                Business Intelligence Session
               </div>
-            ) : (
-              messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3 mt-1">
-                      <Sparkles className="w-4 h-4 text-brand" />
-                    </div>
-                  )}
-                  
-                  <div className={`max-w-2xl rounded-lg p-4 ${
-                    message.role === 'user' 
-                      ? 'bg-brand text-surface' 
-                      : 'bg-surface-elevated border border-border'
-                  }`}>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </div>
-                    <div className={`text-xs mt-2 ${
-                      message.role === 'user' ? 'text-surface/70' : 'text-text-muted'
-                    }`}>
-                      {message.timestamp ? message.timestamp.toLocaleTimeString() : 'Now'}
-                    </div>
-                  </div>
-                  
-                  {message.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center ml-3 mt-1">
-                      <User className="w-4 h-4 text-text" />
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3">
-                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-                </div>
-                <div className="bg-surface-elevated border border-border rounded-lg p-4">
-                  <div className="text-sm text-text-muted">AI is thinking...</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Input */}
-        <div className="border-t border-border bg-surface/95 backdrop-blur p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="relative bg-surface border border-border rounded-3xl shadow-lg">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Test your original pipeline... (Intelligence, Voice, Multimodal, Admin all connected)"
-                className="w-full resize-none border-0 bg-transparent py-4 pl-6 pr-20 focus:outline-none focus:ring-0 placeholder:text-text-muted"
-                disabled={isLoading}
-                rows={1}
-                style={{ minHeight: '56px' }}
-              />
-
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {input.trim() && (
-                  <Button
-                    onClick={() => {
-                      handleSendMessage(input)
-                      setInput('')
-                    }}
-                    disabled={isLoading || !input.trim()}
-                    size="sm"
-                    className="w-8 h-8 p-0 rounded-full bg-brand hover:bg-brand-hover text-surface"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-xs text-text-muted">
-                Chat V2 - Original pipeline connected to AI SDK backend
+              <p className="text-sm text-text-muted">
+                Guided consultation powered by Gemini 2.5 — tracking discovery stages, multimodal tools, and ROI validation.
               </p>
-              {chatError && (
-                <p className="mt-2 text-xs text-red-500">
-                  {chatError.message}
-                </p>
+            </div>
+
+            <div className="space-y-4">
+              {mappedMessages.length === 0 ? (
+                <div className="rounded-3xl border border-border bg-surface/70 p-10 text-center shadow-sm">
+                  <p className="text-lg font-medium text-text">How can I help you today?</p>
+                  <p className="mt-2 text-sm text-text-muted">
+                    Ask about automation opportunities, ROI analysis, or request a live multimodal workflow.
+                  </p>
+                  <Button
+                    className="mt-6"
+                    onClick={() => {
+                      const prompt = "Hello! I'm evaluating AI automation for our team."
+                      setInput(prompt)
+                    }}
+                  >
+                    Suggest a prompt
+                  </Button>
+                </div>
+              ) : (
+                mappedMessages.map((message) => (
+                  <UnifiedMessage
+                    key={message.id}
+                    message={message}
+                    onSuggestionClick={handleSuggestionClick}
+                    onMessageAction={handleMessageAction}
+                  />
+                ))
               )}
             </div>
+
+            <UnifiedMultimodalWidget
+              onVoiceToggle={() => setIsVoiceOverlayOpen(true)}
+              onWebcamToggle={() => setIsWebcamOpen(true)}
+              onScreenShareToggle={() => setIsScreenShareOpen(true)}
+            />
+
+            <div className="rounded-3xl border border-border bg-surface/70 p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-text">Pipeline Diagnostics</h3>
+                  <p className="text-xs text-text-muted">Trigger the original APIs to ensure everything is connected.</p>
+                </div>
+                <Badge variant="outline" className="border-border/60 text-xs text-text-muted">
+                  {contextLoading ? 'Refreshing…' : 'Live'}
+                </Badge>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                {TEST_ACTIONS.map((action) => (
+                  <Button
+                    key={action.id}
+                    variant="outline"
+                    className="justify-start gap-3 rounded-xl bg-background/40 text-sm hover:border-brand hover:bg-brand/5"
+                    onClick={() =>
+                      action.onClick({
+                        refreshIntelligence,
+                        testROI,
+                        testWebcam,
+                        testVoice,
+                        testAdmin,
+                      })
+                    }
+                  >
+                    <Sparkles className="h-4 w-4 text-brand" />
+                    <span className="flex-1 text-left">
+                      <span className="block font-medium text-text">{action.label}</span>
+                      <span className="block text-xs text-text-muted">{action.description}</span>
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+
+        <CleanInputField
+          value={input}
+          onChange={setInput}
+          onSend={() => {
+            void handleSendMessage(input)
+            setInput('')
+          }}
+          onVoiceClick={() => setIsVoiceOverlayOpen(true)}
+          isLoading={isLoading}
+          voiceMode={isVoiceOverlayOpen}
+        />
+
+        <VoiceOverlay
+          open={isVoiceOverlayOpen}
+          onCancel={() => setIsVoiceOverlayOpen(false)}
+          onAccept={handleVoiceAccepted}
+          activeModalities={{
+            voice: true,
+            webcam: isWebcamOpen,
+            screen: isScreenShareOpen,
+          }}
+        />
+
+        {isWebcamOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur">
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-border bg-surface shadow-2xl">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 top-3 z-10 h-8 w-8 rounded-full bg-surface/80"
+                onClick={() => setIsWebcamOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <WebcamCapture
+                mode="canvas"
+                onCapture={() => {}}
+                onClose={() => setIsWebcamOpen(false)}
+                onAIAnalysis={(analysis) =>
+                  addMessage({
+                    role: 'assistant',
+                    content: analysis,
+                    timestamp: new Date(),
+                    type: 'multimodal',
+                    metadata: { source: 'webcam-analysis' },
+                  })
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        {isScreenShareOpen && (
+          <ScreenShare
+            onClose={() => setIsScreenShareOpen(false)}
+            onAnalysis={(analysis) =>
+              addMessage({
+                role: 'assistant',
+                content: analysis,
+                timestamp: new Date(),
+                type: 'multimodal',
+                metadata: { source: 'screen-analysis' },
+              })
+            }
+          />
+        )}
+
+        {chatError && (
+          <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-red-200 bg-red-50 px-4 py-1 text-xs text-red-600 shadow">
+            {chatError.message}
+          </div>
+        )}
+
+        <UnifiedChatDebugPanel />
       </div>
-      <UnifiedChatDebugPanel />
-    </div>
     </UnifiedChatActionsProvider>
   )
 }

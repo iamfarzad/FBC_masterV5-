@@ -169,7 +169,7 @@ export const UnifiedControlPanel = React.memo<UnifiedControlPanelProps>(({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => console.log('Voice toggle')}
+                        onClick={() => onToolSelect('voice')}
                         className="w-full h-8 rounded-xl bg-surface-elevated hover:bg-brand/10"
                       >
                         <Mic className="w-4 h-4 mr-2" />

@@ -34,7 +34,12 @@ const INTELLIGENCE_STAGE_MAP = {
   'CALL_TO_ACTION': 7
 }
 
-export function StageRail({ sessionId }: { sessionId?: string }) {
+interface StageRailProps {
+  sessionId?: string
+  side?: 'left' | 'right'
+}
+
+export function StageRail({ sessionId, side = 'right' }: StageRailProps) {
   // Use the StageProvider context for proper stage management
   const { currentStageIndex, stages, getProgressPercentage } = useStage()
   const [ctx, setCtx] = useState<Context>({ stage: 1, exploredCount: 0, total: 16 })
@@ -128,7 +133,10 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
     <>
       {/* Desktop: Fixed centered layout */}
       <aside
-        className="fixed right-4 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex"
+        className={cn(
+          'fixed top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex',
+          side === 'left' ? 'left-4' : 'right-4'
+        )}
         role="complementary"
         aria-label="Session progress and stage information"
       >
@@ -208,7 +216,12 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
       </aside>
 
       {/* Mobile: Dropdown trigger */}
-      <div className="fixed bottom-4 right-4 z-20 md:hidden">
+      <div
+        className={cn(
+          'fixed bottom-4 z-20 md:hidden',
+          side === 'left' ? 'left-4' : 'right-4'
+        )}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -305,7 +318,6 @@ export function StageRail({ sessionId }: { sessionId?: string }) {
     </>
   )
 }
-
 
 
 

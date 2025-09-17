@@ -11,6 +11,7 @@ import { cn } from "@/src/core/utils"
 import { StructuredData } from "./structured-data"
 import { MeetingProvider } from "@/components/providers/meeting-provider"
 import { CanvasProvider } from "@/components/providers/canvas-provider"
+import { StageProvider } from "@/contexts/stage-context"
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -28,14 +29,16 @@ function RootLayoutClient({
       <TooltipProvider>
         <MeetingProvider>
           <CanvasProvider>
-            <DemoSessionProvider>
-              <GlobalChrome>
-                <main className="min-h-screen">
-                  {children}
-                </main>
-                <Toaster />
-              </GlobalChrome>
-            </DemoSessionProvider>
+            <StageProvider>
+              <DemoSessionProvider>
+                <GlobalChrome>
+                  <main className="min-h-screen">
+                    {children}
+                  </main>
+                  <Toaster />
+                </GlobalChrome>
+              </DemoSessionProvider>
+            </StageProvider>
           </CanvasProvider>
         </MeetingProvider>
       </TooltipProvider>
