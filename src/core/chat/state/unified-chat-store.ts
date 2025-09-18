@@ -23,10 +23,10 @@ export interface UnifiedChatStoreState {
 }
 
 const DEFAULT_STATE: UnifiedChatStoreState = {
-  id: undefined,
+  id: '',
   messages: [],
   status: 'ready',
-  error: undefined,
+  error: null,
   context: undefined,
   sendMessage: undefined,
   regenerate: undefined,

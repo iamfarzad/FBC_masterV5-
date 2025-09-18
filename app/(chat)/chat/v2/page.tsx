@@ -216,7 +216,7 @@ export default function ChatV2() {
       implementation={implementation}
       options={{
         sessionId,
-        mode: 'standard' as const,
+        mode: 'standard',
         context: chatContext,
       }}
     >

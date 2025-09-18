@@ -6,7 +6,7 @@ import { AiElementsConversation } from '@/components/chat/AiElementsConversation
 import { NativeAISDKConversation } from '@/components/chat/NativeAISDKConversation'
 // Removed mapper import - using native AI SDK types directly
 import type { UnifiedChatOptions } from '@/src/core/chat/unified-types'
-import type { Message } from 'ai'
+import type { UIMessage as Message } from 'ai'
 
 export interface UnifiedChatWithFlagsProps extends UnifiedChatOptions {
   userId?: string

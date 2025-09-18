@@ -16,7 +16,7 @@ import {
   getMigrationStatus
 } from '@/src/core/feature-flags/ai-sdk-migration'
 import type { UnifiedChatOptions, UnifiedChatReturn } from '@/src/core/chat/unified-types'
-import type { Message } from 'ai'
+import type { UIMessage as Message } from 'ai'
 
 export interface UnifiedChatWithFlagsOptions extends UnifiedChatOptions {
   userId?: string

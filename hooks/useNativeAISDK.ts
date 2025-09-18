@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Message } from 'ai'
+import type { UIMessage as Message } from 'ai'
 import {
   UNIFIED_CHAT_STORE_ID,
   syncUnifiedChatStoreState,

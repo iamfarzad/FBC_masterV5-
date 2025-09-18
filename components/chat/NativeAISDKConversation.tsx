@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { Copy, RefreshCw } from 'lucide-react'
-import type { Message } from 'ai'
+import type { UIMessage as Message } from 'ai'
 
 import {
   Conversation,
