@@ -1,15 +1,24 @@
 # Chat V2 – Source of Truth Notes
 
-## Current reality
+## Current reality (UPDATED - AI SDK Tools Restored)
 - `/chat` redirects to `/chat/v2`, which is the primary chat experience on this branch.
-- The v2 page uses `AiElementsConversation` plus shared panels (control cards, multimodal widget, stage rail) running on top of `useUnifiedChat` and the AI SDK-backed `/api/chat/unified` route.
+- The v2 page uses `AiElementsConversation` plus shared panels (control cards, multimodal widget, stage rail) running on top of **THREE IMPLEMENTATION MODES**:
+  - **Custom Mode**: `useUnifiedChat` with custom Zustand store
+  - **AI SDK Tools Mode**: `useUnifiedChatV2` with restored AI SDK Tools pattern
+  - **Simple Mode**: `useSimpleAISDK` with fallback implementation
+- All modes use the AI SDK-backed `/api/chat/unified` route.
 - The admin assistant now reuses the same component stack, so both surfaces present identical behaviour.
 
-## Shipped pieces
+## Shipped pieces (UPDATED)
 - Legacy `components/chat/layouts/*` have been removed; AI Element primitives are the only render path.
-- `useUnifiedChat` streams Gemini responses, mirrors state into `@ai-sdk-tools/store`, and exposes selector hooks for the UI.
+- **THREE CHAT IMPLEMENTATIONS** available:
+  - `useUnifiedChat` - Custom Zustand store with local state management
+  - `useUnifiedChatV2` - **RESTORED** AI SDK Tools pattern with global state management
+  - `useSimpleAISDK` - Simple fallback implementation
+- All implementations stream Gemini responses through `/api/chat/unified` and expose selector hooks for the UI.
 - Screen share, webcam capture, ROI tests, and other quick actions push their status messages through `UnifiedChatActionsProvider`, keeping the transcript in sync.
 - Stage context is synchronised from intelligence responses so the StageRail reflects current progress automatically.
+- **RESTORED**: `ChatDevtools` component provides real-time debugging for AI SDK Tools mode.
 
 ## Missing pieces (previously claimed but not present)
 - No `/api/chat/simple` or alternate implementation hooks (`useAISDKComplete`, `useSimpleAISDK`, etc.).

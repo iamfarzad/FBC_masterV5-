@@ -11,12 +11,17 @@ import { VoiceOverlay } from '@/components/chat/VoiceOverlay'
 import { ScreenShare } from '@/components/chat/tools/ScreenShare/ScreenShare'
 import { WebcamCapture } from '@/components/chat/tools/WebcamCapture/WebcamCapture'
 import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
+import { ChatDevtools } from '@/components/debug/ChatDevtools'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 import { AiElementsConversation } from '@/components/chat/AiElementsConversation'
+import { SettingsPanel } from './components/SettingsPanel'
+import { DocumentUpload } from './components/DocumentUpload'
+import { BookingInterface } from './components/BookingInterface'
 
 import { useUnifiedChat } from '@/hooks/useUnifiedChat'
+import { useUnifiedChatV2 } from '@/hooks/useUnifiedChatV2'
 import { useSimpleAISDK } from '@/hooks/useSimpleAISDK'
 import type { UnifiedChatReturn } from '@/src/core/chat/unified-types'
 import type { UnifiedContext } from '@/src/core/chat/unified-types'
@@ -152,6 +157,7 @@ function UnifiedPipelineProvider({ options, children }: Omit<ChatPipelineProvide
   return <ChatPipelineContext.Provider value={value}>{children}</ChatPipelineContext.Provider>
 }
 
+
 function SimplePipelineProvider({ options, children }: Omit<ChatPipelineProviderProps, 'implementation'>) {
   const controller = useSimpleAISDK(options)
   const status = getControllerStatus(controller)
@@ -183,14 +189,17 @@ export default function ChatV2() {
   const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false)
   const [isWebcamOpen, setIsWebcamOpen] = useState(false)
   const [isScreenShareOpen, setIsScreenShareOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isDocumentUploadOpen, setIsDocumentUploadOpen] = useState(false)
+  const [isBookingOpen, setIsBookingOpen] = useState(false)
 
   const [implementation, setImplementation] = useState<ChatImplementation>('unified')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     const stored = window.localStorage.getItem(IMPLEMENTATION_STORAGE_KEY)
-    if (stored === 'simple' || stored === 'unified') {
-      setImplementation(stored)
+    if (stored === 'simple' || stored === 'unified' || stored === 'ai-sdk-tools') {
+      setImplementation(stored as ChatImplementation)
     }
   }, [])
 
@@ -239,6 +248,12 @@ export default function ChatV2() {
         setIsWebcamOpen={setIsWebcamOpen}
         isScreenShareOpen={isScreenShareOpen}
         setIsScreenShareOpen={setIsScreenShareOpen}
+        isSettingsOpen={isSettingsOpen}
+        setIsSettingsOpen={setIsSettingsOpen}
+        isDocumentUploadOpen={isDocumentUploadOpen}
+        setIsDocumentUploadOpen={setIsDocumentUploadOpen}
+        isBookingOpen={isBookingOpen}
+        setIsBookingOpen={setIsBookingOpen}
       />
     </ChatPipelineProvider>
   )
@@ -267,6 +282,12 @@ interface ChatPageContentProps {
   setIsWebcamOpen: React.Dispatch<React.SetStateAction<boolean>>
   isScreenShareOpen: boolean
   setIsScreenShareOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isSettingsOpen: boolean
+  setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isDocumentUploadOpen: boolean
+  setIsDocumentUploadOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isBookingOpen: boolean
+  setIsBookingOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function ChatPageContent({
@@ -288,6 +309,12 @@ function ChatPageContent({
   setIsWebcamOpen,
   isScreenShareOpen,
   setIsScreenShareOpen,
+  isSettingsOpen,
+  setIsSettingsOpen,
+  isDocumentUploadOpen,
+  setIsDocumentUploadOpen,
+  isBookingOpen,
+  setIsBookingOpen,
 }: ChatPageContentProps) {
   const { controller, status } = useChatPipeline()
   const {
@@ -610,32 +637,34 @@ function ChatPageContent({
   }, [addMessage])
 
   const handleShowSettings = useCallback(() => {
-    addMessage({
-      role: 'assistant',
-      content: '⚙️ Settings panel is under construction as part of the AI SDK migration.',
-      timestamp: new Date(),
-      type: 'text',
-      metadata: { source: 'settings', info: true },
-    })
-  }, [addMessage])
+    setIsSettingsOpen(true)
+  }, [])
 
   const handleShowBooking = useCallback(() => {
+    setIsBookingOpen(true)
+  }, [])
+
+  const handleDocumentUpload = useCallback(() => {
+    setIsDocumentUploadOpen(true)
+  }, [])
+
+  const handleFileUploaded = useCallback((fileUrl: string, fileName: string) => {
     addMessage({
       role: 'assistant',
-      content: '📅 Booking assistant is syncing with the new pipeline. Please use the contact form meanwhile.',
+      content: `📄 **File Uploaded Successfully**\n\nFile: ${fileName}\nURL: ${fileUrl}\n\nThe document has been processed and is ready for analysis.`,
       timestamp: new Date(),
       type: 'text',
-      metadata: { source: 'booking', info: true },
+      metadata: { source: 'document-upload', success: true },
     })
   }, [addMessage])
 
-  const handleDocumentUpload = useCallback(() => {
+  const handleBookingComplete = useCallback((meetingId: string) => {
     addMessage({
       role: 'assistant',
-      content: '📄 Document uploads will return after the AI SDK rollout. Please send files to contact@farzadbayat.com for now.',
+      content: `📅 **Meeting Scheduled Successfully**\n\nMeeting ID: ${meetingId}\n\nYour meeting has been scheduled and a confirmation email has been sent. You'll receive the meeting link shortly.`,
       timestamp: new Date(),
       type: 'text',
-      metadata: { source: 'document', info: true },
+      metadata: { source: 'booking', success: true },
     })
   }, [addMessage])
 
@@ -688,7 +717,7 @@ function ChatPageContent({
                       className={`h-8 rounded-full border border-border/60 px-3 text-xs ${implementation === 'unified' ? 'bg-brand/10 text-brand' : 'bg-background/80 text-text-muted'}`}
                       onClick={() => onImplementationChange('unified')}
                     >
-                      <Zap className="mr-1 h-3.5 w-3.5" /> Tools Mode
+                      <Zap className="mr-1 h-3.5 w-3.5" /> Custom Mode
                     </Button>
                     <Button
                       variant="ghost"
@@ -848,7 +877,31 @@ function ChatPageContent({
         )}
 
         <UnifiedChatDebugPanel />
+        
       </div>
+
+      {/* New Feature Components */}
+      <SettingsPanel 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
+      
+      <DocumentUpload 
+        isOpen={isDocumentUploadOpen} 
+        onClose={() => setIsDocumentUploadOpen(false)}
+        onFileUploaded={handleFileUploaded}
+      />
+      
+      <BookingInterface 
+        isOpen={isBookingOpen} 
+        onClose={() => setIsBookingOpen(false)}
+        onBookingComplete={handleBookingComplete}
+        leadInfo={{
+          name: intelligenceContext?.lead?.name,
+          email: intelligenceContext?.lead?.email,
+          company: intelligenceContext?.company?.name
+        }}
+      />
     </UnifiedChatActionsProvider>
   )
 }
