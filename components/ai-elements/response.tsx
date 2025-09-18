@@ -198,7 +198,7 @@ const components: Options['components'] = {
   ),
   a: ({ node, children, className, ...props }) => (
     <a
-      className={cn('font-medium text-primary underline', className)}
+      className={cn('font-medium text-blue-600 underline hover:text-blue-800', className)}
       rel="noreferrer"
       target="_blank"
       {...props}
@@ -288,7 +288,7 @@ const components: Options['components'] = {
           size="sm"
           variant="outline"
           className={cn(
-            'mx-1 my-1 border-accent/30 hover:border-accent hover:bg-accent/10 text-accent',
+            'mx-1 my-1 border-border hover:border-border/80 hover:bg-muted',
             className
           )}
           data-coach-cta="true"
@@ -303,7 +303,7 @@ const components: Options['components'] = {
 
     // Regular button - render as default button
     return (
-      <button className={cn('underline text-primary hover:text-accent', className)} {...props}>
+      <button className={cn('underline text-blue-600 hover:text-blue-800', className)} {...props}>
         {children}
       </button>
     );
@@ -332,7 +332,7 @@ export const Response = memo(
         className={cn(
           'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
           // Coach CTA chips styling hooks
-          '[&_button[data-coach-cta]]:inline-flex [&_button[data-coach-cta]]:items-center [&_button[data-coach-cta]]:gap-2 [&_button[data-coach-cta]]:px-2.5 [&_button[data-coach-cta]]:py-1.5 [&_button[data-coach-cta]]:rounded-md [&_button[data-coach-cta]]:border [&_button[data-coach-cta]]:text-xs [&_button[data-coach-cta]]:text-foreground/80 [&_button[data-coach-cta]]:border-border/50 [&_button[data-coach-cta]]:bg-card/60 [&_button[data-coach-cta]]:hover:bg-accent/10',
+          '[&_button[data-coach-cta]]:inline-flex [&_button[data-coach-cta]]:items-center [&_button[data-coach-cta]]:gap-2 [&_button[data-coach-cta]]:px-2.5 [&_button[data-coach-cta]]:py-1.5 [&_button[data-coach-cta]]:rounded-md [&_button[data-coach-cta]]:border [&_button[data-coach-cta]]:text-xs [&_button[data-coach-cta]]:text-foreground [&_button[data-coach-cta]]:border-border [&_button[data-coach-cta]]:bg-background [&_button[data-coach-cta]]:hover:bg-muted',
           className,
         )}
         {...props}

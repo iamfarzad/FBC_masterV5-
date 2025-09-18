@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { MessageData } from '../components/UnifiedMessage';
+import type { AiChatMessage } from '@/src/core/chat/ai-elements';
 
 export interface ConversationState {
   leadScore: number;
@@ -13,7 +13,7 @@ export interface AppState {
   // Input and messaging
   input: string;
   isLoading: boolean;
-  messages: MessageData[];
+  messages: AiChatMessage[];
   
   // Voice and multimodal
   voiceMode: boolean;

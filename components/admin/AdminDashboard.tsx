@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { AdminAssistantPanel } from "@/components/admin/AdminAssistantPanel"
 import {
   Home,
   Users,
@@ -48,33 +49,59 @@ const navigationItems = [
 ]
 
 export function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState<DashboardSection>("overview")
+  const [activeSection, setActiveSection] = useState<DashboardSection>("ai-assistant")
 
-  const renderSection = () => {
-    // Simple placeholder until admin features are needed
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Admin Dashboard</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="py-8 text-center">
-              <Brain className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">Admin Features Coming Soon</h3>
-              <p className="text-muted-foreground">
-                Advanced admin features will be available when needed for business operations.
-              </p>
-              <div className="mt-4 flex justify-center gap-2">
-                <Badge variant="secondary" className="bg-info/10 text-info">System Healthy</Badge>
-                <Badge variant="secondary" className="bg-success/10 text-success">AI Online</Badge>
-                <Badge variant="secondary" className="bg-accent/10 text-accent">DB Connected</Badge>
-              </div>
+  const renderPlaceholder = (title: string) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="py-8 text-center">
+            <Brain className="mx-auto mb-4 size-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">Module Coming Soon</h3>
+            <p className="text-muted-foreground">
+              Advanced admin insights will appear here once the workflow calls for them.
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Badge variant="secondary" className="bg-info/10 text-info">System Healthy</Badge>
+              <Badge variant="secondary" className="bg-success/10 text-success">AI Online</Badge>
+              <Badge variant="secondary" className="bg-accent/10 text-accent">DB Connected</Badge>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    )
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'ai-assistant':
+        return <AdminAssistantPanel />
+      case 'overview':
+        return renderPlaceholder('System Overview')
+      case 'leads':
+        return renderPlaceholder('Lead Management')
+      case 'meetings':
+        return renderPlaceholder('Meetings & Scheduling')
+      case 'emails':
+        return renderPlaceholder('Email Automation')
+      case 'costs':
+        return renderPlaceholder('AI Cost Tracking')
+      case 'analytics':
+        return renderPlaceholder('Business Analytics')
+      case 'ai-performance':
+        return renderPlaceholder('AI Performance Metrics')
+      case 'gemini-optimization':
+        return renderPlaceholder('Gemini Optimization')
+      case 'activity':
+        return renderPlaceholder('System Activity')
+      case 'system-health':
+        return renderPlaceholder('System Health')
+      default:
+        return renderPlaceholder('Admin Dashboard')
+    }
   }
 
   return (
@@ -89,7 +116,32 @@ export function AdminDashboard() {
               </div>
             </div>
           </header>
-          <div className="p-6">{renderSection()}</div>
+          <div className="grid gap-6 p-6 md:grid-cols-[240px_1fr]">
+            <nav className="space-y-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon
+                const isActive = item.id === activeSection
+                return (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    className="flex w-full items-center justify-start gap-3"
+                    onClick={() => setActiveSection(item.id as DashboardSection)}
+                  >
+                    <Icon className="size-4" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-medium">{item.label}</span>
+                      <span className="text-xs text-muted-foreground hidden lg:inline">
+                        {item.description}
+                      </span>
+                    </div>
+                  </Button>
+                )
+              })}
+            </nav>
+
+            <div>{renderSection()}</div>
+          </div>
         </div>
       </div>
     </div>

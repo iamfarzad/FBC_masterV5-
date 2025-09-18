@@ -1,15 +1,11 @@
 "use client"
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react'
-import { Sparkles, Brain, Mic, X } from 'lucide-react'
+import React, { useState, useCallback, useEffect, useMemo, useContext, createContext } from 'react'
+import { Sparkles, Brain, X, Zap } from 'lucide-react'
 
 import { StageRailCard } from '@/components/collab/StageRail'
 import { UnifiedControlPanel } from './components/UnifiedControlPanel'
-import {
-  UnifiedMessage,
-  UnifiedMultimodalWidget,
-  type MessageData,
-} from './components/UnifiedMessage'
+import { UnifiedMultimodalWidget } from './components/UnifiedMultimodalWidget'
 import { CleanInputField } from './components/input/CleanInputField'
 import { VoiceOverlay } from '@/components/chat/VoiceOverlay'
 import { ScreenShare } from '@/components/chat/tools/ScreenShare/ScreenShare'
@@ -18,14 +14,17 @@ import { UnifiedChatDebugPanel } from '@/components/debug/UnifiedChatDebugPanel'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
+import { AiElementsConversation } from '@/components/chat/AiElementsConversation'
+
 import { useUnifiedChat } from '@/hooks/useUnifiedChat'
-import {
-  useUnifiedChatMessages,
-  useUnifiedChatStatus,
-  useUnifiedChatError,
-} from '@/src/core/chat/state/unified-chat-store'
+import { useSimpleAISDK } from '@/hooks/useSimpleAISDK'
+import type { UnifiedChatReturn } from '@/src/core/chat/unified-types'
+import type { UnifiedContext } from '@/src/core/chat/unified-types'
+import type { ChatStatus } from '@/src/core/chat/state/unified-chat-store'
 import { UnifiedChatActionsProvider } from '@/src/core/chat/unified-chat-context'
-import { useStage } from '@/contexts/stage-context'
+import { useStage, getStageIdForNumber, getStageNumberForId, syncStageFromIntelligence } from '@/contexts/stage-context'
+// Removed mapper import - using native AI SDK types directly
+import type { AiChatMessage } from '@/src/core/chat/ai-elements'
 
 const TEST_ACTIONS: Array<{
   id: string
@@ -83,6 +82,98 @@ interface TestActionHandlers {
   testAdmin: () => Promise<void>
 }
 
+const TOTAL_CAPABILITIES = 16
+
+type ChatImplementation = 'unified' | 'simple'
+
+const IMPLEMENTATION_STORAGE_KEY = 'chat-implementation'
+
+interface ChatPipelineContextValue {
+  controller: UnifiedChatReturn
+  status: ChatStatus
+}
+
+const ChatPipelineContext = createContext<ChatPipelineContextValue | null>(null)
+
+const deriveStageNumber = (context: any): number => {
+  if (!context) return 1
+  if (typeof context.stage === 'number') {
+    return Math.max(1, Math.min(7, Number(context.stage)))
+  }
+  if (typeof context.stage === 'string') {
+    return getStageNumberForId(context.stage)
+  }
+
+  let stage = 1
+  if (context.lead?.email) {
+    stage = Math.max(stage, 3)
+  }
+  if (context.company || context.person || context.role) {
+    stage = Math.max(stage, 4)
+  }
+  if (Array.isArray(context.capabilities) && context.capabilities.length > 5) {
+    stage = Math.max(stage, 5)
+  }
+  return stage
+}
+
+const deriveExplorationCount = (context: any): number => {
+  if (!context) return 0
+  if (typeof context.exploredCount === 'number') {
+    return context.exploredCount
+  }
+  if (Array.isArray(context.capabilities)) {
+    return context.capabilities.length
+  }
+  return 0
+}
+
+function getControllerStatus(controller: UnifiedChatReturn): ChatStatus {
+  if (controller.error) return 'error'
+  if (controller.isStreaming) return 'streaming'
+  if (controller.isLoading) return 'submitted'
+  return 'ready'
+}
+
+interface ChatPipelineProviderProps {
+  implementation: ChatImplementation
+  options: {
+    sessionId: string
+    mode: 'standard' | 'admin' | string
+    context: UnifiedContext
+  }
+  children: React.ReactNode
+}
+
+function UnifiedPipelineProvider({ options, children }: Omit<ChatPipelineProviderProps, 'implementation'>) {
+  const controller = useUnifiedChat(options)
+  const status = getControllerStatus(controller)
+  const value = useMemo<ChatPipelineContextValue>(() => ({ controller, status }), [controller, status])
+  return <ChatPipelineContext.Provider value={value}>{children}</ChatPipelineContext.Provider>
+}
+
+function SimplePipelineProvider({ options, children }: Omit<ChatPipelineProviderProps, 'implementation'>) {
+  const controller = useSimpleAISDK(options)
+  const status = getControllerStatus(controller)
+  const value = useMemo<ChatPipelineContextValue>(() => ({ controller, status }), [controller, status])
+  return <ChatPipelineContext.Provider value={value}>{children}</ChatPipelineContext.Provider>
+}
+
+function ChatPipelineProvider({ implementation, options, children }: ChatPipelineProviderProps) {
+  if (implementation === 'simple') {
+    return <SimplePipelineProvider options={options}>{children}</SimplePipelineProvider>
+  }
+  return <UnifiedPipelineProvider options={options}>{children}</UnifiedPipelineProvider>
+}
+
+function useChatPipeline(): ChatPipelineContextValue {
+  const ctx = useContext(ChatPipelineContext)
+  if (!ctx) {
+    throw new Error('useChatPipeline must be used inside ChatPipelineProvider')
+  }
+  return ctx
+}
+
 export default function ChatV2() {
   const [input, setInput] = useState('')
   const [sessionId] = useState(() => crypto.randomUUID())
@@ -93,30 +184,25 @@ export default function ChatV2() {
   const [isWebcamOpen, setIsWebcamOpen] = useState(false)
   const [isScreenShareOpen, setIsScreenShareOpen] = useState(false)
 
-  const chatContext = useMemo(
-    () => ({
-      sessionId,
-      intelligenceContext: intelligenceContext || undefined,
-    }),
-    [sessionId, intelligenceContext],
-  )
+  const [implementation, setImplementation] = useState<ChatImplementation>('unified')
 
-  const {
-    sendMessage,
-    addMessage,
-    updateContext,
-  } = useUnifiedChat({
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(IMPLEMENTATION_STORAGE_KEY)
+    if (stored === 'simple' || stored === 'unified') {
+      setImplementation(stored)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(IMPLEMENTATION_STORAGE_KEY, implementation)
+  }, [implementation])
+
+  const chatContext = useMemo<UnifiedContext>(() => ({
     sessionId,
-    mode: 'standard',
-    context: chatContext,
-  })
-
-  const messages = useUnifiedChatMessages()
-  const chatStatus = useUnifiedChatStatus()
-  const chatError = useUnifiedChatError()
-  const isStreaming = chatStatus === 'streaming'
-  const isSubmitting = chatStatus === 'submitted'
-  const isLoading = isStreaming || isSubmitting
+    intelligenceContext: intelligenceContext || undefined,
+  }), [sessionId, intelligenceContext])
 
   const stageCtx = useStage()
   const stageProgress = useMemo(() => ({
@@ -125,24 +211,143 @@ export default function ChatV2() {
     percentage: stageCtx.getProgressPercentage(),
   }), [stageCtx])
 
+  return (
+    <ChatPipelineProvider
+      implementation={implementation}
+      options={{
+        sessionId,
+        mode: 'standard' as const,
+        context: chatContext,
+      }}
+    >
+      <ChatPageContent
+        input={input}
+        setInput={setInput}
+        implementation={implementation}
+        onImplementationChange={setImplementation}
+        intelligenceContext={intelligenceContext}
+        setIntelligenceContext={setIntelligenceContext}
+        contextLoading={contextLoading}
+        setContextLoading={setContextLoading}
+        sessionId={sessionId}
+        stageCtx={stageCtx}
+        stageProgress={stageProgress}
+        totalCapabilities={TOTAL_CAPABILITIES}
+        isVoiceOverlayOpen={isVoiceOverlayOpen}
+        setIsVoiceOverlayOpen={setIsVoiceOverlayOpen}
+        isWebcamOpen={isWebcamOpen}
+        setIsWebcamOpen={setIsWebcamOpen}
+        isScreenShareOpen={isScreenShareOpen}
+        setIsScreenShareOpen={setIsScreenShareOpen}
+      />
+    </ChatPipelineProvider>
+  )
+}
+
+interface ChatPageContentProps {
+  input: string
+  setInput: React.Dispatch<React.SetStateAction<string>>
+  implementation: ChatImplementation
+  onImplementationChange: (impl: ChatImplementation) => void
+  intelligenceContext: any
+  setIntelligenceContext: React.Dispatch<React.SetStateAction<any>>
+  contextLoading: boolean
+  setContextLoading: React.Dispatch<React.SetStateAction<boolean>>
+  sessionId: string
+  stageCtx: ReturnType<typeof useStage>
+  stageProgress: {
+    current: number
+    total: number
+    percentage: number
+  }
+  totalCapabilities: number
+  isVoiceOverlayOpen: boolean
+  setIsVoiceOverlayOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isWebcamOpen: boolean
+  setIsWebcamOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isScreenShareOpen: boolean
+  setIsScreenShareOpen: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+function ChatPageContent({
+  input,
+  setInput,
+  implementation,
+  onImplementationChange,
+  intelligenceContext,
+  setIntelligenceContext,
+  contextLoading,
+  setContextLoading,
+  sessionId,
+  stageCtx,
+  stageProgress,
+  totalCapabilities,
+  isVoiceOverlayOpen,
+  setIsVoiceOverlayOpen,
+  isWebcamOpen,
+  setIsWebcamOpen,
+  isScreenShareOpen,
+  setIsScreenShareOpen,
+}: ChatPageContentProps) {
+  const { controller, status } = useChatPipeline()
+  const {
+    messages,
+    isStreaming: controllerStreaming,
+    isLoading: controllerLoading,
+    error: controllerError,
+    sendMessage,
+    addMessage,
+    updateContext,
+  } = controller
+
+  const chatError = controllerError
+  const isStreaming = status === 'streaming' || controllerStreaming
+  const isSubmitting = status === 'submitted'
+  const isLoading = isStreaming || isSubmitting || controllerLoading
+
+  const aiMessages = useMemo<AiChatMessage[]>(
+    () => messages.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      displayRole: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+      timestamp: msg.timestamp,
+      isComplete: msg.metadata?.isComplete ?? true,
+      suggestions: msg.metadata?.suggestions || [],
+      sources: msg.metadata?.sources || [],
+      reasoning: msg.metadata?.reasoning,
+      tools: msg.metadata?.tools || [],
+      tasks: msg.metadata?.tasks || [],
+      citations: msg.metadata?.citations || [],
+      metadata: msg.metadata || {}
+    })),
+    [messages],
+  )
+
   const systemState = useMemo(() => ({
     currentStage: stageCtx.stages[stageCtx.currentStageIndex] ?? null,
     stageProgress,
     capabilityUsage: {
       used: intelligenceContext?.capabilities?.length ?? 0,
-      total: 16,
+      total: totalCapabilities,
     },
     activeCapabilities: intelligenceContext?.capabilities ?? [],
     allCapabilities: intelligenceContext?.capabilities ?? [],
     allStages: stageCtx.stages,
     intelligenceScore: stageProgress.percentage,
-  }), [intelligenceContext, stageCtx, stageProgress])
+  }), [
+    intelligenceContext,
+    stageCtx.stages,
+    stageCtx.currentStageIndex,
+    stageProgress,
+    totalCapabilities,
+  ])
 
   const conversationState = useMemo(() => ({
     leadScore: intelligenceContext?.leadScore ?? 65,
     stage: stageCtx.stages[stageCtx.currentStageIndex]?.label ?? 'Discovery',
     showActions: true,
-  }), [intelligenceContext, stageCtx])
+  }), [intelligenceContext, stageCtx.stages, stageCtx.currentStageIndex])
 
   const activeTools = useMemo(() => {
     const tools: string[] = []
@@ -152,26 +357,29 @@ export default function ChatV2() {
     return tools
   }, [isVoiceOverlayOpen, isWebcamOpen, isScreenShareOpen])
 
-  const mappedMessages = useMemo<MessageData[]>(
-    () =>
-      messages.map((message) => ({
-        id: message.id,
-        content: message.content,
-        sender: message.role === 'user' ? 'user' : 'ai',
-        role: message.role,
-        timestamp: message.timestamp,
-        type: (message.metadata?.type as MessageData['type']) || 'text',
-        suggestions: message.metadata?.suggestions,
-        isComplete: message.metadata?.isComplete ?? true,
-      })),
-    [messages],
+  const conversationEmptyState = (
+    <div className="rounded-3xl border border-border bg-surface/70 p-10 text-center shadow-sm">
+      <p className="text-lg font-medium text-text">How can I help you today?</p>
+      <p className="mt-2 text-sm text-text-muted">
+        Ask about automation opportunities, ROI analysis, or request a live multimodal workflow.
+      </p>
+      <Button
+        className="mt-6"
+        onClick={() => {
+          const prompt = "Hello! I'm evaluating AI automation for our team."
+          setInput(prompt)
+        }}
+      >
+        Suggest a prompt
+      </Button>
+    </div>
   )
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     setInput(suggestion)
-  }, [])
+  }, [setInput])
 
-  const handleMessageAction = useCallback((action: string, messageId: string) => {
+  const handleMessageAction = useCallback((action: 'copy' | 'regenerate', messageId: string) => {
     const target = messages.find((message) => message.id === messageId)
     if (!target) return
 
@@ -206,7 +414,7 @@ export default function ChatV2() {
     } finally {
       setContextLoading(false)
     }
-  }, [sessionId])
+  }, [sessionId, setContextLoading, setIntelligenceContext])
 
   useEffect(() => {
     void refreshIntelligence()
@@ -215,8 +423,16 @@ export default function ChatV2() {
   useEffect(() => {
     if (intelligenceContext) {
       updateContext({ intelligenceContext })
+      const nextStageNumber = deriveStageNumber(intelligenceContext)
+      const explored = deriveExplorationCount(intelligenceContext)
+      syncStageFromIntelligence({
+        stageId: getStageIdForNumber(nextStageNumber),
+        exploredCount: explored,
+        total: totalCapabilities,
+        completedStageIds: Array.from({ length: Math.max(0, nextStageNumber - 1) }, (_, index) => getStageIdForNumber(index + 1)),
+      })
     }
-  }, [intelligenceContext, updateContext])
+  }, [intelligenceContext, updateContext, totalCapabilities])
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return
@@ -381,7 +597,7 @@ export default function ChatV2() {
       default:
         break
     }
-  }, [addMessage])
+  }, [addMessage, setIsScreenShareOpen, setIsVoiceOverlayOpen, setIsWebcamOpen])
 
   const handleGeneratePDF = useCallback(() => {
     addMessage({
@@ -413,7 +629,6 @@ export default function ChatV2() {
     })
   }, [addMessage])
 
-
   const handleDocumentUpload = useCallback(() => {
     addMessage({
       role: 'assistant',
@@ -437,7 +652,7 @@ export default function ChatV2() {
   const handleVoiceAccepted = useCallback((transcript: string) => {
     setIsVoiceOverlayOpen(false)
     void handleSendMessage(transcript)
-  }, [handleSendMessage])
+  }, [handleSendMessage, setIsVoiceOverlayOpen])
 
   return (
     <UnifiedChatActionsProvider
@@ -447,7 +662,7 @@ export default function ChatV2() {
         updateContext,
       }}
     >
-      <div className="relative min-h-screen bg-background pb-40">
+      <div className="relative h-screen bg-background flex flex-col">
         <UnifiedControlPanel
           systemState={systemState}
           conversationState={conversationState}
@@ -458,96 +673,100 @@ export default function ChatV2() {
           onShowBooking={handleShowBooking}
         />
 
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pt-16 md:flex-row md:gap-16">
-          <div className="w-full flex-1 space-y-8 md:pl-20">
-            <div className="space-y-2">
-              <Badge variant="outline" className="border-brand/40 bg-brand/5 text-brand">
-                <Sparkles className="mr-2 h-3 w-3" /> F.B/c AI Assistant
-              </Badge>
-              <div className="flex items-center gap-3 text-lg font-semibold text-text">
-                <Brain className="h-5 w-5 text-brand" />
-                Business Intelligence Session
-              </div>
-              <p className="text-sm text-text-muted">
-                Guided consultation powered by Gemini 2.5 — tracking discovery stages, multimodal tools, and ROI validation.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {mappedMessages.length === 0 ? (
-                <div className="rounded-3xl border border-border bg-surface/70 p-10 text-center shadow-sm">
-                  <p className="text-lg font-medium text-text">How can I help you today?</p>
-                  <p className="mt-2 text-sm text-text-muted">
-                    Ask about automation opportunities, ROI analysis, or request a live multimodal workflow.
-                  </p>
-                  <Button
-                    className="mt-6"
-                    onClick={() => {
-                      const prompt = "Hello! I'm evaluating AI automation for our team."
-                      setInput(prompt)
-                    }}
-                  >
-                    Suggest a prompt
-                  </Button>
+        <div className="flex-1 overflow-hidden">
+          <div className="mx-auto flex w-full max-w-6xl h-full flex-col gap-10 px-6 pt-16 md:flex-row md:gap-16">
+            <div className="w-full flex-1 flex flex-col md:pl-20">
+              <div className="space-y-3 mb-8">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="border-brand/40 bg-brand/5 text-brand">
+                    <Sparkles className="mr-2 h-3 w-3" /> F.B/c AI Assistant
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      className={`h-8 rounded-full border border-border/60 px-3 text-xs ${implementation === 'unified' ? 'bg-brand/10 text-brand' : 'bg-background/80 text-text-muted'}`}
+                      onClick={() => onImplementationChange('unified')}
+                    >
+                      <Zap className="mr-1 h-3.5 w-3.5" /> Tools Mode
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      className={`h-8 rounded-full border border-border/60 px-3 text-xs ${implementation === 'simple' ? 'bg-brand/10 text-brand' : 'bg-background/80 text-text-muted'}`}
+                      onClick={() => onImplementationChange('simple')}
+                    >
+                      <Sparkles className="mr-1 h-3.5 w-3.5" /> Simple Mode
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                mappedMessages.map((message) => (
-                  <UnifiedMessage
-                    key={message.id}
-                    message={message}
-                    onSuggestionClick={handleSuggestionClick}
-                    onMessageAction={handleMessageAction}
-                  />
-                ))
-              )}
-            </div>
-
-           <UnifiedMultimodalWidget
-              onVoiceToggle={() => setIsVoiceOverlayOpen(true)}
-              onWebcamToggle={() => setIsWebcamOpen(true)}
-              onScreenShareToggle={() => setIsScreenShareOpen(true)}
-            />
-
-            <div className="hidden md:block">
-              <StageRailCard />
-            </div>
-
-            <div className="rounded-3xl border border-border bg-surface/70 p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-text">Pipeline Diagnostics</h3>
-                  <p className="text-xs text-text-muted">Trigger the original APIs to ensure everything is connected.</p>
+                <div className="flex items-center gap-3 text-lg font-semibold text-text">
+                  <Brain className="h-5 w-5 text-brand" />
+                  Business Intelligence Session
                 </div>
-                <Badge variant="outline" className="border-border/60 text-xs text-text-muted">
-                  {contextLoading ? 'Refreshing…' : 'Live'}
-                </Badge>
+                <p className="text-sm text-text-muted">
+                  Guided consultation powered by Gemini 2.5 — tracking discovery stages, multimodal tools, and ROI validation.
+                </p>
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                {TEST_ACTIONS.map((action) => (
-                  <Button
-                    key={action.id}
-                    variant="outline"
-                    className="justify-start gap-3 rounded-xl bg-background/40 text-sm hover:border-brand hover:bg-brand/5"
-                    onClick={() =>
-                      action.onClick({
-                        refreshIntelligence,
-                        testROI,
-                        testWebcam,
-                        testVoice,
-                        testAdmin,
-                      })
-                    }
-                  >
-                    <Sparkles className="h-4 w-4 text-brand" />
-                    <span className="flex-1 text-left">
-                      <span className="block font-medium text-text">{action.label}</span>
-                      <span className="block text-xs text-text-muted">{action.description}</span>
-                    </span>
-                  </Button>
-                ))}
+
+            {/* Scrollable conversation area */}
+            <div className="flex-1 min-h-0 mb-8">
+              <AiElementsConversation
+                messages={aiMessages}
+                onSuggestionClick={handleSuggestionClick}
+                onMessageAction={(action, id) => handleMessageAction(action, id)}
+                emptyState={conversationEmptyState}
+              />
+            </div>
+            <div className="space-y-8">
+              <UnifiedMultimodalWidget
+                onVoiceToggle={() => setIsVoiceOverlayOpen(true)}
+                onWebcamToggle={() => setIsWebcamOpen(true)}
+                onScreenShareToggle={() => setIsScreenShareOpen(true)}
+              />
+
+              <div className="hidden md:block">
+                <StageRailCard />
+              </div>
+
+              <div className="rounded-3xl border border-border bg-surface/70 p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-text">Pipeline Diagnostics</h3>
+                    <p className="text-xs text-text-muted">Trigger the original APIs to ensure everything is connected.</p>
+                  </div>
+                  <Badge variant="outline" className="border-border/60 text-xs text-text-muted">
+                    {contextLoading ? 'Refreshing…' : 'Live'}
+                  </Badge>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {TEST_ACTIONS.map((action) => (
+                    <Button
+                      key={action.id}
+                      variant="outline"
+                      className="justify-start gap-3 rounded-xl bg-background/40 text-sm hover:border-brand hover:bg-brand/5"
+                      onClick={() =>
+                        action.onClick({
+                          refreshIntelligence,
+                          testROI,
+                          testWebcam,
+                          testVoice,
+                          testAdmin,
+                        })
+                      }
+                    >
+                      <Sparkles className="h-4 w-4 text-brand" />
+                      <span className="flex-1 text-left">
+                        <span className="block font-medium text-text">{action.label}</span>
+                        <span className="block text-xs text-text-muted">{action.description}</span>
+                      </span>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         <CleanInputField

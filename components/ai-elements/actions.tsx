@@ -85,7 +85,7 @@ export const Suggestion = ({ suggestion, onClick, className }: SuggestionProps) 
     size="sm"
     onClick={() => onClick?.(suggestion)}
     className={cn(
-      'text-xs border-border/30 hover:border-accent/50 hover:bg-accent/10 rounded-xl',
+      'text-xs border-border hover:border-border/80 hover:bg-muted rounded-xl',
       className
     )}
   >

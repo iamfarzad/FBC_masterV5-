@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState, useCallback } from "react"
 import { motion } from "framer-motion"
 
 import { cn } from '@/src/core/utils'
@@ -34,21 +34,26 @@ function AnimatedGridPattern({
   const id = useId()
   const containerRef = useRef<SVGSVGElement | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [squares, setSquares] = useState(() => generateSquares(numSquares))
+  const [squares, setSquares] = useState<Array<{ id: number; pos: [number, number] }>>([])
 
-  function getPos() {
+  const getPos = useCallback((): [number, number] => {
+    if (!dimensions.width || !dimensions.height) {
+      return [0, 0]
+    }
     return [
       Math.floor((Math.random() * dimensions.width) / width),
       Math.floor((Math.random() * dimensions.height) / height),
     ]
-  }
+  }, [dimensions.height, dimensions.width, width, height])
 
-  function generateSquares(count: number) {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      pos: getPos(),
-    }))
-  }
+  const generateSquares = useCallback(
+    (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        pos: getPos(),
+      })),
+    [getPos],
+  )
 
   const updateSquarePosition = (id: number) => {
     setSquares((currentSquares) =>
@@ -67,7 +72,7 @@ function AnimatedGridPattern({
     if (dimensions.width && dimensions.height) {
       setSquares(generateSquares(numSquares))
     }
-  }, [dimensions, numSquares])
+  }, [dimensions, numSquares, generateSquares])
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -79,11 +84,12 @@ function AnimatedGridPattern({
       }
     })
 
-    if (containerRef.current) resizeObserver.observe(containerRef.current)
+    const element = containerRef.current
+    if (element) resizeObserver.observe(element)
     return () => {
-      if (containerRef.current) resizeObserver.unobserve(containerRef.current)
+      resizeObserver.disconnect()
     }
-  }, [containerRef])
+  }, [])
 
   return (
     <svg

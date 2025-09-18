@@ -79,7 +79,7 @@ export type PromptInputProps = HTMLAttributes<HTMLFormElement>;
 export const PromptInput = ({ className, ...props }: PromptInputProps) => (
   <form
     className={cn(
-      'w-full divide-y overflow-hidden rounded-2xl border bg-card/60 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-200',
+      'w-full divide-y overflow-hidden rounded-2xl border bg-background shadow-sm hover:shadow-md transition-all duration-200',
       className,
     )}
     {...props}
@@ -124,8 +124,8 @@ export const PromptInputTextarea = ({
     <Textarea
       className={cn(
         'w-full resize-none rounded-none border-none p-4 shadow-none outline-none ring-0',
-        'bg-transparent text-text',
-        'focus-visible:ring-0 placeholder:text-muted-foreground/70 dark:placeholder:text-muted-foreground/50',
+        'bg-transparent text-foreground',
+        'focus-visible:ring-0 placeholder:text-muted-foreground',
         className,
       )}
       name="message"
@@ -185,7 +185,7 @@ export const PromptInputButton = ({
     <Button
       className={cn(
         'shrink-0 gap-1.5 rounded-xl',
-        variant === 'ghost' && 'text-muted-foreground hover:bg-accent/10',
+        variant === 'ghost' && 'text-muted-foreground hover:bg-muted',
         newSize === 'default' && 'px-3',
         className,
       )}
@@ -222,7 +222,7 @@ export const PromptInputSubmit = ({
   return (
     <Button
       className={cn(
-        'gap-1.5 rounded-xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 shadow-md hover:shadow-lg transition-all duration-200',
+        'gap-1.5 rounded-xl transition-all duration-200',
         className
       )}
       size={size}
@@ -253,7 +253,7 @@ export const PromptInputModelSelectTrigger = ({
   <SelectTrigger
     className={cn(
       'border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors rounded-xl',
-      'hover:bg-accent/10 hover:text-foreground [&[aria-expanded="true"]]:bg-accent/10 [&[aria-expanded="true"]]:text-foreground',
+      'hover:bg-muted hover:text-foreground [&[aria-expanded="true"]]:bg-muted [&[aria-expanded="true"]]:text-foreground',
       className,
     )}
     {...props}
@@ -268,7 +268,7 @@ export const PromptInputModelSelectContent = ({
   className,
   ...props
 }: PromptInputModelSelectContentProps) => (
-  <SelectContent className={cn('rounded-xl border-border/20 bg-card/90 backdrop-blur-xl', className)} {...props} />
+  <SelectContent className={cn('rounded-xl border bg-background', className)} {...props} />
 );
 
 export type PromptInputModelSelectItemProps = ComponentProps<typeof SelectItem>;
@@ -277,7 +277,7 @@ export const PromptInputModelSelectItem = ({
   className,
   ...props
 }: PromptInputModelSelectItemProps) => (
-  <SelectItem className={cn('rounded-lg hover:bg-accent/10', className)} {...props} />
+  <SelectItem className={cn('rounded-lg hover:bg-muted', className)} {...props} />
 );
 
 export type PromptInputModelSelectValueProps = ComponentProps<

@@ -32,17 +32,17 @@ export const MessageContent = ({
 }: MessageContentProps) => (
   <div
     className={cn(
-      'flex flex-col gap-2 rounded-2xl text-sm text-foreground px-4 py-3 overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-200',
-      // Modern styling with glass morphism
-      'group-[.is-user]:bg-gradient-to-r group-[.is-user]:from-accent group-[.is-user]:to-accent/90 group-[.is-user]:text-accent-foreground group-[.is-user]:rounded-br-md',
-      'group-[.is-assistant]:bg-card/60 group-[.is-assistant]:border group-[.is-assistant]:border-border/20 group-[.is-assistant]:text-foreground group-[.is-assistant]:rounded-bl-md',
-      // Enhanced hover effects
-      'group-[.is-user]:hover:shadow-xl group-[.is-assistant]:hover:shadow-lg',
+      'flex flex-col gap-2 rounded-2xl text-sm px-4 py-3 overflow-hidden transition-all duration-200',
+      // Clean, neutral styling
+      'group-[.is-user]:bg-muted group-[.is-user]:text-muted-foreground group-[.is-user]:rounded-br-md',
+      'group-[.is-assistant]:bg-background group-[.is-assistant]:border group-[.is-assistant]:border-border group-[.is-assistant]:text-foreground group-[.is-assistant]:rounded-bl-md',
+      // Subtle hover effects
+      'group-[.is-user]:hover:bg-muted/80 group-[.is-assistant]:hover:shadow-sm',
       className,
     )}
     {...props}
   >
-    <div className="is-user:dark break-words leading-relaxed">{children}</div>
+    <div className="break-words leading-relaxed">{children}</div>
   </div>
 );
 

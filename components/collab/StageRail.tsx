@@ -1,14 +1,12 @@
 "use client"
 
-import React, { useEffect, useState, useMemo } from "react"
+import React from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, TrendingUp } from "lucide-react"
 import { cn } from "@/src/core/utils"
-import { useStage } from "@/contexts/stage-context"
-
-type Context = { stage?: number; exploredCount?: number; total?: number; intelligenceReady?: boolean }
+import { useStage, getStageIdForNumber } from "@/contexts/stage-context"
 
 // Import proper stage instructions from src/core
 import { StageInstructions } from '@/src/core/conversation/stages'
@@ -24,110 +22,21 @@ const STAGE_DESCRIPTIONS = {
   7: "Next Steps & Action"
 }
 
-const INTELLIGENCE_STAGE_MAP = {
-  'GREETING': 1,
-  'NAME_COLLECTION': 2,
-  'EMAIL_CAPTURE': 2,
-  'BACKGROUND_RESEARCH': 3,
-  'PROBLEM_DISCOVERY': 5,
-  'SOLUTION_PRESENTATION': 6,
-  'CALL_TO_ACTION': 7
-}
-
 interface StageRailProps {
-  sessionId?: string
   side?: 'left' | 'right'
   show?: boolean
 }
 
-export function StageRail({ sessionId, side = 'right', show = true }: StageRailProps) {
+export function StageRail({ side = 'right', show = true }: StageRailProps) {
+  const { currentStageIndex, getProgressPercentage, exploration } = useStage()
   if (!show) return null
-  // Use the StageProvider context for proper stage management
-  const { currentStageIndex, stages, getProgressPercentage } = useStage()
-  const [ctx, setCtx] = useState<Context>({ stage: 1, exploredCount: 0, total: 16 })
-  const [isLoading, setIsLoading] = useState(false)
-
-  // 🔧 MASTER FLOW: Intelligence-aware context fetching
-  const fetchContext = useMemo(() => async () => {
-    const id = sessionId || (typeof window !== 'undefined' ? (localStorage.getItem('intelligence-session-id') || undefined) : undefined)
-    if (!id) return
-    
-    setIsLoading(true)
-    try {
-      const res = await fetch(`/api/intelligence/context?sessionId=${id}`, { 
-        cache: 'no-store',
-        headers: { 
-          'Cache-Control': 'no-cache',
-          'x-intelligence-session-id': id
-        }
-      })
-      if (!res.ok) return
-      const j = await res.json()
-      const out = j?.output || j
-      
-      // Calculate stage based on intelligence context
-      let stage = 1 // Default to initial contact
-      
-      if (out?.lead?.email) {
-        stage = Math.max(stage, 3) // Has consent & research
-      }
-      
-      if (out?.company || out?.person || out?.role) {
-        stage = Math.max(stage, 4) // Background analysis complete
-      }
-      
-      if (out?.capabilities && out.capabilities.length > 5) {
-        stage = Math.max(stage, 5) // Requirements discovery
-      }
-      
-      // Use explicit stage if provided, otherwise use calculated
-      const finalStage = Number(out?.stage || stage)
-      const explored = Number(out?.exploredCount || out?.capabilities?.length || 0)
-      const hasIntelligence = !!(out?.company || out?.person || out?.role)
-      
-      setCtx({ 
-        stage: finalStage, 
-        exploredCount: explored, 
-        total: 16,
-        intelligenceReady: hasIntelligence
-      })
-      
-      console.log('🎯 Stage updated:', { stage: finalStage, explored, hasIntelligence })
-    } catch (error) {
-      console.warn('Stage context fetch failed:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [sessionId])
-
-  useEffect(() => {
-    fetchContext()
-  }, [fetchContext])
-
-  // Listen to capability-used events to refresh quickly without polling
-  useEffect(() => {
-    const onUsed = () => {
-      fetchContext()
-    }
-    
-    try { 
-      window.addEventListener('chat-capability-used', onUsed as EventListener) 
-    } catch (error) {
-      // Warning log removed - could add proper error handling here
-    }
-    
-    return () => { 
-      try { 
-        window.removeEventListener('chat-capability-used', onUsed as EventListener) 
-      } catch (error) {
-        // Warning log removed - could add proper error handling here
-      }
-    }
-  }, [fetchContext])
-
-  // Use stage context for current stage, fallback to API context
-  const currentStage = currentStageIndex + 1 || ctx.stage || 1
-  const progressPercentage = getProgressPercentage() || Math.round(((ctx.exploredCount || 0) / (ctx.total || 16)) * 100)
+  const currentStage = currentStageIndex + 1
+  const stagePercent = getProgressPercentage()
+  const progressPercentage = stagePercent > 0
+    ? stagePercent
+    : exploration.total > 0
+      ? Math.round((exploration.exploredCount / exploration.total) * 100)
+      : 0
 
   // Desktop: Fixed centered on right side
   // Mobile: Dropdown trigger button
@@ -148,6 +57,7 @@ export function StageRail({ sessionId, side = 'right', show = true }: StageRailP
         <ol className={cn("flex flex-col gap-2")} role="list">
           {Array.from({ length: 7 }).map((_, i) => {
             const stageNumber = i + 1
+            const stageId = getStageIdForNumber(stageNumber)
             const isCurrent = stageNumber === currentStage
             const isCompleted = stageNumber < currentStage
             const isUpcoming = stageNumber > currentStage
@@ -188,7 +98,7 @@ export function StageRail({ sessionId, side = 'right', show = true }: StageRailP
                         </p>
                         {/* Show stage instruction for context */}
                         <p className="text-xs text-muted-foreground/70 mt-1 italic">
-                          {Object.values(StageInstructions)[stageNumber - 1]}
+                          {StageInstructions[stageId as keyof typeof StageInstructions]}
                         </p>
                         {isCurrent && (
                           <p className="text-xs font-medium text-primary">Current stage</p>
@@ -204,17 +114,14 @@ export function StageRail({ sessionId, side = 'right', show = true }: StageRailP
         <div className="space-y-1 text-center text-xs text-muted-foreground">
           <div className="text-[10px] opacity-70">Exploration</div>
           <div className="flex items-center justify-center gap-1">
-            <span>{ctx.exploredCount}</span>
+            <span>{exploration.exploredCount}</span>
             <span>of</span>
-            <span>{ctx.total}</span>
+            <span>{exploration.total}</span>
           </div>
           <div className="h-1 w-12 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercentage} aria-label="Exploration progress">
             <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progressPercentage}%` }} />
           </div>
         </div>
-        {isLoading && (
-          <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading progress" />
-        )}
       </aside>
 
       {/* Mobile: Dropdown trigger */}
@@ -299,7 +206,7 @@ export function StageRail({ sessionId, side = 'right', show = true }: StageRailP
                 Exploration Progress
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span>{ctx.exploredCount} of {ctx.total}</span>
+                <span>{exploration.exploredCount} of {exploration.total}</span>
                 <span className="text-xs text-muted-foreground">{progressPercentage}%</span>
               </div>
               <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
@@ -309,11 +216,6 @@ export function StageRail({ sessionId, side = 'right', show = true }: StageRailP
                 />
               </div>
             </div>
-            {isLoading && (
-              <div className="flex justify-center py-2">
-                <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -326,7 +228,7 @@ export function StageRailCard() {
   const currentStage = stages[currentStageIndex] ?? null
   const percentage = getProgressPercentage()
   const stageNumber = currentStageIndex + 1
-  const stageInstruction = StageInstructions[String(stageNumber) as keyof typeof StageInstructions]
+  const stageInstruction = StageInstructions[getStageIdForNumber(stageNumber) as keyof typeof StageInstructions]
 
   return (
     <div className="rounded-2xl border border-border bg-surface/80 p-4 backdrop-blur">

@@ -13,6 +13,7 @@ export interface StageContextType {
   stages: StageItem[]
   currentStage: StageItem | null
   currentStageIndex: number
+  exploration: StageExplorationState
   nextStage: () => void
   previousStage: () => void
   goToStage: (stageId: string) => void
@@ -22,8 +23,17 @@ export interface StageContextType {
   getProgressPercentage: () => number
 }
 
-// Import stage instructions from the superior src/core architecture
-import { StageInstructions } from '@/src/core/conversation/stages'
+export interface StageExplorationState {
+  exploredCount: number
+  total: number
+}
+
+export interface StageSyncPayload {
+  stageId?: string
+  exploredCount?: number
+  total?: number
+  completedStageIds?: string[]
+}
 
 const INITIAL_STAGES: StageItem[] = [
   { id: 'GREETING', label: 'Discovery & Setup', done: false, current: true },
@@ -36,9 +46,12 @@ const INITIAL_STAGES: StageItem[] = [
 ]
 
 const StageContext = createContext<StageContextType | undefined>(undefined)
+const STAGE_ID_SEQUENCE = INITIAL_STAGES.map(stage => stage.id)
+const DEFAULT_CAPABILITY_TOTAL = 16
 
 export function StageProvider({ children }: { children: React.ReactNode }) {
   const [stages, setStages] = useState<StageItem[]>(INITIAL_STAGES)
+  const [exploration, setExploration] = useState<StageExplorationState>({ exploredCount: 0, total: DEFAULT_CAPABILITY_TOTAL })
 
   const currentStageIndex = stages.findIndex(stage => stage.current)
   const currentStage = currentStageIndex >= 0 ? stages[currentStageIndex] : null
@@ -99,6 +112,7 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
 
   const resetStages = useCallback(() => {
     setStages(INITIAL_STAGES)
+    setExploration({ exploredCount: 0, total: DEFAULT_CAPABILITY_TOTAL })
   }, [])
 
   const isStageCompleted = useCallback((stageId: string) => {
@@ -135,10 +149,64 @@ export function StageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [completeStage, nextStage, goToStage])
 
+  useEffect(() => {
+    const handleIntelligenceSync = (event: CustomEvent<StageSyncPayload>) => {
+      const { stageId, exploredCount, total, completedStageIds } = event.detail
+
+      if (typeof exploredCount === 'number' || typeof total === 'number') {
+        setExploration(prev => ({
+          exploredCount: typeof exploredCount === 'number' ? exploredCount : prev.exploredCount,
+          total: typeof total === 'number' ? total : (prev.total || DEFAULT_CAPABILITY_TOTAL)
+        }))
+      }
+
+      if (!stageId && (!completedStageIds || completedStageIds.length === 0)) {
+        return
+      }
+
+      updateStages(prevStages => {
+        const nextStages = prevStages.map(stage => ({ ...stage }))
+
+        if (completedStageIds && completedStageIds.length) {
+          for (const completed of completedStageIds) {
+            const idx = nextStages.findIndex(stage => stage.id === completed)
+            if (idx >= 0) {
+              nextStages[idx] = { ...nextStages[idx]!, done: true, current: false }
+            }
+          }
+        }
+
+        if (stageId) {
+          const idx = nextStages.findIndex(stage => stage.id === stageId)
+          if (idx >= 0) {
+            return nextStages.map((stage, index) => {
+              if (index < idx) {
+                return { ...stage, done: true, current: false }
+              }
+              if (index === idx) {
+                return { ...stage, done: false, current: true }
+              }
+              return { ...stage, current: false }
+            })
+          }
+        }
+
+        return nextStages
+      })
+    }
+
+    window.addEventListener('stage-intelligence-update' as any, handleIntelligenceSync as any)
+
+    return () => {
+      window.removeEventListener('stage-intelligence-update' as any, handleIntelligenceSync as any)
+    }
+  }, [updateStages])
+
   const value: StageContextType = {
     stages,
     currentStage: currentStage ?? null,
     currentStageIndex,
+    exploration,
     nextStage,
     previousStage,
     goToStage,
@@ -169,4 +237,24 @@ export function triggerStageProgression(stageId: string, action: 'complete' | 'n
     detail: { stage: stageId, action }
   })
   window.dispatchEvent(event)
+}
+
+export function syncStageFromIntelligence(payload: StageSyncPayload) {
+  const event = new CustomEvent('stage-intelligence-update', {
+    detail: payload
+  })
+  window.dispatchEvent(event)
+}
+
+export function getStageIdForIndex(index: number): string {
+  return STAGE_ID_SEQUENCE[index] || STAGE_ID_SEQUENCE[0]!
+}
+
+export function getStageIdForNumber(stageNumber: number): string {
+  return getStageIdForIndex(Math.max(0, Math.min(STAGE_ID_SEQUENCE.length - 1, stageNumber - 1)))
+}
+
+export function getStageNumberForId(stageId: string): number {
+  const idx = STAGE_ID_SEQUENCE.indexOf(stageId)
+  return idx >= 0 ? idx + 1 : 1
 }

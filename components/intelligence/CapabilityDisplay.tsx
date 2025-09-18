@@ -245,7 +245,7 @@ export function useCapabilitySuggestions(userMessage: string, sessionId?: string
   const suggestions = useMemo(() => {
     if (!userMessage.trim()) return []
     return getSuggestedCapabilities?.(userMessage) || []
-  }, [userMessage, getSuggestedCapabilities, available])
+  }, [userMessage, getSuggestedCapabilities])
 
   return {
     suggestions,

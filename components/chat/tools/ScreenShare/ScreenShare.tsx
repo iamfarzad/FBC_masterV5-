@@ -24,6 +24,16 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
+  const analysisCountRef = useRef(analysisCount)
+  const connectionQualityRef = useRef(connectionQuality)
+
+  useEffect(() => {
+    analysisCountRef.current = analysisCount
+  }, [analysisCount])
+
+  useEffect(() => {
+    connectionQualityRef.current = connectionQuality
+  }, [connectionQuality])
 
   // Intelligence context integration
   const sessionId = typeof window !== 'undefined' ? (localStorage?.getItem('intelligence-session-id') || '') : ''
@@ -31,7 +41,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
   // 🚀 ENHANCED SCREEN SHARE START - Professional UX with feedback
   const startScreenShare = useCallback(async () => {
     setIsConnecting(true)
-    
+
     try {
       // 🔄 Professional loading feedback
       await new Promise(resolve => setTimeout(resolve, 300)) // Brief loading for UX
@@ -65,7 +75,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       }
 
       const mediaStream = await navigator.mediaDevices.getDisplayMedia(getOptimalConstraints())
-      
+
       setStream(mediaStream)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
@@ -92,20 +102,19 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
         videoTrack.addEventListener("ended", () => {
           // Professional shutdown with feedback
           setIsAnalyzing(false)
-          const endedMessage = `**📊 Screen Share Session Ended**\\n\\nSession completed. Total analyses: ${analysisCount}`
+          const totalAnalyses = analysisCountRef.current
+          const endedMessage = `**📊 Screen Share Session Ended**\\n\\nSession completed. Total analyses: ${totalAnalyses}`
           onAnalysis?.(endedMessage)
           chatActions?.addMessage({
             role: 'assistant',
             content: endedMessage,
             timestamp: new Date(),
             type: 'multimodal',
-            metadata: { source: 'screen-share', event: 'ended', analyses: analysisCount },
+            metadata: { source: 'screen-share', event: 'ended', analyses: totalAnalyses },
           })
           // Stop screen sharing inline to avoid circular dependency
-          if (stream) {
-            stream.getTracks().forEach((track) => track.stop())
-            setStream(null)
-          }
+          mediaStream.getTracks().forEach((track) => track.stop())
+          setStream(null)
           if (intervalRef.current) {
             clearInterval(intervalRef.current)
             intervalRef.current = null
@@ -142,7 +151,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
     } finally {
       setIsConnecting(false)
     }
-  }, [onClose, onAnalysis, analysisCount, chatActions])
+  }, [onClose, onAnalysis, chatActions])
 
   // Stop screen share
   const stopScreenShare = useCallback(() => {
@@ -191,7 +200,10 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       })
       
       if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`)
+        const errorText = await response.text()
+        const errorMessage = `API Error ${response.status}: ${errorText}`
+        console.error('Screen API error:', errorMessage)
+        throw new Error(errorMessage)
       }
       
       const result = await response.json()
@@ -200,9 +212,11 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       // 🔄 Intelligent Response Routing with Enhanced UX
       if (analysisText && analysisText.length > 10) {
         // 📊 Update analysis metrics for UX feedback
-        setAnalysisCount(prev => prev + 1)
+        const nextCount = analysisCountRef.current + 1
+        analysisCountRef.current = nextCount
+        setAnalysisCount(nextCount)
         setLastAnalysisTime(new Date())
-        
+
         // Store analysis for conversation context
         if (sessionId) {
           const contextKey = `screen-analysis-${sessionId}`
@@ -212,18 +226,19 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
             timestamp: new Date().toISOString(),
             analysis: analysisText.slice(0, 200), // Truncate for context
             trigger: context?.trigger || 'auto',
-            quality: connectionQuality
+            quality: connectionQualityRef.current
           })
           // Keep only last 5 analyses for context
           if (contextArray.length > 5) contextArray.shift()
           localStorage.setItem(contextKey, JSON.stringify(contextArray))
         }
-        
+
         // 💬 Professional chat integration with rich formatting
         const triggerEmoji = context?.trigger === 'manual' ? '⚡' : '🔄'
-        const qualityBadge = connectionQuality === 'excellent' ? '🔥' : connectionQuality === 'good' ? '✅' : '⚠️'
-        
-        const enhancedAnalysis = `**${triggerEmoji} Screen Analysis #${analysisCount + 1}** ${qualityBadge}\n\n${analysisText}\n\n*${context?.trigger === 'manual' ? 'Manual analysis' : 'Auto-analysis'} • ${new Date().toLocaleTimeString()} • Quality: ${connectionQuality}*`
+        const currentQuality = connectionQualityRef.current
+        const qualityBadge = currentQuality === 'excellent' ? '🔥' : currentQuality === 'good' ? '✅' : '⚠️'
+
+        const enhancedAnalysis = `**${triggerEmoji} Screen Analysis #${nextCount}** ${qualityBadge}\n\n${analysisText}\n\n*${context?.trigger === 'manual' ? 'Manual analysis' : 'Auto-analysis'} • ${new Date().toLocaleTimeString()} • Quality: ${currentQuality}*`
         onAnalysis?.(enhancedAnalysis)
         chatActions?.addMessage({
           role: 'assistant',
@@ -233,10 +248,10 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
           metadata: {
             source: 'screen-analysis',
             trigger: context?.trigger || 'auto',
-            quality: connectionQuality,
+            quality: currentQuality,
           },
         })
-        
+
         // 🎵 Subtle success feedback (visual only)
         if (context?.trigger === 'manual') {
           // Brief visual feedback for manual triggers
@@ -269,8 +284,9 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
       // 📊 Adaptive interval based on performance and activity
       const getAdaptiveInterval = () => {
         const baseInterval = 15000 // 15s base
-        const performanceFactor = connectionQuality === 'excellent' ? 1 :
-                                connectionQuality === 'good' ? 1.2 : 1.5
+        const currentQuality = connectionQualityRef.current
+        const performanceFactor = currentQuality === 'excellent' ? 1 :
+                                currentQuality === 'good' ? 1.2 : 1.5
         return Math.round(baseInterval * performanceFactor)
       }
 
@@ -299,8 +315,9 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
             ctx.drawImage(video, 0, 0, targetWidth, targetHeight)
             
             // 📈 ADAPTIVE COMPRESSION - Lower quality for auto, higher for manual
-            const compressionQuality = connectionQuality === 'excellent' ? 0.8 :
-                                     connectionQuality === 'good' ? 0.7 : 0.6
+            const currentQuality = connectionQualityRef.current
+            const compressionQuality = currentQuality === 'excellent' ? 0.8 :
+                                     currentQuality === 'good' ? 0.7 : 0.6
             
             const data = canvas.toDataURL("image/jpeg", compressionQuality)
             
@@ -316,7 +333,7 @@ export function ScreenShare({ onClose, onAnalysis }: ScreenShareProps) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [stream, sendFrame, isAnalyzing, connectionQuality])
+  }, [stream, sendFrame, isAnalyzing])
 
   // ⚡ PERFORMANCE-OPTIMIZED MANUAL ANALYSIS - High quality instant feedback
   const triggerManualAnalysis = useCallback(async () => {

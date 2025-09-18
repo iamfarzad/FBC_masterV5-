@@ -14,6 +14,7 @@ import {
 import {
   UNIFIED_CHAT_STORE_ID,
   syncUnifiedChatStoreState,
+  resetUnifiedChatStore,
 } from '@/src/core/chat/state/unified-chat-store'
 
 export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
@@ -21,6 +22,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [chatContextState, setChatContextState] = useState<UnifiedContext>(options.context || {})
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -99,7 +101,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       // Prepare request for unified API (AI SDK backend)
       const request: UnifiedChatRequest = {
         messages: [...messages, userMessage],
-        context: options.context || {},
+        context: chatContextState,
         mode: options.mode || 'standard',
         stream: true
       }
@@ -194,7 +196,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
     } finally {
       abortControllerRef.current = null
     }
-  }, [messages, isLoading, isStreaming, options, addMessage, updateMessage])
+  }, [messages, isLoading, isStreaming, options, chatContextState, addMessage, updateMessage])
 
   const clearMessages = useCallback(() => {
     setMessages([])
@@ -202,8 +204,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
   }, [])
 
   const updateContext = useCallback((context: Partial<UnifiedContext>) => {
-    // Context updates would trigger re-initialization
-    console.log('Context update:', context)
+    setChatContextState(prev => ({ ...prev, ...context }))
   }, [])
 
   const chatStatus = useMemo(() => {
@@ -214,11 +215,18 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
   }, [error, isStreaming, isLoading])
 
   useEffect(() => {
+    if (options.context) {
+      setChatContextState(prev => ({ ...prev, ...options.context }))
+    }
+  }, [options.context])
+
+  useEffect(() => {
     syncUnifiedChatStoreState({
       id: options.sessionId || 'unified-session',
       messages,
       error: error ?? undefined,
       status: chatStatus,
+      context: chatContextState,
       sendMessage,
       regenerate,
       stop,
@@ -226,11 +234,12 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       addToolResult,
       setMessages: replaceMessages,
       clearError,
-    } as any, UNIFIED_CHAT_STORE_ID)
+    }, UNIFIED_CHAT_STORE_ID)
   }, [
     messages,
     error,
     chatStatus,
+    chatContextState,
     sendMessage,
     regenerate,
     stop,
@@ -247,6 +256,7 @@ export function useUnifiedChat(options: UnifiedChatOptions): UnifiedChatReturn {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
+      resetUnifiedChatStore(UNIFIED_CHAT_STORE_ID)
     }
   }, [])
 

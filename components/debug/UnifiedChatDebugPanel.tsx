@@ -16,13 +16,13 @@ const containerClass = clsx(
 )
 
 export function UnifiedChatDebugPanel() {
-  if (process.env.NODE_ENV !== 'development') {
-    return null
-  }
-
   const messageCount = useUnifiedChatMessageCount()
   const status = useUnifiedChatStatus()
   const error = useUnifiedChatError()
+
+  if (process.env.NODE_ENV !== 'development') {
+    return null
+  }
 
   return (
     <div className={containerClass}>

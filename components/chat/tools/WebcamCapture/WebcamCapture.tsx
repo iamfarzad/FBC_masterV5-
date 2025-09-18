@@ -157,8 +157,8 @@ export function WebcamCapture({
       // Get image data for AI analysis
       const imageData = canvas.toDataURL("image/jpeg", 0.8)
 
-      // Send to AI for analysis using the real Gemini Vision API
-      if (sessionId && _onAIAnalysis) {
+      // Send to AI for analysis using the direct API (working approach)
+      if (sessionId) {
         try {
           const response = await fetch('/api/tools/webcam', {
             method: 'POST',
@@ -179,7 +179,7 @@ export function WebcamCapture({
               title: "AI Analysis Complete",
               description: analysisText.slice(0, 100) + (analysisText.length > 100 ? '...' : ''),
             })
-            _onAIAnalysis(analysisText)
+            _onAIAnalysis?.(analysisText)
             chatActions?.addMessage({
               role: 'assistant',
               content: `📸 **Webcam Analysis**\\n\\n${analysisText}`,
@@ -187,17 +187,59 @@ export function WebcamCapture({
               type: 'multimodal',
               metadata: { source: 'webcam-analysis' },
             })
+          } else {
+            // Handle API errors properly
+            const errorText = await response.text()
+            const errorMessage = `API Error ${response.status}: ${errorText}`
+            console.error('Webcam API error:', errorMessage)
+            
+            toast({
+              title: "Webcam Analysis Failed",
+              description: `Error ${response.status}: ${response.statusText}`,
+              variant: "destructive"
+            })
+            
+            chatActions?.addMessage({
+              role: 'assistant',
+              content: `📸 **Webcam Analysis Failed**\\n\\n${errorMessage}`,
+              timestamp: new Date(),
+              type: 'multimodal',
+              metadata: { source: 'webcam-analysis', error: true },
+            })
           }
         } catch (error) {
           console.error('AI analysis failed:', error)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          
+          toast({
+            title: "Webcam Analysis Failed",
+            description: errorMessage,
+            variant: "destructive"
+          })
+          
           chatActions?.addMessage({
             role: 'assistant',
-            content: `📸 **Webcam Analysis Failed**\\n\\n${error instanceof Error ? error.message : 'Unknown error'}` ,
+            content: `📸 **Webcam Analysis Failed**\\n\\n${errorMessage}`,
             timestamp: new Date(),
             type: 'multimodal',
             metadata: { source: 'webcam-analysis', error: true },
           })
         }
+      } else {
+        // No session ID - show error
+        toast({
+          title: "Webcam Analysis Failed",
+          description: "No session ID found. Please refresh the page.",
+          variant: "destructive"
+        })
+        
+        chatActions?.addMessage({
+          role: 'assistant',
+          content: `📸 **Webcam Analysis Failed**\\n\\nNo session ID found. Please refresh the page.`,
+          timestamp: new Date(),
+          type: 'multimodal',
+          metadata: { source: 'webcam-analysis', error: true },
+        })
       }
 
       // Download the screenshot

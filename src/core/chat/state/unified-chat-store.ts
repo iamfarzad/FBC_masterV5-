@@ -1,64 +1,108 @@
-import {
-  type ChatStore,
-  getChatStore,
-  useChatMessages,
-  useChatStatus,
-  useChatError,
-  useChatSendMessage,
-  useChatMessageCount,
-  useChatActions,
-  useChatProperty,
-} from '@ai-sdk-tools/store'
+import { createStore, type StoreApi } from 'zustand/vanilla'
+import { useStore } from 'zustand'
+
+import type { UnifiedMessage, UnifiedContext } from '@/src/core/chat/unified-types'
 
 export const UNIFIED_CHAT_STORE_ID = 'unified-ai-sdk'
 
-export type UnifiedChatStore = ChatStore<any>
+export type ChatStatus = 'ready' | 'submitted' | 'streaming' | 'error'
 
-type PartialUnifiedStore = Partial<UnifiedChatStore>
+export interface UnifiedChatStoreState {
+  id?: string
+  messages: UnifiedMessage[]
+  status: ChatStatus
+  error?: Error
+  context?: UnifiedContext
+  sendMessage?: (content: string) => Promise<void>
+  regenerate?: () => Promise<void>
+  stop?: () => Promise<void>
+  resumeStream?: () => Promise<void>
+  addToolResult?: (...args: any[]) => Promise<void>
+  setMessages?: (messages: UnifiedMessage[]) => void
+  clearError?: () => void
+}
+
+const DEFAULT_STATE: UnifiedChatStoreState = {
+  id: undefined,
+  messages: [],
+  status: 'ready',
+  error: undefined,
+  context: undefined,
+  sendMessage: undefined,
+  regenerate: undefined,
+  stop: undefined,
+  resumeStream: undefined,
+  addToolResult: undefined,
+  setMessages: undefined,
+  clearError: undefined,
+}
+
+const stores = new Map<string, StoreApi<UnifiedChatStoreState>>()
+
+function getOrCreateStore(storeId: string): StoreApi<UnifiedChatStoreState> {
+  const existing = stores.get(storeId)
+  if (existing) return existing
+
+  const store = createStore<UnifiedChatStoreState>(() => DEFAULT_STATE)
+  stores.set(storeId, store)
+  return store
+}
+
+export function resetUnifiedChatStore(storeId: string = UNIFIED_CHAT_STORE_ID): void {
+  const store = getOrCreateStore(storeId)
+  store.setState(DEFAULT_STATE, true)
+}
 
 export function syncUnifiedChatStoreState(
-  partial: PartialUnifiedStore,
+  partial: Partial<UnifiedChatStoreState>,
   storeId: string = UNIFIED_CHAT_STORE_ID,
 ): void {
-  const store = getChatStore<any>(storeId)
-
-  if (typeof store._syncState === 'function') {
-    store._syncState(partial)
-    return
-  }
-
-  if (typeof store.setState === 'function') {
-    store.setState(partial)
-  }
+  const store = getOrCreateStore(storeId)
+  store.setState((prev) => ({ ...prev, ...partial }), true)
 }
 
 export function useUnifiedChatMessages(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatMessages<any>(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => state.messages)
 }
 
 export function useUnifiedChatStatus(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatStatus(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => state.status)
 }
 
 export function useUnifiedChatError(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatError(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => state.error)
 }
 
 export function useUnifiedChatSendMessage(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatSendMessage(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => state.sendMessage)
 }
 
 export function useUnifiedChatMessageCount(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatMessageCount(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => state.messages.length)
 }
 
 export function useUnifiedChatActions(storeId: string = UNIFIED_CHAT_STORE_ID) {
-  return useChatActions(storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, (state) => ({
+    sendMessage: state.sendMessage,
+    regenerate: state.regenerate,
+    stop: state.stop,
+    resumeStream: state.resumeStream,
+    addToolResult: state.addToolResult,
+    setMessages: state.setMessages,
+    clearError: state.clearError,
+  }))
 }
 
 export function useUnifiedChatSelector<T>(
-  selector: (state: UnifiedChatStore) => T,
+  selector: (state: UnifiedChatStoreState) => T,
   storeId: string = UNIFIED_CHAT_STORE_ID,
 ): T {
-  return useChatProperty<any, T>(selector, storeId)
+  const store = getOrCreateStore(storeId)
+  return useStore(store, selector)
 }

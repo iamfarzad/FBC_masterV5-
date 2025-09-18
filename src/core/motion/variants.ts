@@ -209,7 +209,7 @@ export const pageVariants = {
   exit: { opacity: 0, x: -20 },
 }
 
-export default {
+const motionVariants = {
   durations,
   easings,
   fadeVariants,
@@ -227,3 +227,5 @@ export default {
   overlayVariants,
   pageVariants,
 }
+
+export default motionVariants
