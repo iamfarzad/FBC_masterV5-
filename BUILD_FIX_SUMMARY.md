@@ -6,16 +6,16 @@ During earlier attempts to migrate the chat experience, the branch accumulated r
 ## What changed on this branch
 - `/chat` now redirects to `/chat/v2`, and the v2 page renders conversations with `AiElementsConversation` backed by `useUnifiedChat` and `/api/chat/unified`.
 - Legacy chat layout components were removed, leaving the AI Element flow as the sole presentation layer.
-- `useUnifiedChat` streams Gemini responses via the AI SDK helpers and mirrors state into `@ai-sdk-tools/store`, exposing selector hooks throughout the UI.
+- `useUnifiedChat` streams Gemini responses via the AI SDK helpers and syncs state into `src/core/chat/state/unified-chat-store.ts`, exposing selector hooks throughout the UI.
 - Tooling panels (screen share, webcam, ROI checks) push their outputs through the shared store using `UnifiedChatActionsProvider`.
 - Stage progress updates flow from `syncStageFromIntelligence`, keeping the StageRail and diagnostics cards aligned with the active session.
 
 ## What still needs attention
-- Missing files/routes mentioned in prior docs (`/api/chat/simple`, `useSimpleAISDK`, etc.) should either be implemented or removed from plans (documentation has now been cleaned to reflect reality).
-- `/api/chat/unified` only emits plain text plus minimal metadata; structured tool/task/reasoning data is still on the backlog.
-- Chat state continues to live inside `useUnifiedChat`; a dedicated shared store is recommended for future work.
+- `useUnifiedChat` continues to expose stubbed `regenerate`, `resumeStream`, and `addToolResult` helpers, so recovery tooling remains limited.
+- Automated coverage for the SSE parser, metadata mapping, and feature-flag routing has not been written.
+- Chat Devtools exists, but the deeper performance dashboard originally envisioned is still outstanding.
 
 ## Next steps
-1. Enrich the unified chat endpoint with structured metadata so AI Element components can display reasoning, tools, tasks, and citations.
-2. Promote chat state into a dedicated store slice to enable multi-session control outside the hook.
-3. Reintroduce guardrails/tests that assert against the actual SoT instead of placeholder artefacts.
+1. Wire up regenerate/resume/tool-result handlers so recovery and tooling paths are fully functional.
+2. Add automated coverage for SSE parsing, metadata propagation, and feature-flag routing.
+3. Expand devtools/telemetry to monitor rollout health and surface chat performance metrics.

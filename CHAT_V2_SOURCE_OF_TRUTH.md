@@ -2,12 +2,12 @@
 
 ## Current reality (UPDATED - AI SDK Tools Restored)
 - `/chat` redirects to `/chat/v2`, which is the primary chat experience on this branch.
-- The v2 page uses `AiElementsConversation` plus shared panels (control cards, multimodal widget, stage rail) running on top of **THREE IMPLEMENTATION MODES**:
-  - **Custom Mode**: `useUnifiedChat` with custom Zustand store
-  - **AI SDK Tools Mode**: `useUnifiedChatV2` with restored AI SDK Tools pattern
-  - **Simple Mode**: `useSimpleAISDK` with fallback implementation
-- All modes use the AI SDK-backed `/api/chat/unified` route.
-- The admin assistant now reuses the same component stack, so both surfaces present identical behaviour.
+- The v2 page uses the shared pipeline in `app/(chat)/chat/v2/page.tsx` together with `UnifiedChatWithFlags` to pick between **THREE IMPLEMENTATION MODES**:
+  - **Unified Mode**: `useUnifiedChat` (streaming via `/api/chat/unified`)
+  - **AI SDK Tools Mode**: `useUnifiedChatV2`/`useNativeAISDK` (feature-flag driven)
+  - **Simple Mode**: `useSimpleAISDK` (non-streaming fallback hitting `/api/chat/simple`)
+- All modes push lifecycle state into `src/core/chat/state/unified-chat-store.ts`, so selector hooks and devtools stay in sync.
+- The admin assistant reuses the same component stack, giving parity with the customer experience.
 
 ## Shipped pieces (UPDATED)
 - Legacy `components/chat/layouts/*` have been removed; AI Element primitives are the only render path.
@@ -15,19 +15,19 @@
   - `useUnifiedChat` - Custom Zustand store with local state management
   - `useUnifiedChatV2` - **RESTORED** AI SDK Tools pattern with global state management
   - `useSimpleAISDK` - Simple fallback implementation
-- All implementations stream Gemini responses through `/api/chat/unified` and expose selector hooks for the UI.
+- Unified and native modes stream Gemini responses through `/api/chat/unified`, while the simple mode calls `/api/chat/simple`; all three sync into the shared selector hooks for the UI.
 - Screen share, webcam capture, ROI tests, and other quick actions push their status messages through `UnifiedChatActionsProvider`, keeping the transcript in sync.
 - Stage context is synchronised from intelligence responses so the StageRail reflects current progress automatically.
 - **RESTORED**: `ChatDevtools` component provides real-time debugging for AI SDK Tools mode.
 
-## Missing pieces (previously claimed but not present)
-- No `/api/chat/simple` or alternate implementation hooks (`useAISDKComplete`, `useSimpleAISDK`, etc.).
-- No layered feature toggles or localStorage flags to switch between implementations.
-- No Gemini intelligence routes beyond `/api/chat/unified`; realtime/multimodal/admin endpoints still rely on legacy handlers.
-- Advanced devtools UI, performance analytics, and full tool ecosystems described in earlier drafts have not been built.
+## Gaps to watch
+- `useUnifiedChat` still stubs regenerate/resume/tool-result behaviour, and the native hook’s reload/stop helpers remain placeholders.
+- Automated coverage has not been added for SSE parsing, feature-flag selection, or metadata rendering.
+- The Chat Devtools overlay is available, but the deeper performance dashboard referenced in early plans is still future work.
+- Realtime/multimodal/admin API variants beyond `/api/chat/unified` continue to rely on legacy handlers.
 
 ## Focus for completion
-1. Extend `/api/chat/unified` to stream structured metadata (reasoning, tool/task payloads, citations) so `AiElementsConversation` can show more than plain text.
-2. Promote chat state into a dedicated store slice to reduce duplication between the hook and the AI SDK store.
-3. Decide whether multiple implementations or toggles are still required; if not, remove lingering references from planning docs.
-4. Expand automated coverage (integ/unit smoke) around the SSE mapper and tool triggers to protect the new SoT.
+1. Wire regenerate/resume/tool-result flows through the hooks and backend so recovery tooling works end-to-end.
+2. Add automated coverage around SSE parsing, metadata propagation, and feature-flag routing.
+3. Build out the performance/debug dashboard originally scoped for the AI SDK rollout.
+4. Evaluate remaining legacy realtime/multimodal handlers and plan upgrades onto the unified AI SDK stack.
