@@ -11,8 +11,8 @@ export interface UnifiedChatStoreState {
   id?: string
   messages: UnifiedMessage[]
   status: ChatStatus
-  error?: Error
-  context?: UnifiedContext
+  error?: Error | null
+  context?: UnifiedContext | null
   sendMessage?: (content: string) => Promise<void>
   regenerate?: () => Promise<void>
   stop?: () => Promise<void>
@@ -27,14 +27,7 @@ const DEFAULT_STATE: UnifiedChatStoreState = {
   messages: [],
   status: 'ready',
   error: null,
-  context: undefined,
-  sendMessage: undefined,
-  regenerate: undefined,
-  stop: undefined,
-  resumeStream: undefined,
-  addToolResult: undefined,
-  setMessages: undefined,
-  clearError: undefined,
+  context: null,
 }
 
 const stores = new Map<string, StoreApi<UnifiedChatStoreState>>()

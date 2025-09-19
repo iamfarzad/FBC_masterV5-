@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { Copy, RefreshCw } from 'lucide-react'
-import type { UIMessage as Message } from 'ai'
+import type { UnifiedMessage } from '@/src/core/chat/unified-types'
 
 import {
   Conversation,
@@ -46,7 +46,7 @@ import {
 import { GroundedCitation } from '@/components/ai-elements/inline-citation'
 
 export interface NativeAISDKConversationProps {
-  messages: Message[]
+  messages: UnifiedMessage[]
   toolInvocations?: any[]
   annotations?: any[]
   onSuggestionClick: (suggestion: string) => void

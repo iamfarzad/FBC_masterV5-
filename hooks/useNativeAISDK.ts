@@ -1,335 +1,442 @@
 /**
  * Native AI SDK Hook
- * Uses AI SDK's native streaming with full metadata support
+ * Provides a richer streaming experience with tool invocation metadata while
+ * mirroring all state into the unified chat store.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { UIMessage as Message } from 'ai'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import {
+  type UnifiedChatOptions,
+  type UnifiedChatReturn,
+  type UnifiedContext,
+  type UnifiedMessage,
+} from '@/src/core/chat/unified-types'
 import {
   UNIFIED_CHAT_STORE_ID,
-  syncUnifiedChatStoreState,
   resetUnifiedChatStore,
+  syncUnifiedChatStoreState,
 } from '@/src/core/chat/state/unified-chat-store'
 
-export interface NativeAISDKOptions {
-  sessionId?: string
-  mode?: 'standard' | 'realtime' | 'admin' | 'multimodal' | 'automation'
-  context?: {
-    sessionId?: string
-    leadContext?: {
-      name?: string
-      email?: string
-      company?: string
-      role?: string
-      industry?: string
-    }
-    intelligenceContext?: any
-    conversationIds?: string[]
-    adminId?: string
-    multimodalData?: {
-      audioData?: string | Uint8Array
-      imageData?: string | Uint8Array
-      videoData?: string | Uint8Array
-    }
-    [key: string]: any
-  }
-  initialMessages?: Message[]
-  onMessage?: (message: Message) => void
-  onComplete?: () => void
-  onError?: (error: Error) => void
+export interface NativeAISDKOptions extends UnifiedChatOptions {
+  apiEndpoint?: string
 }
 
-export interface NativeAISDKReturn {
-  messages: Message[]
-  isLoading: boolean
-  isStreaming: boolean
-  error: Error | null
-  sendMessage: (content: string) => Promise<void>
-  addMessage: (message: Omit<Message, 'id'>) => Message
-  clearMessages: () => void
-  updateContext: (context: Partial<NativeAISDKOptions['context']>) => void
-  // AI SDK native methods
-  append: (message: Message) => Promise<void>
+export interface NativeAISDKReturn extends UnifiedChatReturn {
+  append: (message: UnifiedMessage) => Promise<void>
   reload: () => Promise<void>
-  stop: () => void
-  setMessages: (messages: Message[]) => void
-  // Rich metadata
   toolInvocations: any[]
   annotations: any[]
+}
+
+type StreamRunOptions = {
+  assistantId?: string
+  requestId?: string
+}
+
+type NormalisedChunk = {
+  message: UnifiedMessage | null
+  toolInvocations?: any[]
+  annotations?: any[]
+  isComplete?: boolean
+}
+
+type StreamMessageType = Exclude<UnifiedMessage['type'], 'meta' | undefined>
+
+function isStreamMessageType(value: unknown): value is StreamMessageType {
+  return value === 'text' || value === 'tool' || value === 'multimodal'
+}
+
+function normaliseMessage(input: Omit<UnifiedMessage, 'id'> & { id?: string }): UnifiedMessage {
+  const id = input.id && input.id.length > 0 ? input.id : crypto.randomUUID()
+
+  return {
+    id,
+    role: input.role,
+    content: input.content ?? '',
+    timestamp: input.timestamp ? new Date(input.timestamp) : new Date(),
+    type: input.type ?? 'text',
+    metadata: { ...(input.metadata || {}) },
+  }
+}
+
+function parseStreamChunk(data: unknown, fallbackId?: string | null): NormalisedChunk {
+  if (!data || typeof data !== 'object') {
+    return { message: null }
+  }
+
+  const payload = data as Record<string, any>
+  const metadata = typeof payload.metadata === 'object' && payload.metadata
+    ? { ...payload.metadata }
+    : {}
+
+  if (typeof payload.isComplete === 'boolean' && !metadata.isComplete) {
+    metadata.isComplete = payload.isComplete
+  }
+
+  const id = typeof payload.id === 'string' && payload.id.length > 0
+    ? payload.id
+    : fallbackId || crypto.randomUUID()
+
+  const rawType = typeof payload.type === 'string' ? payload.type : undefined
+
+  if (rawType === 'meta') {
+    return {
+      message: null,
+      toolInvocations: Array.isArray(metadata.toolInvocations) ? metadata.toolInvocations : undefined,
+      annotations: Array.isArray(metadata.annotations) ? metadata.annotations : undefined,
+      isComplete: Boolean(metadata.isComplete),
+    }
+  }
+
+  const role: UnifiedMessage['role'] = payload.role === 'user' ? 'user' : 'assistant'
+  const resolvedType: StreamMessageType = isStreamMessageType(rawType) ? rawType : 'text'
+
+  const message: UnifiedMessage = {
+    id,
+    role,
+    content: typeof payload.content === 'string' ? payload.content : '',
+    timestamp: payload.timestamp ? new Date(payload.timestamp) : new Date(),
+    type: resolvedType,
+    metadata,
+  }
+
+  return {
+    message,
+    toolInvocations: Array.isArray(metadata.toolInvocations) ? metadata.toolInvocations : undefined,
+    annotations: Array.isArray(metadata.annotations) ? metadata.annotations : undefined,
+    isComplete: Boolean(metadata.isComplete),
+  }
 }
 
 export function useNativeAISDK(options: NativeAISDKOptions): NativeAISDKReturn {
   const {
     sessionId = 'native-ai-sdk',
     mode = 'standard',
-    context,
+    context: initialContext,
     initialMessages = [],
     onMessage,
     onComplete,
     onError,
+    apiEndpoint = '/api/chat/unified',
   } = options
 
-  // Build system prompt based on mode and context
-  const systemPrompt = useMemo(() => {
-    let prompt = "You are F.B/c AI, a helpful business assistant."
-    
-    if (mode === 'admin') {
-      prompt = `You are F.B/c AI Admin Assistant, specialized in business intelligence and management.
-      
-Your capabilities:
-- Analyze lead data and provide actionable insights
-- Draft professional emails for campaigns
-- Suggest meeting scheduling strategies
-- Interpret analytics and performance metrics
-- Provide business recommendations based on data
-- Help with lead scoring and prioritization
-
-Response style: Be concise, actionable, and data-driven.`
-    }
-
-    // Add intelligence context if available
-    if (context?.intelligenceContext) {
-      const intCtx = context.intelligenceContext
-      let contextData = '\n\nPERSONALIZED CONTEXT:\n'
-      
-      if (intCtx.lead) {
-        contextData += `User: ${intCtx.lead.name} (${intCtx.lead.email})\n`
-      }
-      
-      if (intCtx.company) {
-        contextData += `Company: ${intCtx.company.name || 'Unknown'}\n`
-        if (intCtx.company.industry) contextData += `Industry: ${intCtx.company.industry}\n`
-        if (intCtx.company.size) contextData += `Size: ${intCtx.company.size}\n`
-      }
-      
-      if (intCtx.person) {
-        if (intCtx.person.role) contextData += `Role: ${intCtx.person.role}\n`
-        if (intCtx.person.seniority) contextData += `Seniority: ${intCtx.person.seniority}\n`
-      }
-
-      prompt += contextData
-    }
-
-    // Add multimodal context
-    if (context?.multimodalData) {
-      let multimodalContext = '\n\nMULTIMODAL INPUT:\n'
-      
-      if (context.multimodalData.audioData) {
-        multimodalContext += `Audio input received (${context.multimodalData.audioData.length} bytes)\n`
-      }
-      
-      if (context.multimodalData.imageData) {
-        multimodalContext += `Image input received (${context.multimodalData.imageData.length} bytes)\n`
-      }
-      
-      if (context.multimodalData.videoData) {
-        multimodalContext += `Video input received\n`
-      }
-
-      prompt += multimodalContext
-    }
-
-    return prompt
-  }, [mode, context])
-
-  // Use existing unified chat infrastructure with enhanced metadata
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [messages, setMessages] = useState<UnifiedMessage[]>(() => initialMessages.map(message => normaliseMessage(message)))
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [chatContextState, setChatContextState] = useState<UnifiedContext>(initialContext || {})
   const [toolInvocations, setToolInvocations] = useState<any[]>([])
   const [annotations, setAnnotations] = useState<any[]>([])
 
-  const append = useCallback(async (message: Message) => {
-    setMessages(prev => [...prev, message])
+  const messagesRef = useRef<UnifiedMessage[]>(messages)
+  const contextRef = useRef<UnifiedContext>(chatContextState)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const requestIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  useEffect(() => {
+    contextRef.current = chatContextState
+  }, [chatContextState])
+
+  useEffect(() => {
+    if (initialContext) {
+      setChatContextState(prev => ({ ...prev, ...initialContext }))
+    }
+    // We intentionally run this effect only once on mount so that subsequent
+    // context updates flow through the returned updateContext helper instead of
+    // rehydrating from the initial options.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const reload = useCallback(async () => {
-    // Reload functionality - would need to be implemented
-    console.log('[NATIVE_AI_SDK] Reload requested')
+  const commitMessages = useCallback((next: UnifiedMessage[] | ((prev: UnifiedMessage[]) => UnifiedMessage[])) => {
+    setMessages(prev => {
+      const computed = typeof next === 'function' ? next(prev) : next
+      messagesRef.current = computed
+      return computed
+    })
   }, [])
 
-  const stop = useCallback(() => {
+  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'> & { id?: string }): UnifiedMessage => {
+    const normalised = normaliseMessage(message)
+    commitMessages(prev => [...prev, normalised])
+    return normalised
+  }, [commitMessages])
+
+  const append = useCallback(async (message: UnifiedMessage) => {
+    const normalised = normaliseMessage(message)
+    commitMessages(prev => [...prev, normalised])
+  }, [commitMessages])
+
+  const setMessagesState = useCallback((nextMessages: UnifiedMessage[]) => {
+    commitMessages(nextMessages.map(message => normaliseMessage(message)))
+  }, [commitMessages])
+
+  const clearMessages = useCallback(() => {
+    commitMessages([])
+    setToolInvocations([])
+    setAnnotations([])
+  }, [commitMessages])
+
+  const updateContext = useCallback((context: Partial<UnifiedContext>) => {
+    setChatContextState(prev => ({ ...prev, ...context }))
+  }, [])
+
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
+  const stop = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+
+    setIsStreaming(false)
     setIsLoading(false)
   }, [])
 
-  const isStreaming = isLoading && messages.length > 0
-
-  const sendMessage = useCallback(async (content: string): Promise<void> => {
-    if (!content.trim() || isLoading) return
+  const runStream = useCallback(async (
+    requestMessages: UnifiedMessage[],
+    { assistantId, requestId }: StreamRunOptions = {},
+  ) => {
+    const id = requestId || crypto.randomUUID()
+    requestIdRef.current = id
 
     try {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       setIsLoading(true)
+      setIsStreaming(false)
       setError(null)
 
-      // Add user message
-      const userMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: content.trim(),
-      }
-      setMessages(prev => [...prev, userMessage])
-
-      // Call unified API with enhanced metadata
-      const response = await fetch('/api/chat/unified', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-session-id': sessionId,
           'x-chat-mode': mode,
+          'x-request-id': id,
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
-          context,
+          messages: requestMessages,
+          context: contextRef.current,
           mode,
           stream: true,
         }),
+        signal: controller.signal,
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const data = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(data.error || `HTTP ${response.status}`)
       }
 
-      // Parse SSE stream
+      setIsLoading(false)
+      setIsStreaming(true)
+
       const reader = response.body?.getReader()
       if (!reader) throw new Error('No response stream')
 
-      let assistantMessage: Message | null = null
       const decoder = new TextDecoder()
+      let buffer = ''
+      let activeAssistantId: string | null = assistantId ?? null
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
+        buffer += decoder.decode(value, { stream: true })
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              
-              if (data.role === 'assistant') {
-                if (!assistantMessage) {
-                  assistantMessage = {
-                    id: crypto.randomUUID(),
-                    role: 'assistant',
-                    content: data.content,
-                  }
-                  setMessages(prev => [...prev, assistantMessage!])
-                } else {
-                  setMessages(prev => prev.map(msg => 
-                    msg.id === assistantMessage!.id 
-                      ? { ...msg, content: data.content }
-                      : msg
-                  ))
+        let boundary = buffer.indexOf('\n\n')
+        while (boundary !== -1) {
+          const rawEvent = buffer.slice(0, boundary)
+          buffer = buffer.slice(boundary + 2)
+
+          const dataLine = rawEvent.split('\n').find(line => line.startsWith('data:'))
+          if (dataLine) {
+            const payloadText = dataLine.replace(/^data:\s*/, '')
+            if (payloadText && payloadText !== '[DONE]') {
+              try {
+                const parsed = JSON.parse(payloadText)
+                const { message, toolInvocations: tools, annotations: anns, isComplete } = parseStreamChunk(parsed, activeAssistantId)
+
+                if (message) {
+                  activeAssistantId = message.id
+
+                  commitMessages(prev => {
+                    const index = prev.findIndex(item => item.id === message.id)
+                    if (index === -1) {
+                      return [...prev, message]
+                    }
+
+                    const next = [...prev]
+                    const existing = next[index]
+                    if (!existing) {
+                      return next
+                    }
+
+                    next[index] = {
+                      ...existing,
+                      content: message.content,
+                      metadata: { ...existing.metadata, ...message.metadata },
+                    }
+                    return next
+                  })
+
+                  onMessage?.(message)
                 }
 
-                // Extract enhanced metadata
-                if (data.metadata?.toolInvocations) {
-                  setToolInvocations(data.metadata.toolInvocations)
-                }
-                if (data.metadata?.annotations) {
-                  setAnnotations(data.metadata.annotations)
+                if (Array.isArray(tools)) {
+                  setToolInvocations(tools)
                 }
 
-                if (data.metadata?.isComplete) {
-                  setIsLoading(false)
+                if (Array.isArray(anns)) {
+                  setAnnotations(anns)
+                }
+
+                if (isComplete) {
+                  setIsStreaming(false)
                   onComplete?.()
-                  break
                 }
+              } catch (streamError) {
+                console.warn('[NATIVE_AI_SDK] Failed to parse stream chunk', streamError)
               }
-            } catch (e) {
-              // Skip invalid JSON
             }
           }
+
+          boundary = buffer.indexOf('\n\n')
         }
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return
+      }
+
+      const normalisedError = err instanceof Error ? err : new Error(String(err))
       setIsLoading(false)
-      const error = err instanceof Error ? err : new Error(String(err))
-      setError(error)
-      onError?.(error)
+      setIsStreaming(false)
+      setError(normalisedError)
+      onError?.(normalisedError)
+    } finally {
+      abortControllerRef.current = null
     }
-  }, [messages, isLoading, sessionId, mode, context, onComplete, onError])
+  }, [
+    apiEndpoint,
+    commitMessages,
+    mode,
+    onComplete,
+    onError,
+    onMessage,
+    sessionId,
+  ])
 
-  const addMessage = useCallback((message: Omit<Message, 'id'>): Message => {
-    const newMessage: Message = {
-      ...message,
-      id: crypto.randomUUID(),
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading) return
+
+    const trimmed = content.trim()
+    const userMessage = normaliseMessage({
+      role: 'user',
+      content: trimmed,
+      timestamp: new Date(),
+      type: 'text',
+      metadata: { mode },
+    })
+
+    commitMessages(prev => [...prev, userMessage])
+    await runStream([...messagesRef.current], { requestId: crypto.randomUUID() })
+  }, [commitMessages, isLoading, mode, runStream])
+
+  const reload = useCallback(async () => {
+    const current = messagesRef.current
+    const lastUserIndex = [...current].map(message => message.role).lastIndexOf('user')
+    if (lastUserIndex === -1) return
+
+    const truncated = current.slice(0, lastUserIndex + 1)
+    commitMessages(truncated)
+
+    const lastAssistant = [...current].reverse().find(message => message.role === 'assistant')
+    const runOptions: StreamRunOptions = {}
+    if (lastAssistant?.id) {
+      runOptions.assistantId = lastAssistant.id
     }
-    setMessages(prev => [...prev, newMessage])
-    return newMessage
-  }, [setMessages])
+    if (requestIdRef.current) {
+      runOptions.requestId = requestIdRef.current
+    }
 
-  const clearMessages = useCallback(() => {
-    setMessages([])
-  }, [setMessages])
+    await runStream(truncated, runOptions)
+  }, [commitMessages, runStream])
 
-  const updateContext = useCallback((newContext: Partial<NativeAISDKOptions['context']>) => {
-    // Context updates would require re-initializing the chat
-    // For now, we'll log the update
-    console.log('[NATIVE_AI_SDK] Context update requested:', newContext)
+  const resumeStream = useCallback(async () => {
+    await reload()
+  }, [reload])
+
+  const addToolResult = useCallback(async (
+    toolCallId: string,
+    result: unknown,
+    metadata: Record<string, unknown> = {},
+  ) => {
+    setToolInvocations(prev => {
+      const next = Array.isArray(prev) ? [...prev] : []
+      const index = next.findIndex((invocation: any) => invocation?.toolCallId === toolCallId)
+      const payload = {
+        toolCallId,
+        result,
+        state: 'output-available',
+        ...metadata,
+      }
+
+      if (index === -1) {
+        next.push(payload)
+      } else {
+        next[index] = { ...next[index], ...payload }
+      }
+
+      return next
+    })
   }, [])
 
-  // Sync state to unified store for compatibility
   useEffect(() => {
     syncUnifiedChatStoreState({
       id: sessionId,
-      messages: messages.map(msg => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(),
-        type: 'text' as const,
-        metadata: {
-          mode,
-          isComplete: !isStreaming,
-          toolInvocations: toolInvocations?.length || 0,
-          annotations: annotations?.length || 0,
-        },
-      })),
+      messages,
       status: error ? 'error' : isStreaming ? 'streaming' : isLoading ? 'submitted' : 'ready',
-      error: error ?? undefined,
-      context,
-      sendMessage: async (content: string) => {
-        await sendMessage(content)
-      },
+      error: error ?? null,
+      context: chatContextState,
+      sendMessage,
       regenerate: reload,
       stop,
-      resumeStream: undefined, // Not supported in native AI SDK
-      addToolResult: undefined, // Handled by AI SDK
-      setMessages: (msgs) => {
-        setMessages(msgs.map(msg => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant' | 'system',
-          content: msg.content,
-        })))
-      },
-      clearError: () => {
-        // AI SDK handles errors internally
-      },
+      resumeStream,
+      addToolResult,
+      setMessages: setMessagesState,
+      clearError,
     }, UNIFIED_CHAT_STORE_ID)
   }, [
-    messages,
+    addToolResult,
+    chatContextState,
+    clearError,
+    error,
     isLoading,
     isStreaming,
-    error,
-    context,
-    sendMessage,
+    messages,
     reload,
-    stop,
-    setMessages,
+    resumeStream,
+    sendMessage,
     sessionId,
-    mode,
-    toolInvocations,
-    annotations,
+    setMessagesState,
+    stop,
   ])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      resetUnifiedChatStore(UNIFIED_CHAT_STORE_ID)
-    }
+  useEffect(() => () => {
+    resetUnifiedChatStore(UNIFIED_CHAT_STORE_ID)
   }, [])
 
   return {
@@ -337,17 +444,20 @@ Response style: Be concise, actionable, and data-driven.`
     isLoading,
     isStreaming,
     error,
+    context: chatContextState,
     sendMessage,
     addMessage,
     clearMessages,
     updateContext,
-    // AI SDK native methods
+    stop,
+    regenerate: reload,
+    resumeStream,
+    addToolResult,
+    setMessages: setMessagesState,
+    clearError,
     append,
     reload,
-    stop,
-    setMessages,
-    // Rich metadata
-    toolInvocations: toolInvocations || [],
-    annotations: annotations || [],
+    toolInvocations,
+    annotations,
   }
 }

@@ -33,47 +33,60 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
   const [chatContextState, setChatContextState] = useState<UnifiedContext>(options.context || {})
 
   const abortControllerRef = useRef<AbortController | null>(null)
+  const messagesRef = useRef<UnifiedMessage[]>(options.initialMessages || [])
+  const chatContextRef = useRef<UnifiedContext>(options.context || {})
 
-  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'>): UnifiedMessage => {
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  useEffect(() => {
+    chatContextRef.current = chatContextState
+  }, [chatContextState])
+
+  const commitMessages = useCallback((
+    next: UnifiedMessage[] | ((prev: UnifiedMessage[]) => UnifiedMessage[]),
+  ) => {
+    setMessages(prev => {
+      const computed = typeof next === 'function' ? next(prev) : next
+      messagesRef.current = computed
+      return computed
+    })
+  }, [])
+
+  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'> & { id?: string }): UnifiedMessage => {
+    const { id, ...rest } = message
     const newMessage: UnifiedMessage = {
-      ...message,
-      id: crypto.randomUUID(),
-      timestamp: message.timestamp || new Date(),
-      type: message.type || 'text',
-      metadata: message.metadata || {},
+      ...rest,
+      id: id || crypto.randomUUID(),
+      timestamp: rest.timestamp || new Date(),
+      type: rest.type || 'text',
+      metadata: rest.metadata || {},
     }
-    setMessages((prev) => [...prev, newMessage])
-    return newMessage
-  }, [])
 
-  const updateMessage = useCallback((id: string, updates: Partial<UnifiedMessage>) => {
-    setMessages((prev) => prev.map((message) => (message.id === id ? { ...message, ...updates } : message)))
-  }, [])
+    commitMessages(prev => [...prev, newMessage])
+    return newMessage
+  }, [commitMessages])
+
+  const replaceMessages = useCallback((nextMessages: UnifiedMessage[]) => {
+    commitMessages(nextMessages)
+  }, [commitMessages])
 
   const clearError = useCallback(() => {
     setError(null)
   }, [])
 
-  const replaceMessages = useCallback((nextMessages: UnifiedMessage[]) => {
-    setMessages(nextMessages)
-  }, [])
-
   const clearMessages = useCallback(() => {
-    setMessages([])
+    commitMessages([])
     setError(null)
-  }, [])
+  }, [commitMessages])
 
   const updateContext = useCallback((context: Partial<UnifiedContext>) => {
-    setChatContextState((prev) => ({ ...prev, ...context }))
+    setChatContextState(prev => ({ ...prev, ...context }))
   }, [])
 
-  const sendMessage = useCallback(async (content: string): Promise<void> => {
-    if (!content.trim() || isLoading) return
-
+  const runRequest = useCallback(async (requestMessages: UnifiedMessage[]) => {
     try {
-      setIsLoading(true)
-      setError(null)
-
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -81,12 +94,8 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
       const controller = new AbortController()
       abortControllerRef.current = controller
 
-      const userMessage = addMessage({
-        role: 'user',
-        content: content.trim(),
-        timestamp: new Date(),
-        type: 'text',
-      })
+      setIsLoading(true)
+      setError(null)
 
       const response = await fetch(SIMPLE_ENDPOINT, {
         method: 'POST',
@@ -95,8 +104,8 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
           'x-session-id': options.sessionId || 'anonymous',
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
-          context: chatContextState,
+          messages: requestMessages,
+          context: chatContextRef.current,
           mode: options.mode || 'standard',
         }),
         signal: controller.signal,
@@ -121,31 +130,103 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
         },
       })
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return
+      }
+
       const normalizedError = err instanceof Error ? err : new Error(String(err))
       setError(normalizedError)
-      if (normalizedError.name !== 'AbortError') {
-        addMessage({
-          role: 'assistant',
-          content: `I encountered an error: ${normalizedError.message}`,
-          timestamp: new Date(),
-          type: 'text',
-          metadata: { error: true },
-        })
-      }
+      addMessage({
+        role: 'assistant',
+        content: `I encountered an error: ${normalizedError.message}`,
+        timestamp: new Date(),
+        type: 'text',
+        metadata: { error: true },
+      })
     } finally {
       setIsLoading(false)
       abortControllerRef.current = null
     }
-  }, [
-    addMessage,
-    chatContextState,
-    isLoading,
-    messages,
-    options.mode,
-    options.sessionId,
-  ])
+  }, [addMessage, options.mode, options.sessionId])
 
-  const chatStatus = useMemo<"ready" | "submitted" | "error">(() => {
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
+    if (!content.trim() || isLoading) return
+
+    const trimmed = content.trim()
+    const userMessage: UnifiedMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: trimmed,
+      timestamp: new Date(),
+      type: 'text',
+      metadata: {},
+    }
+
+    commitMessages(prev => [...prev, userMessage])
+    await runRequest([...messagesRef.current])
+  }, [commitMessages, runRequest, isLoading])
+
+  const stop = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+
+    setIsLoading(false)
+  }, [])
+
+  const regenerate = useCallback(async () => {
+    const current = messagesRef.current
+    const lastUserIndex = [...current].map(message => message.role).lastIndexOf('user')
+    if (lastUserIndex === -1) return
+
+    const truncated = current.slice(0, lastUserIndex + 1)
+    commitMessages(truncated)
+
+    await runRequest(truncated)
+  }, [commitMessages, runRequest])
+
+  const resumeStream = useCallback(async () => {
+    await regenerate()
+  }, [regenerate])
+
+  const addToolResult = useCallback(async (
+    toolCallId: string,
+    result: unknown,
+    metadata: Record<string, unknown> = {},
+  ) => {
+    commitMessages(prev => prev.map(message => {
+      if (message.role !== 'assistant') return message
+
+      const existingInvocations = Array.isArray(message.metadata?.toolInvocations)
+        ? [...message.metadata!.toolInvocations]
+        : []
+
+      const index = existingInvocations.findIndex((inv: any) => inv?.toolCallId === toolCallId)
+      const nextInvocation = {
+        toolCallId,
+        result,
+        state: 'output-available',
+        ...metadata,
+      }
+
+      if (index === -1) {
+        existingInvocations.push(nextInvocation)
+      } else {
+        existingInvocations[index] = { ...existingInvocations[index], ...nextInvocation }
+      }
+
+      return {
+        ...message,
+        metadata: {
+          ...message.metadata,
+          toolInvocations: existingInvocations,
+        },
+      }
+    }))
+  }, [commitMessages])
+
+  const chatStatus = useMemo<'ready' | 'submitted' | 'error'>(() => {
     if (error) return 'error'
     if (isLoading) return 'submitted'
     return 'ready'
@@ -153,7 +234,7 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
 
   useEffect(() => {
     if (options.context) {
-      setChatContextState((prev) => ({ ...prev, ...options.context! }))
+      setChatContextState(prev => ({ ...prev, ...options.context! }))
     }
   }, [options.context])
 
@@ -162,17 +243,13 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
       id: options.sessionId || 'simple-session',
       messages,
       status: chatStatus,
-      error: error ?? undefined,
+      error: error ?? null,
       context: chatContextState,
       sendMessage,
-      regenerate: undefined,
-      stop: async () => {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort()
-        }
-      },
-      resumeStream: undefined,
-      addToolResult: undefined,
+      regenerate,
+      stop,
+      resumeStream,
+      addToolResult,
       setMessages: replaceMessages,
       clearError,
     }, UNIFIED_CHAT_STORE_ID)
@@ -182,15 +259,17 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
     error,
     chatContextState,
     sendMessage,
+    regenerate,
+    stop,
+    resumeStream,
+    addToolResult,
     replaceMessages,
     clearError,
     options.sessionId,
   ])
 
-  useEffect(() => {
-    return () => {
-      resetUnifiedChatStore(UNIFIED_CHAT_STORE_ID)
-    }
+  useEffect(() => () => {
+    resetUnifiedChatStore(UNIFIED_CHAT_STORE_ID)
   }, [])
 
   return {
@@ -198,9 +277,16 @@ export function useSimpleAISDK(options: UnifiedChatOptions): UnifiedChatReturn {
     isLoading,
     isStreaming: false,
     error,
+    context: chatContextState,
     sendMessage,
     addMessage,
     clearMessages,
     updateContext,
+    stop,
+    regenerate,
+    resumeStream,
+    addToolResult,
+    setMessages: replaceMessages,
+    clearError,
   }
 }
