@@ -5,5 +5,5 @@
 node scripts/ci-env-check.js
 pnpm run guard:unified
 pnpm run guard:gemini
-pnpm lint:all --passWithNoTests || true
+pnpm lint:all || true
 pnpm test:unit --passWithNoTests || true
