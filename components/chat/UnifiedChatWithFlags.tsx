@@ -4,9 +4,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useUnifiedChatWithFlags, useMigrationStatus } from '@/hooks/useUnifiedChatWithFlags'
 import { AiElementsConversation } from '@/components/chat/AiElementsConversation'
 import { NativeAISDKConversation } from '@/components/chat/NativeAISDKConversation'
-// Removed mapper import - using native AI SDK types directly
-import type { UnifiedChatOptions } from '@/src/core/chat/unified-types'
-import type { UIMessage as Message } from 'ai'
+import type { UnifiedChatOptions, UnifiedMessage } from '@/src/core/chat/unified-types'
 
 export interface UnifiedChatWithFlagsProps extends UnifiedChatOptions {
   userId?: string
@@ -114,13 +112,8 @@ export function UnifiedChatWithFlags({
   }, [messages, useNativeConversation])
 
   // Convert messages for native conversation component
-  const nativeMessages = useMemo(() => {
-    if (!useNativeConversation) return []
-    return messages.map(msg => ({
-      id: msg.id,
-      role: msg.role as 'user' | 'assistant' | 'system',
-      content: msg.content,
-    }))
+  const nativeMessages = useMemo<UnifiedMessage[]>(() => {
+    return useNativeConversation ? messages : []
   }, [messages, useNativeConversation])
 
   // Render migration status if requested

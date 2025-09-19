@@ -5,10 +5,10 @@ import {
 } from '@/components/ui/avatar';
 import type { ComponentProps, HTMLAttributes } from 'react';
 import { cn } from '@/src/core/utils';
-import type { UIMessage } from 'ai';
+import type { UnifiedMessage } from '@/src/core/chat/unified-types';
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage['role'];
+  from: UnifiedMessage['role'];
 };
 
 export const Message = ({ className, from, ...props }: MessageProps) => (

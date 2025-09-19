@@ -1,41 +1,39 @@
 # AI SDK Migration – Current Status
 
 ## Snapshot
-- Unified chat surfaces (customer and admin) now render through `AiElementsConversation`, giving us consistent message markup, suggestions, and tool/task placeholders.
-- `useUnifiedChat` sends traffic to `/api/chat/unified`, which streams Gemini output via the AI SDK helpers. The hook mirrors its state into `@ai-sdk-tools/store`, so selectors such as `useUnifiedChatMessages` work anywhere in the tree.
-- Both chat shells share supporting context: stage tracking, multimodal widgets, tool actions, and the light debug panel that reflects store status.
-- Legacy `components/chat/layouts/*` and the old `UnifiedMessage` renderer have been removed on this branch, so the AI Element flow is the only UI path.
+- Customer chat and the admin assistant both render through the AI Elements shell, powered by the shared pipeline in `app/(chat)/chat/v2/page.tsx` and `components/chat/UnifiedChatWithFlags.tsx`.
+- `useUnifiedChat`, `useSimpleAISDK`, and `useNativeAISDK` all call the AI SDK backed `/api/chat/unified` (or `/api/chat/simple` for the fallback) and mirror their lifecycle into the local Zustand store exposed by `src/core/chat/state/unified-chat-store.ts`.
+- Feature-flag helpers in `src/core/feature-flags/ai-sdk-migration.ts` let us toggle between implementations and metadata tiers without code changes.
+- Legacy layout stacks remain removed – AI Element components are the only rendering path.
 
 ## Delivered so far
-- Replaced the bespoke chat message stack with AI Element primitives (`Conversation`, `Message`, `Response`, `Suggestions`, etc.).
-- Centralised chat state exposure via `src/core/chat/state/unified-chat-store.ts`, providing selector-style hooks (`useUnifiedChatMessages`, `useUnifiedChatStatus`, `useUnifiedChatError`).
-- Wired `/api/chat/unified` to Gemini through `@ai-sdk/google`'s `streamText`, returning incremental SSE chunks to the browser.
-- Added `UnifiedChatActionsProvider` so shell features (screen share, webcam capture, ROI helpers) can push messages through the same pipeline.
-- Synced stage and capability metadata: `syncStageFromIntelligence` keeps the StageRail and progress cards aligned with streaming updates.
-- Restored lint cleanliness – `pnpm lint` passes without warnings.
+- Ai Elements Conversation + Native AI SDK Conversation components handle every transcript, supplying tool, reasoning, task, and citation UI where metadata exists.
+- `/api/chat/unified` streams Gemini responses via `streamText`, enriches the final chunk with reasoning/tasks/citations, and exposes AI SDK tool invocations; `/api/chat/simple` offers the non-streaming fallback.
+- `useUnifiedChat`, `useSimpleAISDK`, and `useNativeAISDK` share a consistent interface while syncing into the unified chat store for selectors and devtools support.
+- Feature flags (`shouldUseNativeAISDK`, `shouldUseNativeTools`, etc.) decide whether we serve the legacy pipeline, the native AI SDK experience, or fall back automatically.
+- Multimodal helpers (screen share, webcam, ROI) continue to post into the shared store so transcripts stay aligned with auxiliary tools.
 
 ## Still missing
-- There is no `/api/chat/simple` route, `useSimpleAISDK` hook, or toggle-driven multi-implementation flow. `useUnifiedChat` remains the single source of truth.
-- The AI SDK stream only emits text plus minimal metadata. Reasoning traces, tool payloads, tasks, and citations are not surfaced yet, so the richer UI sections stay empty.
-- Chat state still lives inside the hook and is mirrored into the external store; we have not promoted a first-class Zustand slice that other code can mutate directly.
-- Feature flags and UI toggles for switching implementations were never built.
-- Several documents (including this one) previously referenced future layers that do not exist. Those references have been removed.
+- `useUnifiedChat` exposes `regenerate`, `resumeStream`, and `addToolResult` as stubs, so the UI cannot yet trigger those actions without further backend work.
+- The native AI SDK hook’s `reload`/`stop` helpers are placeholders and do not reconnect an interrupted stream automatically.
+- End-to-end and unit coverage for the SSE parsers, tool mappers, and feature-flag routing remains to be written.
+- Performance dashboards/devtools are limited to the lightweight Chat Devtools overlay; deeper analytics remain on the backlog.
 
 ## Technical notes
-- **API**: `/api/chat/unified` (Node runtime) wraps `streamText` from `@ai-sdk/google`, applies the configured Gemini model, and streams SSE events. It currently returns cumulative assistant text plus a small metadata payload.
-- **Hook**: `hooks/useUnifiedChat.ts` owns request lifecycle, handles aborts, and mirrors its state into the AI SDK store via `syncUnifiedChatStoreState`. Consumers subscribe through selector hooks rather than prop drilling.
-- **Renderer**: `components/chat/AiElementsConversation.tsx` maps `UnifiedMessage` data into richer UI: avatars, streaming loader, suggestions, tool/task scaffolding, and source blocks. It uses `mapUnifiedMessagesToAiMessages` for the shape conversion.
-- **Shared UI**: `CleanInputField`, `UnifiedMultimodalWidget`, `ScreenShare`, and `WebcamCapture` now report back into the unified chat store so their outputs appear in the transcript.
-- **Admin parity**: `components/admin/AdminAssistantPanel.tsx` consumes the same stack, ensuring the admin assistant matches the public chat behaviour.
+- **API**: `/api/chat/unified` (Node runtime) wraps `streamText` from `@ai-sdk/google`, accumulates streamed text, and emits a metadata-rich completion event that includes reasoning, task, citation, and tool invocation payloads. `/api/chat/simple` mirrors the prompt into a single `generateText` call for fallbacks.
+- **Hooks**: `useUnifiedChat`, `useSimpleAISDK`, `useNativeAISDK`, and the global `useUnifiedChatStore` variant share a consistent contract while pushing state into the unified chat store so selector hooks work anywhere in the tree.
+- **Feature flags**: `src/core/feature-flags/ai-sdk-migration.ts` coordinates admin/user/session rollouts, enhanced metadata, native tool enablement, and debug logging.
+- **Renderers**: `AiElementsConversation` and `NativeAISDKConversation` surface reasoning, tool summaries, tasks, sources, and annotations alongside streaming responses.
+- **Shared UI**: Clean input, multimodal widgets, and the booking/document flows all publish through the chat actions context to keep transcripts and stage rails synchronised.
 
 ## Known gaps to close
-1. Enrich `/api/chat/unified` so it emits reasoning, tool, task, and citation metadata that the AI Elements UI can render.
-2. Extract chat state into a durable Zustand slice (or equivalent) instead of keeping `useUnifiedChat` as the only authority.
-3. Introduce guarded feature toggles if layered rollouts are still desired (legacy vs tools vs pure AI SDK).
-4. Add regression coverage (unit and smoke) for the mapper and SSE handling.
-5. Hook auxiliary tools (uploads, ROI, admin analytics) into real AI SDK flows instead of stubbing messages.
+1. Flesh out regenerate/stop workflows in the hooks so transcripts can recover from errors without a full page reset.
+2. Harden the SSE parsing utilities and add automated coverage around tool and annotation mapping.
+3. Expand the Chat Devtools experience with performance metrics and feature-flag inspection for production rollouts.
+4. Audit auxiliary tool integrations to ensure long-running uploads/actions surface progress and errors through the unified metadata channel.
 
 ## Next steps
-- Prioritise the data-model work (metadata + store refactor) so the UI surfaces match the design intent.
-- Once the missing layers land, update the migration docs again and schedule deletion of any remaining legacy providers.
+- Wire the regenerate/resume handlers through the hooks and API so recovery actions function end-to-end.
+- Add automated coverage around SSE parsing, feature-flag routing, and tool metadata rendering.
+- Expand Chat Devtools (or successor dashboards) with production-friendly telemetry before broad rollout.
 - Keep future documentation grounded in shipped behaviour to avoid confusion about phantom features.
