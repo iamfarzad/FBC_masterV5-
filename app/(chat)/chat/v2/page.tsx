@@ -23,7 +23,7 @@ import { BookingInterface } from './components/BookingInterface'
 import { useUnifiedChat } from '@/hooks/useUnifiedChat'
 import { useUnifiedChatV2 } from '@/hooks/useUnifiedChatV2'
 import { useSimpleAISDK } from '@/hooks/useSimpleAISDK'
-import type { UnifiedChatReturn } from '@/src/core/chat/unified-types'
+import type { UnifiedChatReturn, ChatMode } from '@/src/core/chat/unified-types'
 import type { UnifiedContext } from '@/src/core/chat/unified-types'
 import type { ChatStatus } from '@/src/core/chat/state/unified-chat-store'
 import { UnifiedChatActionsProvider } from '@/src/core/chat/unified-chat-context'
@@ -144,7 +144,7 @@ interface ChatPipelineProviderProps {
   implementation: ChatImplementation
   options: {
     sessionId: string
-    mode: 'standard' | 'admin' | string
+    mode: ChatMode
     context: UnifiedContext
   }
   children: React.ReactNode

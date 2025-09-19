@@ -50,7 +50,7 @@ export function UnifiedChatWithFlags({
     setMessages,
   } = useUnifiedChatWithFlags({
     ...chatOptions,
-    userId,
+    userId: userId || 'anonymous',
     isAdmin,
     forceLegacy,
     forceNative,
@@ -97,7 +97,7 @@ export function UnifiedChatWithFlags({
     return messages.map(msg => ({
       id: msg.id,
       role: msg.role,
-      displayRole: msg.role === 'user' ? 'user' : 'assistant',
+      displayRole: msg.role === 'user' ? 'user' : 'assistant' as 'user' | 'assistant',
       content: msg.content,
       timestamp: msg.timestamp,
       isComplete: msg.metadata?.isComplete ?? true,

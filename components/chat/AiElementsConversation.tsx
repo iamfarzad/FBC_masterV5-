@@ -114,11 +114,11 @@ export function AiElementsConversation({
                         <div className="space-y-2">
                           {message.tools.map((tool, idx) => (
                             <Tool key={tool.id ?? `${message.id}-tool-${idx}`}>
-                              <ToolHeader type={tool.type} state={tool.state} />
+                              <ToolHeader type={`tool-${tool.type}` as `tool-${string}`} state={tool.state} />
                               <ToolContent>
-                                {tool.input && <ToolInput input={tool.input} />}
+                                {tool.input && <ToolInput input={tool.input as any} />}
                                 <ToolOutput
-                                  output={renderToolOutput(tool.output)}
+                                  output={renderToolOutput(tool.output) as React.ReactNode}
                                   errorText={tool.errorText}
                                 />
                               </ToolContent>

@@ -117,6 +117,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
         name: bookingData.name,
         email: bookingData.email,
         company: bookingData.company,
+        preferredDate: selectedDate,
         preferredTime: selectedTime,
         timeZone: bookingData.timeZone,
         message: bookingData.message
@@ -146,8 +147,8 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
     setError('')
   }, [])
 
-  const getNextWeekDates = () => {
-    const dates = []
+  const getNextWeekDates = (): Array<{ date: string; display: string }> => {
+    const dates: Array<{ date: string; display: string }> = []
     const today = new Date()
     
     for (let i = 1; i <= 14; i++) {
@@ -157,7 +158,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
       // Only include weekdays
       if (date.getDay() >= 1 && date.getDay() <= 5) {
         dates.push({
-          date: date.toISOString().split('T')[0],
+          date: date.toISOString().split('T')[0] || '',
           display: date.toLocaleDateString('en-US', { 
             weekday: 'short', 
             month: 'short', 
@@ -170,9 +171,10 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
     return dates
   }
 
-  const formatTime = (time: string) => {
+  const formatTime = (time: string | undefined) => {
+    if (!time) return ''
     const [hours, minutes] = time.split(':')
-    const hour = parseInt(hours)
+    const hour = parseInt(hours || '0')
     const ampm = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
     return `${displayHour}:${minutes} ${ampm}`

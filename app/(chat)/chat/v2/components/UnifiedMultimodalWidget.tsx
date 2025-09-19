@@ -133,7 +133,7 @@ export const UnifiedMultimodalWidget = ({
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {cards.map(({ id, label, icon: Icon, message, onClick }) => {
-          const status = formatStatus(message)
+          const status = formatStatus(message || null)
           const IconStatus = message?.metadata?.error ? AlertTriangle : CheckCircle2
           return (
             <button

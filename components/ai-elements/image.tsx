@@ -59,8 +59,8 @@ export const Image = (props: ImageProps) => {
         height={height}
         className={getClassName(className)}
         sizes={sizes}
-        priority={priority}
-        unoptimized={unoptimized}
+        priority={priority ?? false}
+        unoptimized={unoptimized ?? false}
       />
     )
   }
@@ -84,7 +84,7 @@ export const Image = (props: ImageProps) => {
       height={height}
       className={getClassName(className)}
       sizes={sizes}
-      priority={priority}
+      priority={priority ?? false}
       unoptimized={unoptimized ?? true}
     />
   )

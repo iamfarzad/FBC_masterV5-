@@ -198,12 +198,12 @@ export function NativeAISDKConversation({
                             <Task key={task.id ?? `task-${idx}`}>
                               <TaskTrigger title={task.title ?? 'Task'} />
                               <TaskContent>
-                                {task.files?.map((file, fileIdx) => (
+                                {task.files?.map((file: any, fileIdx: number) => (
                                   <TaskItemFile key={file.name ?? fileIdx}>
                                     {file.name ?? 'Attachment'}
                                   </TaskItemFile>
                                 ))}
-                                {task.items?.map((item, itemIdx) => (
+                                {task.items?.map((item: any, itemIdx: number) => (
                                   <TaskItem key={item.id ?? itemIdx}>
                                     {item.title ?? 'Task item'}
                                     {item.description && (

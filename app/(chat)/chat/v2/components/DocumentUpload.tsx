@@ -43,7 +43,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   onFileUploaded 
 }) => {
   const { uploadFile, isUploading, progress } = useFileUpload()
-  const { mediaFiles, addMediaFiles, removeMediaFile } = useMedia()
+  const { mediaFiles, addMediaFiles, removeFile } = useMedia()
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -128,7 +128,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   }, [uploadFile, onFileUploaded])
 
-  const removeFile = useCallback((fileId: string) => {
+  const removeUploadedFile = useCallback((fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId))
   }, [])
 
@@ -324,7 +324,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeFile(file.id)}
+                            onClick={() => removeUploadedFile(file.id)}
                             className="h-8 w-8 hover:bg-red-500/10 text-red-500"
                           >
                             <Trash2 className="w-4 h-4" />
