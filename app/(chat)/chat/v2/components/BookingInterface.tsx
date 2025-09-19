@@ -469,3 +469,4 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
     </AnimatePresence>
   )
 }
+

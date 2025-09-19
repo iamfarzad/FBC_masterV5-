@@ -1,361 +1,297 @@
 /**
- * AI SDK Tools Migration - Global Chat Store
- * Drop-in replacement for useUnifiedChat with global state management
+ * Unified Chat Store Hook
+ * Provides global session tracking for all AI SDK chat implementations
  */
 
-import React from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { create } from 'zustand'
-import { subscribeWithSelector } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
 import { devtools } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
 import { enableMapSet } from 'immer'
 
-// Enable MapSet plugin for Immer
+import {
+  type UnifiedChatOptions,
+  type UnifiedChatReturn,
+  type UnifiedContext,
+  type UnifiedMessage,
+} from '@/src/core/chat/unified-types'
+import { type ChatStatus } from '@/src/core/chat/state/unified-chat-store'
+import {
+  useUnifiedChatWithFlags,
+  type UnifiedChatWithFlagsReturn,
+} from './useUnifiedChatWithFlags'
+
+// Enable Immer support for Map/Set collections
 enableMapSet()
 
-import {
-  UnifiedMessage,
-  UnifiedChatOptions,
-  UnifiedChatReturn,
-  UnifiedContext,
-  UnifiedChatRequest
-} from '@/src/core/chat/unified-types'
+type ChatImplementation = 'legacy' | 'native' | 'simple' | 'unknown'
 
-// Store State Interface
-interface ChatStore {
-  // State
-  sessions: Map<string, {
-    messages: UnifiedMessage[]
-    isLoading: boolean
-    isStreaming: boolean
-    error: Error | null
-    context?: UnifiedContext
-    mode: 'standard' | 'realtime' | 'admin' | 'multimodal' | 'automation'
-    abortController?: AbortController
-  }>
-  
-  // Actions
-  initializeSession: (sessionId: string, options: UnifiedChatOptions) => void
-  sendMessage: (sessionId: string, content: string) => Promise<void>
-  addMessage: (sessionId: string, message: Omit<UnifiedMessage, 'id'>) => UnifiedMessage
-  updateMessage: (sessionId: string, id: string, updates: Partial<UnifiedMessage>) => void
-  clearMessages: (sessionId: string) => void
-  updateContext: (sessionId: string, context: Partial<UnifiedContext>) => void
-  setLoading: (sessionId: string, loading: boolean) => void
-  setStreaming: (sessionId: string, streaming: boolean) => void
-  setError: (sessionId: string, error: Error | null) => void
-  stop: (sessionId: string) => Promise<void>
-  regenerate: (sessionId: string) => Promise<void>
-  resumeStream: (sessionId: string) => Promise<void>
-  addToolResult: (sessionId: string, ...args: any[]) => Promise<void>
-  setMessages: (sessionId: string, messages: UnifiedMessage[]) => void
-  clearError: (sessionId: string) => void
+interface SessionActions {
+  sendMessage: UnifiedChatReturn['sendMessage']
+  addMessage: UnifiedChatReturn['addMessage']
+  clearMessages: UnifiedChatReturn['clearMessages']
+  updateContext: UnifiedChatReturn['updateContext']
+  stop: UnifiedChatReturn['stop']
+  regenerate: UnifiedChatReturn['regenerate']
+  resumeStream: UnifiedChatReturn['resumeStream']
+  addToolResult: UnifiedChatReturn['addToolResult']
+  setMessages: UnifiedChatReturn['setMessages']
+  clearError: UnifiedChatReturn['clearError']
 }
 
-// Create the store with middleware
-export const useChatStore = create<ChatStore>()(
+interface SessionMetadata {
+  mode?: UnifiedChatOptions['mode']
+  implementation: ChatImplementation
+  requestCount: number
+  createdAt: number
+  updatedAt: number
+  lastMessageAt?: number | undefined
+  toolInvocationCount?: number | undefined
+  annotationCount?: number | undefined
+}
+
+interface SessionSnapshot {
+  id: string
+  messages: UnifiedMessage[]
+  context: UnifiedContext
+  error: Error | null
+  isLoading: boolean
+  isStreaming: boolean
+  status: ChatStatus
+  metadata: SessionMetadata
+  migrationStatus?: UnifiedChatWithFlagsReturn['migrationStatus']
+  toolInvocations: any[]
+  annotations: any[]
+  actions: SessionActions
+}
+
+interface ChatStoreState {
+  sessions: Map<string, SessionSnapshot>
+  updateSession: (sessionId: string, snapshot: SessionSnapshot) => void
+  removeSession: (sessionId: string) => void
+  clearMessages: (sessionId: string) => void
+}
+
+export const useChatStore = create<ChatStoreState>()(
   devtools(
-    subscribeWithSelector(
-      immer((set, get) => ({
-        sessions: new Map(),
+    immer((set, get) => ({
+      sessions: new Map(),
 
-        initializeSession: (sessionId: string, options: UnifiedChatOptions) => {
-          set((state) => {
-            if (!state.sessions.has(sessionId)) {
-              state.sessions.set(sessionId, {
-                messages: options.initialMessages || [],
-                isLoading: false,
-                isStreaming: false,
-                error: null,
-                context: options.context,
-                mode: options.mode || 'standard',
-                abortController: undefined,
-              })
+      updateSession: (sessionId, snapshot) => {
+        set(state => {
+          const existing = state.sessions.get(sessionId)
+          const createdAt = existing?.metadata.createdAt ?? snapshot.metadata.createdAt
+          const updatedAt = Date.now()
+
+          if (existing) {
+            existing.messages = snapshot.messages
+            existing.context = snapshot.context
+            existing.error = snapshot.error
+            existing.isLoading = snapshot.isLoading
+            existing.isStreaming = snapshot.isStreaming
+            existing.status = snapshot.status
+            existing.metadata = {
+              ...existing.metadata,
+              ...snapshot.metadata,
+              createdAt,
+              updatedAt,
             }
-          })
-        },
-
-        sendMessage: async (sessionId: string, content: string) => {
-          const session = get().sessions.get(sessionId)
-          if (!session || session.isLoading || session.isStreaming) return
-
-          // Add user message
-          const userMessage = get().addMessage(sessionId, {
-            role: 'user',
-            content: content.trim(),
-            timestamp: new Date(),
-            type: 'text'
-          })
-
-          // Set loading state
-          get().setLoading(sessionId, true)
-          get().setError(sessionId, null)
-
-          try {
-            // Prepare request
-            const request: UnifiedChatRequest = {
-              messages: [...session.messages, userMessage],
-              context: session.context || {},
-              mode: session.mode,
-              stream: true
+            if (typeof snapshot.migrationStatus === 'undefined') {
+              delete existing.migrationStatus
+            } else {
+              existing.migrationStatus = snapshot.migrationStatus
             }
-
-            // Create abort controller
-            const controller = new AbortController()
-            set((state) => {
-              const session = state.sessions.get(sessionId)
-              if (session) {
-                session.abortController = controller
-              }
-            })
-
-            // Call unified API
-            const response = await fetch('/api/chat/unified', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-request-id': crypto.randomUUID(),
-                'x-session-id': sessionId
-              },
-              body: JSON.stringify(request),
-              signal: controller.signal
-            })
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-              throw new Error(errorData.error || `HTTP ${response.status}`)
-            }
-
-            get().setLoading(sessionId, false)
-            get().setStreaming(sessionId, true)
-
-            // Parse SSE stream
-            const reader = response.body?.getReader()
-            if (!reader) throw new Error('No response body')
-
-            const decoder = new TextDecoder()
-            let buffer = ''
-
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
-
-              buffer += decoder.decode(value, { stream: true })
-              const lines = buffer.split('\n')
-              buffer = lines.pop() || ''
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6))
-                    
-                    if (data.type === 'text') {
-                      // Update or create assistant message
-                      const existingMessage = session.messages.find(m => m.role === 'assistant' && !m.metadata?.isComplete)
-                      
-                      if (existingMessage) {
-                        get().updateMessage(sessionId, existingMessage.id, {
-                          content: data.content,
-                          metadata: { ...existingMessage.metadata, isComplete: data.done }
-                        })
-                      } else {
-                        get().addMessage(sessionId, {
-                          role: 'assistant',
-                          content: data.content,
-                          timestamp: new Date(),
-                          type: 'text',
-                          metadata: { isComplete: data.done }
-                        })
-                      }
-                    }
-                  } catch (e) {
-                    console.warn('Failed to parse SSE data:', e)
-                  }
-                }
-              }
-            }
-
-            get().setStreaming(sessionId, false)
-          } catch (error) {
-            get().setError(sessionId, error instanceof Error ? error : new Error('Unknown error'))
-            get().setLoading(sessionId, false)
-            get().setStreaming(sessionId, false)
-          }
-        },
-
-        addMessage: (sessionId: string, message: Omit<UnifiedMessage, 'id'>) => {
-          const newMessage: UnifiedMessage = {
-            ...message,
-            id: crypto.randomUUID(),
-            timestamp: message.timestamp || new Date(),
-            type: message.type || 'text',
-            metadata: message.metadata || {}
+            existing.toolInvocations = snapshot.toolInvocations
+            existing.annotations = snapshot.annotations
+            existing.actions = snapshot.actions
+            return
           }
 
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.messages.push(newMessage)
-            }
+          state.sessions.set(sessionId, {
+            ...snapshot,
+            metadata: {
+              ...snapshot.metadata,
+              createdAt,
+              updatedAt,
+            },
           })
+        })
+      },
 
-          return newMessage
-        },
+      removeSession: (sessionId) => {
+        const session = get().sessions.get(sessionId)
+        if (session?.actions.stop) {
+          void session.actions.stop()
+        }
 
-        updateMessage: (sessionId: string, id: string, updates: Partial<UnifiedMessage>) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              const message = session.messages.find(m => m.id === id)
-              if (message) {
-                Object.assign(message, updates)
-              }
-            }
-          })
-        },
+        set(state => {
+          state.sessions.delete(sessionId)
+        })
+      },
 
-        clearMessages: (sessionId: string) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.messages = []
-            }
-          })
-        },
+      clearMessages: (sessionId) => {
+        const session = get().sessions.get(sessionId)
+        if (!session) return
 
-        updateContext: (sessionId: string, context: Partial<UnifiedContext>) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.context = { ...session.context, ...context }
-            }
-          })
-        },
+        session.actions.clearMessages()
+        session.actions.clearError()
 
-        setLoading: (sessionId: string, loading: boolean) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.isLoading = loading
-            }
-          })
-        },
+        set(state => {
+          const target = state.sessions.get(sessionId)
+          if (!target) return
 
-        setStreaming: (sessionId: string, streaming: boolean) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.isStreaming = streaming
-            }
-          })
-        },
+          target.messages = []
+          target.error = null
+          target.status = 'ready'
+          delete target.metadata.lastMessageAt
+          target.metadata.updatedAt = Date.now()
+        })
+      },
+    })),
+    { name: 'ai-sdk-chat-store' },
+  ),
+);
 
-        setError: (sessionId: string, error: Error | null) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.error = error
-            }
-          })
-        },
+function resolveImplementation(
+  chat: UnifiedChatWithFlagsReturn,
+  apiEndpoint?: string,
+): ChatImplementation {
+  if (apiEndpoint?.includes('/simple')) {
+    return 'simple'
+  }
 
-        stop: async (sessionId: string) => {
-          const session = get().sessions.get(sessionId)
-          if (session?.abortController) {
-            session.abortController.abort()
-          }
-          get().setLoading(sessionId, false)
-          get().setStreaming(sessionId, false)
-        },
+  if (chat.toolInvocations && chat.toolInvocations.length > 0) {
+    return 'native'
+  }
 
-        regenerate: async (sessionId: string) => {
-          console.warn('Regenerate not implemented for AI SDK Tools store yet.')
-        },
+  const phase = chat.migrationStatus?.phase
+  if (phase === 'native') return 'native'
+  if (phase === 'legacy') return 'legacy'
 
-        resumeStream: async (sessionId: string) => {
-          console.warn('resumeStream not implemented for AI SDK Tools store yet.')
-        },
+  return 'legacy'
+}
 
-        addToolResult: async (sessionId: string, ...args: any[]) => {
-          console.warn('addToolResult not implemented for AI SDK Tools store yet.')
-        },
+function getStatus(chat: UnifiedChatReturn): ChatStatus {
+  if (chat.error) return 'error'
+  if (chat.isStreaming) return 'streaming'
+  if (chat.isLoading) return 'submitted'
+  return 'ready'
+}
 
-        setMessages: (sessionId: string, messages: UnifiedMessage[]) => {
-          set((state) => {
-            const session = state.sessions.get(sessionId)
-            if (session) {
-              session.messages = messages
-            }
-          })
-        },
+function getLastMessageTimestamp(messages: UnifiedMessage[]): number | undefined {
+  if (!messages.length) return undefined
+  const last = messages[messages.length - 1]
+  if (!last) return undefined
 
-        clearError: (sessionId: string) => {
-          get().setError(sessionId, null)
-        },
-      })),
-      {
-        name: 'ai-sdk-tools-chat-store',
-      }
-    )
-  )
-)
+  try {
+    return last.timestamp instanceof Date
+      ? last.timestamp.getTime()
+      : new Date(last.timestamp).getTime()
+  } catch {
+    return Date.now()
+  }
+}
 
-// Hook to use the store
 export function useUnifiedChatStore(options: UnifiedChatOptions): UnifiedChatReturn {
-  const sessionId = options.sessionId || 'default'
-  
-  // Memoize options to prevent infinite re-renders
-  const stableOptions = React.useMemo(() => options, [
-    options.mode,
-    options.apiEndpoint,
-    options.headers,
-    options.sessionId,
-    options.initialMessages,
-    options.initialContext
-  ])
-  
-  // Initialize session if it doesn't exist
-  React.useEffect(() => {
-    useChatStore.getState().initializeSession(sessionId, stableOptions)
-  }, [sessionId, stableOptions])
+  const {
+    sessionId = 'unified-session',
+    ...chatOptions
+  } = options
 
-  const session = useChatStore((state) => state.sessions.get(sessionId))
-  
-  if (!session) {
-    return {
-      messages: [],
-      isLoading: false,
-      isStreaming: false,
-      error: null,
-      sendMessage: async () => {},
-      addMessage: () => ({ id: '', role: 'user', content: '', timestamp: new Date(), type: 'text', metadata: {} }),
-      updateMessage: () => {},
-      clearMessages: () => {},
-      updateContext: () => {},
-      stop: async () => {},
-      regenerate: async () => {},
-      resumeStream: async () => {},
-      addToolResult: async () => {},
-      setMessages: () => {},
-      clearError: () => {},
+  const chat = useUnifiedChatWithFlags({
+    ...chatOptions,
+    sessionId,
+  })
+
+  const updateSession = useChatStore(state => state.updateSession)
+  const removeSession = useChatStore(state => state.removeSession)
+
+  const createdAtRef = useRef(Date.now())
+  const requestCountRef = useRef(0)
+  const wasLoadingRef = useRef(chat.isLoading)
+
+  useEffect(() => {
+    if (chat.isLoading && !wasLoadingRef.current) {
+      requestCountRef.current += 1
     }
-  }
+    wasLoadingRef.current = chat.isLoading
+  }, [chat.isLoading])
 
-  return {
-    messages: session.messages,
-    isLoading: session.isLoading,
-    isStreaming: session.isStreaming,
-    error: session.error,
-    sendMessage: (content: string) => useChatStore.getState().sendMessage(sessionId, content),
-    addMessage: (message: Omit<UnifiedMessage, 'id'>) => useChatStore.getState().addMessage(sessionId, message),
-    updateMessage: (id: string, updates: Partial<UnifiedMessage>) => useChatStore.getState().updateMessage(sessionId, id, updates),
-    clearMessages: () => useChatStore.getState().clearMessages(sessionId),
-    updateContext: (context: Partial<UnifiedContext>) => useChatStore.getState().updateContext(sessionId, context),
-    stop: () => useChatStore.getState().stop(sessionId),
-    regenerate: () => useChatStore.getState().regenerate(sessionId),
-    resumeStream: () => useChatStore.getState().resumeStream(sessionId),
-    addToolResult: (...args: any[]) => useChatStore.getState().addToolResult(sessionId, ...args),
-    setMessages: (messages: UnifiedMessage[]) => useChatStore.getState().setMessages(sessionId, messages),
-    clearError: () => useChatStore.getState().clearError(sessionId),
-  }
+  const status = getStatus(chat)
+
+  const apiEndpoint = (options as { apiEndpoint?: string }).apiEndpoint
+  const implementation = resolveImplementation(chat, apiEndpoint)
+
+  const actions = useMemo<SessionActions>(() => ({
+    sendMessage: chat.sendMessage,
+    addMessage: chat.addMessage,
+    clearMessages: chat.clearMessages,
+    updateContext: chat.updateContext,
+    stop: chat.stop,
+    regenerate: chat.regenerate,
+    resumeStream: chat.resumeStream,
+    addToolResult: chat.addToolResult,
+    setMessages: chat.setMessages,
+    clearError: chat.clearError,
+  }), [
+    chat.addMessage,
+    chat.addToolResult,
+    chat.clearError,
+    chat.clearMessages,
+    chat.regenerate,
+    chat.resumeStream,
+    chat.sendMessage,
+    chat.setMessages,
+    chat.stop,
+    chat.updateContext,
+  ])
+
+  useEffect(() => {
+    const snapshot: SessionSnapshot = {
+      id: sessionId,
+      messages: chat.messages,
+      context: chat.context,
+      error: chat.error,
+      isLoading: chat.isLoading,
+      isStreaming: chat.isStreaming,
+      status,
+      metadata: {
+        mode: options.mode,
+        implementation,
+        requestCount: requestCountRef.current,
+        createdAt: createdAtRef.current,
+        updatedAt: Date.now(),
+        lastMessageAt: getLastMessageTimestamp(chat.messages),
+        toolInvocationCount: chat.toolInvocations?.length ?? 0,
+        annotationCount: chat.annotations?.length ?? 0,
+      },
+      migrationStatus: chat.migrationStatus,
+      toolInvocations: chat.toolInvocations ?? [],
+      annotations: chat.annotations ?? [],
+      actions,
+    }
+
+    updateSession(sessionId, snapshot)
+  }, [
+    actions,
+    chat.annotations,
+    chat.context,
+    chat.error,
+    chat.isLoading,
+    chat.isStreaming,
+    chat.messages,
+    chat.migrationStatus,
+    chat.toolInvocations,
+    implementation,
+    options.mode,
+    sessionId,
+    status,
+    updateSession,
+  ])
+
+  useEffect(() => () => {
+    removeSession(sessionId)
+  }, [removeSession, sessionId])
+
+  return chat
 }

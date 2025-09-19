@@ -5,18 +5,16 @@
 
 import { useCallback, useMemo } from 'react'
 import { useUnifiedChat } from './useUnifiedChat'
-import { useNativeAISDK } from './useNativeAISDK'
-import { 
+import { useNativeAISDK, type NativeAISDKOptions } from './useNativeAISDK'
+import {
   shouldUseNativeAISDK,
   shouldUseEnhancedMetadata,
   shouldUseNativeTools,
   shouldFallbackToLegacy,
-  getFallbackThreshold,
   shouldEnableDebugLogging,
-  getMigrationStatus
+  getMigrationStatus,
 } from '@/src/core/feature-flags/ai-sdk-migration'
-import type { UnifiedChatOptions, UnifiedChatReturn } from '@/src/core/chat/unified-types'
-import type { UIMessage as Message } from 'ai'
+import type { UnifiedChatOptions, UnifiedChatReturn, UnifiedMessage } from '@/src/core/chat/unified-types'
 
 export interface UnifiedChatWithFlagsOptions extends UnifiedChatOptions {
   userId?: string
@@ -37,13 +35,13 @@ export interface UnifiedChatWithFlagsReturn extends UnifiedChatReturn {
     }
   }
   // Native AI SDK specific (if available)
-  toolInvocations?: any[]
-  annotations?: any[]
+  toolInvocations: any[]
+  annotations: any[]
   // Native AI SDK methods (if available)
-  append?: (message: Message) => Promise<void>
+  append?: (message: UnifiedMessage) => Promise<void>
   reload?: () => Promise<void>
-  stop?: () => void
-  setMessages?: (messages: Message[]) => void
+  nativeStop?: () => Promise<void>
+  nativeSetMessages?: (messages: UnifiedMessage[]) => void
 }
 
 export function useUnifiedChatWithFlags(
@@ -73,10 +71,6 @@ export function useUnifiedChatWithFlags(
     return shouldUseNativeTools(sessionId, userId, isAdmin)
   }, [sessionId, userId, isAdmin])
 
-  const enableFallback = useMemo(() => {
-    return shouldFallbackToLegacy(sessionId, userId, isAdmin)
-  }, [sessionId, userId, isAdmin])
-
   const enableDebug = useMemo(() => {
     return shouldEnableDebugLogging(sessionId, userId, isAdmin)
   }, [sessionId, userId, isAdmin])
@@ -87,55 +81,96 @@ export function useUnifiedChatWithFlags(
   }, [sessionId, userId, isAdmin])
 
   // Legacy implementation
-  const legacyChat = useUnifiedChat({
-    ...chatOptions,
-    sessionId,
+  const legacyOptions: UnifiedChatOptions = {
     mode: chatOptions.mode || 'standard',
-  })
+  }
 
-  // Native AI SDK implementation
-  const nativeChat = useNativeAISDK({
-    sessionId,
+  if (sessionId) {
+    legacyOptions.sessionId = sessionId
+  }
+
+  if (chatOptions.context) {
+    legacyOptions.context = chatOptions.context
+  }
+
+  if (chatOptions.initialMessages) {
+    legacyOptions.initialMessages = chatOptions.initialMessages
+  }
+
+  if (chatOptions.onMessage) {
+    legacyOptions.onMessage = chatOptions.onMessage
+  }
+
+  if (chatOptions.onComplete) {
+    legacyOptions.onComplete = chatOptions.onComplete
+  }
+
+  if (chatOptions.onError) {
+    legacyOptions.onError = chatOptions.onError
+  }
+
+  const legacyChat = useUnifiedChat(legacyOptions)
+
+  const nativeOptions: NativeAISDKOptions = {
     mode: chatOptions.mode || 'standard',
-    context: chatOptions.context,
-    initialMessages: chatOptions.initialMessages?.map(msg => ({
-      id: msg.id,
-      role: msg.role as 'user' | 'assistant' | 'system',
-      content: msg.content,
-    })),
-    onMessage: chatOptions.onMessage ? (message) => {
-      chatOptions.onMessage?.({
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        timestamp: new Date(),
-        type: 'text',
-        metadata: {}
-      })
-    } : undefined,
-    onComplete: chatOptions.onComplete,
-    onError: chatOptions.onError,
-  })
+  }
 
-  // Error handling with fallback
-  const handleError = useCallback((error: Error) => {
-    if (enableDebug) {
-      console.error('[UNIFIED_CHAT_FLAGS] Error:', error)
-    }
-    
-    if (enableFallback && useNative) {
-      console.warn('[UNIFIED_CHAT_FLAGS] Falling back to legacy implementation due to error:', error.message)
-      // In a real implementation, you'd switch to legacy here
-      // For now, we'll just log the fallback
-    }
-    
-    chatOptions.onError?.(error)
-  }, [enableFallback, useNative, chatOptions.onError, enableDebug])
+  if (sessionId) {
+    nativeOptions.sessionId = sessionId
+  }
+
+  if (chatOptions.context) {
+    nativeOptions.context = chatOptions.context
+  }
+
+  if (chatOptions.initialMessages) {
+    nativeOptions.initialMessages = chatOptions.initialMessages
+  }
+
+  if (chatOptions.onMessage) {
+    nativeOptions.onMessage = chatOptions.onMessage
+  }
+
+  if (chatOptions.onComplete) {
+    nativeOptions.onComplete = chatOptions.onComplete
+  }
+
+  if (chatOptions.onError) {
+    nativeOptions.onError = chatOptions.onError
+  }
+
+  const nativeChat = useNativeAISDK(nativeOptions)
 
   // Choose the active implementation
   const activeChat = useNative ? nativeChat : legacyChat
 
-  // Debug logging
+  const messages = activeChat.messages
+
+  const addMessage = useCallback((message: Omit<UnifiedMessage, 'id'> & { id?: string }) => {
+    return useNative ? nativeChat.addMessage(message) : legacyChat.addMessage(message)
+  }, [legacyChat, nativeChat, useNative])
+
+  const setMessages = useCallback((nextMessages: UnifiedMessage[]) => {
+    if (useNative) {
+      nativeChat.setMessages(nextMessages)
+    } else {
+      legacyChat.setMessages(nextMessages)
+    }
+  }, [legacyChat, nativeChat, useNative])
+
+  const stop = useCallback(async () => {
+    if (useNative) {
+      await nativeChat.stop()
+    } else {
+      await legacyChat.stop()
+    }
+  }, [legacyChat, nativeChat, useNative])
+
+  const regenerate = useNative ? nativeChat.reload : legacyChat.regenerate
+  const resumeStream = useNative ? nativeChat.resumeStream : legacyChat.resumeStream
+  const addToolResult = useNative ? nativeChat.addToolResult : legacyChat.addToolResult
+  const clearError = useNative ? nativeChat.clearError : legacyChat.clearError
+
   if (enableDebug) {
     console.log('[UNIFIED_CHAT_FLAGS] Using implementation:', {
       useNative,
@@ -148,54 +183,34 @@ export function useUnifiedChatWithFlags(
     })
   }
 
-  // Return unified interface
   return {
-    // Core chat functionality
-    messages: activeChat.messages.map(msg => ({
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      timestamp: msg.timestamp || new Date(),
-      type: msg.type || 'text',
-      metadata: msg.metadata || {}
-    })),
+    messages,
     isLoading: activeChat.isLoading,
     isStreaming: activeChat.isStreaming,
     error: activeChat.error,
+    context: activeChat.context,
     sendMessage: activeChat.sendMessage,
-    addMessage: (message) => {
-      const newMsg = activeChat.addMessage({
-        id: message.id || crypto.randomUUID(),
-        role: message.role,
-        content: message.content,
-        timestamp: message.timestamp || new Date(),
-        type: message.type || 'text',
-        metadata: message.metadata || {}
-      })
-      return {
-        id: newMsg.id,
-        role: newMsg.role,
-        content: newMsg.content,
-        timestamp: newMsg.timestamp,
-        type: newMsg.type || 'text',
-        metadata: newMsg.metadata || {}
-      }
-    },
+    addMessage,
     clearMessages: activeChat.clearMessages,
     updateContext: activeChat.updateContext,
-    
-    // Migration status
+    stop,
+    regenerate,
+    resumeStream,
+    addToolResult,
+    setMessages,
+    clearError,
+
     migrationStatus,
-    
-    // Native AI SDK specific (if available)
-    toolInvocations: useNative ? nativeChat.toolInvocations : undefined,
-    annotations: useNative ? nativeChat.annotations : undefined,
-    
-    // Native AI SDK methods (if available)
-    append: useNative ? nativeChat.append : undefined,
-    reload: useNative ? nativeChat.reload : undefined,
-    stop: useNative ? nativeChat.stop : undefined,
-    setMessages: useNative ? nativeChat.setMessages : undefined,
+    toolInvocations: useNative ? nativeChat.toolInvocations : [],
+    annotations: useNative ? nativeChat.annotations : [],
+    ...(useNative
+      ? {
+          append: nativeChat.append,
+          reload: nativeChat.reload,
+          nativeStop: nativeChat.stop,
+          nativeSetMessages: nativeChat.setMessages,
+        }
+      : {}),
   }
 }
 
