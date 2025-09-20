@@ -20,8 +20,7 @@ import {
   BarChart3,
   TrendingUp
 } from 'lucide-react'
-import { ArtifactMessage } from '@/components/chat/ArtifactMessage'
-import { useArtifactChat } from '@/hooks/useArtifactChat'
+import { WorkflowMessage } from '@/components/chat/WorkflowMessage'
 
 // Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
@@ -33,12 +32,8 @@ export default function ChatV2() {
   const [contextLoading, setContextLoading] = useState(false)
   const [assistantV2Enabled, setAssistantV2Enabled] = useState(false)
 
-  // Assistant V2 with Artifacts
-  const artifactChat = useArtifactChat({
-    sessionId,
-    mode: 'standard',
-    autoGenerateArtifacts: assistantV2Enabled,
-  })
+  // Assistant V2 with Workflow
+  // Note: Workflow functionality is handled by WorkflowMessage component
 
   // Connect to your original intelligence system
   const refreshIntelligence = useCallback(async () => {
@@ -491,27 +486,28 @@ export default function ChatV2() {
               </div>
             ) : (
               messages.map((message, index) => {
-                // Use ArtifactMessage when Assistant V2 is enabled and message suggests analytics
-                const shouldUseArtifact = assistantV2Enabled && (
+                // Use WorkflowMessage when Assistant V2 is enabled and message suggests workflow
+                const shouldUseWorkflow = assistantV2Enabled && (
                   message.role === 'assistant' && 
-                  (message.content.toLowerCase().includes('chart') || 
-                   message.content.toLowerCase().includes('analytics') ||
-                   message.content.toLowerCase().includes('burn rate') ||
-                   message.content.toLowerCase().includes('revenue') ||
-                   message.content.toLowerCase().includes('lead'))
+                  (message.content.toLowerCase().includes('workflow') || 
+                   message.content.toLowerCase().includes('analyze') ||
+                   message.content.toLowerCase().includes('terms') ||
+                   message.content.toLowerCase().includes('research') ||
+                   message.content.toLowerCase().includes('summary') ||
+                   message.content.toLowerCase().includes('pdf'))
                 );
 
-                if (shouldUseArtifact) {
+                if (shouldUseWorkflow) {
                   return (
                     <div key={message.id || `msg-${index}`} className="mb-4">
-                      <ArtifactMessage 
+                      <WorkflowMessage 
                         message={{
                           id: message.id || `msg-${index}`,
                           content: message.content,
-                          type: "artifact",
+                          type: "workflow",
                           metadata: {
-                            artifactType: "burn-rate", // Default, will be detected
-                            query: message.content,
+                            workflowType: "tc-analysis", // Default, will be detected
+                            sessionId: sessionId,
                           }
                         }}
                       />
