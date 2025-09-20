@@ -26,6 +26,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^2.0.44
         version: 2.0.44(react@19.1.1)(zod@4.1.8)
+      '@canvasjs/react-charts':
+        specifier: ^1.0.2
+        version: 1.0.2(@canvasjs/charts@3.13.9)(react@19.1.1)
       '@emotion/is-prop-valid':
         specifier: latest
         version: 1.3.1
@@ -125,6 +128,9 @@ importers:
       bufferutil:
         specifier: ^4.0.9
         version: 4.0.9
+      canvasjs:
+        specifier: ^1.8.3
+        version: 1.8.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -601,6 +607,15 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@canvasjs/charts@3.13.9':
+    resolution: {integrity: sha512-WKAwb/mhyfDa3Hcwoqdfhl7aW12S6KPlnljTxlp4oTAs3D1WgMUwcLrBXGpO0EVd6vaB3MN9ubrqVtxCrpjNgA==}
+
+  '@canvasjs/react-charts@1.0.2':
+    resolution: {integrity: sha512-PZgJlDbGdMF4AN/KvrvGY9X50EByJMZ7MHfQB/U0aky9Onn9mt0CpsvwudBsBe+DofaV3SHR4SHn/Wfo/pubDw==}
+    peerDependencies:
+      '@canvasjs/charts': ^3.7.5
+      react: '>=16.0.0'
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -2796,6 +2811,9 @@ packages:
 
   caniuse-lite@1.0.30001737:
     resolution: {integrity: sha512-BiloLiXtQNrY5UyF0+1nSJLXUENuhka2pzy2Fx5pGxqavdrxSCW4U6Pn/PoG3Efspi2frRbHpBV2XsrPE6EDlw==}
+
+  canvasjs@1.8.3:
+    resolution: {integrity: sha512-60eUT0VjqRgYqdIQcOkXg0Zptfbl4HefA/O51YEf1m/P0uXvE3icI/1KPrXpY9aVxn8gG/BB8DzVoTGCcyBnYg==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -6974,6 +6992,13 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
+  '@canvasjs/charts@3.13.9': {}
+
+  '@canvasjs/react-charts@1.0.2(@canvasjs/charts@3.13.9)(react@19.1.1)':
+    dependencies:
+      '@canvasjs/charts': 3.13.9
+      react: 19.1.1
+
   '@colors/colors@1.5.0':
     optional: true
 
@@ -9308,6 +9333,8 @@ snapshots:
   camelcase@6.3.0: {}
 
   caniuse-lite@1.0.30001737: {}
+
+  canvasjs@1.8.3: {}
 
   ccount@2.0.1: {}
 

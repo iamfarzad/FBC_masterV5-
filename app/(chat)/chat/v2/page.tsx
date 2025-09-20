@@ -16,8 +16,11 @@ import {
   Calculator,
   FileText,
   User,
-  RefreshCw
+  RefreshCw,
+  BarChart3,
+  TrendingUp
 } from 'lucide-react'
+import { RealWorkflowMessage } from '@/components/chat/RealWorkflowMessage'
 
 // Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
@@ -27,6 +30,10 @@ export default function ChatV2() {
   const [sessionId] = useState(() => crypto.randomUUID())
   const [intelligenceContext, setIntelligenceContext] = useState<any>(null)
   const [contextLoading, setContextLoading] = useState(false)
+  const [assistantV2Enabled, setAssistantV2Enabled] = useState(false)
+
+  // Assistant V2 with Workflow
+  // Note: Workflow functionality is handled by WorkflowMessage component
 
   // Connect to your original intelligence system
   const refreshIntelligence = useCallback(async () => {
@@ -325,6 +332,12 @@ export default function ChatV2() {
                   AI SDK
                 </Badge>
               </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Assistant V2:</span>
+                <Badge variant={assistantV2Enabled ? "default" : "secondary"} className={`text-xs ${assistantV2Enabled ? 'bg-brand text-surface' : ''}`}>
+                  {assistantV2Enabled ? "Artifacts ON" : "Artifacts OFF"}
+                </Badge>
+              </div>
             </div>
           </div>
 
@@ -385,6 +398,15 @@ export default function ChatV2() {
             >
               <Mic className="w-4 h-4 mr-2" />
               Test Voice API
+            </Button>
+            
+            <Button 
+              variant={assistantV2Enabled ? "default" : "outline"} 
+              className={`w-full justify-start ${assistantV2Enabled ? 'bg-brand text-surface' : ''}`}
+              onClick={() => setAssistantV2Enabled(!assistantV2Enabled)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              {assistantV2Enabled ? 'Assistant V2 ON' : 'Assistant V2 OFF'}
             </Button>
             
             <Button 
@@ -463,16 +485,45 @@ export default function ChatV2() {
                 </div>
               </div>
             ) : (
-              messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3 mt-1">
-                      <Sparkles className="w-4 h-4 text-brand" />
+              messages.map((message, index) => {
+                // Use RealWorkflowMessage when Assistant V2 is enabled and message suggests real workflow
+                const shouldUseRealWorkflow = assistantV2Enabled && (
+                  message.role === 'assistant' && 
+                  (message.content.toLowerCase().includes('consent') || 
+                   message.content.toLowerCase().includes('terms') ||
+                   message.content.toLowerCase().includes('research') ||
+                   message.content.toLowerCase().includes('personalize') ||
+                   message.content.toLowerCase().includes('workflow'))
+                );
+
+                if (shouldUseRealWorkflow) {
+                  return (
+                    <div key={message.id || `msg-${index}`} className="mb-4">
+                      <RealWorkflowMessage 
+                        message={{
+                          id: message.id || `msg-${index}`,
+                          content: message.content,
+                          type: "real-workflow",
+                          metadata: {
+                            workflowType: "consent", // Default, will be detected
+                            sessionId: sessionId,
+                          }
+                        }}
+                      />
                     </div>
-                  )}
+                  );
+                }
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center mr-3 mt-1">
+                        <Sparkles className="w-4 h-4 text-brand" />
+                      </div>
+                    )}
                   
                   <div className={`max-w-2xl rounded-lg p-4 ${
                     message.role === 'user' 
@@ -495,7 +546,8 @@ export default function ChatV2() {
                     </div>
                   )}
                 </div>
-              ))
+                );
+              })
             )}
 
             {/* Loading indicator */}
