@@ -20,7 +20,7 @@ import {
   BarChart3,
   TrendingUp
 } from 'lucide-react'
-import { WorkflowMessage } from '@/components/chat/WorkflowMessage'
+import { RealWorkflowMessage } from '@/components/chat/RealWorkflowMessage'
 
 // Chat V2 - Working Implementation Connected to Original Pipeline
 export default function ChatV2() {
@@ -486,27 +486,26 @@ export default function ChatV2() {
               </div>
             ) : (
               messages.map((message, index) => {
-                // Use WorkflowMessage when Assistant V2 is enabled and message suggests workflow
-                const shouldUseWorkflow = assistantV2Enabled && (
+                // Use RealWorkflowMessage when Assistant V2 is enabled and message suggests real workflow
+                const shouldUseRealWorkflow = assistantV2Enabled && (
                   message.role === 'assistant' && 
-                  (message.content.toLowerCase().includes('workflow') || 
-                   message.content.toLowerCase().includes('analyze') ||
+                  (message.content.toLowerCase().includes('consent') || 
                    message.content.toLowerCase().includes('terms') ||
                    message.content.toLowerCase().includes('research') ||
-                   message.content.toLowerCase().includes('summary') ||
-                   message.content.toLowerCase().includes('pdf'))
+                   message.content.toLowerCase().includes('personalize') ||
+                   message.content.toLowerCase().includes('workflow'))
                 );
 
-                if (shouldUseWorkflow) {
+                if (shouldUseRealWorkflow) {
                   return (
                     <div key={message.id || `msg-${index}`} className="mb-4">
-                      <WorkflowMessage 
+                      <RealWorkflowMessage 
                         message={{
                           id: message.id || `msg-${index}`,
                           content: message.content,
-                          type: "workflow",
+                          type: "real-workflow",
                           metadata: {
-                            workflowType: "tc-analysis", // Default, will be detected
+                            workflowType: "consent", // Default, will be detected
                             sessionId: sessionId,
                           }
                         }}
