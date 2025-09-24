@@ -22,7 +22,7 @@ export async function connectLive(options: LiveConnectOptions) {
 
   // sensible default; can be overridden by caller
   const liveModel =
-    model ?? 'gemini-2.5-flash-preview-native-audio-dialog'
+    model ?? 'gemini-2.5-flash-native-audio-preview-09-2025'
 
   // default response modalities if caller didn't specify
   const mergedConfig: Record<string, unknown> = {

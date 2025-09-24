@@ -69,6 +69,8 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   const audioChunksRef = useRef<Blob[]>([])
   const audioStreamRef = useRef<MediaStream | null>(null)
   const reconnectingRef = useRef(false)
+  const reconnectAttemptsRef = useRef(0)
+  const lastConnectionAttemptRef = useRef(0)
   const messageQueueRef = useRef<string[]>([])
   const preferredLanguageRef = useRef<string>('en-US')
   // Track whether we've issued a start message for the current socket
@@ -87,6 +89,52 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
   useEffect(() => {
     transcriptRef.current = transcript
   }, [transcript])
+
+  // Connection health monitoring
+  const connectionHealthRef = useRef({
+    lastPong: 0,
+    lastMessage: 0,
+    isHealthy: true
+  })
+
+  // Exponential backoff for reconnections
+  const getReconnectDelay = useCallback((attempt: number) => {
+    // Base delay: 1s, max delay: 30s, exponential backoff
+    const baseDelay = 1000
+    const maxDelay = 30000
+    const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay)
+    // Add jitter to prevent thundering herd
+    const jitter = Math.random() * 1000
+    return delay + jitter
+  }, [])
+
+  // Connection health monitoring
+  const updateConnectionHealth = useCallback((event: string) => {
+    const now = Date.now()
+    connectionHealthRef.current.lastMessage = now
+
+    // Mark connection as healthy on successful events
+    if (event === 'connected' || event === 'session_started' || event === 'pong') {
+      connectionHealthRef.current.isHealthy = true
+      connectionHealthRef.current.lastPong = now
+    }
+  }, [])
+
+  // Check connection health
+  const checkConnectionHealth = useCallback(() => {
+    const now = Date.now()
+    const health = connectionHealthRef.current
+    const healthTimeout = 30000 // 30 seconds without activity = unhealthy
+    const isHealthy = (now - health.lastMessage) < healthTimeout
+
+    if (isHealthy !== health.isHealthy) {
+      health.isHealthy = isHealthy
+      console.log(isHealthy ? 'info' : 'warn', 'Connection health changed', {
+        isHealthy,
+        timeSinceLastMessage: now - health.lastMessage
+      })
+    }
+  }, [])
 
   // Log mount/unmount once (avoid logging on every render)
   useEffect(() => {
@@ -284,6 +332,10 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       setIsConnected(true)
       setError(null)
       reconnectingRef.current = false
+      reconnectAttemptsRef.current = 0 // Reset reconnection attempts on successful connection
+
+      // Update connection health
+      updateConnectionHealth('connected')
 
       // Flush any queued non-audio messages immediately; defer audio until session is active
       if (messageQueueRef.current.length > 0) {
@@ -316,6 +368,9 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         const message = JSON.parse(event.data)
         // Action logged
         // Action logged
+
+        // Update connection health on any message
+        updateConnectionHealth('message')
 
         switch (message.type) {
           case 'connected':
@@ -391,15 +446,39 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       setSession(null)
       reconnectingRef.current = false
       sessionActiveRef.current = false
-      
+
+      // Update connection health
+      connectionHealthRef.current.isHealthy = false
+      connectionHealthRef.current.lastPong = 0
+
       // Auto-reconnect on unexpected close (not user-initiated)
       if (event.code !== 1000 && event.code !== 1001) {
-        // Action logged
-        setTimeout(() => {
-          if (!reconnectingRef.current) {
-            connectWebSocket()
-          }
-        }, 1000)
+        const shouldReconnect = reconnectAttemptsRef.current < 5 // Max 5 reconnection attempts
+        if (shouldReconnect) {
+          reconnectAttemptsRef.current++
+          const delay = getReconnectDelay(reconnectAttemptsRef.current)
+          console.warn('WebSocket closed unexpectedly, reconnecting...', {
+            closeCode: event.code,
+            attempt: reconnectAttemptsRef.current,
+            delay: Math.round(delay)
+          })
+
+          setTimeout(() => {
+            if (!reconnectingRef.current) {
+              connectWebSocket()
+            }
+          }, delay)
+        } else {
+          console.error('Max reconnection attempts reached', {
+            finalCloseCode: event.code,
+            totalAttempts: reconnectAttemptsRef.current
+          })
+          setError('Connection lost. Please refresh the page to reconnect.')
+        }
+      } else {
+        // Reset reconnection attempts on normal close
+        reconnectAttemptsRef.current = 0
+        console.info('WebSocket closed normally', { closeCode: event.code })
       }
     }
   }, []) // Remove all dependencies to prevent infinite re-renders
@@ -418,7 +497,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
           const { token } = await res.json()
           if (!token) throw new Error('No token returned')
 
-          const model = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-live-2.5-flash-preview-native-audio'
+          const model = process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash-native-audio-preview-09-2025'
 
           const responseQueue: unknown[] = []
           function onmessage(message: any) {
@@ -708,6 +787,23 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       // Warning log removed - could add proper error handling here
     }
   }, [])
+
+  // Periodic connection health check
+  useEffect(() => {
+    const healthCheckInterval = setInterval(() => {
+      checkConnectionHealth()
+
+      // If connection is unhealthy for too long, trigger reconnection
+      const health = connectionHealthRef.current
+      if (!health.isHealthy && isConnected && !reconnectingRef.current) {
+        console.warn('Connection appears unhealthy, triggering reconnection')
+        reconnectAttemptsRef.current = 0
+        connectWebSocket()
+      }
+    }, 10000) // Check every 10 seconds
+
+    return () => clearInterval(healthCheckInterval)
+  }, [checkConnectionHealth, isConnected])
 
   // Cleanup marker (do not auto-close socket to avoid StrictMode/FastRefresh loops)
   useEffect(() => {
