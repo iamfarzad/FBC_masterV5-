@@ -129,12 +129,12 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
 
     if (isHealthy !== health.isHealthy) {
       health.isHealthy = isHealthy
-      logActivity(isHealthy ? 'info' : 'warn', 'Connection health changed', {
+      console.log(isHealthy ? 'info' : 'warn', 'Connection health changed', {
         isHealthy,
         timeSinceLastMessage: now - health.lastMessage
       })
     }
-  }, [logActivity])
+  }, [])
 
   // Log mount/unmount once (avoid logging on every render)
   useEffect(() => {
@@ -457,7 +457,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
         if (shouldReconnect) {
           reconnectAttemptsRef.current++
           const delay = getReconnectDelay(reconnectAttemptsRef.current)
-          logActivity('warn', 'WebSocket closed unexpectedly, reconnecting...', {
+          console.warn('WebSocket closed unexpectedly, reconnecting...', {
             closeCode: event.code,
             attempt: reconnectAttemptsRef.current,
             delay: Math.round(delay)
@@ -469,7 +469,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
             }
           }, delay)
         } else {
-          logActivity('error', 'Max reconnection attempts reached', {
+          console.error('Max reconnection attempts reached', {
             finalCloseCode: event.code,
             totalAttempts: reconnectAttemptsRef.current
           })
@@ -478,7 +478,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       } else {
         // Reset reconnection attempts on normal close
         reconnectAttemptsRef.current = 0
-        logActivity('info', 'WebSocket closed normally', { closeCode: event.code })
+        console.info('WebSocket closed normally', { closeCode: event.code })
       }
     }
   }, []) // Remove all dependencies to prevent infinite re-renders
@@ -796,7 +796,7 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
       // If connection is unhealthy for too long, trigger reconnection
       const health = connectionHealthRef.current
       if (!health.isHealthy && isConnected && !reconnectingRef.current) {
-        logActivity('warn', 'Connection appears unhealthy, triggering reconnection')
+        console.warn('Connection appears unhealthy, triggering reconnection')
         reconnectAttemptsRef.current = 0
         connectWebSocket()
       }

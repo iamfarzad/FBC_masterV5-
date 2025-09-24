@@ -138,11 +138,11 @@ export function useGeminiLiveAudio({
   // Track failures for circuit breaker
   const recordFailure = useCallback(() => {
     rateLimitRef.current.failures++
-    logActivity('warn', 'Connection failure recorded', {
+    console.warn('Connection failure recorded', {
       failureCount: rateLimitRef.current.failures,
       circuitBreakerThreshold: 3
     })
-  }, [logActivity])
+  }, [])
 
   // Authentication check
   const authenticateUser = useCallback(async (): Promise<{ success: boolean; userId?: string; error?: string }> => {
@@ -180,7 +180,7 @@ export function useGeminiLiveAudio({
         // Retry on rate limit or temporary server errors
         if (response.status === 429 || response.status >= 500) {
           if (retryCount < 2) {
-            logActivity('warn', 'Token fetch failed, retrying...', { status: response.status, retryCount })
+            console.warn('Token fetch failed, retrying...', { status: response.status, retryCount })
             await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
             return fetchApiKey(retryCount + 1)
           }
@@ -194,15 +194,15 @@ export function useGeminiLiveAudio({
         throw new Error('No token returned from server')
       }
 
-      logActivity('info', 'Successfully fetched ephemeral token', { expiresIn: '30 minutes' })
+      console.info('Successfully fetched ephemeral token', { expiresIn: '30 minutes' })
       return token
     } catch (error) {
       console.error('Failed to fetch API key:', error)
       throw error
     }
-  }, [sessionId, userId, logActivity])
+  }, [sessionId, userId])
 
-  // Structured logging
+  // Structured logging (defined after correlationId is available)
   const logActivity = useCallback((level: 'info' | 'error' | 'warn', message: string, metadata: any = {}) => {
     const logData = {
       timestamp: new Date().toISOString(),
@@ -214,9 +214,9 @@ export function useGeminiLiveAudio({
       model: modelName,
       ...metadata
     }
-    
+
     console.log(JSON.stringify(logData))
-    
+
     // Also log to Supabase if available
     if (correlationId) {
       logTokenUsage({
