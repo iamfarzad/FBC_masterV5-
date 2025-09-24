@@ -223,7 +223,7 @@ nodeProcess?.on('unhandledRejection', (reason: unknown) => {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const liveModel = process.env.GEMINI_LIVE_MODEL || process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash-preview-native-audio-dialog'
+    const liveModel = process.env.GEMINI_LIVE_MODEL || process.env.NEXT_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash-native-audio-preview-09-2025'
     const session = await ai.live.connect({
       model: liveModel,
       config: {

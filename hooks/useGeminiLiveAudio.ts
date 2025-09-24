@@ -34,12 +34,12 @@ interface RateLimitResult {
   resetTime: number
 }
 
-export function useGeminiLiveAudio({ 
-  apiKey, 
-  modelName = 'gemini-2.5-flash-preview-native-audio-dialog', 
+export function useGeminiLiveAudio({
+  apiKey = '', // Will be fetched from server if not provided
+  modelName = 'gemini-2.5-flash-native-audio-preview-09-2025',
   onStatusChange,
   sessionId,
-  userId 
+  userId
 }: UseGeminiLiveAudioOptions) {
   const [isConnected, setIsConnected] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -47,7 +47,11 @@ export function useGeminiLiveAudio({
   const [correlationId, setCorrelationId] = useState<string>('')
   const sessionRef = useRef<any>(null)
   const audioPlayer = useAudioPlayer()
-  const rateLimitRef = useRef<{ count: number; resetTime: number }>({ count: 0, resetTime: Date.now() })
+  const rateLimitRef = useRef<{ count: number; resetTime: number; failures: number }>({
+    count: 0,
+    resetTime: Date.now(),
+    failures: 0
+  })
 
   // Generate correlation ID for structured logging
   const generateCorrelationId = useCallback(() => {
@@ -79,41 +83,72 @@ export function useGeminiLiveAudio({
     }
   }, [])
 
-  // Rate limiting check
+  // Enhanced rate limiting check with circuit breaker
   const checkRateLimit = useCallback(async (): Promise<RateLimitResult> => {
     const now = Date.now()
     const windowMs = 60000 // 1 minute
     const maxRequests = 20
+    const maxFailures = 5
+    const circuitBreakerThreshold = 3
+    const circuitBreakerTimeout = 30000 // 30 seconds
+
+    const rateLimit = rateLimitRef.current
+
+    // Circuit breaker: if too many failures, block requests temporarily
+    if (rateLimit.failures >= circuitBreakerThreshold) {
+      if (now - rateLimit.resetTime < circuitBreakerTimeout) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetTime: rateLimit.resetTime + circuitBreakerTimeout
+        }
+      } else {
+        // Reset circuit breaker after timeout
+        rateLimit.failures = 0
+        rateLimit.resetTime = now + windowMs
+      }
+    }
 
     // Reset counter if window has passed
-    if (now > rateLimitRef.current.resetTime) {
-      rateLimitRef.current = { count: 0, resetTime: now + windowMs }
+    if (now > rateLimit.resetTime) {
+      rateLimit.count = 0
+      rateLimit.resetTime = now + windowMs
+      rateLimit.failures = 0 // Reset failures on new window
     }
 
     // Check if limit exceeded
-    if (rateLimitRef.current.count >= maxRequests) {
+    if (rateLimit.count >= maxRequests) {
       return {
         allowed: false,
         remaining: 0,
-        resetTime: rateLimitRef.current.resetTime
+        resetTime: rateLimit.resetTime
       }
     }
 
     // Increment counter
-    rateLimitRef.current.count++
+    rateLimit.count++
 
     return {
       allowed: true,
-      remaining: maxRequests - rateLimitRef.current.count,
-      resetTime: rateLimitRef.current.resetTime
+      remaining: maxRequests - rateLimit.count,
+      resetTime: rateLimit.resetTime
     }
   }, [])
+
+  // Track failures for circuit breaker
+  const recordFailure = useCallback(() => {
+    rateLimitRef.current.failures++
+    logActivity('warn', 'Connection failure recorded', {
+      failureCount: rateLimitRef.current.failures,
+      circuitBreakerThreshold: 3
+    })
+  }, [logActivity])
 
   // Authentication check
   const authenticateUser = useCallback(async (): Promise<{ success: boolean; userId?: string; error?: string }> => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser()
-      
+
       if (error || !user) {
         return { success: false, error: 'Authentication required' }
       }
@@ -123,6 +158,49 @@ export function useGeminiLiveAudio({
       return { success: false, error: 'Authentication service unavailable' }
     }
   }, [])
+
+  // Fetch ephemeral API key from server with retry logic
+  const fetchApiKey = useCallback(async (retryCount = 0): Promise<string> => {
+    try {
+      const response = await fetch('/api/live/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          userId
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || response.statusText
+
+        // Retry on rate limit or temporary server errors
+        if (response.status === 429 || response.status >= 500) {
+          if (retryCount < 2) {
+            logActivity('warn', 'Token fetch failed, retrying...', { status: response.status, retryCount })
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
+            return fetchApiKey(retryCount + 1)
+          }
+        }
+
+        throw new Error(`Authentication failed: ${errorMessage}`)
+      }
+
+      const { token } = await response.json()
+      if (!token) {
+        throw new Error('No token returned from server')
+      }
+
+      logActivity('info', 'Successfully fetched ephemeral token', { expiresIn: '30 minutes' })
+      return token
+    } catch (error) {
+      console.error('Failed to fetch API key:', error)
+      throw error
+    }
+  }, [sessionId, userId, logActivity])
 
   // Structured logging
   const logActivity = useCallback((level: 'info' | 'error' | 'warn', message: string, metadata: any = {}) => {
@@ -184,16 +262,27 @@ export function useGeminiLiveAudio({
         throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((rateLimit.resetTime - Date.now()) / 1000)} seconds`)
       }
 
+      // Get API key - either from props or fetch from server
+      let actualApiKey = apiKey
+      if (!actualApiKey) {
+        try {
+          actualApiKey = await fetchApiKey()
+          logActivity('info', 'Fetched ephemeral API key from server')
+        } catch (error) {
+          throw new Error('No API key available - authentication required')
+        }
+      }
+
       // Use the live adapter to connect to Gemini
       const session = await connectLive({
-        apiKey,
+        apiKey: actualApiKey,
         model: modelName,
         config: {
           responseModalities: ['audio', 'text'],
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: 'Zephyr'
+                voiceName: 'Puck' // Changed to Puck as per your server config
               }
             }
           },
@@ -214,11 +303,25 @@ export function useGeminiLiveAudio({
       sessionRef.current = session
       
     } catch (e: any) {
-      const errorMessage = e.message || 'Failed to connect to Gemini Live'
-      setError(errorMessage)
+      let errorMessage = e.message || 'Failed to connect to Gemini Live'
+
+      // Provide more specific error messages based on the type of error
+      if (errorMessage.includes('Authentication failed')) {
+        errorMessage = 'Authentication failed - please check your credentials'
+        setError('Authentication required. Please sign in to use voice features.')
+      } else if (errorMessage.includes('Rate limit exceeded')) {
+        errorMessage = 'Rate limit exceeded - please try again later'
+        setError('Too many requests. Please wait a moment before trying again.')
+      } else if (errorMessage.includes('HTTPS required')) {
+        errorMessage = 'Secure connection required for live audio'
+        setError('Voice features require a secure HTTPS connection.')
+      } else {
+        setError(`Connection failed: ${errorMessage}`)
+      }
+
       onStatusChange?.('error')
       logActivity('error', 'Gemini Live connection failed', { error: errorMessage })
-      
+
       // Fallback to regular TTS endpoint
       logActivity('info', 'Falling back to regular TTS endpoint')
     }
@@ -251,16 +354,32 @@ export function useGeminiLiveAudio({
     }
   }, [audioPlayer, onStatusChange, logActivity])
 
-  // Handle errors with fallback
+  // Handle errors with fallback and circuit breaker
   const handleError = useCallback((e: any) => {
     const errorMessage = e.message || 'Unknown error occurred'
-    setError(errorMessage)
+
+    // Record failure for circuit breaker
+    recordFailure()
+
+    // Provide user-friendly error messages
+    let userMessage = 'Connection error occurred'
+    if (errorMessage.includes('quota')) {
+      userMessage = 'API quota exceeded. Please try again later.'
+    } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+      userMessage = 'Network connection issue. Please check your internet connection.'
+    } else if (errorMessage.includes('timeout')) {
+      userMessage = 'Connection timed out. Please try again.'
+    } else {
+      userMessage = 'An unexpected error occurred. Please try again.'
+    }
+
+    setError(userMessage)
     onStatusChange?.('error')
-    logActivity('error', 'Gemini Live session error', { error: errorMessage })
-    
+    logActivity('error', 'Gemini Live session error', { error: errorMessage, userMessage })
+
     // Cleanup and fallback
     cleanup()
-  }, [onStatusChange, logActivity])
+  }, [onStatusChange, logActivity, recordFailure])
 
   // Handle session close
   const handleClose = useCallback(() => {
