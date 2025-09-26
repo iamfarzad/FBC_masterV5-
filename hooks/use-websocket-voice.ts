@@ -469,15 +469,15 @@ export function useWebSocketVoice(): WebSocketVoiceHook {
               },
               // Media resolution for video input
               mediaResolution: 'MEDIA_RESOLUTION_LOW', // Low resolution for faster processing
-              callbacks: {
-                onopen: () => {
-                  setIsConnected(true)
-                  setSession({ connectionId: 'direct', isActive: true })
-                },
-                onmessage,
-                onerror: (error: unknown) => setError(`Gemini error: ${(error as Error)?.message || 'unknown'}`),
-                onclose: () => setIsConnected(false),
-              }
+            },
+            callbacks: {
+              onopen: () => {
+                setIsConnected(true)
+                setSession({ connectionId: 'direct', isActive: true })
+              },
+              onmessage,
+              onerror: (error: unknown) => setError(`Gemini error: ${(error as Error)?.message || 'unknown'}`),
+              onclose: () => setIsConnected(false),
             }
           })
 
