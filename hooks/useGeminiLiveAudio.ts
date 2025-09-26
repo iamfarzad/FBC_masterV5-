@@ -196,18 +196,18 @@ export function useGeminiLiveAudio({
                 voiceName: 'Zephyr'
               }
             }
-          },
-          callbacks: {
-            onopen: () => {
-              setIsConnected(true)
-              setError(null)
-              onStatusChange?.('connected')
-              logActivity('info', 'Gemini Live session connected')
-            },
-            onmessage: handleMessage,
-            onerror: handleError,
-            onclose: handleClose
           }
+        },
+        callbacks: {
+          onopen: () => {
+            setIsConnected(true)
+            setError(null)
+            onStatusChange?.('connected')
+            logActivity('info', 'Gemini Live session connected')
+          },
+          onmessage: handleMessage,
+          onerror: handleError,
+          onclose: handleClose
         }
       })
       
@@ -225,31 +225,53 @@ export function useGeminiLiveAudio({
   }, [apiKey, modelName, onStatusChange, authenticateUser, checkRateLimit, logActivity, generateCorrelationId, sessionId])
 
   // Handle incoming messages from Gemini
-  const handleMessage = useCallback((event: any) => {
+  const handleMessage = useCallback((message: any) => {
     try {
-      const data = event.data
-      if (data.audio) {
-        // Convert Base64 to ArrayBuffer
-        const binary = atob(data.audio)
-        const len = binary.length
-        const buffer = new ArrayBuffer(len)
-        const view = new Uint8Array(buffer)
-        for (let i = 0; i < len; i++) view[i] = binary.charCodeAt(i)
-        
-        // Play the audio using the audio player's playAudioData method
-        audioPlayer.controls.playAudioData(data.audio)
-        onStatusChange?.('playing')
-        
-        logActivity('info', 'Audio response received and playing', {
-          audioSize: buffer.byteLength,
-          outputTokens: estimateTokens(binary)
-        })
+      const extractBase64 = (payload: any): string | null => {
+        if (!payload) return null
+        if (typeof payload === 'string') return payload
+        if (typeof payload.data === 'string') return payload.data
+        if (typeof payload.audio === 'string') return payload.audio
+        if (payload.audio && typeof payload.audio.data === 'string') return payload.audio.data
+        if (payload.inlineData && typeof payload.inlineData.data === 'string') {
+          return payload.inlineData.data
+        }
+        return null
       }
+
+      const inlinePart = Array.isArray(message?.serverContent?.modelTurn?.parts)
+        ? message.serverContent.modelTurn.parts.find((part: any) => extractBase64(part.inlineData))
+        : null
+
+      const audioBase64 =
+        extractBase64(message) ??
+        extractBase64(message?.data) ??
+        extractBase64(message?.audio) ??
+        extractBase64(message?.inlineData) ??
+        (inlinePart ? extractBase64(inlinePart.inlineData) : null)
+
+      if (!audioBase64) {
+        return
+      }
+
+      const binary = atob(audioBase64)
+      const len = binary.length
+      const buffer = new ArrayBuffer(len)
+      const view = new Uint8Array(buffer)
+      for (let i = 0; i < len; i++) view[i] = binary.charCodeAt(i)
+
+      audioPlayer.controls.playAudioData(audioBase64)
+      onStatusChange?.('playing')
+
+      logActivity('info', 'Audio response received and playing', {
+        audioSize: buffer.byteLength,
+        outputTokens: estimateTokens(binary)
+      })
     } catch (e: any) {
       logActivity('error', 'Failed to handle audio message', { error: e.message })
       handleError(e)
     }
-  }, [audioPlayer, onStatusChange, logActivity])
+  }, [audioPlayer, onStatusChange, logActivity, handleError])
 
   // Handle errors with fallback
   const handleError = useCallback((e: any) => {
@@ -302,7 +324,12 @@ export function useGeminiLiveAudio({
       const b64 = btoa(binary)
       
       // Send to Gemini using the live session
-      sessionRef.current.sendRealtimeInput({ audio: b64 })
+      await sessionRef.current.sendRealtimeInput({
+        audio: {
+          data: b64,
+          mimeType: 'audio/pcm;rate=16000'
+        }
+      })
       
       // Log usage
       const tokens = estimateTokens(binary)
